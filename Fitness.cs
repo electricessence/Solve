@@ -247,7 +247,7 @@ namespace Solve
 
 			if (other.Count != 0)
 			{
-				if (Count != 0 && other.Count != Count)
+				if (_source.Count != 0 && other.Count != Count)
 					throw new InvalidOperationException("Cannot add fitness values where the count doesn't match.");
 
 				Sync.Modifying(() =>

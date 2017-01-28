@@ -37,7 +37,7 @@ namespace Open.Arithmetic
 		public static ProcedureResult operator +(ProcedureResult a, ProcedureResult b)
 		{
 			return new ProcedureResult(
-				a.Sum + b.Count,
+				a.Sum + b.Sum,
 				a.Count + b.Count
 			);
 		}

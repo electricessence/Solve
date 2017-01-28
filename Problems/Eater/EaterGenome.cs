@@ -6,6 +6,7 @@ using Solve;
 using System.Text;
 using System.Linq;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 namespace Eater
 {
@@ -285,6 +286,8 @@ namespace Eater
 		static readonly string TURN_LEFT_RIGHT = String.Empty + Steps.TURN_LEFT + Steps.TURN_RIGHT;
 		static readonly string TURN_RIGHT_LEFT = String.Empty + Steps.TURN_RIGHT + Steps.TURN_LEFT;
 
+		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + Steps.TURN_LEFT + Steps.TURN_RIGHT + "]+$");
+
 		public static IEnumerable<Step> ReduceLoop(IEnumerable<Step> steps)
 		{
 			var red = ReduceLoop(steps.ToGenomeHash());
@@ -299,6 +302,7 @@ namespace Eater
 			do
 			{
 				outerReduced = reduced;
+				reduced = ENDING_TURNS_REGEX.Replace(reduced, String.Empty); // Turns at the end are superfluous.
 				var reducedLoop = reduced;
 
 				do

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Open.Collections;
 using Solve;
+using System.Diagnostics;
 
 namespace Eater
 {
@@ -26,7 +27,7 @@ namespace Eater
 
 		protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
 		{
-			return genome.AsReduced();
+			return genome;//.AsReduced(); // DO NOT measure against reduced because turns are expended energy and effect fitness.
 		}
 
 
@@ -52,7 +53,9 @@ namespace Eater
 				energy += e;
 			}
 
-			fitness.AddScores(found / len, -energy, -g.Hash.Length); // Last fitness is unnecessary because of how fitness is ordered, but it's nice to see the values.
+			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
+
+			fitness.AddScores(found / len, -g.Hash.Length, -energy);
 		}
 
 		public static void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
