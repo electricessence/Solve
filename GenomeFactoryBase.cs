@@ -59,6 +59,7 @@ namespace Solve
 		protected virtual TGenome Registration(TGenome genome)
 		{
 			if (genome == null) return null;
+			Debug.Assert(genome.Hash.Length != 0, "Genome cannot have empty hash.");
 			TGenome actual;
 			Register(genome, out actual);
 			return actual;
@@ -119,13 +120,11 @@ namespace Solve
 				}
 			}
 
-			genome = Registration(genome);
-
 			Debug.Assert(genome != null, "Converged? No solutions? Saturated?");
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
-			return genome;
+			return Registration(genome);
 
 		}
 
@@ -180,6 +179,7 @@ namespace Solve
 				throw new ArgumentNullException("source");
 
 			Debug.Assert(source.Length != 0, "Should never pass an empty source for mutation.");
+			source = source.Where(g => g.Hash.Length != 0).ToArray();
 			if (source.Length != 0)
 			{
 				// Find one that will mutate well and use it.
@@ -234,11 +234,26 @@ namespace Solve
 				source = genome;
 				--mutations;
 			}
-			return genome;
+			return Registration(genome);
 		}
 
 
 		protected abstract TGenome[] CrossoverInternal(TGenome a, TGenome b);
+
+		protected TGenome[] Crossover(TGenome a, TGenome b)
+		{
+			var result = CrossoverInternal(a, b);
+			if (result != null)
+			{
+				foreach (var r in result)
+				{
+					if (r.Hash.Length == 0)
+						throw new InvalidOperationException("Cannot process a genome with an empty hash.");
+					Registration(r);
+				}
+			}
+			return result;
+		}
 
 		public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
@@ -249,7 +264,7 @@ namespace Solve
 
 			while (maxAttempts != 0)
 			{
-				var offspring = CrossoverInternal(a, b)?.Where(g => RegisterProduction(g)).ToArray();
+				var offspring = Crossover(a, b)?.Where(g => RegisterProduction(g)).ToArray();
 				if (offspring != null && offspring.Length != 0) return offspring;
 				--maxAttempts;
 			}
@@ -331,6 +346,7 @@ namespace Solve
 		{
 			//var variation = (TGenome)genome.NextVariation();
 			//if (variation != null) yield return AssertFrozen(variation);
+			Debug.Assert(genome.Hash.Length != 0, "Cannot expand an empty genome.");
 			var mutation = GenerateOne(genome);
 			if (mutation != null) yield return mutation;
 		}

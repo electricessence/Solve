@@ -65,6 +65,7 @@ namespace Solve
 								throw new InvalidOperationException("Cannot process an unfrozen genome.");
 
 							var hash = next.Hash;
+							Debug.Assert(hash.Length!=0,"Recieved an empty genome.");
 							if (Registry.Contains(hash)) continue;
 							// Try and reserve this hash.
 							lock (Registry)
@@ -95,7 +96,15 @@ namespace Solve
 					}
 					else
 					{
-						Producer.Post(true);
+						if (attempts >= 20)
+						{
+							Console.WriteLine("Factory is not producing new genomes.");
+							Complete();
+
+						} else
+						{
+							Producer.Post(true);
+						}
 					}
 				}
 				catch (Exception ex)
@@ -141,6 +150,9 @@ namespace Solve
 			{
 				if (!genome.IsReadOnly)
 					throw new InvalidOperationException("Cannot process an unfrozen genome.");
+
+				//if (genome.Hash.Length == 0)
+				//	throw new InvalidOperationException("Cannot process a genome with an empty hash.");
 
 				var hash = genome.Hash;
 				if (force || !Registry.Contains(hash))

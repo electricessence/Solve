@@ -11,7 +11,7 @@ using System.Threading.Tasks.Dataflow;
 using Open.Arithmetic;
 using Open.Collections;
 using Open.Dataflow;
-
+using System.Diagnostics;
 
 namespace Solve.Schemes
 {
@@ -55,11 +55,18 @@ namespace Solve.Schemes
 				genome => Producer.TryEnqueue(Factory.Expand(genome)),
 				new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 8 });
 
+			Action<TGenome> addToBreeders = genome =>
+			{
+				//Debug.Assert(genome.Hash.Length != 0, "Attempting to breed an empty genome.");
+				if(genome.Hash.Length!=0)
+					Breeders.SendAsync(genome);
+			};
+
 			PipelineBuilder = new GenomePipelineBuilder<TGenome>(Producer, Problems, poolSize, nodeSize,
 				selected =>
 				{
 					var top = selected.FirstOrDefault();
-					if (top != null) Breeders.SendAsync(top);
+					if (top != null) addToBreeders(top);
 				});
 
 			Pipeline = PipelineBuilder.CreateNetwork(networkDepth); // 3? Start small?
@@ -161,7 +168,7 @@ namespace Solve.Schemes
 
 							// Top get's special treatment.
 							for (var i = 0; i < networkDepth - 1; i++)
-								Breeders.SendAsync(top);
+								addToBreeders(top);
 							// Crossover.
 							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray());
 							if (o2 != null && o2.Length != 0)

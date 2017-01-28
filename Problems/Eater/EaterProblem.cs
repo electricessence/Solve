@@ -52,7 +52,7 @@ namespace Eater
 				energy += e;
 			}
 
-			fitness.AddScores(found / len, -energy);
+			fitness.AddScores(found / len, -energy, -g.Hash.Length); // Last fitness is unnecessary because of how fitness is ordered, but it's nice to see the values.
 		}
 
 		public static void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)

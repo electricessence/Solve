@@ -32,10 +32,13 @@ namespace Eater
                 }
                 else
                 {
+					bool carried;
                     var _node = _lastGenerated.Last;
                     do
                     {
-                        switch (_node.Value)
+						carried = false;
+
+						switch (_node.Value)
                         {
                             case Step.Forward:
                                 _node.Value = Step.TurnLeft;
@@ -51,16 +54,16 @@ namespace Eater
                                 if (_node == null)
                                 {
                                     _node = _lastGenerated.AddFirst(Step.Forward);
-                                    break;
                                 }
                                 else
                                 {
-                                    continue; // Carry...
+									carried = true;
                                 }
-                        }
+								break;
+						}
 
-                    }
-                    while (_lastGenerated.HasConcecutiveTurns());
+					}
+                    while (carried || _lastGenerated.HasConcecutiveTurns());
                 }
 
 

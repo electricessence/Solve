@@ -120,23 +120,23 @@ namespace Solve.Schemes
 				);
 		}
 
-		async Task<KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[]> NextCondendingVariation(
-			TGenome genome,
-			bool includeOriginal = false)
-		{
-			var results = new List<KeyValuePair<TGenome, KeyValuePair<IProblem<TGenome>, Fitness>[]>>();
-			//var variations = ((IEnumerable<TGenome>)(genome.Variations));
-			//if (includeOriginal) variations = (new TGenome[] { genome }).Concat(variations);
-			//var e = variations.GetEnumerator();
+		//async Task<KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[]> NextCondendingVariation(
+		//	TGenome genome,
+		//	bool includeOriginal = false)
+		//{
+		//	var results = new List<KeyValuePair<TGenome, KeyValuePair<IProblem<TGenome>, Fitness>[]>>();
+		//	var variations = ((IEnumerable<TGenome>)(genome.Variations));
+		//	if (includeOriginal) variations = (new TGenome[] { genome }).Concat(variations);
+		//	var e = variations.GetEnumerator();
 
-			//while (true)
-			//{
-			//	var next = await TryGetContender(e, MinSampleCount);
-			//	if (next.HasValue) results.Add(next.Value);
-			//	else break;
-			//}
-			return NextContender(results);
-		}
+		//	while (true)
+		//	{
+		//		var next = await TryGetContender(e, MinSampleCount);
+		//		if (next.HasValue) results.Add(next.Value);
+		//		else break;
+		//	}
+		//	return NextContender(results);
+		//}
 
 	}
 

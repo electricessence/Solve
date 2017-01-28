@@ -119,6 +119,8 @@ namespace Solve
 			{
 				if (!genome.IsReadOnly)
 					throw new InvalidOperationException("Cannot process an unfrozen genome.");
+				//if (genome.Hash.Length == 0)
+				//	throw new InvalidOperationException("Cannot process a genome with an empty hash.");
 				if (index == -2)
 				{
 					batchId = SampleID.Next();

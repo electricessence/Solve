@@ -91,9 +91,9 @@ namespace Eater
 			return current;
 		}
 
-		public const char FORWARD = '↑';
-		public const char TURN_LEFT = '↰';
-		public const char TURN_RIGHT = '↱';
+		public const char FORWARD = '^';
+		public const char TURN_LEFT = '<';
+		public const char TURN_RIGHT = '>';
 
 		public static readonly IReadOnlyList<Step> ALL = (new List<Step> { Step.Forward, Step.TurnLeft, Step.TurnRight }).AsReadOnly();
 
@@ -228,7 +228,7 @@ namespace Eater
 		{
 			get
 			{
-				throw new NotImplementedException();
+				return AsReduced() != this;
 			}
 		}
 

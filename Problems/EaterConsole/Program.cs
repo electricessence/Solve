@@ -62,6 +62,12 @@ namespace EaterConsole
 				.OnFullfilled(() => Console.WriteLine("Done."))
 				.OnFaulted(ex => { throw ex; })
 				.Wait();
+
+			cancel.Cancel();
+
+			Console.WriteLine();
+			Console.WriteLine("Press any key to continue.");
+			Console.ReadKey();
 		}
 	}
 }
