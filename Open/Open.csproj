@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9A044ED6-7585-4137-A17D-6A5571D4DCAF}</ProjectGuid>
+    <ProjectGuid>{E38AB7EE-9E15-48DC-BEEB-8BEBF2379D09}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Solve</RootNamespace>
-    <AssemblyName>Solve</AssemblyName>
+    <RootNamespace>Open</RootNamespace>
+    <AssemblyName>Open</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,21 +31,21 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Nito.AsyncEx, Version=3.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.dll</HintPath>
+      <HintPath>..\packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Nito.AsyncEx.Concurrent, Version=3.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.Concurrent.dll</HintPath>
+      <HintPath>..\packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.Concurrent.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Nito.AsyncEx.Enlightenment, Version=3.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.Enlightenment.dll</HintPath>
+      <HintPath>..\packages\Nito.AsyncEx.3.0.1\lib\net45\Nito.AsyncEx.Enlightenment.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Threading.Tasks.Dataflow.4.7.0\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+      <HintPath>..\packages\System.Threading.Tasks.Dataflow.4.7.0\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
@@ -56,40 +56,52 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EnvironmentBase.cs" />
-    <Compile Include="Fitness.cs" />
-    <Compile Include="FreezableBase.cs" />
-    <Compile Include="GenomeBase.cs" />
-    <Compile Include="GenomeFactoryBase.cs" />
-    <Compile Include="GenomeFitness.cs" />
-    <Compile Include="GenomePipeline.cs" />
-    <Compile Include="GenomeProducer.cs" />
-    <Compile Include="GenomeTestDelegate.cs" />
-    <Compile Include="IFreeze.cs" />
-    <Compile Include="IGene.cs" />
-    <Compile Include="IGenome.cs" />
-    <Compile Include="IGenomeFactory.cs" />
-    <Compile Include="IProblem.cs" />
-    <Compile Include="IReducible.cs" />
-    <Compile Include="ProblemBase.cs" />
+    <Compile Include="Arithmetic\DynamicArithmetic.cs" />
+    <Compile Include="Arithmetic\MathExtensions.cs" />
+    <Compile Include="Arithmetic\ProcedureResult.cs" />
+    <Compile Include="Arithmetic\Statistical.cs" />
+    <Compile Include="Arithmetic\Triangular.cs" />
+    <Compile Include="Collections\ConcurrencyWrapper.cs" />
+    <Compile Include="Collections\ConcurrentCollectionBase.cs" />
+    <Compile Include="Collections\ConcurrentHashSet.cs" />
+    <Compile Include="Collections\ConcurrentList.cs" />
+    <Compile Include="Collections\Extensions.cs" />
+    <Compile Include="Collections\ItemChangedEventArgs.cs" />
+    <Compile Include="Collections\KeyValuePair.cs" />
+    <Compile Include="Collections\LazyList.cs" />
+    <Compile Include="Collections\OrderedDictionary.cs" />
+    <Compile Include="Collections\TrackedList.cs" />
+    <Compile Include="DataFlow\Extensions.cs" />
+    <Compile Include="DataFlow\Filters\AutoComplete.cs" />
+    <Compile Include="DataFlow\Filters\Changed.cs" />
+    <Compile Include="DataFlow\Filters\Distinct.cs" />
+    <Compile Include="DataFlow\TargetBlockFilter.cs" />
+    <Compile Include="DateTime.cs" />
+    <Compile Include="DeferredCleanupBase.cs" />
+    <Compile Include="Diagnostics\Extensions.cs" />
+    <Compile Include="DisposableBase.cs" />
+    <Compile Include="Formatting\Compression.cs" />
+    <Compile Include="Formatting\Numeric.cs" />
+    <Compile Include="Formatting\Text.cs" />
+    <Compile Include="ICloneable.cs" />
+    <Compile Include="Progress.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReducibleGenomeFactoryBase.cs" />
-    <Compile Include="SampleID.cs" />
-    <Compile Include="Schemes\PyramidPipeline.cs" />
-    <Compile Include="Schemes\UberPools.cs" />
+    <Compile Include="Random.cs" />
+    <Compile Include="Range.cs" />
+    <Compile Include="Threading\AsyncProcess.cs" />
+    <Compile Include="Threading\AsyncQuery.cs" />
+    <Compile Include="Threading\Container.cs" />
+    <Compile Include="Threading\Lazy.cs" />
+    <Compile Include="Threading\ModificationSynchronizedBase.cs" />
+    <Compile Include="Threading\ModificationSynchronizer.cs" />
+    <Compile Include="Threading\ReaderWriterLockSlimExensions.cs" />
+    <Compile Include="Threading\ReadWriteHelper.cs" />
+    <Compile Include="Threading\Tasks.cs" />
+    <Compile Include="Threading\ThreadSafety.cs" />
+    <Compile Include="Threading\TimeoutHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="Evaluation Framework\Evaluation Framework.csproj">
-      <Project>{20a11ef3-81af-446d-b181-bddf4e4f4297}</Project>
-      <Name>Evaluation Framework</Name>
-    </ProjectReference>
-    <ProjectReference Include="Open\Open.csproj">
-      <Project>{e38ab7ee-9e15-48dc-beeb-8bebf2379d09}</Project>
-      <Name>Open</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
