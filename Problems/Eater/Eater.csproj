@@ -7,8 +7,8 @@
     <ProjectGuid>{60F677FC-B3F1-4653-8B3B-8EBB4A70FF97}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Problem.Eater</RootNamespace>
-    <AssemblyName>Problem.Eater</AssemblyName>
+    <RootNamespace>Eater</RootNamespace>
+    <AssemblyName>Eater</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
