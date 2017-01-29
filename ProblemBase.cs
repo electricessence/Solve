@@ -1,3 +1,4 @@
+using Open.Collections;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,6 +13,10 @@ namespace Solve
 
 		protected readonly ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>
 			Fitnesses = new ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>();
+
+		protected readonly ConcurrentHashSet<string>
+			Rejects = new ConcurrentHashSet<string>();
+
 
 		static int ProblemCount = 0;
 		readonly int _id = Interlocked.Increment(ref ProblemCount);
@@ -47,14 +52,15 @@ namespace Solve
 			Lazy<GenomeFitness<TGenome, Fitness>> value;
 			if (Fitnesses.TryGetValue(key, out value))
 			{
-				fitness = value.Value;
-				return true;
+				if(!Rejects.Contains(key))
+				{
+					fitness = value.Value;
+					return true;
+				}
 			}
-			else
-			{
-				fitness = default(GenomeFitness<TGenome, Fitness>);
-				return false;
-			}
+
+			fitness = default(GenomeFitness<TGenome, Fitness>);
+			return false;
 		}
 
 		public GenomeFitness<TGenome, Fitness>? GetFitnessFor(TGenome genome, bool ensureSourceGenome = false)
@@ -86,9 +92,27 @@ namespace Solve
 				throw new InvalidOperationException("Cannot recall fitness for an unfrozen genome.");
 			genome = GetFitnessForKeyTransform(genome);
 			var key = genome.Hash;
-			return Fitnesses
-				.GetOrAdd(key, k =>
-					Lazy.New(() => GenomeFitness.New(genome, new Fitness()))).Value;
+			GenomeFitness<TGenome, Fitness> result = default(GenomeFitness<TGenome, Fitness>);
+			Rejects.IfNotContains(key, () =>
+			{
+				result = Fitnesses
+					.GetOrAdd(key, k =>
+						Lazy.New(() => GenomeFitness.New(genome, new Fitness()))).Value;
+			});
+			return result;
+		}
+
+		// Presents a means for removing and blocking future storage of (for memory control).
+		public void Reject(string hash)
+		{
+			Rejects.Add(hash);
+			Fitnesses.TryRemove(hash);
+		}
+
+		public void Reject(IEnumerable<string> hashes)
+		{
+			foreach (var hash in hashes)
+				Reject(hash);
 		}
 
 		public async Task<IFitness> ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false)
@@ -137,11 +161,16 @@ namespace Solve
 
 		public IFitness AddToGlobalFitness(TGenome genome, IFitness fitness)
 		{
-			var global = GetOrCreateFitnessFor(genome).Fitness;
-			if (global == fitness)
-				throw new InvalidOperationException("Adding fitness on to itself.");
-			global.Merge(fitness);
-			return global.SnapShot();
+			IFitness result = fitness;
+			Rejects.IfNotContains(genome.Hash, () =>
+			{
+				var global = GetOrCreateFitnessFor(genome).Fitness;
+				if (global == fitness)
+					throw new InvalidOperationException("Adding fitness on to itself.");
+				global.Merge(fitness);
+				result = global.SnapShot();
+			});
+			return fitness;
 		}
 
 		public int GetSampleCountFor(TGenome genome)

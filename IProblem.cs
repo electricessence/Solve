@@ -33,6 +33,9 @@ namespace Solve
 		IEnumerable<IGenomeFitness<TGenome, Fitness>> GetFitnessFor(IEnumerable<TGenome> genome, bool ensureSourceGenomes = false);
 
 		int GetSampleCountFor(TGenome genome);
+
+		void Reject(string hash);
+		void Reject(IEnumerable<string> hashes);
 	}
 
 	public static class ProblemExtensions

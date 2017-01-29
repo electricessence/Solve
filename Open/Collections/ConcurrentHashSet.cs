@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Open.Threading;
+using System;
 
 namespace Open.Collections
 {
@@ -65,5 +66,27 @@ namespace Open.Collections
 			Sync.Write(() => InternalSource.UnionWith(other));
         }
 
-    }
+		public bool IfContains(T value, Action action)
+		{
+			bool executed = false;
+			Sync.ReadWriteConditionalOptimized(lockType => this.Contains(value), ()=> {
+				action();
+				executed = true;
+			});
+			return executed;
+		}
+
+		public bool IfNotContains(T value, Action action)
+		{
+			bool executed = false;
+			Sync.ReadWriteConditionalOptimized(lockType => !this.Contains(value),  ()=> {
+				action();
+				executed = true;
+			});
+			return executed;
+		}
+
+
+
+	}
 }

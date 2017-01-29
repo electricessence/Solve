@@ -18,8 +18,6 @@ namespace Eater
 	{
 		public readonly SampleCache Samples;
 
-
-
 		public Problem()
 		{
 			Samples = new SampleCache();

@@ -46,6 +46,11 @@ namespace Solve
 
 	public static class GenomePipeline
 	{
+		static readonly ExecutionDataflowBlockOptions Max2Queued = new ExecutionDataflowBlockOptions()
+		{
+			BoundedCapacity = 2
+		};
+
 		public static TransformBlock<
 			IDictionary<IProblem<TGenome>, Task<GenomeFitness<TGenome>>[]>,
 			Dictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>> Processor<TGenome>()
@@ -147,7 +152,7 @@ namespace Solve
 
 			}, new ExecutionDataflowBlockOptions
 			{
-				BoundedCapacity = size * 2
+				BoundedCapacity = size
 			});
 
 			input.PropagateFaultsTo(output);
@@ -168,7 +173,8 @@ namespace Solve
 				return new GenomeSelection<TGenome>(results.Select(kvp => kvp.Value).Weave().Select(r => r.Genome).Distinct());
 			}, new ExecutionDataflowBlockOptions()
 			{
-				MaxDegreeOfParallelism = 2
+				MaxDegreeOfParallelism = 2,
+				BoundedCapacity = 2
 			});
 		}
 
@@ -209,7 +215,7 @@ namespace Solve
 				await selected.SendAsync(selection.Selected);
 				if (rejected != null)
 					await rejected.SendAsync(selection.Rejected).ConfigureAwait(false);
-			}));
+			}, Max2Queued));
 
 			return input;
 		}
@@ -238,15 +244,16 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			return Distributor(problems, size,
-				new ActionBlock<TGenome[]>(selected),
-				rejected == null ? null : new ActionBlock<TGenome[]>(rejected));
+				new ActionBlock<TGenome[]>(selected, Max2Queued),
+				rejected == null ? null : new ActionBlock<TGenome[]>(rejected, Max2Queued));
 		}
 
 		public static ISourceBlock<TGenome> Node<TGenome>(
 			IEnumerable<ISourceBlock<TGenome>> sources,
 			IEnumerable<IProblem<TGenome>> problems,
 			int size,
-			Action<TGenome[]> globalHandler = null)
+			Action<TGenome[]> globalSelectedHandler = null,
+			Action<TGenome[]> globalRejectedHandler = null)
 			where TGenome : IGenome
 		{
 			var output = new BufferBlock<TGenome>();
@@ -256,9 +263,9 @@ namespace Solve
 					foreach (var g in selected)
 						output.SendAsync(g);
 
-					if (globalHandler != null)
-						globalHandler(selected);
-				})
+					globalSelectedHandler?.Invoke(selected);
+				},
+				globalRejectedHandler)
 				.PropagateFaultsTo(output);
 
 			foreach (var source in sources)
@@ -291,13 +298,15 @@ namespace Solve
 		readonly IList<IProblem<TGenome>> Problems;
 
 		readonly Action<TGenome[]> GlobalSelectedHandler;
+		readonly Action<TGenome[]> GlobalRejectedHandler;
 
 		public GenomePipelineBuilder(
 			ISourceBlock<TGenome> defaultSource,
 			IList<IProblem<TGenome>> problems,
 			ushort poolSize,
 			byte sourceCount = 2,
-			Action<TGenome[]> globalSelectedHandler = null)
+			Action<TGenome[]> globalSelectedHandler = null,
+			Action<TGenome[]> globalRejectedHandler = null)
 		{
 			if (sourceCount < 1)
 				throw new ArgumentOutOfRangeException("sourceCount", sourceCount, "Must be at least 1.");
@@ -310,6 +319,7 @@ namespace Solve
 			PoolSize = poolSize;
 			SourceCount = sourceCount;
 			GlobalSelectedHandler = globalSelectedHandler;
+			GlobalRejectedHandler = globalRejectedHandler;
 		}
 
 		public void AddProblem(IProblem<TGenome> problem)

@@ -208,13 +208,21 @@ namespace Solve.Schemes
 						var rejected = new HashSet<TGenome>(selection.Rejected);
 						rejected.ExceptWith(paretoGenomes);
 
-						// Just in case a challenger got lucky.
-						Producer.TryEnqueue(
-							Problems
+						var recycled = Problems
 								.SelectMany(p => p.GetFitnessFor(rejected, true))
 								.Where(gf => gf.Fitness.IncrementRejection() <= 1)
 								.Select(gf => gf.Genome)
-								.Distinct(), true);
+								.Distinct()
+								.ToArray();
+
+						// Just in case a challenger got lucky.
+						Producer.TryEnqueue(recycled, true);
+
+						rejected.ExceptWith(recycled);
+						var rejects = rejected.Select(r => r.Hash).ToArray();
+						foreach (var p in Problems)
+							p.Reject(rejects);
+
 					}
 				})
 				.PropagateFaultsTo(TopGenome)
