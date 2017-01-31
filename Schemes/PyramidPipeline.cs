@@ -44,10 +44,14 @@ namespace Solve.Schemes
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			uint networkDepth = 3,
-			byte nodeSize = 2) : base(genomeFactory, poolSize)
+			byte nodeSize = 2,
+			ushort finalistPoolSize = 0) : base(genomeFactory, poolSize)
 		{
 			if (poolSize < MIN_POOL_SIZE)
 				throw new ArgumentOutOfRangeException("poolSize", poolSize, "Must have a pool size of at least " + MIN_POOL_SIZE);
+
+			if (finalistPoolSize == 0)
+				finalistPoolSize = poolSize;
 
 			Producer = new GenomeProducer<TGenome>(Factory.Generate());
 
@@ -58,7 +62,7 @@ namespace Solve.Schemes
 			Action<TGenome> addToBreeders = genome =>
 			{
 				//Debug.Assert(genome.Hash.Length != 0, "Attempting to breed an empty genome.");
-				if(genome.Hash.Length!=0)
+				if (genome.Hash.Length != 0)
 					Breeders.SendAsync(genome);
 			};
 
@@ -67,6 +71,15 @@ namespace Solve.Schemes
 				{
 					var top = selected.FirstOrDefault();
 					if (top != null) addToBreeders(top);
+				},
+				rejected =>
+				{
+					var rejects = rejected.Select(s => s.Hash);
+					foreach (var p in Problems)
+					{
+						// If they couldn't make it to the top of the pyramid, make sure they won't try again.
+						p.Reject(rejects);
+					}
 				});
 
 			Pipeline = PipelineBuilder.CreateNetwork(networkDepth); // 3? Start small?
@@ -81,8 +94,6 @@ namespace Solve.Schemes
 					foreach (var problem in Problems)
 					{
 						var fitness = problem.GetFitnessFor(genome).Value.Fitness;
-						// You made it all the way back to the top?  Forget about what I said...
-						fitness.RejectionCount = -1;
 						if (fitness.HasConverged(0))
 						{
 							if (!fitness.HasConverged(ConvergenceThreshold)) // should be enough for perfect convergence.
@@ -105,6 +116,7 @@ namespace Solve.Schemes
 				});
 
 			FinalistPool = PipelineBuilder.Selector(
+				finalistPoolSize,
 				selection =>
 				{
 					var selected = selection.Selected;
@@ -162,6 +174,9 @@ namespace Solve.Schemes
 
 							TopGenomeFilter.Post(KeyValuePair.New(problem, top));
 
+							// You made it all the way back to the top?  Forget about what I said...
+							fitness.RejectionCount = -3; // VIPs get their rejection count augmented so they aren't easily dethroned.
+
 							VipPool.SendAsync(top);
 
 							//Producer.TryEnqueue((IReadOnlyList<TGenome>)top.Variations);
@@ -169,6 +184,7 @@ namespace Solve.Schemes
 							// Top get's special treatment.
 							for (var i = 0; i < networkDepth - 1; i++)
 								addToBreeders(top);
+
 							// Crossover.
 							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray());
 							if (o2 != null && o2.Length != 0)
@@ -201,24 +217,38 @@ namespace Solve.Schemes
 						// Keep trying to breed pareto genomes since they conversely may have important genetic material.
 						Producer.TryEnqueue(Factory.AttemptNewCrossover(paretoGenomes));
 
-						// The top final pool recycles it's winners.
-						foreach (var g in selected.Concat(paretoGenomes).Distinct()) //Also avoid re-entrance if there are more than one.
-							FinalistPool.Post(g); // Might need to look at the whole pool and use pareto to retain.
-
 						var rejected = new HashSet<TGenome>(selection.Rejected);
-						rejected.ExceptWith(paretoGenomes);
 
-						var recycled = Problems
+						// Look for long term winners who have made it to the top before and don't discard them easily.
+						var oldChampions
+							= Problems
 								.SelectMany(p => p.GetFitnessFor(rejected, true))
-								.Where(gf => gf.Fitness.IncrementRejection() <= 1)
+								.Where(gf => gf.Fitness.IncrementRejection() < 1)
 								.Select(gf => gf.Genome)
 								.Distinct()
 								.ToArray();
 
+						rejected.ExceptWith(oldChampions);
+						rejected.ExceptWith(paretoGenomes);
+
+						// The top final pool recycles it's winners.
+						foreach (var g in oldChampions.Concat(selected).Concat(paretoGenomes).Distinct()) //Also avoid re-entrance if there are more than one.
+							FinalistPool.Post(g); // Might need to look at the whole pool and use pareto to retain.
+
+						var recycled
+							= Problems
+								.SelectMany(p => p.GetFitnessFor(rejected, true))
+								.Where(gf => gf.Fitness.RejectionCount < 5)
+								.Select(gf => gf.Genome)
+								.Distinct()
+								.ToArray();
+						
 						// Just in case a challenger got lucky.
 						Producer.TryEnqueue(recycled, true);
 
 						rejected.ExceptWith(recycled);
+
+						// True rejects remain and get marked. :(
 						var rejects = rejected.Select(r => r.Hash).ToArray();
 						foreach (var p in Problems)
 							p.Reject(rejects);
@@ -250,6 +280,17 @@ namespace Solve.Schemes
 						Pipeline.Fault("Producer Completed Unexpectedly.");
 				});
 
+		}
+
+		public void AddSeed(TGenome genome)
+		{
+			FinalistPool.Post(genome);
+		}
+
+		public void AddSeeds(IEnumerable<TGenome> genomes)
+		{
+			foreach(var g in genomes)
+				FinalistPool.Post(g);
 		}
 
 		protected override Task StartInternal()

@@ -45,5 +45,12 @@ namespace Solve
             return base.AttemptNewCrossover(a, b, maxAttempts);
         }
 
-    }
+		public override IEnumerable<TGenome> Expand(TGenome genome)
+		{
+			yield return genome.AsReduced();
+			foreach (var g in base.Expand(genome))
+				yield return g;
+		}
+
+	}
 }

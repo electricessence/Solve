@@ -29,7 +29,7 @@ namespace Eater
 	{
 		public static Orientation TurnLeft(this Orientation orientation)
 		{
-			switch(orientation)
+			switch (orientation)
 			{
 				case Orientation.Up:
 					return Orientation.Left;
@@ -158,6 +158,19 @@ namespace Eater
 		}
 
 		public static bool Try(this IEnumerable<Step> steps,
+			GridLocation boundary, GridLocation start, GridLocation food)
+		{
+			int energy;
+			return Try(steps, boundary, start, food, out energy);
+		}
+
+		public static bool Try(this string steps,
+			GridLocation boundary, GridLocation start, GridLocation food, out int energy)
+		{
+			return Try(FromGenomeHash(steps), boundary, start, food, out energy);
+		}
+
+		public static bool Try(this IEnumerable<Step> steps,
 			GridLocation boundary, GridLocation start, GridLocation food, out int energy)
 		{
 			if (start.X > boundary.X || start.Y > boundary.Y)
@@ -211,6 +224,11 @@ namespace Eater
 		public EaterGenome(IEnumerable<Step> steps) : base()
 		{
 			Freeze(steps);
+		}
+
+		public EaterGenome(string steps) : base()
+		{
+			Freeze(Steps.FromGenomeHash(steps));
 		}
 
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Open;
 using Open.Collections;
+using Open.Arithmetic;
 
 namespace Eater
 {
@@ -27,6 +28,7 @@ namespace Eater
 		public readonly int GridSizeMid;
 
 		public readonly GridLocation Boundary;
+		public int SeedOffset;
 
 		public SampleCache(int gridSize = 10)
 		{
@@ -37,38 +39,73 @@ namespace Eater
 			Boundary = new GridLocation(gridSize, gridSize);
 
 			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
+			SeedOffset = RandomUtilities.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
 		}
 
-		public IEnumerable<Entry> Generate()
+		public IEnumerable<GridLocation> GenerateXY()
 		{
+			for (var y = 0; y < GridSize; y++)
+			{
+				for (var x = 0; x < GridSize; x++)
+				{
+					yield return new GridLocation(x, y);
+				}
+			}
+		}
+
+		public IEnumerable<Entry> GenerateOrdered()
+		{
+			foreach(var eater in GenerateXY())
+			{
+				foreach (var food in GenerateXY())
+				{
+					if (!eater.Equals(food))
+						yield return new Entry(eater, food);
+				}
+			}
+		}
+
+		public IEnumerable<Entry> Generate(int seed)
+		{
+			var random = new Random(SeedOffset + seed);
 			while (true)
 			{
-				var eater = RandomQuadrantPosition();
-
-				// Make sure the food is in the opposite quadrant of the eater. +/- 1 to avoid middle.
-				var foodX = RandomUtilities.Random.Next(GridSizeMid - 1);
-				var foodY = RandomUtilities.Random.Next(GridSizeMid - 1);
-				if (eater.X < GridSizeMid) foodX += GridSizeMid + 1;
-				if (eater.Y < GridSizeMid) foodY += GridSizeMid + 1;
-
-				yield return new Entry(eater, new GridLocation(foodX, foodY));
+				var eater = RandomPosition(random);
+				while (true)
+				{
+					var food = RandomPosition(random);
+					if (!food.Equals(eater))
+					{
+						yield return new Entry(eater, food);
+						break;
+					}
+				}
 			}
 		}
 
-		public LazyList<Entry> Get(long id)
+		public ProcedureResult TestAll(string genome)
 		{
-			return _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
-		}
-
-		GridLocation RandomQuadrantPosition()
-		{
-			GridLocation result;
-			do
+			double sum = 0;
+			int count = 0;
+			foreach (var entry in GenerateOrdered())
 			{
-				result = new GridLocation(RandomUtilities.Random.Next(GridSize), RandomUtilities.Random.Next(GridSize));
+				int e;
+				Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out e);
+				sum += e;
+				count++;
 			}
-			while (result.X == GridSizeMid || result.Y == GridSizeMid);
-			return result;
+
+			return new ProcedureResult(sum, count);
+		}
+
+		public LazyList<Entry> Get(int id)
+		{
+			return _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
+		}
+
+		GridLocation RandomPosition(Random random)
+		{
+			return new GridLocation(random.Next(GridSize), random.Next(GridSize));
 		}
 
 

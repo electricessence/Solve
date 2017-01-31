@@ -382,6 +382,12 @@ namespace Solve
 		{
 			return GenomePipeline.Distributor(Problems, PoolSize, selection);
 		}
+
+		public ITargetBlock<TGenome>
+			Selector(int poolSize, Action<GenomeSelection<TGenome>> selection)
+		{
+			return GenomePipeline.Distributor(Problems, poolSize, selection);
+		}
 	}
 
 	public static class GenomePipelineBuilder

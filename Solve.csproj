@@ -76,6 +76,7 @@
     <Compile Include="ReducibleGenomeFactoryBase.cs" />
     <Compile Include="SampleID.cs" />
     <Compile Include="Schemes\PyramidPipeline.cs" />
+    <Compile Include="Schemes\SinglePool.cs" />
     <Compile Include="Schemes\UberPools.cs" />
   </ItemGroup>
   <ItemGroup>

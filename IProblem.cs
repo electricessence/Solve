@@ -36,6 +36,7 @@ namespace Solve
 
 		void Reject(string hash);
 		void Reject(IEnumerable<string> hashes);
+		bool WasRejected(string hash);
 	}
 
 	public static class ProblemExtensions

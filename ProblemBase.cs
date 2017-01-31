@@ -115,6 +115,11 @@ namespace Solve
 				Reject(hash);
 		}
 
+		public bool WasRejected(string hash)
+		{
+			return Rejects.Contains(hash);
+		}
+
 		public async Task<IFitness> ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false)
 		{
 			var f = new Fitness();
