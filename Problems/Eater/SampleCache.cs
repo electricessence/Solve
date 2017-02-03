@@ -83,19 +83,24 @@ namespace Eater
 			}
 		}
 
-		public ProcedureResult TestAll(string genome)
+		public ProcedureResult[] TestAll(string genome)
 		{
-			double sum = 0;
+			double found = 0;
+			double efficiency = 0;
 			int count = 0;
 			foreach (var entry in GenerateOrdered())
 			{
 				int e;
-				Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out e);
-				sum += e;
+				if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out e))
+					found++;
+				efficiency += e;
 				count++;
 			}
 
-			return new ProcedureResult(sum, count);
+			return new ProcedureResult[] {
+				new ProcedureResult(found, count),
+				new ProcedureResult(efficiency, count)
+			};
 		}
 
 		public LazyList<Entry> Get(int id)

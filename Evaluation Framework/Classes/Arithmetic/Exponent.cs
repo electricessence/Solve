@@ -1,3 +1,8 @@
+/*!
+ * @author electricessence / https://github.com/electricessence/
+ * Licensing: MIT https://github.com/electricessence/evaluation-framework/blob/master/LICENSE.txt
+ */
+
 using System;
 
 namespace EvaluationFramework.ArithmeticOperators
@@ -32,6 +37,20 @@ namespace EvaluationFramework.ArithmeticOperators
 
 			return (TResult)(dynamic)Math.Pow(evaluation, power);
 		}
+
+		public override IEvaluate<TContext, TResult> Reduction()
+		{
+			var cPow = Power as Constant<TContext,TResult>;
+			if(cPow!=null)
+			{
+				dynamic p = cPow.Value;
+				if (p == 0) return new Constant<TContext, TResult>((dynamic)1);
+				if (p == 1) return Evaluation;
+			}
+			return null;
+		}
+
+
 	}
 
 	public class Exponent<TContext> : Exponent<TContext, double, double>

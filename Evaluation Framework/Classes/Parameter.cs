@@ -1,10 +1,16 @@
-using System;
+/*!
+ * @author electricessence / https://github.com/electricessence/
+ * Licensing: MIT https://github.com/electricessence/evaluation-framework/blob/master/LICENSE.txt
+ */
+
+ using System;
 using System.Collections.Generic;
 
 namespace EvaluationFramework
 {
 	public class Parameter<TContext, TResult>
-		: EvaluationBase<TContext, TResult>, IParameter<TContext, TResult>, IClonable<Parameter<TContext, TResult>>
+		: EvaluationBase<TContext, TResult>, IParameter<TContext, TResult>
+		where TResult : IComparable
 	{
 
 		public Parameter(ushort id, Func<TContext, ushort, TResult> evaluator) : base()
@@ -47,6 +53,7 @@ namespace EvaluationFramework
 	}
 
 	public class Parameter<TResult> : Parameter<IReadOnlyList<TResult>, TResult>
+		where TResult : IComparable
 	{
 		public Parameter(ushort id) : base(id, GetParamValueFrom)
 		{

@@ -1,6 +1,6 @@
 /*!
  * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Genetic-Algorithm-Platform/blob/master/LICENSE.md
+ * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
 

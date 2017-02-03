@@ -1,14 +1,13 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
 namespace Solve
 {
-	public interface IReducible<T>
+	public interface IReducibleGenome<TGenome> : IReducible<TGenome>, IGenome
+		where TGenome : IGenome
 	{
-		T AsReduced(bool ensureClone = false);
-
-		bool IsReducible { get; }
+		void ReplaceReduced(TGenome reduced);
 	}
 }

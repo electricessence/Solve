@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EvaluationFramework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 namespace Solve
 {
     public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
-    where TGenome : class, IGenome, IReducible<TGenome>
+    where TGenome : class, IReducibleGenome<TGenome>
     {
 
         protected override TGenome Registration(TGenome target)

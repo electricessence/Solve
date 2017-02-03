@@ -1,15 +1,11 @@
 /*!
  * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Genetic-Algorithm-Platform/blob/master/LICENSE.md
+ * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using Open;
-using Open.Threading;
+using System.Collections;
 
 namespace Solve
 {
@@ -47,6 +43,16 @@ namespace Solve
         {
             return CloneInternal();
         }
-    }
+
+		public IEnumerator<T> GetEnumerator()
+		{
+			return ((IEnumerable<T>)Genes).GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
+		}
+	}
 
 }

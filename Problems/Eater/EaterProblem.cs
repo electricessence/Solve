@@ -37,38 +37,43 @@ namespace Eater
 
 		void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
 		{
-			var boundary = Samples.Boundary;
-			var samples = Samples.Get((int)sampleId);
-			var len = 100;
-			double found = 0;
-			double energy = 0;
+			var fullTest = Samples.TestAll(g.Hash);
 
-			for (var i = 0; i < len; i++)
-			{
-				var s = samples[i];
-				int e;
-				if (g.Try(boundary, s.EaterStart, s.Food, out e))
-				{
-					found++;
-					Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-				}
-				else
-				{
-					Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-				}
+			//var boundary = Samples.Boundary;
+			//var samples = Samples.Get((int)sampleId);
+			//var len = 100;
+			//double found = 0;
+			//double energy = 0;
 
-				energy += e;
-			}
+			//for (var i = 0; i < len; i++)
+			//{
+			//	var s = samples[i];
+			//	int e;
+			//	if (g.Try(boundary, s.EaterStart, s.Food, out e))
+			//	{
+			//		found++;
+			//		Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+			//	}
+			//	else
+			//	{
+			//		Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+			//	}
 
-			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
+			//	energy += e;
+			//}
 
-			var ave = energy / len;
-			var hlen = g.Hash.Length;
+			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
-			fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
+			//var ave = energy / len;
+			//var hlen = g.Hash.Length;
+			var count = fullTest[0].Count;
+			fitness.Add(fullTest[0]);
+			fitness.Add(fullTest[1]);
+			fitness.Add(new ProcedureResult(g.Hash.Length*count,count));
+			//fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
 		}
 
-		static readonly ConcurrentDictionary<string, ProcedureResult> FullTests = new ConcurrentDictionary<string, ProcedureResult>();
+		static readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests = new ConcurrentDictionary<string, ProcedureResult[]>();
 
 		public static double LastScore = double.MaxValue;
 
@@ -86,12 +91,12 @@ namespace Eater
 				Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
 
 			Console.WriteLine("  \t[{0}] ({1} samples)", fitness.Scores.JoinToString(","), fitness.SampleCount);
-			Console.WriteLine("  \t[{0}] ({1} samples)", result.Average, result.Count);
+			Console.WriteLine("  \t[{0}] ({1} samples)", result[1].Average, result[1].Count);
 			Console.WriteLine();
 
-			if(LastScore>result.Average)
+			if(LastScore>result[1].Average)
 			{
-				LastScore = result.Average;
+				LastScore = result[1].Average;
 				Console.WriteLine("New winner ^^^.");
 				Console.ReadKey();
 			}

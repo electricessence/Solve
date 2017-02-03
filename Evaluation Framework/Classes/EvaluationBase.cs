@@ -28,6 +28,6 @@ namespace EvaluationFramework
 				new Lazy<string>(ToStringRepresentationInternal, LazyThreadSafetyMode.ExecutionAndPublication)
 			);
 		}
-
+		
 	}
 }

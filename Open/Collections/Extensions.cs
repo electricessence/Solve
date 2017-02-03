@@ -2218,11 +2218,6 @@ namespace Open.Collections
 			return new LazyList<T>(list, isEndless);
 		}
 
-		public static IEnumerable<T> OfType<TSource, T>(this IEnumerable<TSource> list)
-		{
-			return list.Where(e => e is T).Cast<T>();
-		}
-
 		public static void AddThese<T>(this IList<T> target, IEnumerable<T> values)
 		{
 			foreach (var v in values)

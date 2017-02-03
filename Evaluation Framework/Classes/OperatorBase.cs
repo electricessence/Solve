@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -7,11 +8,13 @@ namespace EvaluationFramework
     public abstract class OperatorBase<TChild, TContext, TResult>
 		: OperationBase<TContext, TResult>, IOperator<TChild, TContext, TResult>
 		where TChild : IEvaluate<TContext, TResult>
+		where TResult : IComparable
 	{
 
 		protected OperatorBase(string symbol, IEnumerable<TChild> children = null) : base(symbol)
 		{
 			ChildrenInternal = children == null ? new List<TChild>() : new List<TChild>(children);
+			ReorderChildren();
 			Children = ChildrenInternal.AsReadOnly();
 		}
 
@@ -21,6 +24,11 @@ namespace EvaluationFramework
 		{
 			get;
 			private set;
+		}
+
+		protected virtual void ReorderChildren()
+		{
+			ChildrenInternal.Sort(Compare);
 		}
 
 		protected override string ToStringInternal(object contents)
@@ -54,6 +62,40 @@ namespace EvaluationFramework
 		{
 			return ToStringInternal(ChildRepresentations());
 		}
+
+
+		// Need a standardized way to order so that comparisons are easier.
+		protected static int Compare(TChild a, TChild b)
+		{
+
+			if (a is Constant<TContext,TResult> && !(b is Constant<TContext, TResult>))
+				return 1;
+
+			if (b is Constant<TContext, TResult> && !(a is Constant<TContext, TResult>))
+				return -1;
+
+			var aC = a as Constant<TContext, TResult>;
+			var bC = b as Constant<TContext, TResult>;
+			if (aC != null && bC != null)
+				return bC.Value.CompareTo(aC.Value); // Descending...
+
+			if (a is Parameter<TContext, TResult> && !(b is Parameter<TContext, TResult>))
+				return 1;
+
+			if (b is Parameter<TContext, TResult> && !(a is Parameter<TContext, TResult>))
+				return -1;
+
+			var aP = a as Parameter<TContext, TResult>;
+			var bP = b as Parameter<TContext, TResult>;
+			if (aP != null && bP != null)
+				return aP.ID.CompareTo(bP.ID);
+
+			var ats = a.ToStringRepresentation();
+			var bts = b.ToStringRepresentation();
+
+			return String.Compare(ats, bts);
+		}
+
 
 	}
 

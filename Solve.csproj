@@ -28,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Nito.AsyncEx, Version=3.0.1.0, Culture=neutral, processorArchitecture=MSIL">
@@ -66,13 +67,14 @@
     <Compile Include="GenomeProducer.cs" />
     <Compile Include="GenomeTestDelegate.cs" />
     <Compile Include="IFreeze.cs" />
-    <Compile Include="IGene.cs" />
     <Compile Include="IGenome.cs" />
     <Compile Include="IGenomeFactory.cs" />
     <Compile Include="IProblem.cs" />
     <Compile Include="IReducible.cs" />
+    <Compile Include="IReducibleGenome.cs" />
     <Compile Include="ProblemBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReducibleGenomeBase.cs" />
     <Compile Include="ReducibleGenomeFactoryBase.cs" />
     <Compile Include="SampleID.cs" />
     <Compile Include="Schemes\PyramidPipeline.cs" />

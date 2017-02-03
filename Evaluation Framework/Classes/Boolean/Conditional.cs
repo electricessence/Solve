@@ -1,30 +1,30 @@
 namespace EvaluationFramework.BooleanOperators
 {
-	public class Conditional<TContext> : FunctionBase<TContext, bool>
+	public class Conditional<TContext, TResult> : FunctionBase<TContext, bool>, IFunction<TContext, TResult>
 	{
 		public const string SYMBOL = " ? ";
 		public Conditional(
 			IEvaluate<TContext, bool> evaluation,
-			IEvaluate<TContext, bool> ifTrue,
-			IEvaluate<TContext, bool> ifFalse)
+			IEvaluate<TContext, TResult> ifTrue,
+			IEvaluate<TContext, TResult> ifFalse)
 			: base(SYMBOL, evaluation)
 		{
 			IfTrue = ifTrue;
 			IfFalse = ifFalse;
 		}
 
-		public IEvaluate<TContext, bool> IfTrue
+		public IEvaluate<TContext, TResult> IfTrue
 		{
 			get;
 			private set;
 		}
-		public IEvaluate<TContext, bool> IfFalse
+		public IEvaluate<TContext, TResult> IfFalse
 		{
 			get;
 			private set;
 		}
 
-		public override bool Evaluate(TContext context)
+		public new TResult Evaluate(TContext context)
 		{
 			return base.Evaluate(context)
 				? IfTrue.Evaluate(context)
