@@ -28,10 +28,16 @@ namespace EvaluationFramework
 
 		public IEvaluate<TContext, TResult> AsReduced()
 		{
-			return Reduction() ?? this;
+			var r = Reduction();
+			if (r != null && r.ToStringRepresentation() == this.ToStringRepresentation()) r = this;
+			return r ?? this;
 		}
 
-		public abstract IEvaluate<TContext, TResult> Reduction();
+		// Override this if reduction is possible.  Return null if you can't reduce.
+		public virtual IEvaluate<TContext, TResult> Reduction()
+		{
+			return null;
+		}
 	}
 
 }

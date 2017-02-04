@@ -25,7 +25,6 @@ namespace EvaluationFramework.BooleanOperators
 			return true;
 		}
 
-
 	}
 
 

@@ -19,12 +19,20 @@ namespace EvaluationFramework
 	{
 		public static IEvaluate<TContext, TResult> Reduction<TContext, TResult>(this IEvaluate<TContext, TResult> target)
 		{
+			if (target == null) throw new NullReferenceException();
 			return (target as IReducibleEvaluation<TContext, TResult>)?.Reduction();
 		}
 
 		public static IEvaluate<TContext, TResult> AsReduced<TContext, TResult>(this IEvaluate<TContext, TResult> target)
 		{
+			if (target == null) throw new NullReferenceException();
 			return (target as IReducibleEvaluation<TContext, TResult>)?.AsReduced() ?? target;
+		}
+
+		public static bool IsReducible<TContext, TResult>(this IEvaluate<TContext, TResult> target)
+		{
+			if (target == null) throw new NullReferenceException();
+			return target.AsReduced() != target;
 		}
 
 		public static IEnumerable<IEvaluate<TContext, TResult>> Flatten<TFlat, TContext, TResult>(this IEnumerable<IEvaluate<TContext, TResult>> source)
