@@ -40,14 +40,17 @@ namespace EvaluationFramework.ArithmeticOperators
 
 		public override IEvaluate<TContext, TResult> Reduction()
 		{
-			var cPow = Power as Constant<TContext,TResult>;
-			if(cPow!=null)
+			var pow = Power.AsReduced();
+			var cPow = pow as Constant<TContext, TResult>;
+			if (cPow != null)
 			{
 				dynamic p = cPow.Value;
 				if (p == 0) return new Constant<TContext, TResult>((dynamic)1);
-				if (p == 1) return Evaluation;
+				if (p == 1) return Evaluation.AsReduced();
 			}
-			return null;
+
+			var result = new Exponent<TContext, TResult, TPower>(Evaluation.AsReduced(), pow);
+			return result.ToStringRepresentation() == result.ToStringRepresentation() ? null : result;
 		}
 
 
