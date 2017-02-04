@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eater", "Problems\Eater\Eat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Problems", "Problems", "{5B3CE6AB-5185-4861-B203-074032156D9D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlgebraBlackBox", "Problems\AlgebraBlackBox\AlgebraBlackBox.csproj", "{F26B56AD-F538-4F65-8CC4-8B746DCA6A1F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackBoxFunction", "Problems\AlgebraBlackBox\BlackBoxFunction.csproj", "{F26B56AD-F538-4F65-8CC4-8B746DCA6A1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

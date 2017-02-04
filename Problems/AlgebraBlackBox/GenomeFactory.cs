@@ -3,12 +3,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using AlgebraBlackBox.Genes;
+using BlackBoxFunction.Genes;
 using Open;
 using Open.Collections;
 using Open.Threading;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
 
 	public class GenomeFactory : GeneticAlgorithmPlatform.GenomeFactoryBase<Genome>

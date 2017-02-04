@@ -14,7 +14,7 @@ using Open.Collections;
 using Open.Formatting;
 using Fitness = GeneticAlgorithmPlatform.Fitness;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
 
 	public delegate double Formula(IReadOnlyList<double> p);

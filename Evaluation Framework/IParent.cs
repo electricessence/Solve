@@ -4,11 +4,23 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EvaluationFramework
 {
-	public interface IParent<TChild>
+	public interface IParent<TDescendant>
 	{
-		IReadOnlyList<TChild> Children { get; }
+		IReadOnlyList<TDescendant> Children { get; }
+
+		IReadOnlyList<TDescendant> Descendants { get; }
+	}
+
+	public static class ParentExtensions
+	{
+		public static IEnumerable<TDescendant> GetDescendants<TDescendant>(this IParent<TDescendant> parent)
+		{
+			return parent.Children.Concat(
+				parent.Children.OfType<IParent<TDescendant>>().SelectMany(c => c.Descendants));			
+		}
 	}
 }

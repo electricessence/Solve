@@ -7,8 +7,8 @@
     <ProjectGuid>{F26B56AD-F538-4F65-8CC4-8B746DCA6A1F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AlgebraBlackBox</RootNamespace>
-    <AssemblyName>AlgebraBlackBox</AssemblyName>
+    <RootNamespace>BlackBoxFunction</RootNamespace>
+    <AssemblyName>BlackBoxFunction</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

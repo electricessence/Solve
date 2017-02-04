@@ -1,6 +1,6 @@
 using Open.Formatting;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
     static class AlphaParameters
     {

@@ -7,15 +7,17 @@ using Open.Collections;
 using Open.Threading;
 using Solve;
 using EvaluationFramework;
+using System.Linq;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
-	public sealed class Genome : GenomeBase<IGene>, ICloneable<Genome>, IReducible<Genome>
+	public sealed class Genome : ReducibleGenomeBase<IGene, Genome>
 	{
 		public Genome(IGene root) : base()
 		{
-			Root = root;
+			SetRoot(root);
 		}
+
 
 		public IGene Root
 		{
@@ -27,30 +29,46 @@ namespace AlgebraBlackBox
 		{
 			if (Root != root)
 			{
+				_hash = null;
 				Root = root;
 				return true;
 			}
 			return false;
 		}
 
-		void IReducible<Genome>.ReplaceReduced(Genome reduced)
+		string _hash;
+		public override string Hash
 		{
-			throw new NotImplementedException();
+			get
+			{
+				return _hash ?? Root.ToStringRepresentation();
+			}
 		}
 
-		protected override IGene[] GetGenes()
+
+
+		public new Genome Clone()
 		{
-			throw new NotImplementedException();
+			return new Genome(this.Root);
 		}
 
 		protected override object CloneInternal()
 		{
-			throw new NotImplementedException();
+			return this.Clone();
+		}
+
+		protected override IGene[] GetGenes()
+		{
+			var descendants = (Root as IParent<IGene>).Descendants;
+			var root = new IGene[] { Root };
+			return descendants == null ? root : root.Concat(descendants).ToArray();
 		}
 
 		protected override void OnBeforeFreeze()
 		{
-			throw new NotImplementedException();
+			if (Root == null)
+				throw new InvalidOperationException("Cannot freeze genome without a root.");
+			_hash = Root.ToStringRepresentation();
 		}
 		
 		static IParent<IGene> FindParent(IGene parent, IGene child)
@@ -72,32 +90,7 @@ namespace AlgebraBlackBox
 		{
 			return FindParent(Root,child);
 		}
-
-		public bool Replace(IGene target, IGene replacement)
-		{
-			if (target != replacement)
-			{
-
-				if (Root == target)
-				{
-					return SetRoot(replacement);
-				}
-				else
-				{
-					var parent = FindParent(target);
-					if (parent == null)
-						throw new ArgumentException("'target' not found.");
-					return parent.ReplaceChild(target, replacement);
-				}
-			}
-			return false;
-		}
-
-
-		public new Genome Clone()
-		{
-			return new Genome(Root.Clone());
-		}
+		
 
 		public double Evaluate(IReadOnlyList<double> values)
 		{
@@ -108,34 +101,6 @@ namespace AlgebraBlackBox
 		public string ToAlphaParameters(bool reduced = false)
 		{
 			return AlphaParameters.ConvertTo(reduced ? AsReduced().Hash : Hash);
-		}
-
-		Lazy<Genome> _reduced;
-
-		public bool IsReducible
-		{
-			get
-			{
-				return _reduced.Value != this;
-			}
-		}
-
-		public Genome AsReduced(bool ensureClone = false)
-		{
-
-			var r = _reduced.Value;
-			if (ensureClone)
-			{
-				r = r.Clone();
-				r.Freeze();
-			}
-			return r;
-		}
-
-		internal void ReplaceReduced(Genome reduced)
-		{
-			if (AsReduced() != reduced)
-				Interlocked.Exchange(ref _reduced, Lazy.New(() => reduced));
 		}
 
 		public override IGenome NextVariation()
@@ -167,15 +132,7 @@ namespace AlgebraBlackBox
 				return _variations;
 			}
 		}
-
-		public override string Hash
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
+		
 		internal void RegisterVariations(IEnumerable<Genome> variations)
 		{
 			_variations = variations.Memoize();
@@ -201,7 +158,9 @@ namespace AlgebraBlackBox
 			return Expansions_Array?.Value;
 		}
 
-		
-
+		protected override Genome Reduction()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

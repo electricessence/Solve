@@ -5,7 +5,7 @@ using System.Linq;
 using Open;
 using Open.Collections;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
 	public sealed class SampleCache
 	{

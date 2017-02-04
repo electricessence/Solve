@@ -2,7 +2,7 @@ using System;
 using EvaluationFramework;
 using System.Collections.Generic;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
     public interface IGene : IEvaluate<IReadOnlyList<double>,double>, IComparable<IGene>, ICloneable<IGene>
     {

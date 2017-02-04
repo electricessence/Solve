@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AlgebraBlackBox
+namespace BlackBoxFunction
 {
 	class Runner
 	{
@@ -47,8 +47,8 @@ namespace AlgebraBlackBox
 			Console.WriteLine("Starting...");
 
 			var problem = new Problem(SqrtA2B2);
-			var scheme = new PyramidPipeline<AlgebraBlackBox.Genome>(
-				new AlgebraBlackBox.GenomeFactory(),
+			var scheme = new PyramidPipeline<BlackBoxFunction.Genome>(
+				new BlackBoxFunction.GenomeFactory(),
 				50, 5, 3);
 			scheme.AddProblem(problem);
 
