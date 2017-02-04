@@ -68,7 +68,7 @@ namespace Eater
 			this.Freeze();
 		}
 
-		protected override EaterGenome Reduce()
+		protected override EaterGenome Reduction()
 		{
 			var reducedSteps = _steps.Reduce();
 			return reducedSteps == null ? null : new EaterGenome(reducedSteps);

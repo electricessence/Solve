@@ -21,7 +21,7 @@ namespace Solve
 			TThis reduced;
 			if (!IsReadOnly)
 			{
-				reduced = Reduce();
+				reduced = Reduction();
 				if (reduced == null) reduced = ensureClone ? this.Clone() : (TThis)this;
 			}
 			else
@@ -36,7 +36,7 @@ namespace Solve
 			return (TThis)CloneInternal();
 		}
 
-		protected abstract TThis Reduce();
+		protected abstract TThis Reduction();
 
 		public void ReplaceReduced(TThis reduced)
 		{
@@ -55,13 +55,13 @@ namespace Solve
 			if (Debugger.IsAttached)
 			{
 				// Validate that reduction isn't being trampled in weird ways.
-				var reduced = Reduce() ?? (TThis)this;
+				var reduced = Reduction() ?? (TThis)this;
 				LazyInitializer.EnsureInitialized(ref Reduced, () => reduced);
 				Debug.Assert(Reduced.Hash == reduced.Hash, "Existing reduction does not match actual reduction..");
 			}
 			else
 			{
-				LazyInitializer.EnsureInitialized(ref Reduced, () => Reduce() ?? (TThis)this);
+				LazyInitializer.EnsureInitialized(ref Reduced, () => Reduction() ?? (TThis)this);
 			}
 		}
 	}
