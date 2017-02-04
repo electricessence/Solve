@@ -57,6 +57,7 @@
     <Compile Include="Classes\OperationBase.cs" />
     <Compile Include="Classes\OperatorBase.cs" />
     <Compile Include="Classes\Parameter.cs" />
+    <Compile Include="Classes\ReductionExtensions.cs" />
     <Compile Include="IConstant.cs" />
     <Compile Include="IEvaluate.cs" />
     <Compile Include="IEvaluationNode.cs" />

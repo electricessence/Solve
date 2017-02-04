@@ -53,7 +53,17 @@ namespace EvaluationFramework.ArithmeticOperators
 
 	}
 
-	public class Exponent<TContext> : Exponent<TContext, double, double>
+	public class Exponent<TContext, TResult> : Exponent<TContext, TResult, TResult>
+		where TResult : struct, IComparable
+	{
+		public Exponent(
+			IEvaluate<TContext, TResult> evaluation,
+			IEvaluate<TContext, TResult> power) : base(evaluation, power)
+		{
+		}
+	}
+
+	public class Exponent<TContext> : Exponent<TContext, double>
 	{
 		public Exponent(
 			IEvaluate<TContext, double> evaluation,

@@ -1,3 +1,4 @@
+using EvaluationFramework.Classes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,39 +32,41 @@ namespace EvaluationFramework.ArithmeticOperators
 
 		public override IEvaluate<TContext, TResult> Reduction()
 		{
-			var children = new List<IEvaluate<TContext, TResult>>();
+			// Phase 1: Flatten products of products.
+			var children = ChildrenInternal.Flatten<Product<TContext, TResult>, TContext, TResult>().ToList();
 
-			// Phase 1: Flatten sums of sums.
-			foreach (var child in ChildrenInternal)
+			// Phase 2: Can we collapse?
+			switch (children.Count)
 			{
-				var r = child as IReducibleEvaluation<IEvaluate<TContext, TResult>>;
-				var c = r?.AsReduced() ?? child;
-				var p = c as Product<TContext, TResult>;
-				if (p == null)
-				{
-					children.Add(c);
-				}
-				else
-				{
-					foreach (var sc in p.ChildrenInternal)
-						children.Add(sc);
-				}
+				case 0:
+					throw new InvalidOperationException("Cannot reduce product of empty set.");
+				case 1:
+					return children[0];
 			}
 
-			// Phase 2: Combine constants.
-			var constants = children.OfType<Constant<TContext, TResult>>().ToList();
-			if (constants.Count > 1)
+			// Phase 3&4: Sum compatible exponents together.
+			foreach (var exponents in children.OfType<Exponent<TContext, TResult>>()
+				.GroupBy(g => g.Evaluation.ToStringRepresentation())
+				.Where(g => g.Count() > 1))
 			{
-				foreach (var c in constants)
-					children.Remove(c);
+				var e1 = exponents.First();
+				var power = new Sum<TContext, TResult>(exponents.Select(t => t.Power));
+				foreach (var e in exponents)
+					children.Remove(e);
 
-				children.Add(constants.Product());
+				children.Add(new Exponent<TContext, TResult>(e1.Evaluation,power.AsReduced()));
 			}
 
-			// Phase 3: Check if collapsable?
+			// Phase 5: Combine constants.
+			var constants = children.ExtractConstants();
+			if (constants.Length != 0)
+				children.Add(constants.Length == 1 ? constants[0] : constants.Product());
+
+			// Phase 6: Check if collapsable?
 			if (children.Count == 1)
 				return children[0];
 
+			// Lastly: Sort and return if different.
 			children.Sort(Compare);
 			var result = new Product<TContext, TResult>(children);
 
