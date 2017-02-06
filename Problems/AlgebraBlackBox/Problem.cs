@@ -6,13 +6,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using GeneticAlgorithmPlatform;
 using Open.Arithmetic;
 using Open.Collections;
 using Open.Formatting;
-using Fitness = GeneticAlgorithmPlatform.Fitness;
+using Solve;
 
 namespace BlackBoxFunction
 {
@@ -21,21 +19,12 @@ namespace BlackBoxFunction
 
 	///<summary>
 	/// The 'Problem' class is important for tracking fitness results and deciding how well a genome is peforming.
-	/// It's possible to have multiple 'problems' being measured at once so each Problem class has to keep a rank of the genomes.
+	/// It's possible to have multiple 'problems' being measured at once.
 	///</summary>
-	public class Problem : GeneticAlgorithmPlatform.ProblemBase<Genome>
+	public class Problem : Solve.ProblemBase<Genome>
 	{
 		public readonly SampleCache Samples;
 
-		long _testCount = 0;
-		public long TestCount
-		{
-			get
-			{
-				return _testCount;
-
-			}
-		}
 
 		public Problem(Formula actualFormula)
 		{
@@ -47,29 +36,12 @@ namespace BlackBoxFunction
 			return genome.AsReduced();
 		}
 
-		public override async Task<IFitness> ProcessTest(Genome g, long sampleId = 0, bool mergeWithGlobal = false)
+		protected override Task ProcessTest(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
 		{
-			var f = new Fitness();
-			if (sampleId == 0)
-			{
-				var global = GetOrCreateFitnessFor(g).Fitness;
-				using (await global.Lock.LockAsync())
-				{
-					await ProcessTest(g, f, -global.SampleCount, true);
-					if (mergeWithGlobal) global.Merge(f);
-				}
-			}
-			else
-			{
-				await ProcessTest(g, f, sampleId, true);
-				if (mergeWithGlobal) AddToGlobalFitness(g, f);
-			}
-
-			Interlocked.Increment(ref _testCount);
-			return f;
+			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
 		}
 
-		protected async Task ProcessTest(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
+		void ProcessTestInternal(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
 		{
 			var samples = Samples.Get(sampleId);
 			var len = 10;
@@ -88,7 +60,7 @@ namespace BlackBoxFunction
 				var s = sample.ParamValues;
 				var correctValue = sample.Correct.Value;
 				correct[i] = correctValue;
-				var result = useAsync ? await g.EvaluateAsync(s) : g.Evaluate(s);
+				var result = g.Evaluate(s);
 				// #if DEBUG
 				// 				if (gRed != g)
 				// 				{
@@ -152,7 +124,6 @@ namespace BlackBoxFunction
 		}
 
 	}
-
 
 
 }

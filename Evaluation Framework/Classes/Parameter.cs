@@ -17,6 +17,7 @@ namespace EvaluationFramework
 		{
 			if (evaluator == null)
 				throw new ArgumentNullException("evaluator");
+			ID = id;
 			_evaluator = evaluator;
 		}
 
@@ -24,10 +25,8 @@ namespace EvaluationFramework
 
 		public ushort ID
 		{
-			get
-			{
-				throw new NotImplementedException();
-			}
+			get;
+			private set;
 		}
 
 		protected override string ToStringRepresentationInternal()
@@ -62,6 +61,13 @@ namespace EvaluationFramework
 		static TResult GetParamValueFrom(IReadOnlyList<TResult> source, ushort id)
 		{
 			return source[id];
+		}
+	}
+
+	public class Parameter : Parameter<double>
+	{
+		public Parameter(ushort id) : base(id)
+		{
 		}
 	}
 }

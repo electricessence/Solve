@@ -6,7 +6,7 @@ namespace EvaluationFramework
 		: OperationBase<TContext, TResult>, IFunction<TContext, TResult>
 	{
 
-		protected FunctionBase(string symbol, IEvaluate<TContext, TResult> evaluation) : base(symbol)
+		protected FunctionBase(char symbol, string symbolString, IEvaluate<TContext, TResult> evaluation) : base(symbol, symbolString)
 		{
 			if (evaluation == null)
 				throw new ArgumentNullException("contents");

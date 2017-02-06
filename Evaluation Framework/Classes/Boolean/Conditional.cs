@@ -1,13 +1,15 @@
+using System.Collections.Generic;
+
 namespace EvaluationFramework.BooleanOperators
 {
 	public class Conditional<TContext, TResult> : FunctionBase<TContext, bool>, IFunction<TContext, TResult>
 	{
-		public const string SYMBOL = " ? ";
+
 		public Conditional(
 			IEvaluate<TContext, bool> evaluation,
 			IEvaluate<TContext, TResult> ifTrue,
 			IEvaluate<TContext, TResult> ifFalse)
-			: base(SYMBOL, evaluation)
+			: base(Conditional.SYMBOL, Conditional.SEPARATOR, evaluation)
 		{
 			IfTrue = ifTrue;
 			IfFalse = ifFalse;
@@ -49,6 +51,12 @@ namespace EvaluationFramework.BooleanOperators
 				IfFalse.Evaluate(context));
 		}
 
+	}
+
+	public static class Conditional
+	{
+		public const char SYMBOL = '?';
+		public const string SEPARATOR = " ? ";
 	}
 
 }

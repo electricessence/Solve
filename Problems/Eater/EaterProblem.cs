@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Open.Collections;
 using Solve;
-using System.Diagnostics;
 using Open.Arithmetic;
 using System.Collections.Concurrent;
 
@@ -119,7 +118,6 @@ namespace Eater
 		}
 
 	}
-
 
 
 }

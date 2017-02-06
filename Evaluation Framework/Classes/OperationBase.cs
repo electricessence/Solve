@@ -6,18 +6,21 @@ namespace EvaluationFramework
 		: EvaluationBase<TContext, TResult>, IFunction<TContext, TResult>, ISymbolized, IReducibleEvaluation<TContext, TResult>
 	{
 
-		protected OperationBase(string symbol) : base()
+		protected OperationBase(char symbol, string symbolString) : base()
 		{
-			if (symbol == null)
-				throw new ArgumentNullException("symbol");
+			if (symbolString == null)
+				throw new ArgumentNullException("symbolString");
+
 			Symbol = symbol;
+			SymbolString = symbolString;
 		}
 
-		public string Symbol { get; private set; }
+		public char Symbol { get; private set; }
+		public string SymbolString { get; private set; }
 
 		protected virtual string ToStringInternal(object contents)
 		{
-			return string.Format("{0}({1})", Symbol, contents);
+			return string.Format("{0}({1})", SymbolString, contents);
 		}
 		
 		public override string ToString(TContext context)

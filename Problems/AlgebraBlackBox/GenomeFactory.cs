@@ -3,20 +3,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using BlackBoxFunction.Genes;
 using Open;
 using Open.Collections;
 using Open.Threading;
+using EvaluationFramework;
+using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
 
 namespace BlackBoxFunction
 {
 
-	public class GenomeFactory : GeneticAlgorithmPlatform.GenomeFactoryBase<Genome>
+	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
 		ConcurrentHashSet<int> ParamsOnlyAttempted = new ConcurrentHashSet<int>();
-		protected Genome GenerateParamOnly(int id)
+		protected Genome GenerateParamOnly(ushort id)
 		{
-			return Registration(new Genome(new ParameterGene(id)));
+			return Registration(new Genome(new Parameter(id)));
 		}
 
 		ConcurrentDictionary<int, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<int, IEnumerator<Genome>>();

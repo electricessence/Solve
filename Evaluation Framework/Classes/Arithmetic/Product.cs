@@ -8,9 +8,8 @@ namespace EvaluationFramework.ArithmeticOperators
 	public class Product<TContext, TResult> : OperatorBase<IEvaluate<TContext, TResult>, TContext, TResult>
 		where TResult : struct, IComparable
 	{
-		public const string SYMBOL = " + ";
 		public Product(IEnumerable<IEvaluate<TContext, TResult>> children = null)
-			: base(SYMBOL, children)
+			: base(Product.SYMBOL, Product.SEPARATOR, children)
 		{
 
 		}
@@ -92,8 +91,15 @@ namespace EvaluationFramework.ArithmeticOperators
 		}
 	}
 
-	public static class Product
+	public class Product : Product<IReadOnlyList<double>, double>
 	{
+		public const char SYMBOL = '*';
+		public const string SEPARATOR = " * ";
+
+		public Product(IEnumerable<IEvaluate<IReadOnlyList<double>, double>> children = null) : base(children)
+		{
+		}
+
 		public static Product<TContext, TResult> Of<TContext, TResult>(params IEvaluate<TContext, TResult>[] evaluations)
 		where TResult : struct, IComparable
 		{

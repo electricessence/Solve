@@ -1,17 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace EvaluationFramework
 {
-    public abstract class OperatorBase<TChild, TContext, TResult>
+	public abstract class OperatorBase<TChild, TContext, TResult>
 		: OperationBase<TContext, TResult>, IOperator<TChild, TContext, TResult>
 		where TChild : IEvaluate<TContext, TResult>
 		where TResult : IComparable
 	{
 
-		protected OperatorBase(string symbol, IEnumerable<TChild> children = null) : base(symbol)
+		protected OperatorBase(char symbol, string separator, IEnumerable<TChild> children = null) : base(symbol, separator)
 		{
 			ChildrenInternal = children == null ? new List<TChild>() : new List<TChild>(children);
 			ReorderChildren();
@@ -24,6 +26,15 @@ namespace EvaluationFramework
 		{
 			get;
 			private set;
+		}
+
+		IReadOnlyList<TChild> _descendants;
+		public IReadOnlyList<TChild> Descendants
+		{
+			get
+			{
+				return LazyInitializer.EnsureInitialized(ref _descendants, () => this.GetDescendants().ToList());
+			}
 		}
 
 		protected virtual void ReorderChildren()
@@ -39,7 +50,7 @@ namespace EvaluationFramework
 			int index = -1;
 			foreach (var o in collection)
 			{
-				if (++index != 0) result.Append(Symbol);
+				if (++index != 0) result.Append(SymbolString);
 				result.Append(o);
 			}
 			result.Append(')');
@@ -68,7 +79,7 @@ namespace EvaluationFramework
 		protected static int Compare(TChild a, TChild b)
 		{
 
-			if (a is Constant<TContext,TResult> && !(b is Constant<TContext, TResult>))
+			if (a is Constant<TContext, TResult> && !(b is Constant<TContext, TResult>))
 				return 1;
 
 			if (b is Constant<TContext, TResult> && !(a is Constant<TContext, TResult>))

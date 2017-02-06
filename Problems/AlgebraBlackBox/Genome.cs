@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using Open.Collections;
-using Open.Threading;
 using Solve;
 using EvaluationFramework;
 using System.Linq;
+using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
 
 namespace BlackBoxFunction
 {
@@ -44,8 +42,6 @@ namespace BlackBoxFunction
 				return _hash ?? Root.ToStringRepresentation();
 			}
 		}
-
-
 
 		public new Genome Clone()
 		{
@@ -103,7 +99,7 @@ namespace BlackBoxFunction
 			return AlphaParameters.ConvertTo(reduced ? AsReduced().Hash : Hash);
 		}
 
-		public override IGenome NextVariation()
+		public IGenome NextVariation()
 		{
 			var source = _variations;
 			if (source == null) return null;
@@ -114,7 +110,7 @@ namespace BlackBoxFunction
 		}
 
 		IEnumerator<Genome> _mutationEnumerator;
-		public override IGenome NextMutation()
+		public IGenome NextMutation()
 		{
 			var source = _mutationEnumerator;
 			if (source == null) return null;
@@ -125,7 +121,7 @@ namespace BlackBoxFunction
 
 		IEnumerator<Genome> _variationEnumerator;
 		LazyList<Genome> _variations;
-		public override IReadOnlyList<IGenome> Variations
+		public IReadOnlyList<IGenome> Variations
 		{
 			get
 			{

@@ -2,6 +2,7 @@ namespace EvaluationFramework
 {
 	public interface ISymbolized
 	{
-		string Symbol { get; }
+		char Symbol { get; }
+		string SymbolString { get; }
 	}
 }

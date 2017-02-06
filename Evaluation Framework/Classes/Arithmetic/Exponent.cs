@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace EvaluationFramework.ArithmeticOperators
 {
@@ -11,11 +12,10 @@ namespace EvaluationFramework.ArithmeticOperators
 		where TResult : struct, IComparable
 		where TPower : struct, IComparable
 	{
-		public const string SYMBOL = "^";
 		public Exponent(
 			IEvaluate<TContext, TResult> evaluation,
 			IEvaluate<TContext, TPower> power)
-			: base(SYMBOL, evaluation)
+			: base(Exponent.SYMBOL, Exponent.SEPARATOR, evaluation)
 		{
 			Power = power;
 		}
@@ -38,6 +38,11 @@ namespace EvaluationFramework.ArithmeticOperators
 			return (TResult)(dynamic)Math.Pow(evaluation, power);
 		}
 
+		protected override string ToStringRepresentationInternal()
+		{
+			return ToStringInternal(Evaluation.ToStringRepresentation(), Power.ToStringRepresentation());
+		}
+
 		public override IEvaluate<TContext, TResult> Reduction()
 		{
 			var pow = Power.AsReduced();
@@ -53,6 +58,10 @@ namespace EvaluationFramework.ArithmeticOperators
 			return result.ToStringRepresentation() == result.ToStringRepresentation() ? null : result;
 		}
 
+		protected string ToStringInternal(object contents, object power)
+		{
+			return string.Format("({0}^{1})", contents, power);
+		}
 
 	}
 
@@ -71,6 +80,16 @@ namespace EvaluationFramework.ArithmeticOperators
 		public Exponent(
 			IEvaluate<TContext, double> evaluation,
 			IEvaluate<TContext, double> power) : base(evaluation, power)
+		{
+		}
+	}
+
+	public class Exponent : Exponent<IReadOnlyList<double>,double>
+	{
+		public const char SYMBOL = '^';
+		public const string SEPARATOR = "^";
+
+		public Exponent(IEvaluate<IReadOnlyList<double>, double> evaluation, IEvaluate<IReadOnlyList<double>, double> power) : base(evaluation, power)
 		{
 		}
 	}

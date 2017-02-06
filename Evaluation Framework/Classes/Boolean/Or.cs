@@ -5,9 +5,8 @@ namespace EvaluationFramework.BooleanOperators
 {
 	public class Or<TContext> : OperatorBase<IEvaluate<TContext, bool>, TContext, bool>
 	{
-		public const string SYMBOL = " | ";
 		public Or(IEnumerable<IEvaluate<TContext, bool>> children = null)
-			: base(SYMBOL, children)
+			: base(Or.SYMBOL, Or.SEPARATOR, children)
 		{
 
 		}
@@ -28,8 +27,11 @@ namespace EvaluationFramework.BooleanOperators
 
 	}
 
-	public static class Or
+	public class Or : Or<IReadOnlyList<bool>>
 	{
+		public const char SYMBOL = '|';
+		public const string SEPARATOR = " | ";
+
 		public static Or<TContext> Using<TContext>(IEnumerable<IEvaluate<TContext, bool>> evaluations)
 		{
 			return new Or<TContext>(evaluations);

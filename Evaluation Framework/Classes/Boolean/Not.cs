@@ -2,9 +2,8 @@ namespace EvaluationFramework.BooleanOperators
 {
 	public class Not<TContext> : FunctionBase<TContext, bool>
 	{
-		public const string SYMBOL = "!";
 		public Not(IEvaluate<TContext, bool> contents)
-			: base(SYMBOL, contents)
+			: base(Not.SYMBOL, Not.SYMBOL_STRING, contents)
 		{
 
 		}
@@ -15,8 +14,15 @@ namespace EvaluationFramework.BooleanOperators
 		}
 	}
 
-	public static class Not
+	public class Not : Not<bool>
 	{
+		public const char SYMBOL = '!';
+		public const string SYMBOL_STRING = "!";
+
+		public Not(IEvaluate<bool, bool> contents) : base(contents)
+		{
+		}
+
 		public static Not<TContext> Using<TContext>(IEvaluate<TContext, bool> evaluation)
 		{
 			return new Not<TContext>(evaluation);

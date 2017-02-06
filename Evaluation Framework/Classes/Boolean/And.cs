@@ -5,9 +5,8 @@ namespace EvaluationFramework.BooleanOperators
 {
 	public class And<TContext> : OperatorBase<IEvaluate<TContext, bool>, TContext, bool>
 	{
-		public const string SYMBOL = " & ";
 		public And(IEnumerable<IEvaluate<TContext, bool>> children = null)
-			: base(SYMBOL, children)
+			: base(And.SYMBOL, And.SEPARATOR, children)
 		{
 
 		}
@@ -28,8 +27,11 @@ namespace EvaluationFramework.BooleanOperators
 	}
 
 
-	public static class And
+	public class And : And<IReadOnlyList<bool>>
 	{
+		public const char SYMBOL = '&';
+		public const string SEPARATOR = " & ";
+
 		public static And<TContext> Using<TContext>(IEnumerable<IEvaluate<TContext, bool>> evaluations)
 		{
 			return new And<TContext>(evaluations);

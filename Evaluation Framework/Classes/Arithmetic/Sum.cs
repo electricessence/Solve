@@ -7,9 +7,8 @@ namespace EvaluationFramework.ArithmeticOperators
 	public class Sum<TContext, TResult> : OperatorBase<IEvaluate<TContext, TResult>, TContext, TResult>
 		where TResult : struct, IComparable
 	{
-		public const string SYMBOL = " + ";
 		public Sum(IEnumerable<IEvaluate<TContext, TResult>> children = null)
-			: base(SYMBOL, children)
+			: base(Sum.SYMBOL, Sum.SEPARATOR, children)
 		{
 
 		}
@@ -94,8 +93,17 @@ namespace EvaluationFramework.ArithmeticOperators
 
 	}
 
-	public static class Sum
+	public class Sum : Sum<IReadOnlyList<double>, double>
 	{
+		public const char SYMBOL = '+';
+		public const string SEPARATOR = " + ";
+
+		public Sum(IEnumerable<IEvaluate<IReadOnlyList<double>, double>> children = null)
+			: base(children)
+		{
+
+		}
+
 		public static Sum<TContext, TResult> Of<TContext, TResult>(params IEvaluate<TContext, TResult>[] evaluations)
 		where TResult : struct, IComparable
 		{

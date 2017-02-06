@@ -5,9 +5,9 @@ namespace EvaluationFramework.BooleanOperators
 {
 	public abstract class CountingBase<TContext> : OperatorBase<IEvaluate<TContext, bool>, TContext, bool>
 	{
-		public const string SYMBOL = ", ";
+
 		protected CountingBase(string prefix, int count, IEnumerable<IEvaluate<TContext, bool>> children = null)
-			: base(SYMBOL, children)
+			: base(CountingBase.SYMBOL, CountingBase.SEPARATOR, children)
 		{
 			if (prefix == null)
 				throw new ArgumentNullException("prefix");
@@ -32,5 +32,10 @@ namespace EvaluationFramework.BooleanOperators
 
 	}
 
+	public static class CountingBase
+	{
+		public const char SYMBOL = ',';
+		public const string SEPARATOR = ", ";
+	}
 
 }
