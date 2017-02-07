@@ -8,43 +8,80 @@ using Open.Collections;
 using Open.Threading;
 using EvaluationFramework;
 using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
+using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
+using IFunction = EvaluationFramework.IFunction<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
+using EvaluationFramework.ArithmeticOperators;
 
 namespace BlackBoxFunction
 {
 
 	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
+
+		ConcurrentDictionary<ushort, Parameter> Parameters = new ConcurrentDictionary<ushort, Parameter>();
+		protected Parameter GetParameter(ushort id)
+		{
+			return Parameters.GetOrAdd(id, k => GetParameter(k));
+		}
+
 		ConcurrentHashSet<int> ParamsOnlyAttempted = new ConcurrentHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
 		{
-			return Registration(new Genome(new Parameter(id)));
+			return Registration(new Genome(GetParameter(id)));
 		}
 
-		ConcurrentDictionary<int, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<int, IEnumerator<Genome>>();
-		protected IEnumerable<Genome> GenerateOperated(int paramCount = 2)
+		IEnumerable<ushort> UShortRange(ushort start, ushort max)
+		{
+			ushort s = start;
+			while(s<max)
+			{
+				yield return s;
+				s++;
+			}
+		}
+
+		ConcurrentDictionary<ushort, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
+		protected IEnumerable<Genome> GenerateOperated(ushort paramCount = 2)
 		{
 			if (paramCount < 2)
 				throw new ArgumentOutOfRangeException("paramCount", paramCount, "Must have at least 2 parameter count.");
 
-			foreach (var combination in Enumerable.Range(0, paramCount).Combinations(paramCount))
+			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{
-				foreach (var op in Operators.Available.Operators.Select(o => Operators.New(o)))
+				foreach (var op in Operators.Available.Operators)
 				{
+					var children = new List<IGene>();
 					foreach (var p in combination)
-						op.Add(new ParameterGene(p));
-					yield return Registration(new Genome(op));
+						children.Add(GetParameter(p));
+
+					switch (op)
+					{
+						case Sum.SYMBOL:
+							yield return Registration(new Genome(new Sum(children)));
+							break;
+						case Product.SYMBOL:
+							yield return Registration(new Genome(new Product(children)));
+							break;
+					}
 				}
 			}
 		}
 
-		ConcurrentDictionary<int, IEnumerator<Genome>> FunctionedCatalog = new ConcurrentDictionary<int, IEnumerator<Genome>>();
-		protected IEnumerable<Genome> GenerateFunctioned(int id)
+		ConcurrentDictionary<ushort, IEnumerator<Genome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
+		protected IEnumerable<Genome> GenerateFunctioned(ushort id)
 		{
-			foreach (var op in Operators.Available.Functions.Select(o => Operators.New(o)))
+			var p = GetParameter(id);
+			foreach (var op in Operators.Available.Operators)
 			{
-				op.Add(new ParameterGene(id));
-				yield return Registration(new Genome(op));
+				switch (op)
+				{
+					case Exponent.SYMBOL:
+						yield return Registration(new Genome(new Exponent(p, -1)));
+						yield return Registration(new Genome(new Exponent(p, 1/2)));
+						break;
+				}
 			}
+
 		}
 
 
@@ -69,7 +106,7 @@ namespace BlackBoxFunction
 
 					// Establish a maximum.
 					var tries = 10;
-					int paramCount = 0;
+					ushort paramCount = 0;
 
 					do
 					{
@@ -86,7 +123,9 @@ namespace BlackBoxFunction
 						paramCount += 1; // Operators need at least 2 params to start.
 
 						// Then try an operator based version.
-						var operated = OperatedCatalog.GetOrAdd(paramCount + 1, pc => GenerateOperated(pc).GetEnumerator());
+						ushort pcOne;
+						pcOne = paramCount;
+						var operated = OperatedCatalog.GetOrAdd(++pcOne, pc => GenerateOperated(pc).GetEnumerator());
 						if (operated.MoveNext())
 						{
 							genome = operated.Current;
@@ -96,7 +135,8 @@ namespace BlackBoxFunction
 								return genome;
 						}
 
-						var functioned = FunctionedCatalog.GetOrAdd(paramCount - 1, pc => GenerateFunctioned(pc).GetEnumerator());
+						pcOne = paramCount;
+						var functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
 						if (functioned.MoveNext())
 						{
 							genome = functioned.Current;
@@ -123,26 +163,6 @@ namespace BlackBoxFunction
 					while (--tries != 0);
 				}
 			}
-
-			return genome;
-
-		}
-		public override Genome GenerateOne(Genome[] source = null)
-		{
-			Genome genome;
-			using (TimeoutHandler.New(5000, ms =>
-			{
-				Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms);
-			}))
-			{
-				genome = GenerateOneInternal(source);
-			}
-
-			genome = Registration(genome);
-
-			Debug.Assert(genome != null, "Converged? No solutions? Saturated?");
-			// if(genome==null)
-			// 	throw "Failed... Converged? No solutions? Saturated?";
 
 			return genome;
 
@@ -184,10 +204,10 @@ namespace BlackBoxFunction
 
 			public static Genome AddConstant(Genome source, int geneIndex)
 			{
-				var gene = source.Genes[geneIndex] as SumGene;
+				var gene = source.Genes[geneIndex] as Sum;
 				// Basically, as a helper, if we find a sum gene that doesn't have any constants, then ok, add '1'.
-				return gene != null && !gene.Children.OfType<ConstantGene>().Any()
-					? ApplyClone(source, geneIndex, g => ((SumGene)g).Add(new ConstantGene(1)))
+				return gene != null && !gene.Children.OfType<Constant>().Any()
+					? ApplyClone(source, geneIndex, g => ((Sum)g).Add(new Constant(1)))
 					: null;
 			}
 
@@ -217,7 +237,7 @@ namespace BlackBoxFunction
 
 				// Search for potential futility...
 				// Basically, if there is no dynamic genes left after reduction then it's not worth removing.
-				if (/*parent != source.Root && */!parent.Where(g => g != gene && !(g is ConstantGene)).Any())
+				if (/*parent != source.Root && */!parent.Where(g => g != gene && !(g is Constant)).Any())
 				{
 					return CheckRemovalValidity(source, parent);
 				}
@@ -340,20 +360,20 @@ namespace BlackBoxFunction
 				});
 			}
 
-			public static Genome MutateParameter(Genome source, ParameterGene gene)
+			public static Genome MutateParameter(Genome source, Parameter gene)
 			{
-				var inputParamCount = source.Genes.OfType<ParameterGene>().GroupBy(p => p.ToString()).Count();
+				var inputParamCount = source.Genes.OfType<Parameter>().GroupBy(p => p.ToString()).Count();
 				return ApplyClone(source, gene, (g, newGenome) =>
 				{
-					var parameter = (ParameterGene)g;
+					var parameter = (Parameter)g;
 					var nextParameter = RandomUtilities.NextRandomIntegerExcluding(inputParamCount + 1, parameter.ID);
-					newGenome.Replace(g, new ParameterGene(nextParameter, parameter.Modifier));
+					newGenome.Replace(g, GetParameterGene(nextParameter, parameter.Modifier));
 				});
 			}
 
-			public static Genome ChangeOperation(Genome source, OperatorGeneBase gene)
+			public static Genome ChangeOperation(Genome source, IOperator gene)
 			{
-				bool isFn = gene is FunctionGene;
+				bool isFn = gene is IFunction;
 				if (isFn)
 				{
 					// Functions with no other options?
@@ -369,8 +389,8 @@ namespace BlackBoxFunction
 
 				return ApplyClone(source, gene, (g, newGenome) =>
 				{
-					var og = (OperatorGeneBase)g;
-					OperatorGeneBase replacement = isFn
+					var og = (IOperator)g;
+					IOperator replacement = isFn
 						? Operators.GetRandomFunctionGene(og.Operator)
 						: Operators.GetRandomOperationGene(og.Operator);
 					replacement.AddThese(og.Children);
@@ -379,9 +399,9 @@ namespace BlackBoxFunction
 				});
 			}
 
-			public static Genome AddParameter(Genome source, OperatorGeneBase gene)
+			public static Genome AddParameter(Genome source, IOperator gene)
 			{
-				bool isFn = gene is FunctionGene;
+				bool isFn = gene is IFunction;
 				if (isFn)
 				{
 					// Functions with no other options?
@@ -389,23 +409,23 @@ namespace BlackBoxFunction
 						return null;
 				}
 
-				var inputParamCount = source.Genes.OfType<ParameterGene>().GroupBy(p => p.ToString()).Count();
+				var inputParamCount = source.Genes.OfType<Parameter>().GroupBy(p => p.ToString()).Count();
 				return ApplyClone(source, gene, (g, newGenome) =>
 				{
-					var og = (OperatorGeneBase)g;
-					og.Add(new ParameterGene(RandomUtilities.Random.Next(inputParamCount + 1)));
+					var og = (IOperator)g;
+					og.Add(GetParameterGene(RandomUtilities.Random.Next(inputParamCount + 1)));
 				});
 			}
 
-			public static Genome BranchOperation(Genome source, OperatorGeneBase gene)
+			public static Genome BranchOperation(Genome source, IOperator gene)
 			{
-				var inputParamCount = source.Genes.OfType<ParameterGene>().GroupBy(p => p.ToString()).Count();
+				var inputParamCount = source.Genes.OfType<Parameter>().GroupBy(p => p.ToString()).Count();
 				return ApplyClone(source, gene, (g, newGenome) =>
 				{
-					var n = new ParameterGene(RandomUtilities.Random.Next(inputParamCount));
+					var n = GetParameterGene(RandomUtilities.Random.Next(inputParamCount));
 					var newOp = Operators.GetRandomOperationGene();
 
-					if (gene is FunctionGene || RandomUtilities.Random.Next(4) == 0)
+					if (gene is IFunction || RandomUtilities.Random.Next(4) == 0)
 					{
 						var index = RandomUtilities.Random.Next(2);
 						if (index == 1)
@@ -424,9 +444,9 @@ namespace BlackBoxFunction
 					{
 						newOp.Add(n);
 						// Useless to divide a param by itself, avoid...
-						newOp.Add(new ParameterGene(RandomUtilities.Random.Next(inputParamCount)));
+						newOp.Add(GetParameterGene(RandomUtilities.Random.Next(inputParamCount)));
 
-						((OperatorGeneBase)g).Add(newOp);
+						((IOperator)g).Add(newOp);
 					}
 
 				});
@@ -467,7 +487,7 @@ namespace BlackBoxFunction
 				paramRemoved = paramRemoved.Clone();
 				var root = paramRemoved.Root;
 				var paramGroups = paramRemoved.Genes
-					.OfType<ParameterGene>()
+					.OfType<Parameter>()
 					.Where(g => g != root)
 					.GroupBy(g => g.ID)
 					.OrderByDescending(g => g.Key)
@@ -568,7 +588,7 @@ namespace BlackBoxFunction
 			while (genes.Any())
 			{
 				var gene = genes.RandomSelectOne();
-				if (gene is ConstantGene)
+				if (gene is Constant)
 				{
 					switch (RandomUtilities.Random.Next(4))
 					{
@@ -584,7 +604,7 @@ namespace BlackBoxFunction
 					}
 
 				}
-				else if (gene is ParameterGene)
+				else if (gene is Parameter)
 				{
 					var options = Enumerable.Range(0, 5).ToList();
 					while (options.Any())
@@ -598,7 +618,7 @@ namespace BlackBoxFunction
 							// Simply change parameters
 							case 1:
 								return MutationCatalog
-									.MutateParameter(target, (ParameterGene)gene);
+									.MutateParameter(target, (Parameter)gene);
 
 							// Apply a function
 							case 2:
@@ -631,7 +651,7 @@ namespace BlackBoxFunction
 
 
 				}
-				else if (gene is OperatorGeneBase)
+				else if (gene is IOperator)
 				{
 					var options = Enumerable.Range(0, 8).ToList();
 					while (options.Any())
@@ -651,13 +671,13 @@ namespace BlackBoxFunction
 
 							case 2:
 								ng = MutationCatalog
-									.ChangeOperation(target, (OperatorGeneBase)gene);
+									.ChangeOperation(target, (IOperator)gene);
 								break;
 
 							// Apply a function
 							case 3:
 								// Reduce the pollution of functions...
-								if (RandomUtilities.Random.Next(0, gene is FunctionGene ? 4 : 2) == 0)
+								if (RandomUtilities.Random.Next(0, gene is IFunction ? 4 : 2) == 0)
 								{
 									var f = Operators.GetRandomFunction();
 									// Function of function? Reduce probability even further. Coin toss.
@@ -674,12 +694,12 @@ namespace BlackBoxFunction
 
 							case 5:
 								ng = MutationCatalog
-									.AddParameter(target, (OperatorGeneBase)gene);
+									.AddParameter(target, (IOperator)gene);
 								break;
 
 							case 6:
 								ng = MutationCatalog
-									.BranchOperation(target, (OperatorGeneBase)gene);
+									.BranchOperation(target, (IOperator)gene);
 								break;
 
 							case 7:

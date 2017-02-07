@@ -22,30 +22,7 @@ namespace BlackBoxFunction
 			public static readonly IReadOnlyList<char> Operators = (new List<char> { ADD, MULTIPLY }).AsReadOnly();
 			public static readonly IReadOnlyList<char> Functions = (new List<char> { EXPONENT }).AsReadOnly();
 		}
-
-		public static IOperator New(char op, IEnumerable<IEvaluate<IReadOnlyList<double>, double>> children, double modifier = 1)
-		{
-
-			switch (op)
-			{
-
-				case ADD:
-					return new Sum(children);
-
-				case MULTIPLY:
-					return new Product(children);
-
-				case EXPONENT:
-					return new Exponent(multiple);
-					
-			}
-
-			throw new ArgumentException("Invalid operator symbol.", "op");
-
-		}
-
-
-
+		
 
 		public static char GetRandom(IEnumerable<char> excluded = null)
 		{
@@ -71,21 +48,7 @@ namespace BlackBoxFunction
 			var ao = Available.Functions.Where(o => o != excluded).ToArray();
 			return ao.RandomSelectOne();
 		}
-
-		public static IOperator GetRandomOperationGene(IEnumerable<char> excluded = null)
-		{
-			return New(GetRandom(excluded));
-		}
-
-		public static IOperator GetRandomOperationGene(char excluded)
-		{
-			return New(GetRandom(excluded));
-		}
-
-		public static IOperator GetRandomFunctionGene(char excluded)
-		{
-			return New(GetRandomFunction(excluded));
-		}
+		
 
 
 	}

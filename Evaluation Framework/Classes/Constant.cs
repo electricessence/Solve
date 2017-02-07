@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 namespace EvaluationFramework
 {
-	public sealed class Constant<TContext, TResult>
+	public class Constant<TContext, TResult>
 		: EvaluationBase<TContext, TResult>, IConstant<TContext, TResult>, ICloneable
 		where TResult : IComparable
 	{
@@ -60,6 +61,13 @@ namespace EvaluationFramework
 			return new Constant<TContext, TResult>(value);
 		}
 
+	}
+
+	public sealed class Constant : Constant<IReadOnlyList<double>, double>
+	{
+		public Constant(double value) : base(value)
+		{
+		}
 	}
 
 }

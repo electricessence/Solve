@@ -92,6 +92,10 @@ namespace EvaluationFramework.ArithmeticOperators
 		public Exponent(IEvaluate<IReadOnlyList<double>, double> evaluation, IEvaluate<IReadOnlyList<double>, double> power) : base(evaluation, power)
 		{
 		}
+
+		public Exponent(IEvaluate<IReadOnlyList<double>, double> evaluation, double power) : base(evaluation, new Constant<IReadOnlyList<double>, double>(power))
+		{
+		}
 	}
 
 	// Can handle better precision operations that are only positive integers.
