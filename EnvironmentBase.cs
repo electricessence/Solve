@@ -20,7 +20,15 @@ namespace Solve
 		protected const ushort MIN_POOL_SIZE = 2;
 		public readonly ushort PoolSize;
 
-		readonly protected ConcurrentList<IProblem<TGenome>> Problems = new ConcurrentList<IProblem<TGenome>>();
+		readonly protected ConcurrentList<IProblem<TGenome>> ProblemsInternal = new ConcurrentList<IProblem<TGenome>>();
+
+		public IProblem<TGenome>[] Problems
+		{
+			get
+			{
+				return ProblemsInternal.ToArrayDirect();
+			}
+		}
 
 		protected EnvironmentBase(
 			IGenomeFactory<TGenome> genomeFactory,
@@ -38,7 +46,7 @@ namespace Solve
 		public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
 			foreach (var problem in problems)
-				Problems.Add(problem);
+				ProblemsInternal.Add(problem);
 		}
 
 		protected abstract Task StartInternal();
@@ -46,7 +54,7 @@ namespace Solve
 		public Task Start(params IProblem<TGenome>[] problems)
 		{
 			AddProblems(problems);
-			if (!Problems.HasAny())
+			if (!ProblemsInternal.HasAny())
 				throw new InvalidOperationException("Cannot start without any registered 'Problems'");
 			return StartInternal();
 		}

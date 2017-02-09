@@ -7,9 +7,9 @@ using System;
 
 namespace EvaluationFramework
 {
-	public interface IOperator<TChild, in TContext, out TResult>
-		: IFunction<TContext, TResult>, IEvaluationNode<TChild, TContext, TResult>, ISymbolized
-		where TChild : IEvaluate<TContext, TResult>
+	public interface IOperator<out TChild, out TResult>
+		: IFunction<TResult>, IParent<TChild>
+		where TChild : IEvaluate
 		where TResult : IComparable
 	{ 
 

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace EvaluationFramework
 {
-	public class Constant<TContext, TResult>
-		: EvaluationBase<TContext, TResult>, IConstant<TContext, TResult>, ICloneable
+	public class Constant<TResult>
+		: EvaluationBase<TResult>, IConstant<TResult>, ICloneable
 		where TResult : IComparable
 	{
 
@@ -24,9 +24,9 @@ namespace EvaluationFramework
 			return string.Empty + Value;
 		}
 
-		public Constant<TContext, TResult> Clone()
+		public Constant<TResult> Clone()
 		{
-			return new Constant<TContext, TResult>(Value);
+			return new Constant<TResult>(Value);
 		}
 
 
@@ -35,35 +35,35 @@ namespace EvaluationFramework
 			return this.Clone();
 		}
 
-		public override TResult Evaluate(TContext context)
+		protected override TResult EvaluateInternal(object context)
 		{
 			return Value;
 		}
 
-		public override string ToString(TContext context)
+		protected override string ToStringInternal(object context)
 		{
 			return ToStringRepresentation();
 		}
 
-		public static Constant<TContext, TResult> operator +(Constant<TContext, TResult> a, Constant<TContext, TResult> b)
+		public static Constant<TResult> operator +(Constant<TResult> a, Constant<TResult> b)
 		{
 			dynamic value = 0;
 			value += a.Value;
 			value += b.Value;
-			return new Constant<TContext, TResult>(value);
+			return new Constant<TResult>(value);
 		}
 
-		public static Constant<TContext, TResult> operator *(Constant<TContext, TResult> a, Constant<TContext, TResult> b)
+		public static Constant<TResult> operator *(Constant<TResult> a, Constant<TResult> b)
 		{
 			dynamic value = 1;
 			value *= a.Value;
 			value *= b.Value;
-			return new Constant<TContext, TResult>(value);
+			return new Constant<TResult>(value);
 		}
 
 	}
 
-	public sealed class Constant : Constant<IReadOnlyList<double>, double>
+	public sealed class Constant : Constant<double>
 	{
 		public Constant(double value) : base(value)
 		{

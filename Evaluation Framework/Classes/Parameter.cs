@@ -8,12 +8,12 @@ using System.Collections.Generic;
 
 namespace EvaluationFramework
 {
-	public class Parameter<TContext, TResult>
-		: EvaluationBase<TContext, TResult>, IParameter<TContext, TResult>
+	public class Parameter<TResult>
+		: EvaluationBase<TResult>, IParameter<TResult>
 		where TResult : IComparable
 	{
 
-		public Parameter(ushort id, Func<TContext, ushort, TResult> evaluator) : base()
+		public Parameter(ushort id, Func<object, ushort, TResult> evaluator) : base()
 		{
 			if (evaluator == null)
 				throw new ArgumentNullException("evaluator");
@@ -21,7 +21,7 @@ namespace EvaluationFramework
 			_evaluator = evaluator;
 		}
 
-		Func<TContext, ushort, TResult> _evaluator;
+		Func<object, ushort, TResult> _evaluator;
 
 		public ushort ID
 		{
@@ -34,40 +34,31 @@ namespace EvaluationFramework
 			return "{" + ID + "}";
 		}
 
-		public Parameter<TContext, TResult> Clone()
-		{
-			return new Parameter<TContext, TResult>(ID, _evaluator);
-		}
-
-		public override TResult Evaluate(TContext context)
+		protected override TResult EvaluateInternal(object context)
 		{
 			return _evaluator(context, ID);
 		}
 
-		public override string ToString(TContext context)
+		protected override string ToStringInternal(object context)
 		{
 			return string.Empty + Evaluate(context);
-		}
-
-	}
-
-	public class Parameter<TResult> : Parameter<IReadOnlyList<TResult>, TResult>
-		where TResult : IComparable
-	{
-		public Parameter(ushort id) : base(id, GetParamValueFrom)
-		{
-		}
-
-		static TResult GetParamValueFrom(IReadOnlyList<TResult> source, ushort id)
-		{
-			return source[id];
 		}
 	}
 
 	public class Parameter : Parameter<double>
 	{
-		public Parameter(ushort id) : base(id)
+		public Parameter(ushort id) : base(id, GetParamValueFrom)
 		{
 		}
+
+		static double GetParamValueFrom(object source, ushort id)
+		{
+			var list = source as IReadOnlyList<double>;
+			if(list!=null) return list[id];
+			var array = source as double[];
+			if (array != null) return list[id];
+			throw new ArgumentException("Unknown context type.");
+		}
 	}
+	
 }

@@ -4,16 +4,16 @@ using System.Linq;
 
 namespace EvaluationFramework.ArithmeticOperators
 {
-	public class Sum<TContext, TResult> : OperatorBase<IEvaluate<TContext, TResult>, TContext, TResult>
+	public class Sum<TResult> : OperatorBase<IEvaluate<TResult>, TResult>
 		where TResult : struct, IComparable
 	{
-		public Sum(IEnumerable<IEvaluate<TContext, TResult>> children = null)
+		public Sum(IEnumerable<IEvaluate<TResult>> children = null)
 			: base(Sum.SYMBOL, Sum.SEPARATOR, children)
 		{
 
 		}
 
-		public override TResult Evaluate(TContext context)
+		protected override TResult EvaluateInternal(object context)
 		{
 			if (ChildrenInternal.Count == 0)
 				throw new InvalidOperationException("Cannot resolve sum of empty set.");
@@ -27,29 +27,29 @@ namespace EvaluationFramework.ArithmeticOperators
 			return result;
 		}
 
-		public override IEvaluate<TContext, TResult> Reduction()
+		public override IEvaluate<TResult> Reduction()
 		{
 			// Phase 1: Flatten sums of sums.
-			var children = ChildrenInternal.Flatten<Sum<TContext, TResult>, TContext, TResult>().ToList();
+			var children = ChildrenInternal.Flatten<Sum<TResult>, TResult>().ToList();
 
 			// Phase 2: Can we collapse?
 			switch(children.Count)
 			{
 				case 0:
-					return new Constant<TContext, TResult>((TResult)(dynamic)0);
+					return new Constant<TResult>((TResult)(dynamic)0);
 				case 1:
 					return children[0];
 			}
 
 			// Phase 3: Look for groupings: constant multplied products
-			var productsWithConstants = new List<Tuple<string, Constant<TContext, TResult>, IEvaluate<TContext, TResult>, Product<TContext, TResult>>>();
-			foreach (var p in children.OfType<Product<TContext, TResult>>())
+			var productsWithConstants = new List<Tuple<string, Constant<TResult>, IEvaluate<TResult>, Product<TResult>>>();
+			foreach (var p in children.OfType<Product<TResult>>())
 			{
-				Constant<TContext, TResult> multiple;
+				Constant<TResult> multiple;
 				var reduced = p.ReductionWithMutlipleExtracted(out multiple);
 				if (multiple != null)
 				{
-					productsWithConstants.Add(new Tuple<string, Constant<TContext, TResult>, IEvaluate<TContext, TResult>, Product<TContext, TResult>>(
+					productsWithConstants.Add(new Tuple<string, Constant<TResult>, IEvaluate<TResult>, Product<TResult>>(
 						reduced.ToStringRepresentation(),
 						multiple,
 						reduced,
@@ -68,10 +68,10 @@ namespace EvaluationFramework.ArithmeticOperators
 				foreach (var px in p.Select(t => t.Item4))
 					children.Remove(px);
 
-				var replacement = new List<IEvaluate<TContext, TResult>>();
+				var replacement = new List<IEvaluate<TResult>>();
 				replacement.Add(p1.Item3);
 				replacement.Add(multiple);
-				children.Add(new Product<TContext, TResult>(replacement));
+				children.Add(new Product<TResult>(replacement));
 			}
 
 
@@ -86,41 +86,41 @@ namespace EvaluationFramework.ArithmeticOperators
 
 			// Lastly: Sort and return if different.
 			children.Sort(Compare);
-			var result = new Sum<TContext, TResult>(children);
+			var result = new Sum<TResult>(children);
 
 			return result.ToStringRepresentation() == result.ToStringRepresentation() ? null : result;
 		}
 
 	}
 
-	public class Sum : Sum<IReadOnlyList<double>, double>
+	public class Sum : Sum<double>
 	{
 		public const char SYMBOL = '+';
 		public const string SEPARATOR = " + ";
 
-		public Sum(IEnumerable<IEvaluate<IReadOnlyList<double>, double>> children = null)
+		public Sum(IEnumerable<IEvaluate<double>> children = null)
 			: base(children)
 		{
 
 		}
 
-		public static Sum<TContext, TResult> Of<TContext, TResult>(params IEvaluate<TContext, TResult>[] evaluations)
+		public static Sum<TResult> Of<TResult>(params IEvaluate<TResult>[] evaluations)
 		where TResult : struct, IComparable
 		{
-			return new Sum<TContext, TResult>(evaluations);
+			return new Sum<TResult>(evaluations);
 		}
 	}
 
 	public static class SumExtensions
 	{
-		public static Constant<TContext, TResult> Sum<TContext, TResult>(this IEnumerable<Constant<TContext, TResult>> constants)
+		public static Constant<TResult> Sum<TResult>(this IEnumerable<Constant<TResult>> constants)
 		where TResult : struct, IComparable
 		{
-			var list = constants as IList<Constant<TContext, TResult>> ?? constants.ToList();
+			var list = constants as IList<Constant<TResult>> ?? constants.ToList();
 			switch (list.Count)
 			{
 				case 0:
-					return new Constant<TContext, TResult>((TResult)(dynamic)0);
+					return new Constant<TResult>((TResult)(dynamic)0);
 				case 1:
 					return list[0];
 			}
@@ -131,53 +131,53 @@ namespace EvaluationFramework.ArithmeticOperators
 				result += c.Value;
 			}
 
-			return new Constant<TContext, TResult>(result);
+			return new Constant<TResult>(result);
 		}
 
-		public static Sum<TContext, float> Sum<TContext>(this IEnumerable<IEvaluate<TContext, float>> evaluations)
+		public static Sum<float> Sum<TContext>(this IEnumerable<IEvaluate<float>> evaluations)
 		{
-			return new Sum<TContext, float>(evaluations);
+			return new Sum<float>(evaluations);
 		}
 
-		public static Sum<TContext, double> Sum<TContext>(this IEnumerable<IEvaluate<TContext, double>> evaluations)
+		public static Sum<double> Sum<TContext>(this IEnumerable<IEvaluate<double>> evaluations)
 		{
-			return new Sum<TContext, double>(evaluations);
+			return new Sum<double>(evaluations);
 		}
 
-		public static Sum<TContext, decimal> Sum<TContext>(this IEnumerable<IEvaluate<TContext, decimal>> evaluations)
+		public static Sum<decimal> Sum<TContext>(this IEnumerable<IEvaluate<decimal>> evaluations)
 		{
-			return new Sum<TContext, decimal>(evaluations);
+			return new Sum<decimal>(evaluations);
 		}
 
-		public static Sum<TContext, short> Sum<TContext>(this IEnumerable<IEvaluate<TContext, short>> evaluations)
+		public static Sum<short> Sum<TContext>(this IEnumerable<IEvaluate<short>> evaluations)
 		{
-			return new Sum<TContext, short>(evaluations);
+			return new Sum<short>(evaluations);
 		}
 
-		public static Sum<TContext, ushort> Sum<TContext>(this IEnumerable<IEvaluate<TContext, ushort>> evaluations)
+		public static Sum<ushort> Sum<TContext>(this IEnumerable<IEvaluate<ushort>> evaluations)
 		{
-			return new Sum<TContext, ushort>(evaluations);
+			return new Sum<ushort>(evaluations);
 		}
 
 
-		public static Sum<TContext, int> Sum<TContext>(this IEnumerable<IEvaluate<TContext, int>> evaluations)
+		public static Sum<int> Sum<TContext>(this IEnumerable<IEvaluate<int>> evaluations)
 		{
-			return new Sum<TContext, int>(evaluations);
+			return new Sum<int>(evaluations);
 		}
 
-		public static Sum<TContext, uint> Sum<TContext>(this IEnumerable<IEvaluate<TContext, uint>> evaluations)
+		public static Sum<uint> Sum<TContext>(this IEnumerable<IEvaluate<uint>> evaluations)
 		{
-			return new Sum<TContext, uint>(evaluations);
+			return new Sum<uint>(evaluations);
 		}
 
-		public static Sum<TContext, long> Sum<TContext>(this IEnumerable<IEvaluate<TContext, long>> evaluations)
+		public static Sum<long> Sum<TContext>(this IEnumerable<IEvaluate<long>> evaluations)
 		{
-			return new Sum<TContext, long>(evaluations);
+			return new Sum<long>(evaluations);
 		}
 
-		public static Sum<TContext, ulong> Sum<TContext>(this IEnumerable<IEvaluate<TContext, ulong>> evaluations)
+		public static Sum<ulong> Sum<TContext>(this IEnumerable<IEvaluate<ulong>> evaluations)
 		{
-			return new Sum<TContext, ulong>(evaluations);
+			return new Sum<ulong>(evaluations);
 		}
 
 	}

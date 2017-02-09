@@ -9,7 +9,7 @@ using Open.Threading;
 using EvaluationFramework;
 using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
 using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
-using IFunction = EvaluationFramework.IFunction<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
+using IFunction = EvaluationFramework.IFunction<System.Collections.Generic.IReadOnlyList<double>, double>;
 using EvaluationFramework.ArithmeticOperators;
 
 namespace BlackBoxFunction
@@ -33,7 +33,7 @@ namespace BlackBoxFunction
 		IEnumerable<ushort> UShortRange(ushort start, ushort max)
 		{
 			ushort s = start;
-			while(s<max)
+			while (s < max)
 			{
 				yield return s;
 				s++;
@@ -77,7 +77,7 @@ namespace BlackBoxFunction
 				{
 					case Exponent.SYMBOL:
 						yield return Registration(new Genome(new Exponent(p, -1)));
-						yield return Registration(new Genome(new Exponent(p, 1/2)));
+						yield return Registration(new Genome(new Exponent(p, 1 / 2)));
 						break;
 				}
 			}
@@ -85,83 +85,73 @@ namespace BlackBoxFunction
 		}
 
 
-		protected Genome GenerateOneInternal(Genome[] source)
+		protected override Genome GenerateOneInternal()
 		{
 			var attempts = 0; // For debugging.
 			Genome genome = null;
 			string hash = null;
 
-			// Note: for now, we will only mutate by 1.
-
-			// See if it's possible to mutate from the provided genomes.
-			if (source != null && source.Length != 0)
+			for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 			{
-				AttemptNewMutation(source, out genome);
-			}
 
-			if (genome == null)
-			{
-				for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
+				// Establish a maximum.
+				var tries = 10;
+				ushort paramCount = 0;
+
+				do
 				{
+					if (ParamsOnlyAttempted.Add(paramCount))
+					{
+						// Try a param only version first.
+						genome = GenerateParamOnly(paramCount);
+						hash = genome.Hash;
+						attempts++;
+						if (RegisterProduction(genome)) // May be supurfulous.
+							return genome;
+					}
 
-					// Establish a maximum.
-					var tries = 10;
-					ushort paramCount = 0;
+					paramCount += 1; // Operators need at least 2 params to start.
 
+					// Then try an operator based version.
+					ushort pcOne;
+					pcOne = paramCount;
+					var operated = OperatedCatalog.GetOrAdd(++pcOne, pc => GenerateOperated(pc).GetEnumerator());
+					if (operated.MoveNext())
+					{
+						genome = operated.Current;
+						hash = genome.Hash;
+						attempts++;
+						if (RegisterProduction(genome)) // May be supurfulous.
+							return genome;
+					}
+
+					pcOne = paramCount;
+					var functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
+					if (functioned.MoveNext())
+					{
+						genome = functioned.Current;
+						hash = genome.Hash;
+						attempts++;
+						if (RegisterProduction(genome)) // May be supurfulous.
+							return genome;
+					}
+
+
+					var t = Math.Min(Registry.Count * 2, 100); // A local maximum.
 					do
 					{
-						if (ParamsOnlyAttempted.Add(paramCount))
-						{
-							// Try a param only version first.
-							genome = GenerateParamOnly(paramCount);
-							hash = genome.Hash;
-							attempts++;
-							if (RegisterProduction(genome)) // May be supurfulous.
-								return genome;
-						}
-
-						paramCount += 1; // Operators need at least 2 params to start.
-
-						// Then try an operator based version.
-						ushort pcOne;
-						pcOne = paramCount;
-						var operated = OperatedCatalog.GetOrAdd(++pcOne, pc => GenerateOperated(pc).GetEnumerator());
-						if (operated.MoveNext())
-						{
-							genome = operated.Current;
-							hash = genome.Hash;
-							attempts++;
-							if (RegisterProduction(genome)) // May be supurfulous.
-								return genome;
-						}
-
-						pcOne = paramCount;
-						var functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
-						if (functioned.MoveNext())
-						{
-							genome = functioned.Current;
-							hash = genome.Hash;
-							attempts++;
-							if (RegisterProduction(genome)) // May be supurfulous.
-								return genome;
-						}
-
-
-						var t = Math.Min(Registry.Count * 2, 100); // A local maximum.
-						do
-						{
-							// NOTE: Let's use expansions here...
-							genome = Mutate(Registry[RegistryOrder.Source.RandomSelectOne()].Value, m);
-							hash = genome?.Hash;
-							attempts++;
-							if (hash != null && RegisterProduction(genome))
-								return genome;
-						}
-						while (--t != 0);
-
+						// NOTE: Let's use expansions here...
+						genome = Mutate(Registry[RegistryOrder.Source.RandomSelectOne()].Value, m);
+						hash = genome?.Hash;
+						attempts++;
+						if (hash != null && RegisterProduction(genome))
+							return genome;
 					}
-					while (--tries != 0);
+					while (--t != 0);
+
 				}
+				while (--tries != 0);
+
 			}
 
 			return genome;

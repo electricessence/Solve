@@ -2,20 +2,20 @@ using System.Collections.Generic;
 
 namespace EvaluationFramework.BooleanOperators
 {
-	public class Exactly<TContext> : CountingBase<TContext>
+	public class Exactly : CountingBase
 	{
 		public const string PREFIX = "Exactly";
-		public Exactly(int count, IEnumerable<IEvaluate<TContext, bool>> children = null)
+		public Exactly(int count, IEnumerable<IEvaluate<bool>> children = null)
 			: base(PREFIX, count, children)
 		{
 		}
 
-		public override bool Evaluate(TContext context)
+		protected override bool EvaluateInternal(object context)
 		{
 			int count = 0;
 			foreach (var result in ChildResults(context))
 			{
-				if (result) count++;
+				if ((bool)result) count++;
 				if (count > Count) return false;
 			}
 

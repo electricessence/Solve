@@ -60,7 +60,6 @@
     <Compile Include="Classes\Parameter.cs" />
     <Compile Include="IConstant.cs" />
     <Compile Include="IEvaluate.cs" />
-    <Compile Include="IEvaluationNode.cs" />
     <Compile Include="IFunction.cs" />
     <Compile Include="IOperator.cs" />
     <Compile Include="IParameter.cs" />

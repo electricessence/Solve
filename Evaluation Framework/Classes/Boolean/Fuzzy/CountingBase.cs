@@ -3,11 +3,13 @@ using System.Collections.Generic;
 
 namespace EvaluationFramework.BooleanOperators
 {
-	public abstract class CountingBase<TContext> : OperatorBase<IEvaluate<TContext, bool>, TContext, bool>
+	public abstract class CountingBase : OperatorBase<IEvaluate<bool>, bool>
 	{
+		public const char SYMBOL = ',';
+		public const string SEPARATOR = ", ";
 
-		protected CountingBase(string prefix, int count, IEnumerable<IEvaluate<TContext, bool>> children = null)
-			: base(CountingBase.SYMBOL, CountingBase.SEPARATOR, children)
+		protected CountingBase(string prefix, int count, IEnumerable<IEvaluate<bool>> children = null)
+			: base(SYMBOL, SEPARATOR, children)
 		{
 			if (prefix == null)
 				throw new ArgumentNullException("prefix");
@@ -32,10 +34,5 @@ namespace EvaluationFramework.BooleanOperators
 
 	}
 
-	public static class CountingBase
-	{
-		public const char SYMBOL = ',';
-		public const string SEPARATOR = ", ";
-	}
 
 }

@@ -66,28 +66,12 @@ namespace BlackBoxFunction
 				throw new InvalidOperationException("Cannot freeze genome without a root.");
 			_hash = Root.ToStringRepresentation();
 		}
-		
-		static IParent<IGene> FindParent(IGene parent, IGene child)
-		{
-			var p = parent as IParent<IGene>;
-			if (p!=null)
-			{
-				foreach(var c in p.Children)
-				{
-					if (child == c) return p;
-					var np = FindParent(c,child);
-					if (np != null) return np;
-				}
-			}
-			return null;
-		}
 
 		public IParent<IGene> FindParent(IGene child)
 		{
-			return FindParent(Root,child);
+			return Hierarchy.FindParentOf(Root,child);
 		}
 		
-
 		public double Evaluate(IReadOnlyList<double> values)
 		{
 			return Root.Evaluate(values);

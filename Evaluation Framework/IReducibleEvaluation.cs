@@ -6,37 +6,37 @@ using System.Threading.Tasks;
 
 namespace EvaluationFramework
 {
-	public interface IReducibleEvaluation<in TContext, out TResult> : IEvaluate<TContext, TResult>
+	public interface IReducibleEvaluation<out TResult> : IEvaluate<TResult>
 	{
 		/// <returns>Null if no reduction possible.  Otherwise returns the reduction.</returns>
-		IEvaluate<TContext,TResult> Reduction();
+		IEvaluate<TResult> Reduction();
 
 		/// <returns>The reduced version if possible otherwise returns the current instance.</returns>
-		IEvaluate<TContext, TResult> AsReduced();
+		IEvaluate<TResult> AsReduced();
 	}
 
 	public static class ReductionExtensions
 	{
-		public static IEvaluate<TContext, TResult> Reduction<TContext, TResult>(this IEvaluate<TContext, TResult> target)
+		public static IEvaluate<TResult> Reduction<TContext, TResult>(this IEvaluate<TResult> target)
 		{
 			if (target == null) throw new NullReferenceException();
-			return (target as IReducibleEvaluation<TContext, TResult>)?.Reduction();
+			return (target as IReducibleEvaluation<TResult>)?.Reduction();
 		}
 
-		public static IEvaluate<TContext, TResult> AsReduced<TContext, TResult>(this IEvaluate<TContext, TResult> target)
+		public static IEvaluate<TResult> AsReduced<TResult>(this IEvaluate<TResult> target)
 		{
 			if (target == null) throw new NullReferenceException();
-			return (target as IReducibleEvaluation<TContext, TResult>)?.AsReduced() ?? target;
+			return (target as IReducibleEvaluation<TResult>)?.AsReduced() ?? target;
 		}
 
-		public static bool IsReducible<TContext, TResult>(this IEvaluate<TContext, TResult> target)
+		public static bool IsReducible<TResult>(this IEvaluate<TResult> target)
 		{
 			if (target == null) throw new NullReferenceException();
 			return target.AsReduced() != target;
 		}
 
-		public static IEnumerable<IEvaluate<TContext, TResult>> Flatten<TFlat, TContext, TResult>(this IEnumerable<IEvaluate<TContext, TResult>> source)
-			where TFlat : class, IParent<IEvaluate<TContext, TResult>>
+		public static IEnumerable<IEvaluate<TResult>> Flatten<TFlat, TResult>(this IEnumerable<IEvaluate<TResult>> source)
+			where TFlat : class, IParent<IEvaluate<TResult>>
 		{
 
 			// Phase 1: Flatten products of products.
@@ -56,10 +56,10 @@ namespace EvaluationFramework
 			}
 		}
 
-		public static Constant<TContext, TResult>[] ExtractConstants<TContext, TResult>(this List<IEvaluate<TContext, TResult>> target)
+		public static Constant<TResult>[] ExtractConstants<TResult>(this List<IEvaluate<TResult>> target)
 			where TResult : IComparable
 		{
-			var constants = target.OfType<Constant<TContext, TResult>>().ToArray();
+			var constants = target.OfType<Constant<TResult>>().ToArray();
 			foreach (var c in constants)
 				target.Remove(c);
 

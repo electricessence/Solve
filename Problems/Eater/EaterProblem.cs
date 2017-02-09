@@ -10,12 +10,13 @@ using Open.Collections;
 using Solve;
 using Open.Arithmetic;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Eater
 {
 
 
-	public sealed class Problem : Solve.ProblemBase<EaterGenome>
+	public abstract class Problem : Solve.ProblemBase<EaterGenome>
 	{
 		public static readonly SampleCache Samples = new SampleCache();
 
@@ -34,43 +35,7 @@ namespace Eater
 			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
 		}
 
-		void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
-		{
-			var fullTest = Samples.TestAll(g.Hash);
-
-			//var boundary = Samples.Boundary;
-			//var samples = Samples.Get((int)sampleId);
-			//var len = 100;
-			//double found = 0;
-			//double energy = 0;
-
-			//for (var i = 0; i < len; i++)
-			//{
-			//	var s = samples[i];
-			//	int e;
-			//	if (g.Try(boundary, s.EaterStart, s.Food, out e))
-			//	{
-			//		found++;
-			//		Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-			//	}
-			//	else
-			//	{
-			//		Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-			//	}
-
-			//	energy += e;
-			//}
-
-			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
-
-			//var ave = energy / len;
-			//var hlen = g.Hash.Length;
-			var count = fullTest[0].Count;
-			fitness.Add(fullTest[0]);
-			fitness.Add(fullTest[1]);
-			fitness.Add(new ProcedureResult(g.Hash.Length*count,count));
-			//fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
-		}
+		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);
 
 		static readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests = new ConcurrentDictionary<string, ProcedureResult[]>();
 
@@ -119,5 +84,55 @@ namespace Eater
 
 	}
 
+	public sealed class ProblemFragmented : Problem
+	{
 
+		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
+		{
+
+			var boundary = Samples.Boundary;
+			var samples = Samples.Get((int)sampleId);
+			var len = 100;
+			double found = 0;
+			double energy = 0;
+
+			for (var i = 0; i < len; i++)
+			{
+				var s = samples[i];
+				int e;
+				if (g.Try(boundary, s.EaterStart, s.Food, out e))
+				{
+					found++;
+					Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+				}
+				else
+				{
+					Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+				}
+
+				energy += e;
+			}
+
+			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
+
+			var ave = energy / len;
+			var hlen = g.Hash.Length;
+			fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
+		}
+	}
+
+
+	public sealed class ProblemFullTest : Problem
+	{
+
+		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
+		{
+			var fullTest = Samples.TestAll(g.Hash);			
+			var count = fullTest[0].Count;
+			fitness.Add(fullTest[0]);
+			fitness.Add(fullTest[1]);
+			fitness.Add(new ProcedureResult(g.Hash.Length * count, count));
+		}
+
+	}
 }

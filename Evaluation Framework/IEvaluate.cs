@@ -5,12 +5,18 @@
 
 namespace EvaluationFramework
 {
-	public interface IEvaluate<in TContext, out TResult>
+	public interface IEvaluate
 	{
-		TResult Evaluate(TContext context);
+		object Evaluate(object context);
 
-		string ToString(TContext context);
+		string ToString(object context);
 
 		string ToStringRepresentation();
 	}
+
+	public interface IEvaluate<out TResult> : IEvaluate
+	{
+		new TResult Evaluate(object context);
+	}
+	
 }

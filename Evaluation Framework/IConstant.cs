@@ -7,7 +7,7 @@ using System;
 
 namespace EvaluationFramework
 {
-	public interface IConstant<in TContext, out TResult> : IEvaluate<TContext, TResult>
+	public interface IConstant<out TResult> : IEvaluate<TResult>
 		where TResult : IComparable
 	{
 		TResult Value { get; }

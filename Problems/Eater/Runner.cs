@@ -17,7 +17,7 @@ namespace Eater
 		{
 			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
 			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^<^^^>^^^^^>^^>^^^^^^^^^^^<^^>>^^^^^^>^>^>^>^^>^^^>^^^>^^^^^^>^>^^^^>^^^^^>^^^^^^^^^^^^>^^^^>^<^<^>^^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
 		static void Main(string[] args)
@@ -51,24 +51,29 @@ namespace Eater
 			}
 
 
-			var problem = new Problem();
+			var problem = new ProblemFragmented();
 			var scheme = new PyramidPipeline<EaterGenome>(
 				new EaterFactory(),
-				20, 5, 3, 400);
+				20, 4, 2, 200);
 
 			scheme.AddProblem(problem);
+			//scheme.AddProblem(new ProblemFullTest());
 			scheme.AddSeeds(Seed.Select(s => new EaterGenome(s)));
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
 			Action emitStats = () =>
 			{
-				var tc = problem.TestCount;
-				if (tc != 0)
+				Console.WriteLine("{0} total time", sw.Elapsed.ToStringVerbose());
+				foreach (var p in scheme.Problems)
 				{
-					Console.WriteLine("{0} tests, {1} total time, {2} ticks average", tc, sw.Elapsed.ToStringVerbose(), sw.ElapsedTicks / tc);
-					Console.WriteLine();
+					var tc = ((Problem)p).TestCount;
+					if (tc != 0)
+					{
+						Console.WriteLine("{0}:\t{1} tests, {2} ticks average", p.ID, sw.ElapsedTicks / tc);
+					}
 				}
+				Console.WriteLine();
 			};
 
 			if (Seed.Length == 0)

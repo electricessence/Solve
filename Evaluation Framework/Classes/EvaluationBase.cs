@@ -3,15 +3,13 @@ using System.Threading;
 
 namespace EvaluationFramework
 {
-	public abstract class EvaluationBase<TContext, TResult> : IEvaluate<TContext, TResult>
+
+	public abstract class EvaluationBase<TResult> : IEvaluate<TResult>
 	{
 		protected EvaluationBase()
 		{
 			ResetToStringRepresentation();
 		}
-		public abstract TResult Evaluate(TContext context);
-
-		public abstract string ToString(TContext context);
 
 		protected abstract string ToStringRepresentationInternal();
 		Lazy<string> _toStringRepresentation;
@@ -28,6 +26,26 @@ namespace EvaluationFramework
 				new Lazy<string>(ToStringRepresentationInternal, LazyThreadSafetyMode.ExecutionAndPublication)
 			);
 		}
-		
+
+		protected abstract TResult EvaluateInternal(object context);
+
+		protected abstract string ToStringInternal(object context);
+
+		object IEvaluate.Evaluate(object context)
+		{
+			return this.EvaluateInternal(context);
+		}
+
+		public TResult Evaluate(object context)
+		{
+			return this.EvaluateInternal(context);
+		}
+
+		public virtual string ToString(object context)
+		{
+			return this.ToStringInternal(EvaluateInternal(context));
+		}
+
 	}
+	
 }

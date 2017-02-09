@@ -7,9 +7,10 @@ using System.Threading;
 
 namespace EvaluationFramework
 {
-	public abstract class OperatorBase<TChild, TContext, TResult>
-		: OperationBase<TContext, TResult>, IOperator<TChild, TContext, TResult>
-		where TChild : IEvaluate<TContext, TResult>
+	public abstract class OperatorBase<TChild, TResult>
+		: OperationBase<TResult>, IOperator<TChild, TResult>
+
+		where TChild : IEvaluate
 		where TResult : IComparable
 	{
 
@@ -57,7 +58,7 @@ namespace EvaluationFramework
 			return result.ToString();
 		}
 
-		protected IEnumerable<TResult> ChildResults(TContext context)
+		protected IEnumerable<object> ChildResults(object context)
 		{
 			foreach (var child in ChildrenInternal)
 				yield return child.Evaluate(context);
@@ -79,25 +80,25 @@ namespace EvaluationFramework
 		protected static int Compare(TChild a, TChild b)
 		{
 
-			if (a is Constant<TContext, TResult> && !(b is Constant<TContext, TResult>))
+			if (a is Constant<TResult> && !(b is Constant<TResult>))
 				return 1;
 
-			if (b is Constant<TContext, TResult> && !(a is Constant<TContext, TResult>))
+			if (b is Constant<TResult> && !(a is Constant<TResult>))
 				return -1;
 
-			var aC = a as Constant<TContext, TResult>;
-			var bC = b as Constant<TContext, TResult>;
+			var aC = a as Constant<TResult>;
+			var bC = b as Constant<TResult>;
 			if (aC != null && bC != null)
 				return bC.Value.CompareTo(aC.Value); // Descending...
 
-			if (a is Parameter<TContext, TResult> && !(b is Parameter<TContext, TResult>))
+			if (a is Parameter<TResult> && !(b is Parameter<TResult>))
 				return 1;
 
-			if (b is Parameter<TContext, TResult> && !(a is Parameter<TContext, TResult>))
+			if (b is Parameter<TResult> && !(a is Parameter<TResult>))
 				return -1;
 
-			var aP = a as Parameter<TContext, TResult>;
-			var bP = b as Parameter<TContext, TResult>;
+			var aP = a as Parameter<TResult>;
+			var bP = b as Parameter<TResult>;
 			if (aP != null && bP != null)
 				return aP.ID.CompareTo(bP.ID);
 
@@ -105,6 +106,7 @@ namespace EvaluationFramework
 			var bts = b.ToStringRepresentation();
 
 			return String.Compare(ats, bts);
+
 		}
 
 

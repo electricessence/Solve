@@ -41,7 +41,7 @@ namespace Solve.Schemes
 						{
 							if (Pool.TryAdd(newGenome.Hash, newGenome))
 							{
-								foreach (var p in Problems)
+								foreach (var p in ProblemsInternal)
 								{
 									p.ProcessTest(newGenome, 0, true);
 								}
@@ -52,7 +52,7 @@ namespace Solve.Schemes
 					var pCount = 0;
 					var toRejectCount = new ConcurrentDictionary<string, int>();
 					// Phase 2, process tests in order of sample count.
-					foreach (var p in Problems)
+					foreach (var p in ProblemsInternal)
 					{
 						pCount++;
 						var firstGroup = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
@@ -85,7 +85,7 @@ namespace Solve.Schemes
 						Pool.TryRemove(reject);
 					}
 
-					foreach (var p in Problems)
+					foreach (var p in ProblemsInternal)
 					{
 						var top = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
 							.GroupBy(f => f.Fitness.SampleCount)

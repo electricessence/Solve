@@ -66,7 +66,7 @@ namespace Solve.Schemes
 					Breeders.SendAsync(genome);
 			};
 
-			PipelineBuilder = new GenomePipelineBuilder<TGenome>(Producer, Problems, poolSize, nodeSize,
+			PipelineBuilder = new GenomePipelineBuilder<TGenome>(Producer, ProblemsInternal, poolSize, nodeSize,
 				selected =>
 				{
 					var top = selected.FirstOrDefault();
@@ -75,7 +75,7 @@ namespace Solve.Schemes
 				rejected =>
 				{
 					var rejects = rejected.Select(s => s.Hash);
-					foreach (var p in Problems)
+					foreach (var p in ProblemsInternal)
 					{
 						// If they couldn't make it to the top of the pyramid, make sure they won't try again.
 						p.Reject(rejects);
@@ -91,7 +91,7 @@ namespace Solve.Schemes
 				{
 					var repost = false;
 					long? batchID = null;
-					foreach (var problem in Problems)
+					foreach (var problem in ProblemsInternal)
 					{
 						var fitness = problem.GetFitnessFor(genome).Value.Fitness;
 						if (fitness.HasConverged(0))
@@ -122,7 +122,7 @@ namespace Solve.Schemes
 					var selected = selection.Selected;
 					// Finalists use global fitness?
 					// Get the top one for each problem.
-					var topsConverged = Problems.All(problem =>
+					var topsConverged = ProblemsInternal.All(problem =>
 					{
 						var top = selected
 							.OrderBy(g =>
@@ -208,7 +208,7 @@ namespace Solve.Schemes
 					{
 						// NOTE: That global GenomeFitness returns may return a 'version' of the actual genome.
 						// Ensure the global pareto is retained. (note is using global version)
-						var paretoGenomes = Problems.SelectMany(p =>
+						var paretoGenomes = ProblemsInternal.SelectMany(p =>
 								GenomeFitness.Pareto(p.GetFitnessFor(selection.All)).Select(g => g.Genome)
 							)
 							.Distinct()
@@ -221,7 +221,7 @@ namespace Solve.Schemes
 
 						// Look for long term winners who have made it to the top before and don't discard them easily.
 						var oldChampions
-							= Problems
+							= ProblemsInternal
 								.SelectMany(p => p.GetFitnessFor(rejected, true))
 								.Where(gf => gf.Fitness.IncrementRejection() < 1)
 								.Select(gf => gf.Genome)
@@ -236,7 +236,7 @@ namespace Solve.Schemes
 							FinalistPool.Post(g); // Might need to look at the whole pool and use pareto to retain.
 
 						var recycled
-							= Problems
+							= ProblemsInternal
 								.SelectMany(p => p.GetFitnessFor(rejected, true))
 								.Where(gf => gf.Fitness.RejectionCount < 5)
 								.Select(gf => gf.Genome)
@@ -250,7 +250,7 @@ namespace Solve.Schemes
 
 						// True rejects remain and get marked. :(
 						var rejects = rejected.Select(r => r.Hash).ToArray();
-						foreach (var p in Problems)
+						foreach (var p in ProblemsInternal)
 							p.Reject(rejects);
 
 					}

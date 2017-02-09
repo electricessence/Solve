@@ -2,50 +2,53 @@ using System.Collections.Generic;
 
 namespace EvaluationFramework.BooleanOperators
 {
-	public class Conditional<TContext, TResult> : FunctionBase<TContext, bool>, IFunction<TContext, TResult>
+	public class Conditional<TResult> : FunctionBase<bool>, IFunction<TResult>
 	{
 
 		public Conditional(
-			IEvaluate<TContext, bool> evaluation,
-			IEvaluate<TContext, TResult> ifTrue,
-			IEvaluate<TContext, TResult> ifFalse)
+			IEvaluate<bool> evaluation,
+			IEvaluate<TResult> ifTrue,
+			IEvaluate<TResult> ifFalse)
 			: base(Conditional.SYMBOL, Conditional.SEPARATOR, evaluation)
 		{
 			IfTrue = ifTrue;
 			IfFalse = ifFalse;
+			ChildrenInternal.Add(ifTrue);
 		}
 
-		public IEvaluate<TContext, TResult> IfTrue
+		public IEvaluate<TResult> IfTrue
 		{
 			get;
 			private set;
 		}
-		public IEvaluate<TContext, TResult> IfFalse
+		public IEvaluate<TResult> IfFalse
 		{
 			get;
 			private set;
 		}
 
-		public new TResult Evaluate(TContext context)
+		public new TResult Evaluate(object context)
 		{
 			return base.Evaluate(context)
 				? IfTrue.Evaluate(context)
 				: IfFalse.Evaluate(context);
 		}
 
+		const string FormatString = "{0} ? {1} : {2}";
+
 		protected override string ToStringInternal(object evaluation)
 		{
 			return string.Format(
-				"{0} ? {1} : {2}",
+				FormatString,
 				evaluation,
 				IfTrue.ToStringRepresentation(),
 				IfFalse.ToStringRepresentation());
 		}
 
-		public override string ToString(TContext context)
+		public override string ToString(object context)
 		{
 			return string.Format(
-				"{0} ? {1} : {2}",
+				FormatString,
 				base.Evaluate(context),
 				IfTrue.Evaluate(context),
 				IfFalse.Evaluate(context));

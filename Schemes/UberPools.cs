@@ -44,7 +44,7 @@ namespace Solve.Schemes
 			long sampleId = 0
 		)
 		{
-			var r = await Problems.ProcessOnce(genome, sampleId);
+			var r = await ProblemsInternal.ProcessOnce(genome, sampleId);
 			if (results.Length != r.Length)
 				throw new Exception("Problem added/removed while processing.");
 			for (var f = 0; f < r.Length; f++)
@@ -69,7 +69,7 @@ namespace Solve.Schemes
 			TGenome genome;
 			while (source.ConcurrentTryMoveNext(out genome)) // Using a loop instead of recursion.
 			{
-				results = Problems.Select(p => KeyValuePair.New(p, new Fitness())).ToArray();
+				results = ProblemsInternal.Select(p => KeyValuePair.New(p, new Fitness())).ToArray();
 
 				for (var i = 0; i < samples; i++)
 				{

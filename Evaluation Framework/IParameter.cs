@@ -5,7 +5,7 @@
 
 namespace EvaluationFramework
 {
-	public interface IParameter<TContext, TResult> : IEvaluate<TContext, TResult>
+	public interface IParameter<TResult> : IEvaluate<TResult>
 	{
 		ushort ID { get; }
 	}
