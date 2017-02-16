@@ -18,6 +18,7 @@ namespace EvaluationFramework.ArithmeticOperators
 			: base(Exponent.SYMBOL, Exponent.SEPARATOR, evaluation)
 		{
 			Power = power;
+			ChildrenInternal.Add(power);
 		}
 
 		public IEvaluate<TPower> Power

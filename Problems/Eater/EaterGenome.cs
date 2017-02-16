@@ -5,11 +5,12 @@ using System.Threading;
 using Solve;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace Eater
 {
 
-	public sealed class EaterGenome : ReducibleGenomeBase<Step, EaterGenome>, ICloneable<EaterGenome>
+	public sealed class EaterGenome : ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{
 
 		static readonly Step[] EMPTY = new Step[0];
@@ -51,7 +52,17 @@ namespace Eater
 			return this.Clone();
 		}
 
-		protected override Step[] GetGenes()
+		Lazy<Step[]> _genes;
+		public Step[] Genes
+		{
+			get
+			{
+				var g = _genes;
+				return !IsReadOnly || g == null ? GetGenes() : g.Value;
+			}
+		}
+
+		Step[] GetGenes()
 		{
 			return _steps.ToArray();
 		}
@@ -74,5 +85,14 @@ namespace Eater
 			return reducedSteps == null ? null : new EaterGenome(reducedSteps);
 		}
 
+		public IEnumerator<Step> GetEnumerator()
+		{
+			return ((IEnumerable<Step>)_steps).GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return ((IEnumerable<Step>)_steps).GetEnumerator();
+		}
 	}
 }

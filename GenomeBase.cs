@@ -10,24 +10,12 @@ using System.Collections;
 namespace Solve
 {
 
-	public abstract class GenomeBase<T> : FreezableBase, IGenome<T>
+	public abstract class GenomeBase : FreezableBase, IGenome
 	{
 		public GenomeBase() : base()
 		{
 
         }
-
-		Lazy<T[]> _genes;
-		public T[] Genes
-		{
-			get
-			{
-				var g = _genes;
-				return !IsReadOnly || g == null ? GetGenes() : g.Value;
-			}
-		}
-
-        abstract protected T[] GetGenes();
 
 		public abstract string Hash { get; }
 
@@ -43,16 +31,7 @@ namespace Solve
         {
             return CloneInternal();
         }
-
-		public IEnumerator<T> GetEnumerator()
-		{
-			return ((IEnumerable<T>)Genes).GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.GetEnumerator();
-		}
+		
 	}
 
 }

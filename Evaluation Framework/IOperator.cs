@@ -9,7 +9,7 @@ namespace EvaluationFramework
 {
 	public interface IOperator<out TChild, out TResult>
 		: IFunction<TResult>, IParent<TChild>
-		where TChild : IEvaluate
+		where TChild : class, IEvaluate
 		where TResult : IComparable
 	{ 
 

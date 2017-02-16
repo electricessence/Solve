@@ -11,7 +11,7 @@ namespace EvaluationFramework.BooleanOperators
 		public Or(IEnumerable<IEvaluate<bool>> children = null)
 			: base(SYMBOL, SEPARATOR, children)
 		{
-
+			ReorderChildren();
 		}
 
 		protected override bool EvaluateInternal(object context)

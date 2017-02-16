@@ -1,23 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
 
 namespace EvaluationFramework
 {
 	public abstract class OperatorBase<TChild, TResult>
 		: OperationBase<TResult>, IOperator<TChild, TResult>
 
-		where TChild : IEvaluate
+		where TChild : class, IEvaluate
 		where TResult : IComparable
 	{
 
 		protected OperatorBase(char symbol, string separator, IEnumerable<TChild> children = null) : base(symbol, separator)
 		{
 			ChildrenInternal = children == null ? new List<TChild>() : new List<TChild>(children);
-			ReorderChildren();
 			Children = ChildrenInternal.AsReadOnly();
 		}
 
@@ -29,12 +26,16 @@ namespace EvaluationFramework
 			private set;
 		}
 
-		IReadOnlyList<TChild> _descendants;
-		public IReadOnlyList<TChild> Descendants
+		public Hierarchy.Node<IEvaluate> GetHierarchy()
+		{
+			return Hierarchy.Get<IEvaluate, IEvaluate>(this);
+		}
+
+		IReadOnlyList<object> IParent.Children
 		{
 			get
 			{
-				return LazyInitializer.EnsureInitialized(ref _descendants, () => this.GetDescendants().ToList());
+				return this.Children;
 			}
 		}
 

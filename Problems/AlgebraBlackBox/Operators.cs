@@ -4,7 +4,7 @@ using System.Linq;
 using Open;
 using EvaluationFramework;
 using EvaluationFramework.ArithmeticOperators;
-using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
+using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<double>, double>;
 
 namespace BlackBoxFunction
 {

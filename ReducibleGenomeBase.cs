@@ -4,8 +4,8 @@ using System.Threading;
 
 namespace Solve
 {
-	public abstract class ReducibleGenomeBase<T, TThis> : GenomeBase<T>, IReducibleGenome<TThis>, ICloneable<TThis>
-		where TThis : ReducibleGenomeBase<T, TThis>
+	public abstract class ReducibleGenomeBase<TThis> : GenomeBase, IReducibleGenome<TThis>, ICloneable<TThis>
+		where TThis : ReducibleGenomeBase<TThis>
 	{
 		public bool IsReducible
 		{

@@ -5,17 +5,16 @@ using Open.Collections;
 using Solve;
 using EvaluationFramework;
 using System.Linq;
-using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
+using IGene = EvaluationFramework.IEvaluate<double>;
 
 namespace BlackBoxFunction
 {
-	public sealed class Genome : ReducibleGenomeBase<IGene, Genome>
+	public sealed class Genome : ReducibleGenomeBase<Genome>
 	{
 		public Genome(IGene root) : base()
 		{
 			SetRoot(root);
 		}
-
 
 		public IGene Root
 		{
@@ -53,11 +52,10 @@ namespace BlackBoxFunction
 			return this.Clone();
 		}
 
-		protected override IGene[] GetGenes()
+		// To avoid memory bloat, we don't retain the hierarchy.
+		public Hierarchy.Node<IGene> GetGeneHierarchy()
 		{
-			var descendants = (Root as IParent<IGene>).Descendants;
-			var root = new IGene[] { Root };
-			return descendants == null ? root : root.Concat(descendants).ToArray();
+			return Hierarchy.Get<IGene,IGene>(Root);
 		}
 
 		protected override void OnBeforeFreeze()
@@ -67,11 +65,7 @@ namespace BlackBoxFunction
 			_hash = Root.ToStringRepresentation();
 		}
 
-		public IParent<IGene> FindParent(IGene child)
-		{
-			return Hierarchy.FindParentOf(Root,child);
-		}
-		
+	
 		public double Evaluate(IReadOnlyList<double> values)
 		{
 			return Root.Evaluate(values);

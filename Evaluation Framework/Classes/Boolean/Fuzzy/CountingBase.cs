@@ -17,6 +17,8 @@ namespace EvaluationFramework.BooleanOperators
 				throw new ArgumentOutOfRangeException("count", count, "Count must be at least 0.");
 			Prefix = prefix;
 			Count = count;
+
+			ReorderChildren();
 		}
 
 		protected readonly string Prefix;

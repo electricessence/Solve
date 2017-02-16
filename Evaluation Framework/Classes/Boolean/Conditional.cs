@@ -14,6 +14,7 @@ namespace EvaluationFramework.BooleanOperators
 			IfTrue = ifTrue;
 			IfFalse = ifFalse;
 			ChildrenInternal.Add(ifTrue);
+			ChildrenInternal.Add(ifFalse);
 		}
 
 		public IEvaluate<TResult> IfTrue

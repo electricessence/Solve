@@ -14,12 +14,8 @@ namespace Solve
     {
         string Hash { get; }
 
+		// Simply added for potential convienience.  Equals may create problems.
         bool Equivalent(IGenome other);
-    }
-
-    public interface IGenome<out TGene> : IGenome, IEnumerable<TGene> /* : ISerializable */
-	{
-        TGene[] Genes { get; }
     }
 
 }

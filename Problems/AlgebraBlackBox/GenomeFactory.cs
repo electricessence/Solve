@@ -7,9 +7,9 @@ using Open;
 using Open.Collections;
 using Open.Threading;
 using EvaluationFramework;
-using IGene = EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>;
-using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<System.Collections.Generic.IReadOnlyList<double>, double>, System.Collections.Generic.IReadOnlyList<double>, double>;
-using IFunction = EvaluationFramework.IFunction<System.Collections.Generic.IReadOnlyList<double>, double>;
+using IGene = EvaluationFramework.IEvaluate<double>;
+using IOperator = EvaluationFramework.IOperator<EvaluationFramework.IEvaluate<double>, double>;
+using IFunction = EvaluationFramework.IFunction<double>;
 using EvaluationFramework.ArithmeticOperators;
 
 namespace BlackBoxFunction
@@ -461,7 +461,7 @@ namespace BlackBoxFunction
 
 		protected IEnumerable<Genome> GenerateVariationsUnfiltered(Genome source)
 		{
-			var sourceGenes = source.Genes;
+			var sourceGenes = source.GetGeneHierarchy();
 			var count = sourceGenes.Length;
 
 			for (var i = 0; i < count; i++)
@@ -573,12 +573,13 @@ namespace BlackBoxFunction
 			 * 5) Removing an operation.
 			 * 6) Removing a function. */
 
-			var genes = target.Genes;
+			var genes = target.GetGeneHierarchy();
 
 			while (genes.Any())
 			{
 				var gene = genes.RandomSelectOne();
-				if (gene is Constant)
+				var gv = gene.Value;
+				if (gv is Constant)
 				{
 					switch (RandomUtilities.Random.Next(4))
 					{
@@ -594,7 +595,7 @@ namespace BlackBoxFunction
 					}
 
 				}
-				else if (gene is Parameter)
+				else if (gv is Parameter)
 				{
 					var options = Enumerable.Range(0, 5).ToList();
 					while (options.Any())
@@ -728,30 +729,30 @@ namespace BlackBoxFunction
 			// Avoid inbreeding. :P
 			if (a.AsReduced().Hash == b.AsReduced().Hash) return null;
 
-			var aGenes = a.Genes;
-			var bGenes = b.Genes;
-			var aLen = aGenes.Length;
-			var bLen = bGenes.Length;
+			var aRoot = a.GetGeneHierarchy();
+			var bRoot = a.GetGeneHierarchy();
+			var aGeneNodes = aRoot.GetNodes().ToArray();
+			var bGeneNodes = bRoot.GetNodes().ToArray();
+			var aLen = aGeneNodes.Length;
+			var bLen = bGeneNodes.Length;
 			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
 
 			// Crossover scheme 1:  Swap a node.
-			a = a.Clone();
-			b = b.Clone();
-			aGenes = a.Genes;
-			bGenes = b.Genes;
-			while (aGenes.Length != 0)
+			while (aGeneNodes.Length != 0)
 			{
-				var ag = aGenes.RandomSelectOne();
-				var agS = ag.ToString();
-				var others = bGenes.Where(g => g.ToString() != agS).ToArray();
+				var ag = aGeneNodes.RandomSelectOne();
+				var agS = ag.Value.ToStringRepresentation();
+				var others = bGeneNodes.Where(g => g.Value.ToStringRepresentation() != agS).ToArray();
 				if (others.Length != 0)
 				{
 					var bg = others.RandomSelectOne();
-					a.Replace(ag, bg);
-					b.Replace(bg, ag);
-					return new Genome[] { Registration(a), Registration(b) };
+					return new Genome[]
+					{
+						Registration(new Genome(aRoot.CloneReplaced(ag,bg).Value)),
+						Registration(new Genome(bRoot.CloneReplaced(bg,ag).Value))
+					};
 				}
-				aGenes = aGenes.Where(g => g != ag).ToArray();
+				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
 			}
 
 			return null;
