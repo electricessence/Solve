@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
+﻿using Open.Evaluation;
 using Solve;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Eater
 {
 
-	public sealed class EaterGenome : ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
+    public sealed class EaterGenome
+        : ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{
 
 		static readonly Step[] EMPTY = new Step[0];
@@ -52,13 +50,11 @@ namespace Eater
 			return this.Clone();
 		}
 
-		Lazy<Step[]> _genes;
 		public Step[] Genes
 		{
 			get
 			{
-				var g = _genes;
-				return !IsReadOnly || g == null ? GetGenes() : g.Value;
+				return GetGenes();
 			}
 		}
 
@@ -82,17 +78,21 @@ namespace Eater
 		protected override EaterGenome Reduction()
 		{
 			var reducedSteps = _steps.Reduce();
-			return reducedSteps == null ? null : new EaterGenome(reducedSteps);
+			return reducedSteps == null
+                ? null
+                : new EaterGenome(reducedSteps);
 		}
 
 		public IEnumerator<Step> GetEnumerator()
 		{
-			return ((IEnumerable<Step>)_steps).GetEnumerator();
+			return ((IEnumerable<Step>)_steps)
+                .GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return ((IEnumerable<Step>)_steps).GetEnumerator();
+			return ((IEnumerable<Step>)_steps)
+                .GetEnumerator();
 		}
 	}
 }

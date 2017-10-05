@@ -11,6 +11,7 @@ using Solve;
 using Open.Arithmetic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Open.Numeric;
 
 namespace Eater
 {
@@ -99,18 +100,17 @@ namespace Eater
 			for (var i = 0; i < len; i++)
 			{
 				var s = samples[i];
-				int e;
-				if (g.Try(boundary, s.EaterStart, s.Food, out e))
-				{
-					found++;
-					Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-				}
-				else
-				{
-					Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-				}
+                if (g.Try(boundary, s.EaterStart, s.Food, out int e))
+                {
+                    found++;
+                    Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+                }
+                else
+                {
+                    Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+                }
 
-				energy += e;
+                energy += e;
 			}
 
 			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");

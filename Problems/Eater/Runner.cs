@@ -3,14 +3,13 @@ using System.Threading.Tasks;
 using Solve.Schemes;
 using System.Threading;
 using System.Diagnostics;
+using System.Linq;
 using Open.Dataflow;
 using Open.Threading;
-using Open;
-using System.Linq;
 
 namespace Eater
 {
-	class Runner
+    class Runner
 	{
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]
@@ -33,7 +32,7 @@ namespace Eater
 
 				if (i == 0)
 				{
-					Console.WriteLine("Total possibilities: " + result[1].Count);
+					Console.WriteLine("Total possibilities: {0}", result[1].Count);
 					Console.WriteLine();
 				}
 

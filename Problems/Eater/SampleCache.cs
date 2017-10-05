@@ -5,6 +5,7 @@ using System.Linq;
 using Open;
 using Open.Collections;
 using Open.Arithmetic;
+using Open.Numeric;
 
 namespace Eater
 {
@@ -90,10 +91,9 @@ namespace Eater
 			int count = 0;
 			foreach (var entry in GenerateOrdered())
 			{
-				int e;
-				if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out e))
-					found++;
-				efficiency += e;
+                if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out int e))
+                    found++;
+                efficiency += e;
 				count++;
 			}
 
