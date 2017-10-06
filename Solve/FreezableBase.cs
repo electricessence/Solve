@@ -4,30 +4,24 @@
  */
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using Open;
-using Open.Threading;
 
 namespace Solve
 {
 
-    public abstract class FreezableBase : IFreeze
-    {
+	public abstract class FreezableBase : IFreeze
+	{
 
-        public bool IsReadOnly
-        {
-            get;
-            private set;
-        }
+		public bool IsReadOnly
+		{
+			get;
+			private set;
+		}
 
-        public void Freeze()
-        {
-            OnBeforeFreeze();
-            IsReadOnly = true;
-        }
+		public void Freeze()
+		{
+			OnBeforeFreeze();
+			IsReadOnly = true;
+		}
 
 		protected void AssertIsNotFrozen()
 		{
@@ -35,8 +29,8 @@ namespace Solve
 				throw new InvalidOperationException("Genome is frozen.");
 		}
 
-        protected abstract void OnBeforeFreeze();
+		protected abstract void OnBeforeFreeze();
 
-    }
+	}
 
 }

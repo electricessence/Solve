@@ -9,7 +9,7 @@ using Open.Threading;
 
 namespace Eater
 {
-    class Runner
+	class Runner
 	{
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]

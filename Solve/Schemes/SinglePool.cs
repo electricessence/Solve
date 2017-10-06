@@ -1,4 +1,9 @@
-﻿using Open.Collections;
+﻿/*!
+ * @author electricessence / https://github.com/electricessence/
+ * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
+ */
+
+using Open.Collections;
 using Open.Collections.Numeric;
 using Open.Dataflow;
 using System;
@@ -10,7 +15,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Solve.Schemes
 {
-    public class SinglePool<TGenome> : EnvironmentBase<TGenome>
+	public class SinglePool<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		readonly BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>> TopGenome = new BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>>(null);

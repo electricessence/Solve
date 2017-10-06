@@ -1,16 +1,13 @@
-
+using Nito.AsyncEx;
+using Open.Collections;
+using Open.Numeric;
+using Open.Numeric.Precision;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using Open.Arithmetic;
-using Open.Collections;
-using Open.Text;
-using Open.Numeric;
-using Nito.AsyncEx;
-using Open.Numeric.Precision;
 
 namespace Solve
 {

@@ -7,8 +7,8 @@ using System.Linq;
 namespace Eater
 {
 
-    public sealed class EaterGenome
-        : ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
+	public sealed class EaterGenome
+		: ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{
 
 		static readonly Step[] EMPTY = new Step[0];
@@ -79,20 +79,20 @@ namespace Eater
 		{
 			var reducedSteps = _steps.Reduce();
 			return reducedSteps == null
-                ? null
-                : new EaterGenome(reducedSteps);
+				? null
+				: new EaterGenome(reducedSteps);
 		}
 
 		public IEnumerator<Step> GetEnumerator()
 		{
 			return ((IEnumerable<Step>)_steps)
-                .GetEnumerator();
+				.GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return ((IEnumerable<Step>)_steps)
-                .GetEnumerator();
+				.GetEnumerator();
 		}
 	}
 }

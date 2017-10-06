@@ -33,7 +33,7 @@ namespace Solve
 		IEnumerable<TGenome> Mutate(TGenome source);
 
 		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
-		
+
 		TGenome[] AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3);
 
 		TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3);

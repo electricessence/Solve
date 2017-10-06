@@ -56,7 +56,7 @@ namespace Eater
 
 		public IEnumerable<Entry> GenerateOrdered()
 		{
-			foreach(var eater in GenerateXY())
+			foreach (var eater in GenerateXY())
 			{
 				foreach (var food in GenerateXY())
 				{
@@ -91,9 +91,9 @@ namespace Eater
 			int count = 0;
 			foreach (var entry in GenerateOrdered())
 			{
-                if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out int e))
-                    found++;
-                efficiency += e;
+				if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out int e))
+					found++;
+				efficiency += e;
 				count++;
 			}
 

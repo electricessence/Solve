@@ -52,7 +52,7 @@ namespace Solve
 
 			if (Fitnesses.TryGetValue(key, out Lazy<GenomeFitness<TGenome, Fitness>> value))
 			{
-				if(!Rejects.Contains(key))
+				if (!Rejects.Contains(key))
 				{
 					fitness = value.Value;
 					return true;
@@ -179,8 +179,8 @@ namespace Solve
 		public int GetSampleCountFor(TGenome genome)
 		{
 			return TryGetFitnessFor(genome, out GenomeFitness<TGenome, Fitness> fitness)
-                ? fitness.Fitness.SampleCount
-                : 0;
+				? fitness.Fitness.SampleCount
+				: 0;
 		}
 	}
 }

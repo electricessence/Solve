@@ -3,15 +3,14 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Arithmetic;
+using Open.Collections;
+using Open.Dataflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Open.Arithmetic;
-using Open.Collections;
-using Open.Dataflow;
-using System.Diagnostics;
 
 namespace Solve.Schemes
 {
@@ -242,7 +241,7 @@ namespace Solve.Schemes
 								.Select(gf => gf.Genome)
 								.Distinct()
 								.ToArray();
-						
+
 						// Just in case a challenger got lucky.
 						Producer.TryEnqueue(recycled, true);
 
@@ -289,7 +288,7 @@ namespace Solve.Schemes
 
 		public void AddSeeds(IEnumerable<TGenome> genomes)
 		{
-			foreach(var g in genomes)
+			foreach (var g in genomes)
 				FinalistPool.Post(g);
 		}
 

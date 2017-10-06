@@ -3,11 +3,11 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Open.Collections;
 
 namespace Solve
 {
@@ -144,12 +144,12 @@ namespace Solve
 			return Process(problems, genomes, Enumerable.Range(0, count).Select(i => SampleID.Next()), mergeWithGlobal);
 		}
 
- 		public static Task<KeyValuePair<IProblem<TGenome>, IFitness>[]> Process<TGenome>(
-			this IEnumerable<IProblem<TGenome>> problems,
-			TGenome genome,
-			int count = 1,
-			bool mergeWithGlobal = false)
-			where TGenome : IGenome
+		public static Task<KeyValuePair<IProblem<TGenome>, IFitness>[]> Process<TGenome>(
+		   this IEnumerable<IProblem<TGenome>> problems,
+		   TGenome genome,
+		   int count = 1,
+		   bool mergeWithGlobal = false)
+		   where TGenome : IGenome
 		{
 			return Process(problems, genome, Enumerable.Range(0, count).Select(i => SampleID.Next()), mergeWithGlobal);
 		}

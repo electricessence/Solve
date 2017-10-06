@@ -1,10 +1,10 @@
+using Open.Collections;
+using Open.Dataflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Open.Collections;
-using Open.Dataflow;
 
 namespace Solve
 {
@@ -308,10 +308,10 @@ namespace Solve
 			Action<TGenome[]> globalSelectedHandler = null,
 			Action<TGenome[]> globalRejectedHandler = null)
 		{
-            DefaultSource = defaultSource ?? throw new ArgumentNullException("defaultSource");
-            Problems = problems ?? throw new ArgumentNullException("problems");
-            PoolSize = poolSize;
-            if (sourceCount < 1)
+			DefaultSource = defaultSource ?? throw new ArgumentNullException("defaultSource");
+			Problems = problems ?? throw new ArgumentNullException("problems");
+			PoolSize = poolSize;
+			if (sourceCount < 1)
 				throw new ArgumentOutOfRangeException("sourceCount", sourceCount, "Must be at least 1.");
 			SourceCount = sourceCount;
 			GlobalSelectedHandler = globalSelectedHandler;

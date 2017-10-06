@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Open.Collections;
 using Solve;
-using Open.Arithmetic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Open.Numeric;
@@ -59,7 +58,7 @@ namespace Eater
 			Console.WriteLine("  \t[{0}] ({1} samples)", result[1].Average, result[1].Count);
 			Console.WriteLine();
 
-			if(LastScore>result[1].Average)
+			if (LastScore > result[1].Average)
 			{
 				LastScore = result[1].Average;
 				Console.WriteLine("New winner ^^^.");
@@ -100,17 +99,17 @@ namespace Eater
 			for (var i = 0; i < len; i++)
 			{
 				var s = samples[i];
-                if (g.Try(boundary, s.EaterStart, s.Food, out int e))
-                {
-                    found++;
-                    Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-                }
-                else
-                {
-                    Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
-                }
+				if (g.Try(boundary, s.EaterStart, s.Food, out int e))
+				{
+					found++;
+					Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+				}
+				else
+				{
+					Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+				}
 
-                energy += e;
+				energy += e;
 			}
 
 			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
@@ -127,7 +126,7 @@ namespace Eater
 
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
 		{
-			var fullTest = Samples.TestAll(g.Hash);			
+			var fullTest = Samples.TestAll(g.Hash);
 			var count = fullTest[0].Count;
 			fitness.Add(fullTest[0]);
 			fitness.Add(fullTest[1]);

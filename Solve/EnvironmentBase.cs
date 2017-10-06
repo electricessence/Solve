@@ -3,16 +3,16 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Open.Collections;
 
 namespace Solve
 {
 
-    // Defines the pipeline?
-    public abstract class EnvironmentBase<TGenome>
+	// Defines the pipeline?
+	public abstract class EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
 

@@ -3,19 +3,19 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Collections;
+using Open.Numeric;
+using Open.Threading;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Open.Collections;
-using Open.Threading;
-using Open.Numeric;
 
 namespace Solve
 {
 
-    public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
+	public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	where TGenome : class, IGenome
 	{
 
@@ -200,11 +200,11 @@ namespace Solve
 
 		public IEnumerable<TGenome> Mutate(TGenome source)
 		{
-            while (AttemptNewMutation(source, out TGenome next))
-            {
-                yield return next;
-            }
-        }
+			while (AttemptNewMutation(source, out TGenome next))
+			{
+				yield return next;
+			}
+		}
 
 		protected TGenome Mutate(TGenome source, byte mutations = 1)
 		{
