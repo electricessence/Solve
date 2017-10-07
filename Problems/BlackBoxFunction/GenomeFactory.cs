@@ -168,7 +168,10 @@ namespace BlackBoxFunction
 			return newGenome;
 		}
 
-		public static Genome ApplyClone(Genome source, int geneIndex, Action<IGene> handler)
+		public static GenomeApplyClone(
+			Genome source,
+			int geneIndex,
+			Action<IGene> handler)
 		{
 			if (geneIndex == -1)
 				throw new ArgumentOutOfRangeException("geneIndex", "Can't be -1.");
