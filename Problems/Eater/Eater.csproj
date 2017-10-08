@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Open.Cloneable" Version="1.0.0" />
     <PackageReference Include="Open.DateTime.Extensions" Version="1.0.0" />
     <PackageReference Include="Open.Threading" Version="1.0.1" />
     <PackageReference Include="Open.Threading.Dataflow" Version="1.0.0" />

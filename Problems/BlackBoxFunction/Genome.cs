@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Open.Collections;
+using Open.Evaluation;
+using Solve;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using Open.Collections;
-using Solve;
-using Open.Evaluation;
-using System.Linq;
 using IGene = Open.Evaluation.IEvaluate<double>;
 
 namespace BlackBoxFunction

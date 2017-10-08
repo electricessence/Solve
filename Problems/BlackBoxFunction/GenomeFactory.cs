@@ -168,7 +168,7 @@ namespace BlackBoxFunction
 			return newGenome;
 		}
 
-		public static GenomeApplyClone(
+		public static Genome ApplyClone(
 			Genome source,
 			int geneIndex,
 			Action<IGene> handler)

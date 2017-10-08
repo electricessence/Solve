@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Open.Evaluation\Open.Evaluation.csproj" />
     <ProjectReference Include="..\..\Solve\Solve.csproj" />
   </ItemGroup>
 
