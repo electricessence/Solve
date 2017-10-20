@@ -4,6 +4,7 @@
  */
 
 using Open.Collections;
+using Open.Collections.Synchronized;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,13 +21,13 @@ namespace Solve
 		protected const ushort MIN_POOL_SIZE = 2;
 		public readonly ushort PoolSize;
 
-		readonly protected ConcurrentList<IProblem<TGenome>> ProblemsInternal = new ConcurrentList<IProblem<TGenome>>();
+		readonly protected LockSynchronizedList<IProblem<TGenome>> ProblemsInternal = new LockSynchronizedList<IProblem<TGenome>>();
 
 		public IProblem<TGenome>[] Problems
 		{
 			get
 			{
-				return ProblemsInternal.ToArrayDirect();
+				return ProblemsInternal.Snapshot();
 			}
 		}
 

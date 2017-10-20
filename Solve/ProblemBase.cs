@@ -1,4 +1,5 @@
 using Open.Collections;
+using Open.Collections.Synchronized;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,8 +15,8 @@ namespace Solve
 		protected readonly ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>
 			Fitnesses = new ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>();
 
-		protected readonly ConcurrentHashSet<string>
-			Rejects = new ConcurrentHashSet<string>();
+		protected readonly ReadWriteSynchronizedHashSet<string>
+			Rejects = new ReadWriteSynchronizedHashSet<string>();
 
 
 		static int ProblemCount = 0;
