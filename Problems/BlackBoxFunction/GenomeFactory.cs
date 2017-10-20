@@ -17,20 +17,15 @@ namespace BlackBoxFunction
 
     public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
+		Catalog Catalog = new Catalog();
 
-		ConcurrentDictionary<ushort, Parameter> Parameters = new ConcurrentDictionary<ushort, Parameter>();
-		protected Parameter GetParameter(ushort id)
-		{
-			return Parameters.GetOrAdd(id, k => GetParameter(k));
-		}
-
-        ReadWriteSynchronizedHashSet<int> ParamsOnlyAttempted = new ReadWriteSynchronizedHashSet<int>();
+        LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
 		{
-			return Registration(new Genome(GetParameter(id)));
+			return Registration(new Genome(Catalog.GetParameter(id)));
 		}
 
-		IEnumerable<ushort> UShortRange(ushort start, ushort max)
+		static IEnumerable<ushort> UShortRange(ushort start, ushort max)
 		{
 			ushort s = start;
 			while (s < max)
@@ -52,7 +47,7 @@ namespace BlackBoxFunction
 				{
 					var children = new List<IGene>();
 					foreach (var p in combination)
-						children.Add(GetParameter(p));
+						children.Add(Catalog.GetParameter(p));
 
 					switch (op)
 					{
@@ -70,7 +65,7 @@ namespace BlackBoxFunction
 		ConcurrentDictionary<ushort, IEnumerator<Genome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
 		protected IEnumerable<Genome> GenerateFunctioned(ushort id)
 		{
-			var p = GetParameter(id);
+			var p = Catalog.GetParameter(id);
 			foreach (var op in Operators.Available.Operators)
 			{
 				switch (op)
@@ -135,7 +130,6 @@ namespace BlackBoxFunction
 						if (RegisterProduction(genome)) // May be supurfulous.
 							return genome;
 					}
-
 
 					var t = Math.Min(Registry.Count * 2, 100); // A local maximum.
 					do
