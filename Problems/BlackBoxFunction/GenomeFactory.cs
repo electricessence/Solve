@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Collections.Synchronized;
 using Open.Evaluation;
 using Open.Evaluation.ArithmeticOperators;
 using Open.Numeric;
@@ -23,7 +24,7 @@ namespace BlackBoxFunction
 			return Parameters.GetOrAdd(id, k => GetParameter(k));
 		}
 
-		ConcurrentHashSet<int> ParamsOnlyAttempted = new ConcurrentHashSet<int>();
+        ReadWriteSynchronizedHashSet<int> ParamsOnlyAttempted = new ReadWriteSynchronizedHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
 		{
 			return Registration(new Genome(GetParameter(id)));
@@ -140,7 +141,7 @@ namespace BlackBoxFunction
 					do
 					{
 						// NOTE: Let's use expansions here...
-						genome = Mutate(Registry[RegistryOrder.Source.RandomSelectOne()].Value, m);
+						genome = Mutate(Registry[RegistryOrder.Snapshot().RandomSelectOne()].Value, m);
 						hash = genome?.Hash;
 						attempts++;
 						if (hash != null && RegisterProduction(genome))

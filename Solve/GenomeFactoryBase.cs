@@ -4,8 +4,10 @@
  */
 
 using Open.Collections;
+using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Threading;
+using Open.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,17 +24,17 @@ namespace Solve
 		public GenomeFactoryBase()
 		{
 			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
-			RegistryOrder = new ConcurrencyWrapper<string, List<string>>(new List<string>());
-			PreviouslyProduced = new ConcurrentHashSet<string>();
+			RegistryOrder = new ReadWriteSynchronizedList<string>();
+			PreviouslyProduced = new ReadWriteSynchronizedHashSet<string>();
 		}
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry;
 
-		protected readonly ConcurrentHashSet<string> PreviouslyProduced;
+		protected readonly ReadWriteSynchronizedHashSet<string> PreviouslyProduced;
 
-		protected readonly ConcurrencyWrapper<string, List<string>> RegistryOrder;
+		protected readonly ReadWriteSynchronizedList<string> RegistryOrder;
 
 		protected static TGenome AssertFrozen(TGenome genome)
 		{
@@ -91,7 +93,7 @@ namespace Solve
 		public string[] GetAllPreviousGenomesInOrder()
 		{
 
-			return RegistryOrder.ToArray();
+			return RegistryOrder.Snapshot();
 		}
 
 		// Be sure to call Registration within the GenerateOne call.
