@@ -25,14 +25,14 @@ namespace Solve
 		{
 			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
 			RegistryOrder = new ReadWriteSynchronizedList<string>();
-			PreviouslyProduced = new ReadWriteSynchronizedHashSet<string>();
+			PreviouslyProduced = new LockSynchronizedHashSet<string>();
 		}
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry;
 
-		protected readonly ReadWriteSynchronizedHashSet<string> PreviouslyProduced;
+		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced;
 
 		protected readonly ReadWriteSynchronizedList<string> RegistryOrder;
 

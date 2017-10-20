@@ -15,8 +15,8 @@ namespace Solve
 		protected readonly ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>
 			Fitnesses = new ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>();
 
-		protected readonly ReadWriteSynchronizedHashSet<string>
-			Rejects = new ReadWriteSynchronizedHashSet<string>();
+		protected readonly LockSynchronizedHashSet<string>
+			Rejects = new LockSynchronizedHashSet<string>();
 
 
 		static int ProblemCount = 0;
