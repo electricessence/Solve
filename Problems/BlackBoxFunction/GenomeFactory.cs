@@ -153,13 +153,11 @@ namespace BlackBoxFunction
 		}
 
 		public static Genome ApplyClone(
-			Hierarchy.Node<IEvaluate> source,
-			Hierarchy.Node<IEvaluate> gene,
-			Action<Hierarchy.Node<IEvaluate>, Hierarchy.Node<IEvaluate>> handler)
+			Hierarchy.Node<IEvaluate> sourceGene,
+			Action<Hierarchy.Node<IEvaluate>> handler)
 		{
-			var newGenome = source.Clone();
-			var gene = newGenome.Genes[geneIndex];
-			handler(gene, newGenome);
+			var gene = sourceGene.Clone();
+			handler(gene);
 			return newGenome;
 		}
 

@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Collections.Synchronized;
 using Open.Evaluation;
 using Solve;
 using System;
@@ -43,12 +44,12 @@ namespace BlackBoxFunction
 
 		public new Genome Clone()
 		{
-			return new Genome(this.Root);
+			return new Genome(Root);
 		}
 
 		protected override object CloneInternal()
 		{
-			return this.Clone();
+			return Clone();
 		}
 
 		// To avoid memory bloat, we don't retain the hierarchy.
@@ -61,6 +62,7 @@ namespace BlackBoxFunction
 		{
 			if (Root == null)
 				throw new InvalidOperationException("Cannot freeze genome without a root.");
+
 			_hash = Root.ToStringRepresentation();
 		}
 
@@ -114,13 +116,13 @@ namespace BlackBoxFunction
 			_mutationEnumerator = mutations.GetEnumerator();
 		}
 
-		ConcurrentHashSet<string> Expansions = new ConcurrentHashSet<string>();
+		LockSynchronizedHashSet<string> Expansions = new LockSynchronizedHashSet<string>();
 		Lazy<string[]> Expansions_Array;
 		public bool RegisterExpansion(string genomeHash)
 		{
 			var added = Expansions.Add(genomeHash);
 			if (added)
-				Expansions_Array = Lazy.Create(() => Expansions.ToArrayDirect());
+				Expansions_Array = Lazy.Create(() => Expansions.Snapshot());
 			return added;
 		}
 

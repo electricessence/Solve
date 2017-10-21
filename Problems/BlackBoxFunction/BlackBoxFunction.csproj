@@ -6,8 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Collections" Version="2.0.1" />
+    <PackageReference Include="Open.Collections" Version="2.1.1" />
     <PackageReference Include="Open.DateTime.Extensions" Version="1.0.0" />
+    <PackageReference Include="Open.Disposable.ObjectPools" Version="1.2.0" />
     <PackageReference Include="Open.Numeric" Version="1.0.1" />
     <PackageReference Include="Open.Text" Version="1.0.0" />
   </ItemGroup>

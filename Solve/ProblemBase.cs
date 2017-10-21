@@ -92,7 +92,7 @@ namespace Solve
 			genome = GetFitnessForKeyTransform(genome);
 			var key = genome.Hash;
 			GenomeFitness<TGenome, Fitness> result = default(GenomeFitness<TGenome, Fitness>);
-			Rejects.IfNotContains(key, () =>
+			Rejects.IfNotContains(key, hs =>
 			{
 				result = Fitnesses
 					.GetOrAdd(key, k =>
@@ -166,7 +166,7 @@ namespace Solve
 		public IFitness AddToGlobalFitness(TGenome genome, IFitness fitness)
 		{
 			IFitness result = fitness;
-			Rejects.IfNotContains(genome.Hash, () =>
+			Rejects.IfNotContains(genome.Hash, hs =>
 			{
 				var global = GetOrCreateFitnessFor(genome).Fitness;
 				if (global == fitness)

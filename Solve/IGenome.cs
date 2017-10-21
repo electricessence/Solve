@@ -9,7 +9,7 @@ using Open.Cloneable;
 namespace Solve
 {
 
-	public interface IGenome : IFreeze, ICloneable
+	public interface IGenome : IFreezable, ICloneable
 	{
 		string Hash { get; }
 
