@@ -1,7 +1,9 @@
 ﻿using Open.Dataflow;
 using Open.Threading.Tasks;
+using Solve;
 using Solve.Schemes;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -21,7 +23,13 @@ namespace Eater
 
 		static void Main(string[] args)
 		{
+			uint minSamples = 50;
+			Console.Clear();
+			Console.WriteLine("Solving Eater Problem... (miniumum {0} samples before displaying)", minSamples);
+			Console.WriteLine();
+
 			Console.WriteLine("Starting...");
+			Console.SetCursorPosition(0, Console.CursorTop - 1);
 
 			var sc = new SampleCache();
 
@@ -49,7 +57,6 @@ namespace Eater
 				Console.WriteLine();
 			}
 
-
 			var problem = new ProblemFragmented();
 			var scheme = new PyramidPipeline<EaterGenome>(
 				new EaterFactory(),
@@ -61,44 +68,35 @@ namespace Eater
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
-			Action emitStats = () =>
+			Action<SynchronizedConsole.Cursor> emitStats = cursor =>
 			{
-				Console.WriteLine("{0} total time", sw.Elapsed.ToStringVerbose());
+				Console.WriteLine("{0} total time                    ", sw.Elapsed.ToStringVerbose());
 				foreach (var p in scheme.Problems)
 				{
 					var tc = ((Problem)p).TestCount;
 					if (tc != 0)
 					{
-						Console.WriteLine("{0}:\t{1} tests, {2} ticks average", p.ID, sw.ElapsedTicks / tc);
+						Console.WriteLine("{0}:\t{1} tests, {2} ticks average                        ", p.ID, tc, sw.ElapsedTicks / tc);
 					}
 				}
 				Console.WriteLine();
 			};
 
-			if (Seed.Length == 0)
+			SynchronizedConsole.Message lastConsoleStats = null;
 			{
+				var emitter = new ConsoleEmitter(minSamples);
+				Action<KeyValuePair<IProblem<EaterGenome>, EaterGenome>> onNext;
+				if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
+				else onNext = emitter.EmitTopGenomeFullStats;
+
 				scheme
 					.AsObservable()
-					.Subscribe(
-						Problem.EmitTopGenomeStats,
+					.Subscribe(onNext,
 						ex => Console.WriteLine(ex.GetBaseException()),
 						() =>
 						{
 							cancel.Cancel();
-							emitStats();
-						});
-			}
-			else
-			{
-				scheme
-					.AsObservable()
-					.Subscribe(
-						Problem.EmitTopGenomeFullStats,
-						ex => Console.WriteLine(ex.GetBaseException()),
-						() =>
-						{
-							cancel.Cancel();
-							emitStats();
+							SynchronizedConsole.OverwriteIfSame(ref lastConsoleStats, emitStats);
 						});
 			}
 
@@ -108,7 +106,7 @@ namespace Eater
 				while (!cancel.IsCancellationRequested)
 				{
 					await Task.Delay(5000, cancel.Token);
-					emitStats();
+					SynchronizedConsole.OverwriteIfSame(ref lastConsoleStats, emitStats);
 				}
 
 

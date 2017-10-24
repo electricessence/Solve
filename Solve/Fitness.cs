@@ -171,6 +171,26 @@ namespace Solve
 		{
 			return _results[index].Average;
 		}
+
+		public static bool operator >(FitnessScore a, IFitness b)
+		{
+			return a.CompareTo(b) * Fitness.ORDER_DIRECTION == +1;
+		}
+
+		public static bool operator <(FitnessScore a, IFitness b)
+		{
+			return a.CompareTo(b) * Fitness.ORDER_DIRECTION == -1;
+		}
+
+		public static bool operator >=(FitnessScore a, IFitness b)
+		{
+			return a.CompareTo(b) * Fitness.ORDER_DIRECTION >= 0;
+		}
+
+		public static bool operator <=(FitnessScore a, IFitness b)
+		{
+			return a.CompareTo(b) * Fitness.ORDER_DIRECTION <= 0;
+		}
 	}
 	
 	public class Fitness : TrackedList<SingleFitness>, IFitness
@@ -179,6 +199,14 @@ namespace Solve
 		public Fitness() //: base(new AsyncReadWriteModificationSynchronizer())
 		{
 			ID = Interlocked.Increment(ref FitnessCount);
+		}
+
+		public Fitness(IEnumerable<ProcedureResult> initial)
+			: this()
+		{
+			// No synchronization needed.
+			foreach (var i in initial)
+				_source.Add(new SingleFitness(i));
 		}
 
 		public int SampleCount
@@ -329,7 +357,7 @@ namespace Solve
 			throw new Exception("Impossible? Interlocked failed?");
 
 		}
-
+		
 		public static int ValueComparison(IFitness x, IFitness y)
 		{
 			if (x == y) return 0;

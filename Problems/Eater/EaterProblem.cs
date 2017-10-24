@@ -36,62 +36,7 @@ namespace Eater
 			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
 		}
 
-		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);
-
-		static readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests = new ConcurrentDictionary<string, ProcedureResult[]>();
-
-		public static double LastScore = double.MaxValue;
-
-		public static void EmitTopGenomeFullStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
-		{
-			var p = kvp.Key;
-			var genome = kvp.Value;
-			var fitness = p.GetFitnessFor(genome).Value.Fitness;
-			var result = FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key));
-
-			var asReduced = genome.AsReduced();
-			if (asReduced == genome)
-				Console.WriteLine("{0}:\t{1}", p.ID, genome.Hash);
-			else
-				Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
-
-			Console.WriteLine("  \t[{0}] ({1} samples)", fitness.Scores.JoinToString(","), fitness.SampleCount);
-			Console.WriteLine("  \t[{0}] ({1} samples)", result[1].Average, result[1].Count);
-			Console.WriteLine();
-
-			if (LastScore > result[1].Average)
-			{
-				LastScore = result[1].Average;
-				Console.WriteLine("New winner ^^^.");
-				Console.ReadKey();
-			}
-		}
-
-		public static void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
-		{
-			var p = kvp.Key;
-			var genome = kvp.Value;
-			var fitness = p.GetFitnessFor(genome).Value.Fitness;
-
-			var asReduced = genome.AsReduced();
-			if (asReduced == genome)
-				Console.WriteLine("{0}:\t{1}", p.ID, genome.Hash);
-			else
-				Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
-
-
-			var scoreStrings = new List<string>();
-			var scores = fitness.Scores.ToArray();
-			var len = scores.Length;
-			for (var i = 0; i < len; i++)
-			{
-				scoreStrings.Add(String.Format(ProblemFragmented.FitnessLabels[i], scores[i]));
-			}
-
-			Console.WriteLine("  \t{0} ({1} samples)", scoreStrings.JoinToString(", "), fitness.SampleCount);
-			Console.WriteLine();
-		}
-
+		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);		
 	}
 
 	public sealed class ProblemFragmented : Problem
@@ -130,7 +75,7 @@ namespace Eater
 		}
 
 		public static readonly IReadOnlyList<string> FitnessLabels
-			= (new List<string> { "Found {0:p}", "Average-Energy {0:0.000}", "Hash-Length {0}" }).AsReadOnly();
+			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:0.000}", "Hash-Length {0}" }).AsReadOnly();
 	}
 
 
