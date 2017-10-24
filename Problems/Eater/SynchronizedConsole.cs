@@ -98,10 +98,9 @@ namespace Eater
 				}
 				catch (Exception ex)
 				{
-					var color = Console.ForegroundColor;
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine(ex.ToString());
-					Console.ForegroundColor = color;
+					Console.ResetColor();
 					throw ex;
 				}
 				message = new Message(start, Cursor.Current);
@@ -146,10 +145,9 @@ namespace Eater
 				}
 				catch (Exception ex)
 				{
-					var color = Console.ForegroundColor;
 					Console.ForegroundColor = ConsoleColor.Red;
 					Console.WriteLine(ex.ToString());
-					Console.ForegroundColor = color;
+					Console.ResetColor();
 					throw ex;
 				}
 				message = new Message(start, Cursor.Current);

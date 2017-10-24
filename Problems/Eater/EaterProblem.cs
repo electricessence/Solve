@@ -75,7 +75,7 @@ namespace Eater
 		}
 
 		public static readonly IReadOnlyList<string> FitnessLabels
-			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:0.000}", "Hash-Length {0}" }).AsReadOnly();
+			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Hash-Length {0:n0}" }).AsReadOnly();
 	}
 
 

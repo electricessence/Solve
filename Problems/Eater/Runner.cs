@@ -24,8 +24,9 @@ namespace Eater
 		static void Main(string[] args)
 		{
 			uint minSamples = 50;
+			Console.ResetColor();
 			Console.Clear();
-			Console.WriteLine("Solving Eater Problem... (miniumum {0} samples before displaying)", minSamples);
+			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);
 			Console.WriteLine();
 
 			Console.WriteLine("Starting...");
@@ -40,12 +41,12 @@ namespace Eater
 
 				if (i == 0)
 				{
-					Console.WriteLine("Total possibilities: {0}", result[1].Count);
+					Console.WriteLine("Total possibilities: {0:n0}", result[1].Count);
 					Console.WriteLine();
 				}
 
 				Console.WriteLine("{0}: {1}", i, genome);
-				Console.WriteLine("{0} length, {1} average energy", genome.Length, result[1].Average);
+				Console.WriteLine("{0:n0} length, {1:n0} average energy", genome.Length, result[1].Average);
 				Console.WriteLine();
 			}
 
@@ -76,7 +77,7 @@ namespace Eater
 					var tc = ((Problem)p).TestCount;
 					if (tc != 0)
 					{
-						Console.WriteLine("{0}:\t{1} tests, {2} ticks average                        ", p.ID, tc, sw.ElapsedTicks / tc);
+						Console.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, sw.ElapsedTicks / tc);
 					}
 				}
 				Console.WriteLine();

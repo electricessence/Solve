@@ -80,7 +80,7 @@ namespace Eater
 				scoreStrings.Add(String.Format(ProblemFragmented.FitnessLabels[i], scores[i]));
 			}
 
-			Console.WriteLine("  \t{0} ({1} samples)", scoreStrings.JoinToString(", "), fitness.SampleCount);
+			Console.WriteLine("  \t{0} ({1:n0} samples)", scoreStrings.JoinToString(", "), fitness.SampleCount);
 		}
 
 	}
