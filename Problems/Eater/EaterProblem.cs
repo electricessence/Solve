@@ -11,6 +11,7 @@ using Solve;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Open.Numeric;
+using System.Linq;
 
 namespace Eater
 {
@@ -78,7 +79,16 @@ namespace Eater
 			else
 				Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
 
-			Console.WriteLine("  \t[{0}] ({1} samples)", fitness.Scores.JoinToString(","), fitness.SampleCount);
+
+			var scoreStrings = new List<string>();
+			var scores = fitness.Scores.ToArray();
+			var len = scores.Length;
+			for (var i = 0; i < len; i++)
+			{
+				scoreStrings.Add(String.Format(ProblemFragmented.FitnessLabels[i], scores[i]));
+			}
+
+			Console.WriteLine("  \t{0} ({1} samples)", scoreStrings.JoinToString(", "), fitness.SampleCount);
 			Console.WriteLine();
 		}
 
@@ -115,9 +125,12 @@ namespace Eater
 			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
 			var ave = energy / len;
-			var hlen = g.Hash.Length;
+			var hlen = g.AsReduced().Hash.Length;
 			fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
 		}
+
+		public static readonly IReadOnlyList<string> FitnessLabels
+			= (new List<string> { "Found {0:p}", "Average-Energy {0:0.000}", "Hash-Length {0}" }).AsReadOnly();
 	}
 
 

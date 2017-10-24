@@ -3,6 +3,7 @@ using Open.Collections.Synchronized;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -152,7 +153,8 @@ namespace Solve
 			}
 		}
 
-		public void AddToGlobalFitness<T>(IEnumerable<T> results) where T : IGenomeFitness<TGenome>
+		public void AddToGlobalFitness<T>(IEnumerable<T> results)
+			where T : IGenomeFitness<TGenome>
 		{
 			foreach (var r in results)
 				AddToGlobalFitness(r);
@@ -174,7 +176,7 @@ namespace Solve
 				global.Merge(fitness);
 				result = global.SnapShot();
 			});
-			return fitness;
+			return result;
 		}
 
 		public int GetSampleCountFor(TGenome genome)

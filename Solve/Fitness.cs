@@ -1,5 +1,4 @@
 using Nito.AsyncEx;
-using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Numeric.Precision;
@@ -12,19 +11,21 @@ using System.Threading;
 
 namespace Solve
 {
-
+	[DebuggerDisplay("Sum = {_result.Sum}, Count = {_result.Count}, Average = {_result.Average}")]
 	public class SingleFitness : IComparable<SingleFitness>
 	{
 		public readonly double MaxScore;
 		ProcedureResult _result;
 		object _sync = new Object();
-		public SingleFitness(IEnumerable<double> scores = null, double maxScore = 1) : this(new ProcedureResult(0, 0), maxScore)
+		public SingleFitness(IEnumerable<double> scores = null, double maxScore = 1)
+			: this(new ProcedureResult(0, 0), maxScore)
 		{
 			if (scores != null)
 				Add(scores);
 		}
 
-		public SingleFitness(ProcedureResult initial, double maxScore = 1) : base()
+		public SingleFitness(ProcedureResult initial, double maxScore = 1)
+			: base()
 		{
 			_result = initial;
 			MaxScore = maxScore;
@@ -112,6 +113,7 @@ namespace Solve
 		double GetScore(int index);
 	}
 
+	[DebuggerDisplay("Count = {_results.Length}")]
 	public struct FitnessScore : IFitness
 	{
 		readonly ProcedureResult[] _results;
@@ -170,7 +172,7 @@ namespace Solve
 			return _results[index].Average;
 		}
 	}
-
+	
 	public class Fitness : TrackedList<SingleFitness>, IFitness
 	{
 
@@ -232,7 +234,6 @@ namespace Solve
 					{
 						this.Add(f = new SingleFitness());
 					}
-
 					f.Add(n);
 					i++;
 				}
@@ -266,7 +267,7 @@ namespace Solve
 		}
 		public void AddScores(params double[] scores)
 		{
-			this.AddTheseScores(scores);
+			AddTheseScores(scores);
 		}
 
 		// Allowing for a rejection count opens the possiblity for a second chance.
