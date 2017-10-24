@@ -93,14 +93,31 @@ namespace Eater
 		protected override EaterGenome MutateInternal(EaterGenome target)
 		{
 			var genes = target.Genes;
+
+			// 1 in 6 chance to append to start. (grow)
+			if (Randomizer.Next(6) == 0) return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
+
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
 			// 1 in 4 chance to remove instead of alter.
 			if (Randomizer.Next(4) == 0) return new EaterGenome(genes.Take(index).Concat(genes.Skip(index + 1)));
 
-			genes[index] = Steps.ALL.Where(s => s != value).RandomSelectOne();
-			return new EaterGenome(genes);
+			var g = Steps.ALL.Where(s => s != value).RandomSelectOne();
+
+			// 1 in 3 chance to 'splice' instead of modify.
+			if (index!=0 && Randomizer.Next(3) == 0)
+			{
+				return new EaterGenome(
+					genes.Take(index)
+						.Concat(Enumerable.Repeat(g, 1))
+						.Concat(genes.Skip(index)));
+			}
+			else
+			{
+				genes[index] = g;
+				return new EaterGenome(genes);
+			}
 		}
 
 		public override IEnumerable<EaterGenome> Expand(EaterGenome genome)
