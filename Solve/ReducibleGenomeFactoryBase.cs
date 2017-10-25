@@ -41,10 +41,11 @@ namespace Solve
 			return base.AttemptNewCrossover(a, b, maxAttempts);
 		}
 
-		public override IEnumerable<TGenome> Expand(TGenome genome)
+		public override IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null)
 		{
-			yield return genome.AsReduced();
-			foreach (var g in base.Expand(genome))
+			yield return AssertFrozen(genome.AsReduced());
+
+			foreach (var g in base.Expand(genome, others))
 				yield return g;
 		}
 

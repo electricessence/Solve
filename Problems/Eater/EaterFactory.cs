@@ -90,26 +90,27 @@ namespace Eater
 			};
 		}
 
+		static IEnumerable<T> Remove<T>(int index, T[] source)
+		{
+			return source.Take(index).Concat(source.Skip(index + 1));
+		}
+
 		protected override EaterGenome MutateInternal(EaterGenome target)
 		{
 			var genes = target.Genes;
-
-			// 1 in 8 chance to append to start. (grow)
-			if (Randomizer.Next(8) == 0) return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
-
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
 			var stepCount = Steps.ALL.Count;
 			// 1 in 4 chance to remove instead of alter.
 			var i = Randomizer.Next(genes.Length > 3 ? stepCount + 1 : stepCount);
-			if(i==stepCount)
-				return new EaterGenome(genes.Take(index).Concat(genes.Skip(index + 1)));
+			if (i == stepCount)
+				return new EaterGenome(Remove(index, genes));
 
 			var g = Steps.ALL[i];
 
 			// 50/50 chance to 'splice' instead of modify.
-			if (index!=0 && Randomizer.Next(2) == 0)
+			if (index != 0 && Randomizer.Next(2) == 0)
 			{
 				return new EaterGenome(
 					genes.Take(index)
@@ -123,16 +124,21 @@ namespace Eater
 			}
 		}
 
-		public override IEnumerable<EaterGenome> Expand(EaterGenome genome)
+		protected IEnumerable<EaterGenome> ExpandInternal(EaterGenome genome)
 		{
-			var genes = genome.AsReduced().Genes;
+			var genes = AssertFrozen(genome.AsReduced()).Genes;
+
 			var len = genes.Length - 1;
-			if (len > 1)
-			{
-				yield return new EaterGenome(genes.Take(len));
-			}
-			foreach (var g in base.Expand(genome))
-				yield return g;
+			if (len > 1) yield return new EaterGenome(genes.Take(len));
+
+			if (len > 1) yield return new EaterGenome(genes.Skip(1));
+
+			yield return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
+		}
+
+		public override IEnumerable<EaterGenome> Expand(EaterGenome genome, IEnumerable<EaterGenome> others = null)
+		{
+			return base.Expand(genome, others == null ? ExpandInternal(genome) : others.Concat(ExpandInternal(genome)));
 		}
 
 	}

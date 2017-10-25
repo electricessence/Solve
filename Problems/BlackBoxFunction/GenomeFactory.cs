@@ -460,22 +460,22 @@ namespace BlackBoxFunction
 			return null;
 		}
 
-
-		public override IEnumerable<Genome> Expand(Genome genome)
+		protected IEnumerable<Genome> ExpandInternal(Genome genome)
 		{
-			// Calling AsReduced will cut down on unnecessary retries of existing formulas.
 			var r = genome.AsReduced();
 			Debug.Assert(r != null);
 			if (r != null && r != genome)
 			{
-				yield return AssertFrozen(r);
 				var v = (Genome)r.NextVariation();
 				if (v != null) yield return AssertFrozen(v.AsReduced());
 				var m = (Genome)r.NextMutation();
 				if (m != null) yield return AssertFrozen(m.AsReduced());
 			}
-			foreach (var e in base.Expand(genome))
-				yield return e; // Assertion happens in base.
+		}
+
+		public override IEnumerable<Genome> Expand(Genome genome, IEnumerable<Genome> others = null)
+		{
+			return base.Expand(genome, ExpandInternal(genome));
 		}
 	}
 }

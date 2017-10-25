@@ -16,14 +16,14 @@ namespace Eater
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]
 		{
-			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^<^^^>^^^^^>^^>^^^^^^^^^^^<^^>>^^^^^^>^>^>^>^^>^^^>^^^>^^^^^^>^>^^^^>^^^^^>^^^^^^^^^^^^>^^^^>^<^<^>^^",
-			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
+			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
 		static void Main(string[] args)
 		{
-			uint minSamples = 50;
+			uint minSamples = Seed.Length==0 ? 50u : 0u;
+			var emitter = new ConsoleEmitter(minSamples);
 			Console.ResetColor();
 			Console.Clear();
 			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);
@@ -33,39 +33,41 @@ namespace Eater
 			Console.SetCursorPosition(0, Console.CursorTop - 1);
 
 			var sc = new SampleCache();
+			var factory = new EaterFactory();
+			var problem = new ProblemFragmented();
 
+			var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
 			for (var i = 0; i < Seed.Length; i++)
 			{
-				var genome = Seed[i];
+				var genome = seeds[i];
 				var result = sc.TestAll(genome);
 
 				if (i == 0)
 				{
 					Console.WriteLine("Total possibilities: {0:n0}", result[1].Count);
 					Console.WriteLine();
+					Console.WriteLine("Seeded solutions............................");
+					Console.WriteLine();
 				}
 
-				Console.WriteLine("{0}: {1}", i, genome);
-				Console.WriteLine("{0:n0} length, {1:n0} average energy", genome.Length, result[1].Average);
+				emitter.EmitTopGenomeFullStats(problem, genome);
 				Console.WriteLine();
 			}
 
 			if (Seed.Length != 0)
 			{
-				Console.WriteLine("Press any key to continue.");
-				Console.ReadKey();
+				Console.WriteLine("............................................");
 				Console.WriteLine();
 				Console.WriteLine();
 			}
 
-			var problem = new ProblemFragmented();
 			var scheme = new PyramidPipeline<EaterGenome>(
-				new EaterFactory(),
+				factory,
 				20, 4, 2, 200);
 
 			scheme.AddProblem(problem);
 			//scheme.AddProblem(new ProblemFullTest());
-			scheme.AddSeeds(Seed.Select(s => new EaterGenome(s)));
+			scheme.AddSeeds(seeds);
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
@@ -85,7 +87,6 @@ namespace Eater
 
 			SynchronizedConsole.Message lastConsoleStats = null;
 			{
-				var emitter = new ConsoleEmitter(minSamples);
 				Action<KeyValuePair<IProblem<EaterGenome>, EaterGenome>> onNext;
 				if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
 				else onNext = emitter.EmitTopGenomeFullStats;

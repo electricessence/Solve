@@ -342,8 +342,14 @@ namespace Solve
 			return null;
 		}
 
-		public virtual IEnumerable<TGenome> Expand(TGenome genome)
+		public virtual IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null)
 		{
+			if(others!=null)
+			{
+				foreach (var o in others)
+					yield return o;
+			}
+
 			//var variation = (TGenome)genome.NextVariation();
 			//if (variation != null) yield return AssertFrozen(variation);
 			Debug.Assert(genome.Hash.Length != 0, "Cannot expand an empty genome.");

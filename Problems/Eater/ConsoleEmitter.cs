@@ -26,34 +26,37 @@ namespace Eater
 
 		public void EmitTopGenomeFullStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
 		{
-			var genome = kvp.Value;
-			var result = new Fitness(FullTests.GetOrAdd(genome.Hash, key => Problem.Samples.TestAll(key))).SnapShot();
+			EmitTopGenomeFullStats(kvp.Key, kvp.Value);
+		}
 
-			ThreadSafety.LockConditional(
-				SynchronizedConsole.Sync,
-				() => !LastScore.HasValue || LastScore.Value < result || LastHash == genome.Hash,
-				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
-					cursor =>
-					{
-						var ls = LastScore;
-
-						EmitTopGenomeStats(kvp);
-						LastScore = result;
-
-						if (ls.HasValue && ls.Value < result) Console.WriteLine("New winner ^^^.");
-					}));
+		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
+		{
+			EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Problem.Samples.TestAll(key))));
 		}
 
 		public void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
 		{
-			var p = kvp.Key;
-			var genome = kvp.Value;
-			var fitness = p.GetFitnessFor(genome).Value.Fitness.SnapShot();
+			EmitTopGenomeStatsInternal(kvp.Key, kvp.Value);
+		}
+
+		public void EmitTopGenomeStats(IProblem<EaterGenome> p, EaterGenome genome)
+		{
+			EmitTopGenomeStatsInternal(p,genome);
+		}
+
+		protected bool EmitTopGenomeStatsInternal(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp, IFitness fitness = null)
+		{
+			return EmitTopGenomeStatsInternal(KeyValuePair.Create( kvp.Key, kvp.Value ));
+		}
+
+		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness = null)
+		{
+			var f = (fitness ?? p.GetFitnessFor(genome).Value.Fitness).SnapShot();
 
 			var asReduced = genome.AsReduced();
-			ThreadSafety.LockConditional(
+			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => fitness.SampleCount > SampleMinimum && (!LastScore.HasValue || LastScore.Value.Count < fitness.Count || LastScore.Value < fitness || LastHash == genome.Hash),
+				() => f.SampleCount > SampleMinimum && (!LastScore.HasValue || LastScore.Value < f || LastHash == genome.Hash),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{
@@ -62,10 +65,10 @@ namespace Eater
 						else
 							Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
 
-						EmitFitnessScoreWithLabels(fitness);
+						EmitFitnessScoreWithLabels(f);
 						Console.WriteLine();
 
-						LastScore = fitness.SnapShot();
+						LastScore = f;
 						LastHash = genome.Hash;
 					}));
 		}

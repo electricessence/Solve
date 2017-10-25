@@ -427,7 +427,7 @@ namespace Solve
 
 		public static FitnessScore SnapShot(this IFitness fitness)
 		{
-			return new FitnessScore(fitness);
+			return fitness is FitnessScore f ? f : new FitnessScore(fitness);
 		}
 
 		public static Fitness Merge(this IEnumerable<IFitness> fitnesses)

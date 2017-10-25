@@ -38,6 +38,6 @@ namespace Solve
 
 		TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3);
 
-		IEnumerable<TGenome> Expand(TGenome genome);
+		IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null);
 	}
 }

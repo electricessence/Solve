@@ -284,12 +284,14 @@ namespace Solve.Schemes
 		public void AddSeed(TGenome genome)
 		{
 			FinalistPool.Post(genome);
+			if (genome.Hash.Length != 0)
+				Breeders.SendAsync(genome);
 		}
 
 		public void AddSeeds(IEnumerable<TGenome> genomes)
 		{
 			foreach (var g in genomes)
-				FinalistPool.Post(g);
+				AddSeed(g);
 		}
 
 		protected override Task StartInternal()
