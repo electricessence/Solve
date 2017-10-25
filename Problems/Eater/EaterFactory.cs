@@ -94,19 +94,22 @@ namespace Eater
 		{
 			var genes = target.Genes;
 
-			// 1 in 6 chance to append to start. (grow)
-			if (Randomizer.Next(6) == 0) return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
+			// 1 in 8 chance to append to start. (grow)
+			if (Randomizer.Next(8) == 0) return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
 
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
+			var stepCount = Steps.ALL.Count;
 			// 1 in 4 chance to remove instead of alter.
-			if (Randomizer.Next(4) == 0) return new EaterGenome(genes.Take(index).Concat(genes.Skip(index + 1)));
+			var i = Randomizer.Next(genes.Length > 3 ? stepCount + 1 : stepCount);
+			if(i==stepCount)
+				return new EaterGenome(genes.Take(index).Concat(genes.Skip(index + 1)));
 
-			var g = Steps.ALL.Where(s => s != value).RandomSelectOne();
+			var g = Steps.ALL[i];
 
-			// 1 in 3 chance to 'splice' instead of modify.
-			if (index!=0 && Randomizer.Next(3) == 0)
+			// 50/50 chance to 'splice' instead of modify.
+			if (index!=0 && Randomizer.Next(2) == 0)
 			{
 				return new EaterGenome(
 					genes.Take(index)

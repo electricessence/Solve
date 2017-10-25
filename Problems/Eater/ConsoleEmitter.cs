@@ -31,7 +31,7 @@ namespace Eater
 
 			ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => !LastScore.HasValue || LastScore.Value < result,
+				() => !LastScore.HasValue || LastScore.Value < result || LastHash == genome.Hash,
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{
@@ -53,7 +53,7 @@ namespace Eater
 			var asReduced = genome.AsReduced();
 			ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => fitness.SampleCount > SampleMinimum && (!LastScore.HasValue || LastScore.Value.Count < fitness.Count || LastScore.Value < fitness),
+				() => fitness.SampleCount > SampleMinimum && (!LastScore.HasValue || LastScore.Value.Count < fitness.Count || LastScore.Value < fitness || LastHash == genome.Hash),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{
