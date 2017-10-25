@@ -52,12 +52,6 @@ namespace BlackBoxFunction
 			return Clone();
 		}
 
-		// To avoid memory bloat, we don't retain the hierarchy.
-		public Hierarchy.Node<IGene> GetGeneHierarchy()
-		{
-			return Hierarchy.Get<IGene,IGene>(Root);
-		}
-
 		protected override void OnBeforeFreeze()
 		{
 			if (Root == null)
