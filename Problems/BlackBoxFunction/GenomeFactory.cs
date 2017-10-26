@@ -153,13 +153,6 @@ namespace BlackBoxFunction
 
 		}
 
-
-		public static class MutationCatalog
-		{
-			
-
-		}
-
 		protected IEnumerable<Genome> GenerateVariationsUnfiltered(Genome source)
 		{
 			var sourceTree = source.GetGeneHierarchy();
@@ -431,8 +424,8 @@ namespace BlackBoxFunction
 			// Avoid inbreeding. :P
 			if (a.AsReduced().Hash == b.AsReduced().Hash) return null;
 
-			var aRoot = a.GetGeneHierarchy();
-			var bRoot = a.GetGeneHierarchy();
+			var aRoot = Catalog.Factory.Map(a);
+			var bRoot = Catalog.Factory.Map(b);
 			var aGeneNodes = aRoot.GetNodes().ToArray();
 			var bGeneNodes = bRoot.GetNodes().ToArray();
 			var aLen = aGeneNodes.Length;
