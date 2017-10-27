@@ -1,15 +1,15 @@
 ﻿using Open.Collections;
 using Open.Collections.Synchronized;
-using Open.Evaluation;
 using Solve;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using IGene = Open.Evaluation.IEvaluate<double>;
+using IHaveRoot = Open.Evaluation.Hierarchy.IHaveRoot<Open.Evaluation.IEvaluate<double>>;
 
 namespace BlackBoxFunction
 {
-	public sealed class Genome : ReducibleGenomeBase<Genome>
+	public sealed class Genome : ReducibleGenomeBase<Genome>, IHaveRoot
 	{
 		public Genome(IGene root) : base()
 		{
