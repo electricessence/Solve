@@ -2,7 +2,7 @@
 using Open.Collections.Synchronized;
 using Open.Evaluation;
 using Open.Evaluation.ArithmeticOperators;
-using Open.Evaluation.Hierarchy;
+using Open.Hierarchy;
 using Open.Numeric;
 using System;
 using System.Collections.Concurrent;
@@ -12,6 +12,7 @@ using System.Linq;
 using IFunction = Open.Evaluation.IFunction<double>;
 using IGene = Open.Evaluation.IEvaluate<double>;
 using IOperator = Open.Evaluation.IOperator<Open.Evaluation.IEvaluate<double>, double>;
+using EvaluationRegistry = Open.Evaluation.Registry;
 
 namespace BlackBoxFunction
 {
@@ -44,7 +45,7 @@ namespace BlackBoxFunction
 
 			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{
-				foreach (var op in Operators.Available.Operators)
+				foreach (var op in EvaluationRegistry.Arithmetic.Operators)
 				{
 					var children = new List<IGene>();
 					foreach (var p in combination)
@@ -67,7 +68,7 @@ namespace BlackBoxFunction
 		protected IEnumerable<Genome> GenerateFunctioned(ushort id)
 		{
 			var p = Catalog.GetParameter(id);
-			foreach (var op in Operators.Available.Operators)
+			foreach (var op in EvaluationRegistry.Arithmetic.Functions)
 			{
 				switch (op)
 				{
@@ -77,7 +78,6 @@ namespace BlackBoxFunction
 						break;
 				}
 			}
-
 		}
 
 
@@ -155,7 +155,7 @@ namespace BlackBoxFunction
 
 		protected IEnumerable<Genome> GenerateVariationsUnfiltered(Genome source)
 		{
-			var sourceTree = source.GetGeneHierarchy();
+			var sourceTree = Catalog.Factory.Map(source.Root);
 			var sourceNodes = sourceTree.GetNodes().ToArray();
 			var count = sourceNodes.Length;
 
@@ -266,13 +266,14 @@ namespace BlackBoxFunction
 			 * 3) Adding an operator and a parameter node.
 			 * 4) Removing a node from an operation.
 			 * 5) Removing an operation.
-			 * 6) Removing a function. */
+			 * 6) Removing a function.
+			 */
 
-			var genes = target.GetGeneHierarchy();
+			var genes = Catalog.Factory.Map(target.Root);
 
 			while (genes.Any())
 			{
-				var gene = genes.RandomSelectOne();
+				var gene = genes.GetNodes().ToArray().RandomSelectOne();
 				var gv = gene.Value;
 				if (gv is Constant)
 				{
@@ -424,8 +425,8 @@ namespace BlackBoxFunction
 			// Avoid inbreeding. :P
 			if (a.AsReduced().Hash == b.AsReduced().Hash) return null;
 
-			var aRoot = Catalog.Factory.Map(a);
-			var bRoot = Catalog.Factory.Map(b);
+			var aRoot = Catalog.Factory.Map(a.Root);
+			var bRoot = Catalog.Factory.Map(b.Root);
 			var aGeneNodes = aRoot.GetNodes().ToArray();
 			var bGeneNodes = bRoot.GetNodes().ToArray();
 			var aLen = aGeneNodes.Length;

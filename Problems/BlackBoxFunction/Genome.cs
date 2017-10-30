@@ -1,15 +1,15 @@
 ﻿using Open.Collections;
 using Open.Collections.Synchronized;
+using Open.Hierarchy;
 using Solve;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using IGene = Open.Evaluation.IEvaluate<double>;
-using IHaveRoot = Open.Evaluation.Hierarchy.IHaveRoot<Open.Evaluation.IEvaluate<double>>;
 
 namespace BlackBoxFunction
 {
-	public sealed class Genome : ReducibleGenomeBase<Genome>, IHaveRoot
+	public sealed class Genome : ReducibleGenomeBase<Genome>, IHaveRoot<IGene>
 	{
 		public Genome(IGene root) : base()
 		{
@@ -21,6 +21,8 @@ namespace BlackBoxFunction
 			get;
 			private set;
 		}
+
+		object IHaveRoot.Root => Root;
 
 		bool SetRoot(IGene root)
 		{
@@ -76,8 +78,9 @@ namespace BlackBoxFunction
 		{
 			var source = _variations;
 			if (source == null) return null;
-			var e = LazyInitializer.EnsureInitialized(ref _variationEnumerator, () => source.GetEnumerator());
-            e.ConcurrentTryMoveNext(out IGenome result);
+			LazyInitializer.EnsureInitialized(
+				ref _variationEnumerator, source.GetEnumerator)
+				.ConcurrentTryMoveNext(out IGenome result);
             return result;
 		}
 
@@ -99,7 +102,7 @@ namespace BlackBoxFunction
 				return _variations;
 			}
 		}
-		
+
 		internal void RegisterVariations(IEnumerable<Genome> variations)
 		{
 			_variations = variations.Memoize();

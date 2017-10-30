@@ -1,3 +1,6 @@
 [submodule "Open.Evaluation"]
 	path = Open.Evaluation
 	url = https://github.com/electricessence/Open.Evaluation.git
+[submodule "Open.Hierarchy"]
+	path = Open.Hierarchy
+	url = https://github.com/electricessence/Open.Hierarchy.git

@@ -1,13 +1,9 @@
-﻿using Open;
-using Open.Dataflow;
-using Open.Threading;
+﻿using Open.Dataflow;
 using Open.Threading.Tasks;
 using Solve.Schemes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
