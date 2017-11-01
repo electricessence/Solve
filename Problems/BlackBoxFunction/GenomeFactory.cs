@@ -1,7 +1,7 @@
 ﻿using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Evaluation;
-using Open.Evaluation.ArithmeticOperators;
+using Open.Evaluation.Arithmetic;
 using Open.Hierarchy;
 using Open.Numeric;
 using System;
