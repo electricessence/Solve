@@ -5,7 +5,7 @@ using Solve;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using IGene = Open.Evaluation.IEvaluate<double>;
+using IGene = Open.Evaluation.Core.IEvaluate<double>;
 
 namespace BlackBoxFunction
 {

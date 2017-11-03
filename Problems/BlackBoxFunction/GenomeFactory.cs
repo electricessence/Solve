@@ -2,6 +2,7 @@
 using Open.Collections.Synchronized;
 using Open.Evaluation;
 using Open.Evaluation.Arithmetic;
+using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
 using System;
@@ -9,15 +10,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using IFunction = Open.Evaluation.IFunction<double>;
-using IGene = Open.Evaluation.IEvaluate<double>;
-using IOperator = Open.Evaluation.IOperator<Open.Evaluation.IEvaluate<double>, double>;
 using EvaluationRegistry = Open.Evaluation.Registry;
+using IFunction = Open.Evaluation.Core.IFunction<double>;
+using IGene = Open.Evaluation.Core.IEvaluate<double>;
+using IOperator = Open.Evaluation.Core.IOperator<Open.Evaluation.Core.IEvaluate<double>, double>;
 
 namespace BlackBoxFunction
 {
 
-    public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
+	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
 		Catalog<IGene> Catalog = new Catalog<IGene>();
 
