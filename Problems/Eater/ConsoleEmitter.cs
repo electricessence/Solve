@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Eater
 {
@@ -46,7 +47,7 @@ namespace Eater
 
 		protected bool EmitTopGenomeStatsInternal(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp, IFitness fitness = null)
 		{
-			return EmitTopGenomeStatsInternal(KeyValuePair.Create( kvp.Key, kvp.Value ));
+			return EmitTopGenomeStatsInternal(KVP.Create( kvp.Key, kvp.Value ));
 		}
 
 		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness = null)

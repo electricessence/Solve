@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -98,7 +99,7 @@ namespace Solve.Schemes
 							.OrderByDescending(g => g.Key).First()
 							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First().Genome;
 
-						TopGenomeFiltered.Post(KeyValuePair.Create(p, top));
+						TopGenomeFiltered.Post(KVP.Create(p, top));
 
 						var ac = PoolSize - Pool.Count;
 						if (ac > 0)

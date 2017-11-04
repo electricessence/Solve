@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Collections" Version="2.1.1" />
+    <PackageReference Include="Open.Collections" Version="2.1.2" />
     <PackageReference Include="Open.DateTime.Extensions" Version="1.0.0" />
     <PackageReference Include="Open.Disposable.ObjectPools" Version="1.2.0" />
     <PackageReference Include="Open.Hierarchy" Version="1.0.0" />

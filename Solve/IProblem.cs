@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve
 {
@@ -57,7 +58,7 @@ namespace Solve
 			return Task.WhenAll(
 				problems.Select(p =>
 					p.ProcessTest(genome, sampleId, mergeWithGlobal)
-						.ContinueWith(t => KeyValuePair.Create(p, t.Result))
+						.ContinueWith(t => KVP.Create(p, t.Result))
 				)
 			);
 		}
@@ -79,7 +80,7 @@ namespace Solve
 					Task.WhenAll(
 						genomes.Select(g => p.ProcessTest(g, sampleId, mergeWithGlobal)
 							.ContinueWith(t => new GenomeFitness<TGenome>(g, t.Result))))
-						.ContinueWith(t => KeyValuePair.Create(p, t.Result.Sort()))));
+						.ContinueWith(t => KVP.Create(p, t.Result.Sort()))));
 		}
 
 
@@ -101,7 +102,7 @@ namespace Solve
 						.ContinueWith(t =>
 						{
 							var f = (IFitness)t.Result.Merge();
-							var kvp = KeyValuePair.Create(p, f);
+							var kvp = KVP.Create(p, f);
 							if (mergeWithGlobal) p.AddToGlobalFitness(genome, f);
 							return kvp;
 						})));
@@ -130,7 +131,7 @@ namespace Solve
 							if (mergeWithGlobal) p.AddToGlobalFitness(g, f);
 							return gf;
 						})))
-						.ContinueWith(t => KeyValuePair.Create(p, t.Result.Sort()))));
+						.ContinueWith(t => KVP.Create(p, t.Result.Sort()))));
 		}
 
 

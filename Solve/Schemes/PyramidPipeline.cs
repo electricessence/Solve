@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -138,7 +139,7 @@ namespace Solve.Schemes
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
-								TopGenome.Post(KeyValuePair.Create(problem, top));
+								TopGenome.Post(KVP.Create(problem, top));
 
 								//// Need at least 200 samples to wash out any double precision issues.
 								//Problems.Process(
@@ -160,7 +161,7 @@ namespace Solve.Schemes
 								//				if (first != top)
 								//				{
 								//					Console.WriteLine("Best Variation: " + first + " of " + top);
-								//					TopGenomeFilter.Post(KeyValuePair.Create(problem, first));
+								//					TopGenomeFilter.Post(KVP.Create(problem, first));
 								//				}
 
 								//			}
@@ -171,7 +172,7 @@ namespace Solve.Schemes
 								return true;
 							}
 
-							TopGenomeFilter.Post(KeyValuePair.Create(problem, top));
+							TopGenomeFilter.Post(KVP.Create(problem, top));
 
 							// You made it all the way back to the top?  Forget about what I said...
 							fitness.RejectionCount = -3; // VIPs get their rejection count augmented so they aren't easily dethroned.

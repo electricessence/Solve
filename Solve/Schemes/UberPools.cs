@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -68,7 +69,7 @@ namespace Solve.Schemes
 			TGenome genome;
 			while (source.ConcurrentTryMoveNext(out genome)) // Using a loop instead of recursion.
 			{
-				results = ProblemsInternal.Select(p => KeyValuePair.Create(p, new Fitness())).ToArray();
+				results = ProblemsInternal.Select(p => KVP.Create(p, new Fitness())).ToArray();
 
 				for (var i = 0; i < samples; i++)
 				{
@@ -86,7 +87,7 @@ namespace Solve.Schemes
 
 			if (genome == null) return null;
 
-			return KeyValuePair.Create(genome, results);
+			return KVP.Create(genome, results);
 		}
 
 		KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[] NextContender(
@@ -94,7 +95,7 @@ namespace Solve.Schemes
 		{
 			// Transform...
 			return pool
-				.SelectMany(e => e.Value.Select(v => KeyValuePair.Create(v.Key, new GenomeFitness<TGenome>(e.Key, v.Value))))
+				.SelectMany(e => e.Value.Select(v => KVP.Create(v.Key, new GenomeFitness<TGenome>(e.Key, v.Value))))
 				.GroupBy(g => g.Key)
 				.Select(e => e.OrderBy(f => f.Value, GenomeFitness.Comparer<TGenome>.Instance).First())
 				.ToArray();

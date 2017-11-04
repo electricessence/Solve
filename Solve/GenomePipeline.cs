@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve
 {
@@ -62,7 +63,7 @@ namespace Solve
 				async problems =>
 					(await Task.WhenAll(problems.Select(
 						async kvp =>
-						KeyValuePair.Create(
+						KVP.Create(
 							kvp.Key,
 							await Task.WhenAll(kvp.Value).ContinueWith(t =>
 						{
