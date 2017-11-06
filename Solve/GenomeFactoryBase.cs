@@ -43,13 +43,31 @@ namespace Solve
 			return genome;
 		}
 
-		protected bool Register(TGenome genome, out TGenome actual, Action<string> onBeforeAdd = null)
+		protected bool Register(string genomeHash, Func<TGenome> factory, out TGenome actual, Action<TGenome> onBeforeAdd = null)
+		{
+			var added = false;
+			actual = Registry.GetOrAdd(genomeHash, hash => Lazy.Create(() =>
+			{
+				added = true;
+				var genome = factory();
+				Debug.Assert(genome.Hash == hash);
+				onBeforeAdd(genome);
+				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
+				RegistryOrder.Add(hash);
+				return genome;
+			})).Value;
+
+			return added;
+		}
+
+		protected bool Register(TGenome genome, out TGenome actual, Action<TGenome> onBeforeAdd = null)
 		{
 			var added = false;
 			actual = Registry.GetOrAdd(genome.Hash, hash => Lazy.Create(() =>
 			{
 				added = true;
-				onBeforeAdd(hash);
+				Debug.Assert(genome.Hash == hash);
+				onBeforeAdd(genome);
 				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
 				RegistryOrder.Add(hash);
 				return genome;

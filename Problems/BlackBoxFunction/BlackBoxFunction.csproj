@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Collections" Version="2.1.2" />
-    <PackageReference Include="Open.DateTime.Extensions" Version="1.0.0" />
+    <PackageReference Include="Open.Collections" Version="2.1.3" />
+    <PackageReference Include="Open.DateTime.Extensions" Version="1.0.3" />
     <PackageReference Include="Open.Disposable.ObjectPools" Version="1.2.0" />
     <PackageReference Include="Open.Hierarchy" Version="1.0.0" />
     <PackageReference Include="Open.Numeric" Version="1.0.5" />
@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Open.Evaluation\Open.Evaluation.csproj" />
+    <ProjectReference Include="..\..\Open.Evaluation\source\Open.Evaluation.csproj" />
     <ProjectReference Include="..\..\Solve\Solve.csproj" />
   </ItemGroup>
 

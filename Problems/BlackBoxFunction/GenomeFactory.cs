@@ -25,7 +25,7 @@ namespace BlackBoxFunction
         LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
 		{
-			return Registration(new Genome(Catalog.GetParameter(id)));
+			return Registration(Catalog.GetParameter(id));
 		}
 
 		static IEnumerable<ushort> UShortRange(ushort start, ushort max)
@@ -46,21 +46,10 @@ namespace BlackBoxFunction
 
 			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{
+				var children = combination.Select(p=> Catalog.GetParameter(p)).ToArray();
 				foreach (var op in EvaluationRegistry.Arithmetic.Operators)
 				{
-					var children = new List<IGene>();
-					foreach (var p in combination)
-						children.Add(Catalog.GetParameter(p));
-
-					switch (op)
-					{
-						case Sum.SYMBOL:
-							yield return Registration(new Genome(new Sum(children)));
-							break;
-						case Product.SYMBOL:
-							yield return Registration(new Genome(new Product(children)));
-							break;
-					}
+					yield return Registration(Catalog.GetOperator<double>(op, children));
 				}
 			}
 		}
@@ -74,8 +63,8 @@ namespace BlackBoxFunction
 				switch (op)
 				{
 					case Exponent.SYMBOL:
-						yield return Registration(new Genome(new Exponent(p, -1)));
-						yield return Registration(new Genome(new Exponent(p, 1 / 2)));
+						yield return Registration(Catalog.GetExponent(p, -1));
+						yield return Registration(Catalog.GetExponent(p, 1 / 2));
 						break;
 				}
 			}
@@ -234,27 +223,35 @@ namespace BlackBoxFunction
 				.Select(g => g.First());
 		}
 
+		void RegisterInternal(Genome target)
+		{
+			target.RegisterVariations(GenerateVariations(target));
+			target.RegisterMutations(Mutate(target));
+
+			var reduced = target.AsReduced();
+			if (reduced != target)
+			{
+				// A little caution here. Some possible evil recursion?
+				var reducedRegistration = Registration(reduced);
+				if (reduced != reducedRegistration)
+					target.ReplaceReduced(reducedRegistration);
+
+				reduced.RegisterExpansion(target.Hash);
+			}
+			target.Freeze();
+		}
+
+		protected Genome Registration(IGene root)
+		{
+			if (root == null) return null;
+			Register(root.ToStringRepresentation(), () => new Genome(root), out Genome target, RegisterInternal);
+			return target;
+		}
+
 		protected override Genome Registration(Genome target)
 		{
 			if (target == null) return null;
-			Register(target, out target, hash =>
-			{
-				Debug.Assert(target.Hash == hash);
-				target.RegisterVariations(GenerateVariations(target));
-				target.RegisterMutations(Mutate(target));
-
-				var reduced = target.AsReduced();
-				if (reduced != target)
-				{
-					// A little caution here. Some possible evil recursion?
-					var reducedRegistration = Registration(reduced);
-					if (reduced != reducedRegistration)
-						target.ReplaceReduced(reducedRegistration);
-
-					reduced.RegisterExpansion(hash);
-				}
-				target.Freeze();
-			});
+			Register(target, out target, RegisterInternal);
 			return target;
 		}
 
