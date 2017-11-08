@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Solve
 {
@@ -10,23 +9,22 @@ namespace Solve
 		protected override TGenome Registration(TGenome target)
 		{
 			if (target == null) return null;
-			Register(target, out target, hash =>
+			Register(target, out target, t =>
 			{
-				Debug.Assert(target.Hash == hash);
 				//target.RegisterVariations(GenerateVariations(target));
 				//target.RegisterMutations(Mutate(target));
 
-				var reduced = target.AsReduced();
-				if (reduced != target)
+				var reduced = t.AsReduced();
+				if (reduced != t)
 				{
 					// A little caution here. Some possible evil recursion?
 					var reducedRegistration = Registration(reduced);
 					if (reduced != reducedRegistration)
-						target.ReplaceReduced(reducedRegistration);
+						t.ReplaceReduced(reducedRegistration);
 
 					//reduced.RegisterExpansion(hash);
 				}
-				target.Freeze();
+				t.Freeze();
 			});
 			return target;
 		}
