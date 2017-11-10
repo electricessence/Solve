@@ -22,7 +22,7 @@ namespace BlackBoxFunction
 	{
 		Catalog<IGene> Catalog = new Catalog<IGene>();
 
-        LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
+		LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
 		{
 			return Registration(Catalog.GetParameter(id));
@@ -46,7 +46,7 @@ namespace BlackBoxFunction
 
 			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{
-				var children = combination.Select(p=> Catalog.GetParameter(p)).ToArray();
+				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
 				foreach (var op in EvaluationRegistry.Arithmetic.Operators)
 				{
 					yield return Registration(Catalog.GetOperator<double>(op, children));
@@ -439,11 +439,18 @@ namespace BlackBoxFunction
 				var others = bGeneNodes.Where(g => g.Value.ToStringRepresentation() != agS).ToArray();
 				if (others.Length != 0)
 				{
+					// Do the swap...
 					var bg = others.RandomSelectOne();
+
+					var placeholder = Catalog.Factory.GetBlankNode();
+					bg.Parent.Replace(bg, placeholder);
+					ag.Parent.Replace(ag, bg);
+					Catalog.Factory.Recycle(placeholder);
+
 					return new Genome[]
 					{
-						Registration(new Genome(aRoot.CloneReplaced(ag,bg).Value)),
-						Registration(new Genome(bRoot.CloneReplaced(bg,ag).Value))
+						Registration(Catalog.FixHierarchy<IGene,double>(aRoot).Value),
+						Registration(Catalog.FixHierarchy<IGene,double>(bRoot).Value)
 					};
 				}
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
