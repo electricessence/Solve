@@ -143,28 +143,32 @@ namespace BlackBoxFunction
 
 		}
 
-		protected IEnumerable<Genome> GenerateVariationsUnfiltered(Genome source)
+		protected IEnumerable<IGene> GenerateVariationsUnfiltered(IGene source)
 		{
-			var sourceTree = Catalog.Factory.Map(source.Root);
-			var sourceNodes = sourceTree.GetNodes().ToArray();
-			var count = sourceNodes.Length;
+			var sourceTree = Catalog.Factory.Map(source);
+			var count = sourceTree.GetDescendants().Count();
 
+			// Remove genes one at a time.
 			for (var i = 0; i < count; i++)
 			{
-				yield return VariationCatalog.RemoveGene(sourceTree, sourceNodes[i]);
+				yield return Catalog.RemoveNode<IGene,double>(
+					Catalog.Factory
+						.Clone(sourceTree)
+						.GetDescendants()
+						.ElementAt(i)
+				).Value;
 			}
 
 
 			// Strip down parameter levels to search for significance.
-			Genome paramRemoved = source;
+			var paramRemoved = sourceTree;
 			while (true)
 			{
-				paramRemoved = paramRemoved.Clone();
+				paramRemoved = Catalog.Factory.Clone( paramRemoved );
 				var root = paramRemoved.Root;
-				var paramGroups = paramRemoved.Genes
-					.OfType<Parameter>()
-					.Where(g => g != root)
-					.GroupBy(g => g.ID)
+				var paramGroups = paramRemoved.GetDescendants()
+					.Where(n=>n.Value is IParameter<double>)
+					.GroupBy(n => ((IParameter<double>)n.Value).ID)
 					.OrderByDescending(g => g.Key)
 					.FirstOrDefault()?.ToArray();
 
@@ -173,19 +177,12 @@ namespace BlackBoxFunction
 
 				foreach (var p in paramGroups)
 				{
-					var parent = paramRemoved.FindParent(p);
-					parent.Remove(p);
+					p.Parent.Remove(p);
 				}
 
-				yield return paramRemoved;
+				yield return Catalog.FixHierarchy<IGene,double>( paramRemoved ).Value;
 			}
 
-
-
-			for (var i = 0; i < count; i++)
-			{
-				yield return VariationCatalog.RemoveGene(source, i);
-			}
 
 			for (var i = 0; i < count; i++)
 			{
