@@ -42,7 +42,7 @@ namespace BlackBoxFunction
 		protected IEnumerable<Genome> GenerateOperated(ushort paramCount = 2)
 		{
 			if (paramCount < 2)
-				throw new ArgumentOutOfRangeException("paramCount", paramCount, "Must have at least 2 parameter count.");
+				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount, "Must have at least 2 parameter count.");
 
 			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{

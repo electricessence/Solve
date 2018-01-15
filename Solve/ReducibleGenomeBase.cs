@@ -42,7 +42,7 @@ namespace Solve
 		public void ReplaceReduced(TThis reduced)
 		{
 			if (reduced == null)
-				throw new ArgumentNullException("reduced");
+				throw new ArgumentNullException(nameof(reduced));
 			if (Reduced != reduced)
 			{
 				if (IsReadOnly && Reduced != null && Reduced.Hash != reduced.Hash)

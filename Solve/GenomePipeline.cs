@@ -112,7 +112,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (size < 1)
-				throw new ArgumentOutOfRangeException("size", size, "Must be at least 1.");
+				throw new ArgumentOutOfRangeException(nameof(size), size, "Must be at least 1.");
 
 			var output = Processor<TGenome>();
 
@@ -184,11 +184,11 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (problems == null)
-				throw new ArgumentNullException("problems");
+				throw new ArgumentNullException(nameof(problems));
 			if (size < 2)
-				throw new ArgumentOutOfRangeException("size", size, "Must be at least 2.");
+				throw new ArgumentOutOfRangeException(nameof(size), size, "Must be at least 2.");
 			if (count < 1)
-				throw new ArgumentOutOfRangeException("count", size, "Must be at least 1.");
+				throw new ArgumentOutOfRangeException(nameof(count), size, "Must be at least 1.");
 
 			var processor = Processor(problems, size);
 			var selector = Selector<TGenome>();
@@ -206,7 +206,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (selected == null)
-				throw new ArgumentNullException("selected");
+				throw new ArgumentNullException(nameof(selected));
 
 			var input = Selector(problems, size)
 				.PropagateFaultsTo(selected, rejected);
@@ -229,7 +229,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (selection == null)
-				throw new ArgumentNullException("selection");
+				throw new ArgumentNullException(nameof(selection));
 
 			var input = Selector(problems, size);
 			input.LinkTo(selection);
@@ -309,11 +309,11 @@ namespace Solve
 			Action<TGenome[]> globalSelectedHandler = null,
 			Action<TGenome[]> globalRejectedHandler = null)
 		{
-			DefaultSource = defaultSource ?? throw new ArgumentNullException("defaultSource");
-			Problems = problems ?? throw new ArgumentNullException("problems");
+			DefaultSource = defaultSource ?? throw new ArgumentNullException(nameof(defaultSource));
+			Problems = problems ?? throw new ArgumentNullException(nameof(problems));
 			PoolSize = poolSize;
 			if (sourceCount < 1)
-				throw new ArgumentOutOfRangeException("sourceCount", sourceCount, "Must be at least 1.");
+				throw new ArgumentOutOfRangeException(nameof(sourceCount), sourceCount, "Must be at least 1.");
 			SourceCount = sourceCount;
 			GlobalSelectedHandler = globalSelectedHandler;
 			GlobalRejectedHandler = globalRejectedHandler;
@@ -322,11 +322,11 @@ namespace Solve
 		public void AddProblem(IProblem<TGenome> problem)
 		{
 			if (problem == null)
-				throw new ArgumentNullException("problem");
+				throw new ArgumentNullException(nameof(problem));
 			lock (Problems)
 			{
 				if (Problems.Contains(problem))
-					throw new ArgumentException("Already registered", "problem");
+					throw new ArgumentException("Already registered", nameof(problem));
 
 				Problems.Add(problem);
 			}
@@ -354,7 +354,7 @@ namespace Solve
 		public ISourceBlock<TGenome> CreateNetwork(uint depth = 1)
 		{
 			if (depth == 0)
-				throw new ArgumentOutOfRangeException("depth", depth, "Must be at least 1.");
+				throw new ArgumentOutOfRangeException(nameof(depth), depth, "Must be at least 1.");
 			if (depth == 1) return Node();
 			if (depth == 2) return CreateNextLevelNode();
 

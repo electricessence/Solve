@@ -45,7 +45,7 @@ namespace Solve
 		public void Add(double value, int count = 1)
 		{
 			if (count < 0)
-				throw new ArgumentOutOfRangeException("count", count, "Count cannot be negative.");
+				throw new ArgumentOutOfRangeException(nameof(count), count, "Count cannot be negative.");
 
 			Debug.Assert(count > 0, "Must add a value greater than zero.");
 			if (count != 0)
@@ -84,7 +84,7 @@ namespace Solve
 		{
 			if (this == other) return 0;
 			if (other == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(other));
 
 			// Check for weird averages that push the values above maximum and adjust.  (Bounce off the barrier.)   See above for debug assertions.
 
@@ -361,8 +361,10 @@ namespace Solve
 		public static int ValueComparison(IFitness x, IFitness y)
 		{
 			if (x == y) return 0;
+			if (x == null)
+				throw new ArgumentNullException(nameof(x));
 			if (y == null)
-				throw new ArgumentNullException("other");
+				throw new ArgumentNullException(nameof(y));
 			int xLen = x.Count, yLen = y.Count;
 			if (xLen != 0 || yLen != 0)
 			{

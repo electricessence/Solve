@@ -51,7 +51,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (genome == null)
-				throw new ArgumentNullException("genome");
+				throw new ArgumentNullException(nameof(genome));
 			if (!problems.HasAny())
 				return Task.FromResult(new KeyValuePair<IProblem<TGenome>, IFitness>[0]);
 
@@ -71,7 +71,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (genomes == null)
-				throw new ArgumentNullException("genomes");
+				throw new ArgumentNullException(nameof(genomes));
 			if (!problems.HasAny())
 				return Task.FromResult(new KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>[]>[0]);
 
@@ -92,7 +92,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (genome == null)
-				throw new ArgumentNullException("genome");
+				throw new ArgumentNullException(nameof(genome));
 			if (!problems.HasAny())
 				return Task.FromResult(new KeyValuePair<IProblem<TGenome>, IFitness>[0]);
 
@@ -117,7 +117,7 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (genomes == null)
-				throw new ArgumentNullException("genomes");
+				throw new ArgumentNullException(nameof(genomes));
 			if (!problems.HasAny())
 				return Task.FromResult(new KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>[]>[0]);
 
@@ -163,9 +163,9 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			if (problem == null)
-				throw new ArgumentNullException("problem");
+				throw new ArgumentNullException(nameof(problem));
 			if (genomes == null)
-				throw new ArgumentNullException("genomes");
+				throw new ArgumentNullException(nameof(genomes));
 			return Process(new IProblem<TGenome>[] { problem }, genomes, Enumerable.Range(0, 1).Select(i => SampleID.Next()), mergeWithGlobal)
 				.ContinueWith(t => t.Result.Single());
 		}

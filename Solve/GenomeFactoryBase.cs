@@ -87,7 +87,7 @@ namespace Solve
 		protected bool RegisterProduction(TGenome genome)
 		{
 			if (genome == null)
-				throw new ArgumentNullException("genome");
+				throw new ArgumentNullException(nameof(genome));
 			var hash = genome.Hash;
 			if (!Registry.ContainsKey(hash))
 				throw new InvalidOperationException("Registering for production before genome was in global registry.");
@@ -97,14 +97,14 @@ namespace Solve
 		protected bool AlreadyProduced(string hash)
 		{
 			if (hash == null)
-				throw new ArgumentNullException("hash");
+				throw new ArgumentNullException(nameof(hash));
 			return PreviouslyProduced.Contains(hash);
 		}
 
 		protected bool AlreadyProduced(TGenome genome)
 		{
 			if (genome == null)
-				throw new ArgumentNullException("genome");
+				throw new ArgumentNullException(nameof(genome));
 			return AlreadyProduced(genome.Hash);
 		}
 
@@ -188,14 +188,14 @@ namespace Solve
 		public bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 			return AttemptNewMutation(new TGenome[] { source }, out mutation, triesPerMutationLevel, maxMutations);
 		}
 
 		public bool AttemptNewMutation(TGenome[] source, out TGenome genome, byte triesPerMutationLevel = 5, byte maxMutations = 3)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 
 			Debug.Assert(source.Length != 0, "Should never pass an empty source for mutation.");
 			source = source.Where(g => g.Hash.Length != 0).ToArray();
@@ -294,7 +294,7 @@ namespace Solve
 		public TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3)
 		{
 			if (source == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(source));
 			if (source.Length == 2 && source[0] != source[1]) return AttemptNewCrossover((TGenome)source[0], (TGenome)source[1], maxAttemptsPerCombination);
 			if (source.Length <= 2)
 				return null; //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
@@ -332,9 +332,9 @@ namespace Solve
 		public TGenome[] AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3)
 		{
 			if (primary == null)
-				throw new ArgumentNullException("primary");
+				throw new ArgumentNullException(nameof(primary));
 			if (others == null)
-				throw new ArgumentNullException("source");
+				throw new ArgumentNullException(nameof(others));
 			if (others.Length == 0)
 				return null;// throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 			if (others.Length == 1 && primary != others[0]) return AttemptNewCrossover(primary, (TGenome)others[0], maxAttemptsPerCombination);

@@ -19,8 +19,8 @@ namespace Eater
 
 		public GridLocation(int x, int y)
 		{
-			if (x < 0) throw new ArgumentOutOfRangeException("x", x, "Must be at least 0.");
-			if (y < 0) throw new ArgumentOutOfRangeException("y", y, "Must be at least 0.");
+			if (x < 0) throw new ArgumentOutOfRangeException(nameof(x), x, "Must be at least 0.");
+			if (y < 0) throw new ArgumentOutOfRangeException(nameof(y), y, "Must be at least 0.");
 			X = (uint)x;
 			Y = (uint)y;
 		}

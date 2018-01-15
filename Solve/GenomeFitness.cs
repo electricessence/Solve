@@ -206,7 +206,7 @@ namespace Solve
 			where TFitness : IFitness
 		{
 			if (population == null)
-				throw new ArgumentNullException("population");
+				throw new ArgumentNullException(nameof(population));
 
 			var d = new Dictionary<string, GenomeFitness<TGenome>>();
 			foreach (var entry in population.OrderBy(g => g)) // Enforce distinct by ordering.

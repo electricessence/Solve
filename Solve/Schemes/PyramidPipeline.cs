@@ -48,7 +48,7 @@ namespace Solve.Schemes
 			ushort finalistPoolSize = 0) : base(genomeFactory, poolSize)
 		{
 			if (poolSize < MIN_POOL_SIZE)
-				throw new ArgumentOutOfRangeException("poolSize", poolSize, "Must have a pool size of at least " + MIN_POOL_SIZE);
+				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must have a pool size of at least " + MIN_POOL_SIZE);
 
 			if (finalistPoolSize == 0)
 				finalistPoolSize = poolSize;

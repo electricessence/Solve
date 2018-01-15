@@ -34,7 +34,7 @@ namespace Eater
 		public SampleCache(int gridSize = 10)
 		{
 			if (gridSize < 2)
-				throw new ArgumentOutOfRangeException("gridSize", gridSize, "Must be at least 2.");
+				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");
 			GridSize = gridSize;
 			GridSizeMid = gridSize / 2;
 			Boundary = new GridLocation(gridSize, gridSize);

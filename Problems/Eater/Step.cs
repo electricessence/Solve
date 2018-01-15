@@ -38,7 +38,7 @@ namespace Eater
 					return Orientation.Down;
 			}
 
-			throw new ArgumentException("Invalid orientation value.");
+			throw new ArgumentException("Invalid value.", nameof(orientation));
 		}
 
 		public static Orientation TurnRight(this Orientation orientation)
@@ -55,7 +55,7 @@ namespace Eater
 					return Orientation.Up;
 			}
 
-			throw new ArgumentException("Invalid orientation value.");
+			throw new ArgumentException("Invalid value.", nameof(orientation));
 		}
 
 		public static Orientation Turn(this Orientation orientation, Step step)
@@ -106,7 +106,7 @@ namespace Eater
 				case Step.TurnRight:
 					return TURN_RIGHT;
 			}
-			throw new ArgumentException("Invalid step value.");
+			throw new ArgumentException("Invalid value.", nameof(step));
 		}
 
 		public static Step FromChar(char step)
@@ -120,7 +120,7 @@ namespace Eater
 				case TURN_RIGHT:
 					return Step.TurnRight;
 			}
-			throw new ArgumentException("Invalid step value.");
+			throw new ArgumentException("Invalid value.", nameof(step));
 		}
 
 		public static string ToGenomeHash(this IEnumerable<Step> steps)
@@ -171,10 +171,10 @@ namespace Eater
 			GridLocation boundary, GridLocation start, GridLocation food, out int energy)
 		{
 			if (start.X > boundary.X || start.Y > boundary.Y)
-				throw new ArgumentOutOfRangeException("start", start, "Start exceeds grid boundary.");
+				throw new ArgumentOutOfRangeException(nameof(start), start, "Start exceeds grid boundary.");
 
 			if (food.X > boundary.X || food.Y > boundary.Y)
-				throw new ArgumentOutOfRangeException("food", food, "Food exceeds grid boundary.");
+				throw new ArgumentOutOfRangeException(nameof(food), food, "Food exceeds grid boundary.");
 
 			var current = start;
 			var orientation = Orientation.Up;
