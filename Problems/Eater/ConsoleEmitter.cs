@@ -12,10 +12,12 @@ namespace Eater
 {
 	public class ConsoleEmitter
 	{
-		public uint SampleMinimum;
+		public readonly SampleCache Samples;
+		public readonly uint SampleMinimum;
 
-		public ConsoleEmitter(uint sampleMinimum = 50)
+		public ConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
 		{
+			Samples = samples;
 			SampleMinimum = sampleMinimum;
 		}
 
@@ -32,7 +34,7 @@ namespace Eater
 
 		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
 		{
-			EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Problem.Samples.TestAll(key))));
+			EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 		}
 
 		public void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)

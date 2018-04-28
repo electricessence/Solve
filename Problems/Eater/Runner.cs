@@ -16,14 +16,13 @@ namespace Eater
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]
 		{
-			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
+			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
 		static void Main(string[] args)
 		{
 			uint minSamples = Seed.Length==0 ? 50u : 0u;
-			var emitter = new ConsoleEmitter(minSamples);
 			Console.ResetColor();
 			Console.Clear();
 			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);
@@ -32,15 +31,15 @@ namespace Eater
 			Console.WriteLine("Starting...");
 			Console.SetCursorPosition(0, Console.CursorTop - 1);
 
-			var sc = new SampleCache();
 			var factory = new EaterFactory();
-			var problem = new ProblemFragmented();
+			var problem = new ProblemFragmented(100);
+			var emitter = new ConsoleEmitter(problem.Samples, minSamples);
 
 			var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
 			for (var i = 0; i < Seed.Length; i++)
 			{
 				var genome = seeds[i];
-				var result = sc.TestAll(genome);
+				var result = problem.Samples.TestAll(genome);
 
 				if (i == 0)
 				{

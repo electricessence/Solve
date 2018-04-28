@@ -19,10 +19,11 @@ namespace Eater
 
 	public abstract class Problem : Solve.ProblemBase<EaterGenome>
 	{
-		public static readonly SampleCache Samples = new SampleCache();
+		public readonly SampleCache Samples;
 
-		public Problem()
+		protected Problem(int gridSize = 10)
 		{
+			Samples = new SampleCache();
 		}
 
 		protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
@@ -41,7 +42,9 @@ namespace Eater
 
 	public sealed class ProblemFragmented : Problem
 	{
-
+		public ProblemFragmented(int gridSize = 10):base(gridSize)
+		{
+		}
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
 		{
 
@@ -81,6 +84,9 @@ namespace Eater
 
 	public sealed class ProblemFullTest : Problem
 	{
+		public ProblemFullTest(int gridSize = 10) : base(gridSize)
+		{
+		}
 
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
 		{
