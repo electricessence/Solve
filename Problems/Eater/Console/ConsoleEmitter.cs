@@ -5,6 +5,9 @@ using Solve;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
 using KVP = Open.Collections.KeyValuePair;
 
@@ -73,6 +76,22 @@ namespace Eater
 
 						LastScore = f;
 						LastHash = genome.Hash;
+
+						using (var bitmap = genome.Genes.Render())
+						{
+							// Expand the size for clarity.
+							var newDim = new Rectangle(0, 0, bitmap.Width * 4, bitmap.Height * 4);
+							using (var newImage = new Bitmap(newDim.Width, newDim.Height))
+							using (Graphics gr = Graphics.FromImage(newImage))
+							{
+								gr.SmoothingMode = SmoothingMode.None;
+								gr.InterpolationMode = InterpolationMode.NearestNeighbor;
+								gr.PixelOffsetMode = PixelOffsetMode.Default;
+								gr.DrawImage(bitmap, newDim);
+								newImage.Save(Path.Combine(Environment.CurrentDirectory, "LatestWinner.jpg"));
+							}
+						}
+
 					}));
 		}
 

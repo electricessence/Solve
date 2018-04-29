@@ -32,7 +32,7 @@ namespace Eater
 			Console.SetCursorPosition(0, Console.CursorTop - 1);
 
 			var factory = new EaterFactory();
-			var problem = new ProblemFragmented(100);
+			var problem = new ProblemFragmented(10);
 			var emitter = new ConsoleEmitter(problem.Samples, minSamples);
 
 			var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();

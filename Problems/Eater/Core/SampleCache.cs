@@ -6,6 +6,7 @@ using Open;
 using Open.Collections;
 using Open.Arithmetic;
 using Open.Numeric;
+using System.Drawing;
 
 namespace Eater
 {
@@ -13,10 +14,10 @@ namespace Eater
 	{
 		public struct Entry
 		{
-			public readonly GridLocation EaterStart;
-			public readonly GridLocation Food;
+			public readonly Point EaterStart;
+			public readonly Point Food;
 
-			public Entry(GridLocation eaterStart, GridLocation food)
+			public Entry(Point eaterStart, Point food)
 			{
 				EaterStart = eaterStart;
 				Food = food;
@@ -43,13 +44,13 @@ namespace Eater
 			SeedOffset = RandomUtilities.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
 		}
 
-		public IEnumerable<GridLocation> GenerateXY()
+		public IEnumerable<Point> GenerateXY()
 		{
 			for (var y = 0; y < GridSize; y++)
 			{
 				for (var x = 0; x < GridSize; x++)
 				{
-					yield return new GridLocation(x, y);
+					yield return new Point(x, y);
 				}
 			}
 		}
@@ -114,9 +115,9 @@ namespace Eater
 			return _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
 		}
 
-		GridLocation RandomPosition(Random random)
+		Point RandomPosition(Random random)
 		{
-			return new GridLocation(random.Next(GridSize), random.Next(GridSize));
+			return new Point(random.Next(GridSize), random.Next(GridSize));
 		}
 
 

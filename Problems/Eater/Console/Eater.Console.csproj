@@ -15,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Solve\Solve.csproj" />
+    <ProjectReference Include="..\..\..\Solve\Solve.csproj" />
+    <ProjectReference Include="..\Core\Eater.Core.csproj" />
   </ItemGroup>
 
 </Project>

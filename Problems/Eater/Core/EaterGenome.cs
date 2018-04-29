@@ -1,5 +1,6 @@
 ﻿using Open.Cloneable;
 using Solve;
+using System.Drawing;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,5 +95,6 @@ namespace Eater
 			return ((IEnumerable<Step>)_steps)
 				.GetEnumerator();
 		}
+
 	}
 }

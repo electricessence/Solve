@@ -3,15 +3,14 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Collections;
+using Open.Dataflow;
+using Open.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Open.Collections;
-using Open.Dataflow;
-using Open.Threading;
-using Open.Threading.Tasks;
 
 namespace Solve
 {
