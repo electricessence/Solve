@@ -9,13 +9,11 @@ using System.Threading.Tasks.Dataflow;
 namespace Solve.Schemes
 {
 	// AKA King of the Hill
-    public sealed class ParallelPull<TGenome> : EnvironmentBase<TGenome>, IDisposable 
+    public sealed class KumitePipeline<TGenome> : EnvironmentBase<TGenome>, IDisposable 
 		where TGenome : class, IGenome
 	{
 
-		public ParallelPull(
-			IGenomeFactory<TGenome> genomeFactory,
-			ushort poolSize) : base(genomeFactory, poolSize)
+		public KumitePipeline(Func<ValueTask<TGenome>> genomeFactory) : base(genomeFactory)
 		{
 			Worker = CancellableTask.Init(Process);
 		}
@@ -24,12 +22,16 @@ namespace Solve.Schemes
 
 		void Process()
 		{
+			var root = new KumiteGenomeSelector<TGenome>(Factory, Process);
 			var pool = new HashSet<TGenome>();
 			foreach(var pg in GetTopGenome().AsParallel())
 			{
 
 			}
 		}
+
+		Task Process(TGenome genome)
+			=> Task.WhenAll(ProblemsInternal.Select(p =>p.ProcessTest(genome, 0, true)));
 
 		IEnumerable<(IProblem<TGenome> Problem, TGenome Genome)> GetTopGenome()
 		{
@@ -55,19 +57,15 @@ namespace Solve.Schemes
 			TopGenome.Post(top);
 		}
 
-		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
+		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome
+			= new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
 
-		public override IObservable<KeyValuePair<IProblem<TGenome>, TGenome>> AsObservable()
-		{
-			throw new NotImplementedException();
-			//return TopGenome.AsObservable();
-		}
+		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
+			=> TopGenome.AsObservable();
 
 		#region IDisposable Support
 		public void Dispose()
-		{
-			Worker.Dispose();
-		}
+			=> Worker.Dispose();
 
 		protected override Task StartInternal()
 		{

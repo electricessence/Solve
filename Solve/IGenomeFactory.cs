@@ -18,9 +18,11 @@ namespace Solve
 		 * 3) Forces the person using this class to smartly think about how to provide the array.
 		 */
 
+		TGenome GenerateOne();
+
 		TGenome GenerateOne(TGenome source);
 
-		TGenome GenerateOne(TGenome[] source = null);
+		TGenome GenerateOne(TGenome[] source);
 
 		IEnumerable<TGenome> Generate(TGenome source);
 

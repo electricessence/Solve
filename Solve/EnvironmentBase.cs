@@ -11,15 +11,11 @@ using System.Threading.Tasks;
 
 namespace Solve
 {
-
 	// Defines the pipeline?
 	public abstract class EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-
-		protected readonly IGenomeFactory<TGenome> Factory;
-		protected const ushort MIN_POOL_SIZE = 2;
-		public readonly ushort PoolSize;
+		protected readonly Func<ValueTask<TGenome>> Factory;
 
 		readonly protected LockSynchronizedList<IProblem<TGenome>> ProblemsInternal = new LockSynchronizedList<IProblem<TGenome>>();
 
@@ -31,12 +27,9 @@ namespace Solve
 			}
 		}
 
-		protected EnvironmentBase(
-			IGenomeFactory<TGenome> genomeFactory,
-			ushort poolSize)
+		protected EnvironmentBase(Func<ValueTask<TGenome>> genomeFactory)
 		{
 			Factory = genomeFactory;
-			PoolSize = poolSize;
 		}
 
 		public void AddProblem(params IProblem<TGenome>[] problems)
@@ -60,9 +53,7 @@ namespace Solve
 			return StartInternal();
 		}
 
-		public abstract IObservable<KeyValuePair<IProblem<TGenome>, TGenome>> AsObservable();
-
-
+		public abstract IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable();
 
 	}
 

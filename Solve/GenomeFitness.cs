@@ -98,7 +98,7 @@ namespace Solve
 		{
 			if (x == y) return 0;
 
-			int c = Solve.Fitness.ValueComparison(x.Fitness, y.Fitness);
+			int c = Fitness.ValueComparison(x.Fitness, y.Fitness);
 			if (c != 0) return c;
 
 			var xLen = x.Genome.Hash.Length;
@@ -107,27 +107,21 @@ namespace Solve
 			if (xLen < yLen) return +Fitness.ORDER_DIRECTION;
 			if (xLen > yLen) return -Fitness.ORDER_DIRECTION;
 
-			return Solve.Fitness.IdComparison(x.Fitness, y.Fitness);
+			return Fitness.IdComparison(x.Fitness, y.Fitness);
 		}
 
 		public static int Comparison<TGenome, TFitness>(IGenomeFitness<TGenome, TFitness> x, IGenomeFitness<TGenome, TFitness> y)
 			where TGenome : IGenome
 			where TFitness : IFitness
-		{
-			return ComparisonInternal(x, y);
-		}
+			=> ComparisonInternal(x, y);
 
 		public static int Comparison<TGenome>(IGenomeFitness<TGenome> x, IGenomeFitness<TGenome> y)
 			where TGenome : IGenome
-		{
-			return ComparisonInternal(x, y);
-		}
+			=> ComparisonInternal(x, y);
 
 		public static int Comparison<TGenome>(GenomeFitness<TGenome> x, GenomeFitness<TGenome> y)
 			where TGenome : IGenome
-		{
-			return ComparisonInternal(x, y);
-		}
+			=> ComparisonInternal(x, y);
 
 		public static GenomeFitness<TGenome>[] Sort<TGenome>(this GenomeFitness<TGenome>[] target)
 			where TGenome : IGenome
@@ -138,9 +132,7 @@ namespace Solve
 
 		public static IOrderedEnumerable<GenomeFitness<TGenome>> Sorted<TGenome>(this IEnumerable<GenomeFitness<TGenome>> target)
 			where TGenome : IGenome
-		{
-			return target.OrderBy(g => g, GenomeFitness.Comparer<TGenome>.Instance);
-		}
+			=> target.OrderBy(g => g, Comparer<TGenome>.Instance);
 
 		public class Comparer<TGenome> : IComparer<IGenomeFitness<TGenome>>
 			where TGenome : IGenome
