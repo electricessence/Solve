@@ -19,7 +19,7 @@ namespace Solve.Schemes
 	public class SinglePool<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		readonly BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>> TopGenome = new BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>>(null);
+		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
 
 		readonly ConcurrentDictionary<string, TGenome> Pool = new ConcurrentDictionary<string, TGenome>();
 
@@ -27,7 +27,7 @@ namespace Solve.Schemes
 		{
 		}
 
-		public override IObservable<KeyValuePair<IProblem<TGenome>, TGenome>> AsObservable()
+		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
 		{
 			return TopGenome.AsObservable();
 		}

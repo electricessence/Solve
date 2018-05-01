@@ -7,7 +7,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Solve.Schemes.Kumite
 {
-	public class KumiteNode<TGenome>
+	public sealed class KumiteNode<TGenome>
 		where TGenome : class, IGenome
 	{
 		static readonly GenomeFitness<TGenome> DEFAULT = default(GenomeFitness<TGenome>);
@@ -40,7 +40,7 @@ namespace Solve.Schemes.Kumite
 			_rejects = rejects;
 		}
 
-		public void Post(GenomeFitness<TGenome> challenger)
+		public bool Post(GenomeFitness<TGenome> challenger)
 		{
 			GenomeFitness<TGenome> winner = challenger;
 			int losses;
@@ -85,13 +85,14 @@ namespace Solve.Schemes.Kumite
 
 			if (losses >= 0) // Was there a fight?
 			{
-				NextLevel.Post(winner);
+				return NextLevel.Post(winner);
 			}
 			else if (losses == -2) // New champion?
 			{
-				_announcer.Post(challenger);
+				return _announcer.Post(challenger);
 			}
 
+			return true;
 		}
 
 	}
