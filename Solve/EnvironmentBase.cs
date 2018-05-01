@@ -15,7 +15,7 @@ namespace Solve
 	public abstract class EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		protected readonly Func<ValueTask<TGenome>> Factory;
+		protected readonly IGenomeFactory<TGenome> Factory;
 
 		readonly protected LockSynchronizedList<IProblem<TGenome>> ProblemsInternal = new LockSynchronizedList<IProblem<TGenome>>();
 
@@ -27,7 +27,7 @@ namespace Solve
 			}
 		}
 
-		protected EnvironmentBase(Func<ValueTask<TGenome>> genomeFactory)
+		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
 		{
 			Factory = genomeFactory;
 		}
