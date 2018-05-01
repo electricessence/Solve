@@ -22,7 +22,7 @@ namespace Solve.Schemes
 
 		void Process()
 		{
-			var root = new KumiteGenomeSelector<TGenome>(Factory, Process);
+			var root = new KumiteGenomeSelector<TGenome>(()=>new GenomeFitness<TGenome>(genomeF, Process);
 			var pool = new HashSet<TGenome>();
 			foreach(var pg in GetTopGenome().AsParallel())
 			{
