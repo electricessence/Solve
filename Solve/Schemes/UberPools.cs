@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -26,13 +24,6 @@ namespace Solve.Schemes
 			PoolSize = poolSize;
 		}
 
-		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
-
-		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
-		{
-			return TopGenome.AsObservable();
-		}
-
 
 		protected override Task StartInternal()
 		{
@@ -40,7 +31,7 @@ namespace Solve.Schemes
 		}
 
 		async Task ProcessContenderOnce(
-			KeyValuePair<IProblem<TGenome>, Fitness>[] results,
+			(IProblem<TGenome> Problem, Fitness Fitness)[] results,
 			TGenome genome,
 			long sampleId = 0
 		)
@@ -52,32 +43,32 @@ namespace Solve.Schemes
 			{
 				var result = r[f];
 				var data = results[f];
-				if (result.Key != data.Key)
+				if (result.Problem != data.Problem)
 					throw new Exception("Problem changed while processing.");
-				data.Value.Merge(result.Value);
+				data.Fitness.Merge(result.Fitness);
 			}
 		}
 
-		async Task<KeyValuePair<TGenome, KeyValuePair<IProblem<TGenome>, Fitness>[]>?> TryGetContender(
+		async Task<(TGenome Genome, (IProblem<TGenome> Problem, Fitness Fitness)[])?> TryGetContender(
 			IEnumerator<TGenome> source,
 			int samples,
 			bool useGlobalFitness = false)
 		{
 			var mid = samples / 2;
 
-			KeyValuePair<IProblem<TGenome>, Fitness>[] results = null;
+			(IProblem<TGenome> Problem, Fitness Fitness)[] results = null;
 
 			TGenome genome;
 			while (source.ConcurrentTryMoveNext(out genome)) // Using a loop instead of recursion.
 			{
-				results = ProblemsInternal.Select(p => KVP.Create(p, new Fitness())).ToArray();
+				results = ProblemsInternal.Select(p => (p, new Fitness())).ToArray();
 
 				for (var i = 0; i < samples; i++)
 				{
 					await ProcessContenderOnce(results, genome, useGlobalFitness ? 0 : (-i));
 
 					// Look for lemons and reject them early.
-					if (i > mid && results.Any(s => s.Value.Scores[0] < 0))
+					if (i > mid && results.Any(s => s.Fitness.Scores[0] < 0))
 					{
 						genome = null;
 						break; // Try again...
@@ -88,21 +79,21 @@ namespace Solve.Schemes
 
 			if (genome == null) return null;
 
-			return KVP.Create(genome, results);
+			return (genome, results);
 		}
 
-		KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[] NextContender(
-			IEnumerable<KeyValuePair<TGenome, KeyValuePair<IProblem<TGenome>, Fitness>[]>> pool)
+		(IProblem<TGenome> Problem, GenomeFitness<TGenome> Fitness)[] NextContender(
+			IEnumerable<(TGenome Genome, (IProblem<TGenome> Problem, Fitness Fitness)[] Results)> pool)
 		{
 			// Transform...
 			return pool
-				.SelectMany(e => e.Value.Select(v => KVP.Create(v.Key, new GenomeFitness<TGenome>(e.Key, v.Value))))
-				.GroupBy(g => g.Key)
-				.Select(e => e.OrderBy(f => f.Value, GenomeFitness.Comparer<TGenome>.Instance).First())
+				.SelectMany(e => e.Results.Select(v => (Problem: v.Problem, Fitness: new GenomeFitness<TGenome>(e.Genome, v.Fitness))))
+				.GroupBy(g => g.Problem)
+				.Select(e => e.OrderBy(f => f.Fitness, GenomeFitness.Comparer<TGenome>.Instance).First())
 				.ToArray();
 		}
 
-		async Task<KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[]> NextContender(
+		async Task<(IProblem<TGenome> Problem, GenomeFitness<TGenome> Fitness)[]> NextContender(
 			bool useGlobalFitness = false)
 		{
 			var e = Factory.Generate().GetEnumerator();

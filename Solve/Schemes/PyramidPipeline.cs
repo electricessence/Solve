@@ -18,13 +18,6 @@ namespace Solve.Schemes
 	public sealed class PyramidPipeline<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
-
-		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
-		{
-			return TopGenome.AsObservable();
-		}
-
 		readonly GenomeProducer<TGenome> Producer;
 
 		readonly ITargetBlock<TGenome> FinalistPool;
@@ -85,7 +78,7 @@ namespace Solve.Schemes
 
 			Pipeline = PipelineBuilder.CreateNetwork(networkDepth); // 3? Start small?
 
-			var TopGenomeFilter = TopGenome.OnlyIfChanged(DataflowMessageStatus.Accepted);
+			var TopGenomeFilter = Announcer.OnlyIfChanged(DataflowMessageStatus.Accepted);
 			bool converged = false;
 			VipPool = new ActionBlock<TGenome>(
 				async genome =>
@@ -140,7 +133,7 @@ namespace Solve.Schemes
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
-								TopGenome.Post((problem, top));
+								Announcer.Post((problem, top));
 
 								//// Need at least 200 samples to wash out any double precision issues.
 								//Problems.Process(
@@ -169,7 +162,7 @@ namespace Solve.Schemes
 								//		}
 								//		TopGenome.Complete();
 								//	});
-								TopGenome.Complete();
+								Announcer.Complete();
 								return true;
 							}
 
@@ -256,8 +249,8 @@ namespace Solve.Schemes
 
 					}
 				})
-				.PropagateFaultsTo(TopGenome)
-				.PropagateCompletionTo(TopGenome, VipPool, Breeders, Pipeline);
+				.PropagateFaultsTo(Announcer)
+				.PropagateCompletionTo(Announcer, VipPool, Breeders, Pipeline);
 
 
 			Pipeline.LinkToWithExceptions(FinalistPool);
@@ -268,7 +261,7 @@ namespace Solve.Schemes
 
 
 
-			TopGenome.PropagateCompletionTo(Pipeline);
+			Announcer.PropagateCompletionTo(Pipeline);
 			VipPool.PropagateFaultsTo(Pipeline);
 			Producer.PropagateFaultsTo(Pipeline);
 			Breeders.PropagateFaultsTo(Pipeline);
@@ -298,7 +291,7 @@ namespace Solve.Schemes
 
 		protected override Task StartInternal()
 		{
-			var completed = TopGenome.Completion;
+			var completed = Announcer.Completion;
 			Producer.Poke();
 			return completed;
 		}
