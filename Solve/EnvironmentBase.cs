@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Solve
 {
 	// Defines the pipeline?
-	public abstract class EnvironmentBase<TGenome>
+	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(IProblem<TGenome> Problem, TGenome Genome)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
@@ -52,9 +52,6 @@ namespace Solve
 				throw new InvalidOperationException("Cannot start without any registered 'Problems'");
 			return StartInternal();
 		}
-
-		public abstract IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable();
-
 	}
 
 

@@ -17,8 +17,6 @@ namespace Solve.Schemes
 	public class SinglePool<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
-
 		readonly ushort PoolSize;
 		readonly ConcurrentDictionary<string, TGenome> Pool = new ConcurrentDictionary<string, TGenome>();
 
@@ -27,14 +25,8 @@ namespace Solve.Schemes
 			PoolSize = poolSize;
 		}
 
-		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
-		{
-			return TopGenome.AsObservable();
-		}
-
 		protected override Task StartInternal()
 		{
-			var TopGenomeFiltered = TopGenome.OnlyIfChanged(DataflowMessageStatus.Accepted);
 			return Task.Run(() =>
 			{
 
@@ -99,7 +91,7 @@ namespace Solve.Schemes
 							.OrderByDescending(g => g.Key).First()
 							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First().Genome;
 
-						TopGenomeFiltered.Post((p, top));
+						Announce((p, top));
 
 						var ac = PoolSize - Pool.Count;
 						if (ac > 0)
