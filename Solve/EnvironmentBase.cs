@@ -7,6 +7,7 @@ using Open.Collections;
 using Open.Collections.Synchronized;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve
@@ -43,14 +44,46 @@ namespace Solve
 				ProblemsInternal.Add(problem);
 		}
 
-		protected abstract Task StartInternal();
+		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
+
+		int _state = 0;
 
 		public Task Start(params IProblem<TGenome>[] problems)
 		{
-			AddProblems(problems);
-			if (!ProblemsInternal.HasAny())
-				throw new InvalidOperationException("Cannot start without any registered 'Problems'");
-			return StartInternal();
+			switch(Interlocked.CompareExchange(ref _state, 1, 0))
+			{
+				case -1:
+					throw new InvalidOperationException("Cannot start if cancellation requested.");
+
+				case 0:
+					if (Canceller.IsCancellationRequested)
+						goto case -1;
+						
+					AddProblems(problems);
+					if (!ProblemsInternal.HasAny())
+						throw new InvalidOperationException("Cannot start without any registered 'Problems'");
+
+					return StartInternal(Canceller.Token);
+
+				case 1:
+					throw new InvalidOperationException("Already started.");
+
+			}
+
+			return null;
+		}
+
+		protected abstract Task StartInternal(CancellationToken token);
+
+		protected abstract void OnCancelled();
+
+		public void Cancel()
+		{
+			if (-1 != Interlocked.Exchange(ref _state, -1))
+			{
+				Canceller.Cancel();
+				OnCancelled();
+			};
 		}
 	}
 

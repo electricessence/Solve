@@ -23,7 +23,7 @@ namespace Eater
 
 		static void Main(string[] args)
 		{
-			uint minSamples = Seed.Length==0 ? 50u : 0u;
+			uint minSamples = Seed.Length==0 ? 1u : 0u;
 			Console.ResetColor();
 			Console.Clear();
 			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);
@@ -61,13 +61,13 @@ namespace Eater
 				Console.WriteLine();
 			}
 
-			var scheme = new PyramidPipeline<EaterGenome>(
+			var scheme = new SinglePool<EaterGenome>(
 				factory,
-				20, 4, 2, 200);
+				20);//, 4, 2, 200);
 
 			scheme.AddProblem(problem);
 			//scheme.AddProblem(new ProblemFullTest());
-			scheme.AddSeeds(seeds);
+			//scheme.AddSeeds(seeds);
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
