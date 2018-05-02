@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using KVP = Open.Collections.KeyValuePair;
-
 namespace Solve
 {
 	// GenomeSelection should be short lived.

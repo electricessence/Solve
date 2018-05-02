@@ -17,12 +17,13 @@ namespace Solve.Schemes
 	public sealed class UberPools<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-
+		readonly ushort PoolSize;
 		public readonly ushort MinSampleCount;
 
-		public UberPools(IGenomeFactory<TGenome> genomeFactory, ushort poolSize, ushort minSampleCount = 10) : base(genomeFactory, poolSize)
+		public UberPools(IGenomeFactory<TGenome> genomeFactory, ushort poolSize, ushort minSampleCount = 10) : base(genomeFactory)
 		{
 			MinSampleCount = minSampleCount;
+			PoolSize = poolSize;
 		}
 
 		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);

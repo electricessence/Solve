@@ -86,7 +86,7 @@ namespace Eater
 
 			SynchronizedConsole.Message lastConsoleStats = null;
 			{
-				Action<KeyValuePair<IProblem<EaterGenome>, EaterGenome>> onNext;
+				Action<(IProblem<EaterGenome>, EaterGenome)> onNext;
 				if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
 				else onNext = emitter.EmitTopGenomeFullStats;
 
