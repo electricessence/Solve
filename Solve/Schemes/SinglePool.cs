@@ -8,11 +8,9 @@ using Open.Collections.Numeric;
 using Open.Dataflow;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -21,10 +19,12 @@ namespace Solve.Schemes
 	{
 		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
 
+		readonly ushort PoolSize;
 		readonly ConcurrentDictionary<string, TGenome> Pool = new ConcurrentDictionary<string, TGenome>();
 
-		public SinglePool(IGenomeFactory<TGenome> genomeFactory, ushort poolSize) : base(genomeFactory, poolSize)
+		public SinglePool(IGenomeFactory<TGenome> genomeFactory, ushort poolSize) : base(genomeFactory)
 		{
+			PoolSize = poolSize;
 		}
 
 		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
@@ -99,7 +99,7 @@ namespace Solve.Schemes
 							.OrderByDescending(g => g.Key).First()
 							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First().Genome;
 
-						TopGenomeFiltered.Post(KVP.Create(p, top));
+						TopGenomeFiltered.Post((p, top));
 
 						var ac = PoolSize - Pool.Count;
 						if (ac > 0)

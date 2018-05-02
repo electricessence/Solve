@@ -18,15 +18,9 @@ namespace Solve
 		 * 3) Forces the person using this class to smartly think about how to provide the array.
 		 */
 
-		TGenome GenerateOne();
+		TGenome GenerateOne(params TGenome[] source);
 
-		TGenome GenerateOne(TGenome source);
-
-		TGenome GenerateOne(TGenome[] source);
-
-		IEnumerable<TGenome> Generate(TGenome source);
-
-		IEnumerable<TGenome> Generate(TGenome[] source = null);
+		IEnumerable<TGenome> Generate(params TGenome[] source);
 
 		bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 

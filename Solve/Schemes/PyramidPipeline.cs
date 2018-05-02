@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve.Schemes
 {
@@ -40,15 +39,17 @@ namespace Solve.Schemes
 
 		const int ConvergenceThreshold = 20;
 
+
+
 		public PyramidPipeline(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			uint networkDepth = 3,
 			byte nodeSize = 2,
-			ushort finalistPoolSize = 0) : base(genomeFactory, poolSize)
+			ushort finalistPoolSize = 0) : base(genomeFactory)
 		{
-			if (poolSize < MIN_POOL_SIZE)
-				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must have a pool size of at least " + MIN_POOL_SIZE);
+			if (poolSize < 2)
+				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must have a pool size of at least 2");
 
 			if (finalistPoolSize == 0)
 				finalistPoolSize = poolSize;
@@ -139,7 +140,7 @@ namespace Solve.Schemes
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
-								TopGenome.Post(KVP.Create(problem, top));
+								TopGenome.Post((problem, top));
 
 								//// Need at least 200 samples to wash out any double precision issues.
 								//Problems.Process(
@@ -172,7 +173,7 @@ namespace Solve.Schemes
 								return true;
 							}
 
-							TopGenomeFilter.Post(KVP.Create(problem, top));
+							TopGenomeFilter.Post((problem, top));
 
 							// You made it all the way back to the top?  Forget about what I said...
 							fitness.RejectionCount = -3; // VIPs get their rejection count augmented so they aren't easily dethroned.

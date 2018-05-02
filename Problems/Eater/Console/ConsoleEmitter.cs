@@ -30,9 +30,9 @@ namespace Eater
 		public string LastHash;
 		public SynchronizedConsole.Message LastTopGenomeUpdate;
 
-		public void EmitTopGenomeFullStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
+		public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
 		{
-			EmitTopGenomeFullStats(kvp.Key, kvp.Value);
+			EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
 		}
 
 		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
@@ -40,9 +40,9 @@ namespace Eater
 			EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 		}
 
-		public void EmitTopGenomeStats(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp)
+		public void EmitTopGenomeStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
 		{
-			EmitTopGenomeStatsInternal(kvp.Key, kvp.Value);
+			EmitTopGenomeStatsInternal(kvp.Problem, kvp.Genome);
 		}
 
 		public void EmitTopGenomeStats(IProblem<EaterGenome> p, EaterGenome genome)
