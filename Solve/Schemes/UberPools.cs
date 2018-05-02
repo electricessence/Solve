@@ -25,9 +25,9 @@ namespace Solve.Schemes
 			MinSampleCount = minSampleCount;
 		}
 
-		readonly BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>> TopGenome = new BroadcastBlock<KeyValuePair<IProblem<TGenome>, TGenome>>(null);
+		readonly BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)> TopGenome = new BroadcastBlock<(IProblem<TGenome> Problem, TGenome Genome)>(null);
 
-		public override IObservable<KeyValuePair<IProblem<TGenome>, TGenome>> AsObservable()
+		public override IObservable<(IProblem<TGenome> Problem, TGenome Genome)> AsObservable()
 		{
 			return TopGenome.AsObservable();
 		}
