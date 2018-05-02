@@ -6,9 +6,11 @@
 using Open.Arithmetic;
 using Open.Collections;
 using Open.Dataflow;
+using Open.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -289,7 +291,12 @@ namespace Solve.Schemes
 				AddSeed(g);
 		}
 
-		protected override Task StartInternal()
+		protected override void OnCancelled()
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override Task StartInternal(CancellationToken token)
 		{
 			var completed = Announcer.Completion;
 			Producer.Poke();

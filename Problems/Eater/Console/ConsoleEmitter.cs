@@ -50,11 +50,6 @@ namespace Eater
 			EmitTopGenomeStatsInternal(p,genome);
 		}
 
-		protected bool EmitTopGenomeStatsInternal(KeyValuePair<IProblem<EaterGenome>, EaterGenome> kvp, IFitness fitness = null)
-		{
-			return EmitTopGenomeStatsInternal(KVP.Create( kvp.Key, kvp.Value ));
-		}
-
 		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness = null)
 		{
 			var f = (fitness ?? p.GetFitnessFor(genome).Value.Fitness).SnapShot();

@@ -13,7 +13,7 @@ namespace Solve.Schemes
 		where TGenome : class, IGenome
 	{
 
-		public KumitePipeline(Func<ValueTask<TGenome>> genomeFactory) : base(genomeFactory)
+		public KumitePipeline(IGenomeFactory<TGenome> genomeFactory) : base(genomeFactory)
 		{
 			Worker = CancellableTask.Init(Process);
 		}

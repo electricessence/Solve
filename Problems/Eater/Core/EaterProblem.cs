@@ -3,15 +3,11 @@
  * Licensing: MIT https://github.com/electricessence/Genetic-Algorithm-Platform/blob/master/LICENSE.md
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Open.Collections;
-using Solve;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using Open.Numeric;
-using System.Linq;
+using Solve;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Eater
 {
