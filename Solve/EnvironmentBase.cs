@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -18,7 +18,7 @@ namespace Solve
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
 
-		readonly protected LockSynchronizedList<IProblem<TGenome>> ProblemsInternal = new LockSynchronizedList<IProblem<TGenome>>();
+		readonly protected ISynchronizedCollection<IProblem<TGenome>> ProblemsInternal = new ReadWriteSynchronizedList<IProblem<TGenome>>();
 
 		public IProblem<TGenome>[] Problems
 		{
@@ -50,7 +50,7 @@ namespace Solve
 
 		public Task Start(params IProblem<TGenome>[] problems)
 		{
-			switch(Interlocked.CompareExchange(ref _state, 1, 0))
+			switch (Interlocked.CompareExchange(ref _state, 1, 0))
 			{
 				case -1:
 					throw new InvalidOperationException("Cannot start if cancellation requested.");
@@ -58,7 +58,7 @@ namespace Solve
 				case 0:
 					if (Canceller.IsCancellationRequested)
 						goto case -1;
-						
+
 					AddProblems(problems);
 					if (!ProblemsInternal.HasAny())
 						throw new InvalidOperationException("Cannot start without any registered 'Problems'");
