@@ -60,7 +60,7 @@ namespace Solve
 				}
 			}
 
-			fitness = default(GenomeFitness<TGenome, Fitness>);
+			fitness = default;
 			return false;
 		}
 
@@ -91,7 +91,7 @@ namespace Solve
 				throw new InvalidOperationException("Cannot recall fitness for an unfrozen genome.");
 			genome = GetFitnessForKeyTransform(genome);
 			var key = genome.Hash;
-			GenomeFitness<TGenome, Fitness> result = default(GenomeFitness<TGenome, Fitness>);
+			GenomeFitness<TGenome, Fitness> result = default;
 			Rejects.IfNotContains(key, hs =>
 			{
 				result = Fitnesses
