@@ -1,9 +1,9 @@
-using System.Threading.Tasks.Dataflow;
+﻿using System.Threading.Tasks.Dataflow;
 
 namespace Solve
 {
 	public interface IProcessingScheme<TGenome>
-		: IPropagatorBlock<GenomeFitness<TGenome>, GenomeFitness<TGenome>>
+		: IPropagatorBlock<IGenomeFitness<TGenome, Fitness>, IGenomeFitness<TGenome, Fitness>>
 		where TGenome : IGenome
 	{
 

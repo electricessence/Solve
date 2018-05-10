@@ -13,7 +13,7 @@ namespace Solve
 		// It's concevable that mutliple threads could 're-attempt' to freeze a object 'in the wild'.
 		public void Freeze()
 		{
-			if(0==_frozenState && 0==Interlocked.CompareExchange(ref _frozenState, 1, 0))
+			if (0 == _frozenState && 0 == Interlocked.CompareExchange(ref _frozenState, 1, 0))
 			{
 				OnBeforeFreeze(); // Ensure this is only called once.
 			}

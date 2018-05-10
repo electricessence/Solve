@@ -3,7 +3,6 @@ using Open.Threading.Tasks;
 using Solve;
 using Solve.Schemes;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -12,7 +11,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Eater
 {
-    class Runner
+	class Runner
 	{
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]
@@ -23,7 +22,7 @@ namespace Eater
 
 		static void Main(string[] args)
 		{
-			uint minSamples = Seed.Length==0 ? 1u : 0u;
+			uint minSamples = Seed.Length == 0 ? 1u : 0u;
 			Console.ResetColor();
 			Console.Clear();
 			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);

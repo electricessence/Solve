@@ -1,27 +1,22 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Solve
 {
-	// Use in place of a tuple.
-	// Struct guidelines: https://msdn.microsoft.com/en-us/library/ms229017(v=vs.110).aspx
-	// This is basically a KeyValuePair but more custom.
-	// Can be sorted.
+	public interface IGenomeFitness<TGenome> : IComparable<IGenomeFitness<TGenome>>, IEquatable<IGenomeFitness<TGenome>>
+	where TGenome : IGenome
+	{
+		TGenome Genome { get; }
+		IFitness Fitness { get; }
+	}
 
-	public interface IGenomeFitness<TGenome, TFitness> : IComparable<IGenomeFitness<TGenome, TFitness>>, IEquatable<IGenomeFitness<TGenome, TFitness>>
+	public interface IGenomeFitness<TGenome, TFitness> : IGenomeFitness<TGenome>, IComparable<IGenomeFitness<TGenome, TFitness>>, IEquatable<IGenomeFitness<TGenome, TFitness>>
 		where TGenome : IGenome
 		where TFitness : IFitness
 	{
 
-		TGenome Genome { get; }
-		TFitness Fitness { get; }
-	}
-
-	public interface IGenomeFitness<TGenome> : IGenomeFitness<TGenome, IFitness>, IComparable<IGenomeFitness<TGenome>>, IEquatable<IGenomeFitness<TGenome>>
-		where TGenome : IGenome
-	{
-
+		new TFitness Fitness { get; }
 	}
 
 
@@ -32,6 +27,7 @@ namespace Solve
 		public TGenome Genome { get; private set; }
 		public TFitness Fitness { get; private set; }
 
+		IFitness IGenomeFitness<TGenome>.Fitness => this.Fitness;
 
 		public GenomeFitness(TGenome genome, TFitness Fitness)
 		{
@@ -46,9 +42,28 @@ namespace Solve
 
 		public bool Equals(IGenomeFitness<TGenome, TFitness> other)
 		{
-			return this.Genome.Equals(other.Genome) && this.Fitness.Equals(other.Fitness);
+			return Genome.Equals(other.Genome) && Fitness.Equals(other.Fitness);
 		}
 
+		int IComparable<IGenomeFitness<TGenome>>.CompareTo(IGenomeFitness<TGenome> other)
+		{
+			return GenomeFitness.Comparison(this, other);
+		}
+
+		bool IEquatable<IGenomeFitness<TGenome>>.Equals(IGenomeFitness<TGenome> other)
+		{
+			return Genome.Equals(other.Genome) && Fitness.Equals(other.Fitness);
+		}
+
+		int IComparable<IGenomeFitness<TGenome, TFitness>>.CompareTo(IGenomeFitness<TGenome, TFitness> other)
+		{
+			return GenomeFitness.Comparison(this, other);
+		}
+
+		bool IEquatable<IGenomeFitness<TGenome, TFitness>>.Equals(IGenomeFitness<TGenome, TFitness> other)
+		{
+			return Genome.Equals(other.Genome) && Fitness.Equals(other.Fitness);
+		}
 	}
 
 	public struct GenomeFitness<TGenome> : IGenomeFitness<TGenome>
@@ -69,7 +84,7 @@ namespace Solve
 
 		public bool Equals(IGenomeFitness<TGenome> other)
 		{
-			return this.Genome.Equals(other.Genome) && this.Fitness.Equals(other.Fitness);
+			return Genome.Equals(other.Genome) && Fitness.Equals(other.Fitness);
 		}
 
 		public int CompareTo(IGenomeFitness<TGenome, IFitness> other)
@@ -79,7 +94,7 @@ namespace Solve
 
 		public bool Equals(IGenomeFitness<TGenome, IFitness> other)
 		{
-			return this.Genome.Equals(other.Genome) && this.Fitness.Equals(other.Fitness);
+			return Genome.Equals(other.Genome) && Fitness.Equals(other.Fitness);
 		}
 	}
 
@@ -92,9 +107,8 @@ namespace Solve
 			return Comparison(x, y) == Fitness.ORDER_DIRECTION;
 		}
 
-		static int ComparisonInternal<TGenome, TFitness>(IGenomeFitness<TGenome, TFitness> x, IGenomeFitness<TGenome, TFitness> y)
+		public static int Comparison<TGenome>(IGenomeFitness<TGenome> x, IGenomeFitness<TGenome> y)
 			where TGenome : IGenome
-			where TFitness : IFitness
 		{
 			if (x == y) return 0;
 
@@ -110,27 +124,15 @@ namespace Solve
 			return Fitness.IdComparison(x.Fitness, y.Fitness);
 		}
 
-		public static int Comparison<TGenome, TFitness>(IGenomeFitness<TGenome, TFitness> x, IGenomeFitness<TGenome, TFitness> y)
-			where TGenome : IGenome
-			where TFitness : IFitness
-			=> ComparisonInternal(x, y);
 
-		public static int Comparison<TGenome>(IGenomeFitness<TGenome> x, IGenomeFitness<TGenome> y)
-			where TGenome : IGenome
-			=> ComparisonInternal(x, y);
-
-		public static int Comparison<TGenome>(GenomeFitness<TGenome> x, GenomeFitness<TGenome> y)
-			where TGenome : IGenome
-			=> ComparisonInternal(x, y);
-
-		public static GenomeFitness<TGenome>[] Sort<TGenome>(this GenomeFitness<TGenome>[] target)
+		public static IGenomeFitness<TGenome>[] Sort<TGenome>(this IGenomeFitness<TGenome>[] target)
 			where TGenome : IGenome
 		{
 			Array.Sort(target, Comparison);
 			return target;
 		}
 
-		public static IOrderedEnumerable<GenomeFitness<TGenome>> Sorted<TGenome>(this IEnumerable<GenomeFitness<TGenome>> target)
+		public static IOrderedEnumerable<IGenomeFitness<TGenome>> Sorted<TGenome>(this IEnumerable<IGenomeFitness<TGenome>> target)
 			where TGenome : IGenome
 			=> target.OrderBy(g => g, Comparer<TGenome>.Instance);
 

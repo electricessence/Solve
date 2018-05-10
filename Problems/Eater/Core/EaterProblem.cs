@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: MIT https://github.com/electricessence/Genetic-Algorithm-Platform/blob/master/LICENSE.md
  */
@@ -33,12 +33,12 @@ namespace Eater
 			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
 		}
 
-		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);		
+		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);
 	}
 
 	public sealed class ProblemFragmented : Problem
 	{
-		public ProblemFragmented(int gridSize = 10):base(gridSize)
+		public ProblemFragmented(int gridSize = 10) : base(gridSize)
 		{
 		}
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)

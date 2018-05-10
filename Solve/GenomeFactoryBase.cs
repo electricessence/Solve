@@ -1,12 +1,10 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Numeric;
-using Open.Threading;
 using Open.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
@@ -362,7 +360,7 @@ namespace Solve
 
 		public virtual IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null)
 		{
-			if(others!=null)
+			if (others != null)
 			{
 				foreach (var o in others)
 					yield return o;
@@ -376,6 +374,3 @@ namespace Solve
 		}
 	}
 }
-
-
-
