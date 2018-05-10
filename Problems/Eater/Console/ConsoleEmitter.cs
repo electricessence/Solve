@@ -9,7 +9,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
-using KVP = Open.Collections.KeyValuePair;
 
 namespace Eater
 {
@@ -47,7 +46,7 @@ namespace Eater
 
 		public void EmitTopGenomeStats(IProblem<EaterGenome> p, EaterGenome genome)
 		{
-			EmitTopGenomeStatsInternal(p,genome);
+			EmitTopGenomeStatsInternal(p, genome);
 		}
 
 		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness = null)

@@ -1,11 +1,8 @@
+﻿using Open.Collections;
+using Open.Numeric;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using Open;
-using Open.Collections;
-using Open.Arithmetic;
-using Open.Numeric;
 using System.Drawing;
 
 namespace Eater
@@ -110,7 +107,7 @@ namespace Eater
 			return TestAll(genome.Hash);
 		}
 
-			public LazyList<Entry> Get(int id)
+		public LazyList<Entry> Get(int id)
 		{
 			return _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
 		}

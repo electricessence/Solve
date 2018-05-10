@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -65,7 +65,7 @@ namespace Solve
 								throw new InvalidOperationException("Cannot process an unfrozen genome.");
 
 							var hash = next.Hash;
-							Debug.Assert(hash.Length!=0,"Recieved an empty genome.");
+							Debug.Assert(hash.Length != 0, "Recieved an empty genome.");
 							if (Registry.Contains(hash)) continue;
 							// Try and reserve this hash.
 							lock (Registry)
@@ -101,7 +101,8 @@ namespace Solve
 							Console.WriteLine("Factory is not producing new genomes.");
 							Complete();
 
-						} else
+						}
+						else
 						{
 							Producer.Post(true);
 						}
@@ -234,4 +235,3 @@ namespace Solve
 	}
 
 }
-

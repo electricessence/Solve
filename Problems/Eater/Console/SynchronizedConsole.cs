@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace Eater
 {
@@ -121,7 +119,7 @@ namespace Eater
 				var start = Cursor.Current;
 				try
 				{
-					if (message!=null && start.Equals(message.End))
+					if (message != null && start.Equals(message.End))
 					{
 						message.Begin.MoveTo();
 						action(start = Cursor.Current);
@@ -157,7 +155,7 @@ namespace Eater
 
 		public static void OverwriteIfSame(ref Message message, Func<bool> condition, Action<Cursor> action)
 		{
-			lock(Sync)
+			lock (Sync)
 			{
 				if (condition())
 					OverwriteIfSame(ref message, action);

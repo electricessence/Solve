@@ -2,14 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Solve.Schemes
 {
 	// AKA King of the Hill
-    public sealed class KumitePipeline<TGenome> : EnvironmentBase<TGenome>, IDisposable 
+	public sealed class KumitePipeline<TGenome> : EnvironmentBase<TGenome>, IDisposable
 		where TGenome : class, IGenome
 	{
 
@@ -22,16 +21,16 @@ namespace Solve.Schemes
 
 		void Process()
 		{
-			var root = new KumiteGenomeSelector<TGenome>(()=>new GenomeFitness<TGenome>(genomeF, Process);
+			var root = new KumiteGenomeSelector<TGenome>(() => new GenomeFitness<TGenome>(genomeF, Process);
 			var pool = new HashSet<TGenome>();
-			foreach(var pg in GetTopGenome().AsParallel())
+			foreach (var pg in GetTopGenome().AsParallel())
 			{
 
 			}
 		}
 
 		Task Process(TGenome genome)
-			=> Task.WhenAll(ProblemsInternal.Select(p =>p.ProcessTest(genome, 0, true)));
+			=> Task.WhenAll(ProblemsInternal.Select(p => p.ProcessTest(genome, 0, true)));
 
 		IEnumerable<(IProblem<TGenome> Problem, TGenome Genome)> GetTopGenome()
 		{
@@ -40,7 +39,7 @@ namespace Solve.Schemes
 			{
 				var g = Factory.GenerateOne();
 				p.ProcessTest(g);
-				yield return (p,g);
+				yield return (p, g);
 			}
 
 
@@ -48,7 +47,7 @@ namespace Solve.Schemes
 			// Step 2: Ask for new...
 			foreach (var pg in GetTopGenome())
 			{
-				
+
 			}
 		}
 

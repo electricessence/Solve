@@ -1,4 +1,4 @@
-using Nito.AsyncEx;
+﻿using Nito.AsyncEx;
 using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Numeric.Precision;
@@ -192,7 +192,7 @@ namespace Solve
 			return a.CompareTo(b) * Fitness.ORDER_DIRECTION <= 0;
 		}
 	}
-	
+
 	public class Fitness : TrackedList<SingleFitness>, IFitness
 	{
 
@@ -357,7 +357,7 @@ namespace Solve
 			throw new Exception("Impossible? Interlocked failed?");
 
 		}
-		
+
 		public static int ValueComparison(IFitness x, IFitness y)
 		{
 			if (x == y) return 0;
