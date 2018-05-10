@@ -10,18 +10,18 @@ namespace Solve.Schemes.Kumite
 		internal readonly IProblem<TGenome> Problem;
 		internal KumiteLevel<TGenome> Root;
 		internal ushort MaximumAllowedLosses;
-		internal ITargetBlock<IGenomeFitness<TGenome, Fitness>> RejectProcessor;
+		internal ITargetBlock<IGenomeFitness<TGenome, Fitness>> LoserPool;
 
-		public KumiteTournament(IProblem<TGenome> problem, ushort maximumLoss = ushort.MaxValue, ITargetBlock<IGenomeFitness<TGenome, Fitness>> rejector = null) : base()
+		public KumiteTournament(IProblem<TGenome> problem, ushort maximumLoss = ushort.MaxValue, ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
 		{
 			Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 			Root = new KumiteLevel<TGenome>(0, this);
 			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
 			MaximumAllowedLosses = maximumLoss;
-			RejectProcessor = rejector ?? DataflowBlock.NullTarget<IGenomeFitness<TGenome, Fitness>>();
+			LoserPool = loserPool ?? DataflowBlock.NullTarget<IGenomeFitness<TGenome, Fitness>>();
 		}
 
-		protected override Task Process(IGenomeFitness<TGenome, Fitness> next)
+		public override Task Post(IGenomeFitness<TGenome, Fitness> next)
 			=> Root.Post(next);
 	}
 }

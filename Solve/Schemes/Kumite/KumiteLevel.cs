@@ -38,7 +38,7 @@ namespace Solve.Schemes.Kumite
 			ushort maxLoss = Host.MaximumAllowedLosses;
 			if (loser.LossRecord == maxLoss)
 			{
-				Host.RejectProcessor.Post(loser.GenomeFitness);
+				Host.LoserPool.Post(loser.GenomeFitness);
 			}
 			else
 			{
@@ -46,7 +46,11 @@ namespace Solve.Schemes.Kumite
 				WaitingToCompete.Enqueue(loser);
 			}
 
-			if (m == 1) Host.Announce(winner);
+			if (m == 1)
+			{
+				Debug.WriteLine("New Kumite Level: {0}", Level);
+				Host.Announce(winner);
+			}
 			await NextLevel.Post(winner);
 		}
 
