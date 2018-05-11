@@ -17,10 +17,9 @@ namespace Solve
 			_announcerBlock = b;
 		}
 
-		bool _isComplete = false;
 		public Task Completion => Announcer.Completion;
 
-		protected bool Announce(T message)
+		internal bool Announce(T message)
 			=> Announcer.Post(message);
 
 		public IDisposable LinkTo(
@@ -42,13 +41,11 @@ namespace Solve
 
 		public virtual void Complete()
 		{
-			_isComplete = true;
 			_announcerBlock.Complete();
 		}
 
 		public virtual void Fault(Exception exception)
 		{
-			_isComplete = true;
 			_announcerBlock.Fault(exception);
 		}
 	}

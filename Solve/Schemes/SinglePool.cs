@@ -7,6 +7,7 @@ using Open.Collections;
 using Open.Collections.Numeric;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.Schemes
@@ -22,12 +23,17 @@ namespace Solve.Schemes
 			PoolSize = poolSize;
 		}
 
-		protected override Task StartInternal()
+		protected override void OnCancelled()
 		{
-			return Task.Run(() =>
+
+		}
+
+		protected override Task StartInternal(CancellationToken token)
+		{
+			return Task.Run(cancellationToken: token, action: () =>
 			{
 
-				while (true)
+				while (!token.IsCancellationRequested)
 				{
 					// Phase 1, make sure the pool is full.
 					var addCount = PoolSize - Pool.Count;

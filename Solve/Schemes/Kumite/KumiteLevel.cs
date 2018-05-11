@@ -74,7 +74,7 @@ namespace Solve.Schemes.Kumite
 				}
 				else
 				{
-					// Challenger won.  // Defender stays and recieves a mark on its record.
+					// Challenger won.  // Defender stays.
 					await Resolve(winner: c, loser: defender);
 				}
 			}

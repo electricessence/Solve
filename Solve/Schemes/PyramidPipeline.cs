@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -6,7 +6,6 @@
 using Open.Arithmetic;
 using Open.Collections;
 using Open.Dataflow;
-using Open.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,12 +54,12 @@ namespace Solve.Schemes
 				genome => Producer.TryEnqueue(Factory.Expand(genome)),
 				new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 8 });
 
-			Action<TGenome> addToBreeders = genome =>
+			void addToBreeders(TGenome genome)
 			{
 				//Debug.Assert(genome.Hash.Length != 0, "Attempting to breed an empty genome.");
 				if (genome.Hash.Length != 0)
 					Breeders.SendAsync(genome);
-			};
+			}
 
 			PipelineBuilder = new GenomePipelineBuilder<TGenome>(Producer, ProblemsInternal, poolSize, nodeSize,
 				selected =>

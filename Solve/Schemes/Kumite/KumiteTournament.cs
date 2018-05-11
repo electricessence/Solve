@@ -21,7 +21,7 @@ namespace Solve.Schemes.Kumite
 			LoserPool = loserPool ?? DataflowBlock.NullTarget<IGenomeFitness<TGenome, Fitness>>();
 		}
 
-		public override Task Post(IGenomeFitness<TGenome, Fitness> next)
+		public Task Post(IGenomeFitness<TGenome, Fitness> next)
 			=> Root.Post(next);
 	}
 }

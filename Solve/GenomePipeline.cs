@@ -1,4 +1,4 @@
-using Open.Collections;
+﻿using Open.Collections;
 using Open.Dataflow;
 using System;
 using System.Collections.Generic;
@@ -52,13 +52,13 @@ namespace Solve
 		};
 
 		public static TransformBlock<
-			IDictionary<IProblem<TGenome>, Task<GenomeFitness<TGenome>>[]>,
-			Dictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>> Processor<TGenome>()
+			IDictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]>,
+			Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>> Processor<TGenome>()
 			where TGenome : IGenome
 		{
 			return new TransformBlock<
-			IDictionary<IProblem<TGenome>, Task<GenomeFitness<TGenome>>[]>,
-			Dictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>>(
+			IDictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]>,
+			Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>>(
 				async problems =>
 					(await Task.WhenAll(problems.Select(
 						async kvp =>
@@ -104,7 +104,7 @@ namespace Solve
 		// 	return DataflowBlock.Encapsulate(input, output);
 		// }
 
-		public static IPropagatorBlock<TGenome, Dictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>>
+		public static IPropagatorBlock<TGenome, Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>>
 			Processor<TGenome>(
 				IEnumerable<IProblem<TGenome>> problems,
 				int size)
@@ -118,7 +118,7 @@ namespace Solve
 			var sync = new Object();
 			int index = -2;
 			long batchId = -1;
-			Dictionary<IProblem<TGenome>, Task<GenomeFitness<TGenome>>[]> results = null;
+			Dictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]> results = null;
 
 			var input = new ActionBlock<TGenome>(genome =>
 			{
@@ -129,7 +129,7 @@ namespace Solve
 				if (index == -2)
 				{
 					batchId = SampleID.Next();
-					results = problems.ToDictionary(e => e, e => new Task<GenomeFitness<TGenome>>[size]);
+					results = problems.ToDictionary(e => e, e => new Task<IGenomeFitness<TGenome>>[size]);
 					if (results.Count == 0)
 						throw new Exception("No problems provided to process.");
 					index = -1;
@@ -141,7 +141,7 @@ namespace Solve
 					foreach (var kvp in results)
 					{
 						kvp.Value[index] = kvp.Key.TestProcessor(genome, batchId)
-							.ContinueWith(t => new GenomeFitness<TGenome>(genome, t.Result));
+							.ContinueWith(t => (IGenomeFitness<TGenome>)(new GenomeFitness<TGenome>(genome, t.Result)));
 					}
 				}
 				else
@@ -161,12 +161,12 @@ namespace Solve
 		}
 
 		public static TransformBlock<
-			IDictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>,
+			IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>,
 			GenomeSelection<TGenome>>
 		Selector<TGenome>()
 			where TGenome : IGenome
 		{
-			return new TransformBlock<IDictionary<IProblem<TGenome>, GenomeFitness<TGenome>[]>, GenomeSelection<TGenome>>(results =>
+			return new TransformBlock<IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>, GenomeSelection<TGenome>>(results =>
 			{
 				foreach (var kvp in results)
 					kvp.Key.AddToGlobalFitness(kvp.Value);
@@ -295,14 +295,14 @@ namespace Solve
 
 		readonly ISourceBlock<TGenome> DefaultSource;
 
-		readonly IList<IProblem<TGenome>> Problems;
+		readonly ICollection<IProblem<TGenome>> Problems;
 
 		readonly Action<TGenome[]> GlobalSelectedHandler;
 		readonly Action<TGenome[]> GlobalRejectedHandler;
 
 		public GenomePipelineBuilder(
 			ISourceBlock<TGenome> defaultSource,
-			IList<IProblem<TGenome>> problems,
+			ICollection<IProblem<TGenome>> problems,
 			ushort poolSize,
 			byte sourceCount = 2,
 			Action<TGenome[]> globalSelectedHandler = null,
