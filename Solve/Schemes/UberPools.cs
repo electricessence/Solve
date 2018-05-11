@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -7,6 +7,7 @@ using Open.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.Schemes
@@ -24,8 +25,12 @@ namespace Solve.Schemes
 			PoolSize = poolSize;
 		}
 
+		protected override void OnCancelled()
+		{
+			throw new NotImplementedException();
+		}
 
-		protected override Task StartInternal()
+		protected override Task StartInternal(CancellationToken token)
 		{
 			throw new NotImplementedException();
 		}
@@ -87,7 +92,7 @@ namespace Solve.Schemes
 		{
 			// Transform...
 			return pool
-				.SelectMany(e => e.Results.Select(v => (Problem: v.Problem, Fitness: new GenomeFitness<TGenome>(e.Genome, v.Fitness))))
+				.SelectMany(e => e.Results.Select(v => (v.Problem, Fitness: new GenomeFitness<TGenome>(e.Genome, v.Fitness))))
 				.GroupBy(g => g.Problem)
 				.Select(e => e.OrderBy(f => f.Fitness, GenomeFitness.Comparer<TGenome>.Instance).First())
 				.ToArray();
@@ -111,6 +116,8 @@ namespace Solve.Schemes
 					)
 				);
 		}
+
+
 
 		//async Task<KeyValuePair<IProblem<TGenome>, GenomeFitness<TGenome>>[]> NextCondendingVariation(
 		//	TGenome genome,

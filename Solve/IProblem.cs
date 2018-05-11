@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KVP = Open.Collections.KeyValuePair;
 
 namespace Solve
 {
@@ -63,7 +62,7 @@ namespace Solve
 			);
 		}
 
-		public static Task<(IProblem<TGenome> Problem, GenomeFitness<TGenome>[] Results)[]> ProcessOnce<TGenome>(
+		public static Task<(IProblem<TGenome> Problem, IGenomeFitness<TGenome>[] Results)[]> ProcessOnce<TGenome>(
 			this IEnumerable<IProblem<TGenome>> problems,
 			IEnumerable<TGenome> genomes,
 			long sampleId = 0,
@@ -73,13 +72,13 @@ namespace Solve
 			if (genomes == null)
 				throw new ArgumentNullException(nameof(genomes));
 			if (!problems.HasAny())
-				return Task.FromResult(Array.Empty<(IProblem<TGenome> Problem, GenomeFitness<TGenome>[] Results)>());
+				return Task.FromResult(Array.Empty<(IProblem<TGenome> Problem, IGenomeFitness<TGenome>[] Results)>());
 
 			return Task.WhenAll(problems
 				.Select(p =>
 					Task.WhenAll(
 						genomes.Select(g => p.ProcessTest(g, sampleId, mergeWithGlobal)
-							.ContinueWith(t => new GenomeFitness<TGenome>(g, t.Result))))
+							.ContinueWith(t => (IGenomeFitness<TGenome>)new GenomeFitness<TGenome>(g, t.Result))))
 						.ContinueWith(t => (p, t.Result.Sort()))));
 		}
 
@@ -109,7 +108,7 @@ namespace Solve
 		}
 
 
-		public static Task<(IProblem<TGenome> Problem, GenomeFitness<TGenome>[] Results)[]> Process<TGenome>(
+		public static Task<(IProblem<TGenome> Problem, IGenomeFitness<TGenome>[] Results)[]> Process<TGenome>(
 			this IEnumerable<IProblem<TGenome>> problems,
 			IEnumerable<TGenome> genomes,
 			IEnumerable<long> sampleIds,
@@ -119,7 +118,7 @@ namespace Solve
 			if (genomes == null)
 				throw new ArgumentNullException(nameof(genomes));
 			if (!problems.HasAny())
-				return Task.FromResult(Array.Empty<(IProblem<TGenome>, GenomeFitness<TGenome>[])>());
+				return Task.FromResult(Array.Empty<(IProblem<TGenome>, IGenomeFitness<TGenome>[])>());
 
 			return Task.WhenAll(problems.Select(
 				p => Task.WhenAll(genomes.Select(
@@ -127,7 +126,7 @@ namespace Solve
 						.ContinueWith(t =>
 						{
 							var f = t.Result.Merge();
-							var gf = new GenomeFitness<TGenome>(g, f);
+							IGenomeFitness<TGenome> gf = new GenomeFitness<TGenome>(g, f);
 							if (mergeWithGlobal) p.AddToGlobalFitness(g, f);
 							return gf;
 						})))
@@ -135,7 +134,7 @@ namespace Solve
 		}
 
 
-		public static Task<(IProblem<TGenome> Problem, GenomeFitness<TGenome>[] Results)[]> Process<TGenome>(
+		public static Task<(IProblem<TGenome> Problem, IGenomeFitness<TGenome>[] Results)[]> Process<TGenome>(
 			this IEnumerable<IProblem<TGenome>> problems,
 			IEnumerable<TGenome> genomes,
 			int count = 1,
@@ -155,7 +154,7 @@ namespace Solve
 			return Process(problems, genome, Enumerable.Range(0, count).Select(i => SampleID.Next()), mergeWithGlobal);
 		}
 
-		public static Task<(IProblem<TGenome> Problem, GenomeFitness<TGenome>[] Results)> Process<TGenome>(
+		public static Task<(IProblem<TGenome> Problem, IGenomeFitness<TGenome>[] Results)> Process<TGenome>(
 			this IProblem<TGenome> problem,
 			IEnumerable<TGenome> genomes,
 			int count = 1,

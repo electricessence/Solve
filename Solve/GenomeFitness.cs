@@ -5,7 +5,7 @@ using System.Linq;
 namespace Solve
 {
 	public interface IGenomeFitness<TGenome> : IComparable<IGenomeFitness<TGenome>>, IEquatable<IGenomeFitness<TGenome>>
-	where TGenome : IGenome
+		where TGenome : IGenome
 	{
 		TGenome Genome { get; }
 		IFitness Fitness { get; }
