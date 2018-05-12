@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace Solve.Schemes.Kumite
+namespace Solve.Schemes
 {
 	public sealed class KumiteTournament<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
@@ -21,7 +21,7 @@ namespace Solve.Schemes.Kumite
 			LoserPool = loserPool ?? DataflowBlock.NullTarget<IGenomeFitness<TGenome, Fitness>>();
 		}
 
-		public Task Post(IGenomeFitness<TGenome, Fitness> next)
-			=> Root.Post(next);
+		public Task Post(TGenome next)
+			=> Root.Post(new GenomeFitness<TGenome, Fitness>(next, new Fitness()));
 	}
 }

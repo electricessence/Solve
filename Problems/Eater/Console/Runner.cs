@@ -16,8 +16,8 @@ namespace Eater
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed = new string[]
 		{
-			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
+			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
 		static void Main(string[] args)
@@ -60,7 +60,7 @@ namespace Eater
 				Console.WriteLine();
 			}
 
-			var scheme = new SinglePool<EaterGenome>(
+			var scheme = new Kumite<EaterGenome>(
 				factory,
 				20);//, 4, 2, 200);
 
@@ -86,13 +86,13 @@ namespace Eater
 
 			SynchronizedConsole.Message lastConsoleStats = null;
 			{
-				Action<(IProblem<EaterGenome>, EaterGenome)> onNext;
-				if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
-				else onNext = emitter.EmitTopGenomeFullStats;
+				//Action<(IProblem<EaterGenome>, IGenomeFitness<EaterGenome>)> onNext;
+				//if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
+				//else onNext = emitter.EmitTopGenomeFullStats;
 
 				scheme
 					.AsObservable()
-					.Subscribe(onNext,
+					.Subscribe(emitter.EmitTopGenomeStats,
 						ex => Console.WriteLine(ex.GetBaseException()),
 						() =>
 						{

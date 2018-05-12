@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace Solve.Schemes.Kumite
+namespace Solve.Schemes
 {
 	public sealed class KumiteLevel<TGenome>
 		where TGenome : class, IGenome
