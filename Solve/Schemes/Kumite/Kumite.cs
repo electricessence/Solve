@@ -54,7 +54,9 @@ namespace Solve.Schemes
 		{
 			return Task.Run(cancellationToken: token, action: () =>
 			{
-				Parallel.ForEach(Factory.Generate(), newGenome =>
+				Parallel.ForEach(
+					Factory.Generate(),
+					newGenome =>
 				{
 					Post(newGenome);
 					while (PriorityContenders.TryDequeue(out TGenome g))
