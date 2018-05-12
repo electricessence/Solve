@@ -30,28 +30,39 @@ namespace Solve.Schemes
 		}
 
 		async Task Resolve(
-			IGenomeFitness<TGenome, Fitness> winner,
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
 		{
-			var m = Interlocked.Increment(ref _matches);
-
-			ushort maxLoss = Host.MaximumAllowedLosses;
-			if (loser.LossRecord == maxLoss)
+			var winnerHash = winner.GenomeFitness.Genome.Hash;
+			if (winnerHash == loser.GenomeFitness.Genome.Hash)
 			{
-				Host.LoserPool.Post(loser.GenomeFitness);
+				Debug.WriteLine($"Level {Level}: Contender fought itself: {winnerHash}");
+				WaitingToCompete.Enqueue(winner);
 			}
 			else
 			{
-				loser.LossRecord++;
-				WaitingToCompete.Enqueue(loser);
+				var m = Interlocked.Increment(ref _matches);
+
+				ushort maxLoss = Host.MaximumAllowedLosses;
+				if (loser.LossRecord == maxLoss)
+				{
+					Host.LoserPool.Post(loser.GenomeFitness);
+				}
+				else
+				{
+					loser.LossRecord++;
+					WaitingToCompete.Enqueue(loser);
+				}
+
+				if (m == 1)
+				{
+					Debug.WriteLine("New Kumite Level: {0}", Level);
+					Host.Announce(winner.GenomeFitness);
+				}
+				await NextLevel.Post(winner.GenomeFitness);
 			}
 
-			if (m == 1)
-			{
-				Debug.WriteLine("New Kumite Level: {0}", Level);
-				Host.Announce(winner);
-			}
-			await NextLevel.Post(winner);
+
 		}
 
 		public async Task Post(IGenomeFitness<TGenome, Fitness> c)
@@ -66,16 +77,15 @@ namespace Solve.Schemes
 			{
 				// A defender is available.
 				var d = defender.GenomeFitness;
-				Debug.Assert(c.Genome != d.Genome, "Challenger must be different than the defender.");
-				if (d.CompareTo(c) > 0)
+				if (d.CompareTo(c) < 0) // NOTE: Ordering = first is better.  Ordering direction inverted.
 				{
 					// Challenger lost.  // Defender moves on.
-					await Resolve(winner: d, loser: challenger);
+					await Resolve(winner: defender, loser: challenger);
 				}
 				else
 				{
 					// Challenger won.  // Defender stays.
-					await Resolve(winner: c, loser: defender);
+					await Resolve(winner: challenger, loser: defender);
 				}
 			}
 			else

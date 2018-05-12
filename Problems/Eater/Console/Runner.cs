@@ -70,7 +70,7 @@ namespace Eater
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
-			Action<SynchronizedConsole.Cursor> emitStats = cursor =>
+			void emitStats(SynchronizedConsole.Cursor cursor)
 			{
 				Console.WriteLine("{0} total time                    ", sw.Elapsed.ToStringVerbose());
 				foreach (var p in scheme.Problems)
@@ -82,7 +82,7 @@ namespace Eater
 					}
 				}
 				Console.WriteLine();
-			};
+			}
 
 			SynchronizedConsole.Message lastConsoleStats = null;
 			{
@@ -102,16 +102,16 @@ namespace Eater
 			}
 
 
-			Task.Run(async () =>
+			Task.Run(
+				cancellationToken: cancel.Token,
+				action: async () =>
 			{
 				while (!cancel.IsCancellationRequested)
 				{
 					await Task.Delay(5000, cancel.Token);
 					SynchronizedConsole.OverwriteIfSame(ref lastConsoleStats, emitStats);
 				}
-
-
-			}, cancel.Token);
+			});
 
 			sw.Start();
 			scheme

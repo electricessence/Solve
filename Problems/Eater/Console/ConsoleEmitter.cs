@@ -23,7 +23,8 @@ namespace Eater
 			SampleMinimum = sampleMinimum;
 		}
 
-		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests = new ConcurrentDictionary<string, ProcedureResult[]>();
+		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
+			= new ConcurrentDictionary<string, ProcedureResult[]>();
 
 		public FitnessScore? LastScore;
 		public string LastHash;
@@ -90,7 +91,7 @@ namespace Eater
 					}));
 		}
 
-		public void EmitFitnessScoreWithLabels(IFitness fitness)
+		public static void EmitFitnessScoreWithLabels(IFitness fitness)
 		{
 			var scoreStrings = new List<string>();
 			var scores = fitness.Scores.ToArray();

@@ -351,11 +351,14 @@ namespace Solve
 			c = ValueComparison(x, y);
 			if (c != 0) return c;
 
+			c = SampleComparison(x, y);
+			if (c != 0) return c;
+
 			c = IdComparison(x, y);
 			if (c != 0) return c;
 
-			throw new Exception("Impossible? Interlocked failed?");
-
+			//Debug.Fail("Impossible? Interlocked failed?");
+			return 0;
 		}
 
 		public static int ValueComparison(IFitness x, IFitness y)
@@ -390,6 +393,9 @@ namespace Solve
 
 			return 0;
 		}
+
+		public static int SampleComparison(IFitness x, IFitness y)
+			=> x.SampleCount.CompareTo(y.SampleCount) * ORDER_DIRECTION;
 
 		public static int IdComparison(IFitness x, IFitness y)
 		{
