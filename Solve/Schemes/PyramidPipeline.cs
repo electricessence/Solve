@@ -134,7 +134,7 @@ namespace Solve.Schemes
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
-								Announcer.Post((problem, top));
+								Announcer.Post((problem, gf));
 
 								//// Need at least 200 samples to wash out any double precision issues.
 								//Problems.Process(
@@ -167,7 +167,7 @@ namespace Solve.Schemes
 								return true;
 							}
 
-							TopGenomeFilter.Post((problem, top));
+							TopGenomeFilter.Post((problem, gf));
 
 							// You made it all the way back to the top?  Forget about what I said...
 							fitness.RejectionCount = -3; // VIPs get their rejection count augmented so they aren't easily dethroned.

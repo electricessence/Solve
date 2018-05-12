@@ -13,14 +13,14 @@ using System.Threading.Tasks;
 namespace Solve
 {
 	// Defines the pipeline?
-	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(IProblem<TGenome> Problem, TGenome Genome)>
+	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
 
 		readonly protected ISynchronizedCollection<IProblem<TGenome>> ProblemsInternal = new ReadWriteSynchronizedList<IProblem<TGenome>>();
 
-		public IProblem<TGenome>[] Problems
+		public ICollection<IProblem<TGenome>> Problems
 		{
 			get
 			{
@@ -38,7 +38,7 @@ namespace Solve
 			AddProblems(problems);
 		}
 
-		public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
+		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
 			foreach (var problem in problems)
 				ProblemsInternal.Add(problem);

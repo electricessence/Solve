@@ -30,24 +30,25 @@ namespace Eater
 		public SynchronizedConsole.Message LastTopGenomeUpdate;
 
 		public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
-		{
-			EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
-		}
+			=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
 
 		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
-		{
-			EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
-		}
+			=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
 		public void EmitTopGenomeStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
-		{
-			EmitTopGenomeStatsInternal(kvp.Problem, kvp.Genome);
-		}
+			=> EmitTopGenomeStatsInternal(kvp.Problem, kvp.Genome);
+
+		public void EmitTopGenomeStats((IProblem<EaterGenome>, IGenomeFitness<EaterGenome>) kvp)
+			=> EmitTopGenomeStatsInternal(kvp.Item1, kvp.Item2);
+
+		public void EmitTopGenomeStats(IProblem<EaterGenome> p, IGenomeFitness<EaterGenome> gf)
+			=> EmitTopGenomeStatsInternal(p, gf);
 
 		public void EmitTopGenomeStats(IProblem<EaterGenome> p, EaterGenome genome)
-		{
-			EmitTopGenomeStatsInternal(p, genome);
-		}
+			=> EmitTopGenomeStatsInternal(p, genome);
+
+		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, IGenomeFitness<EaterGenome> gf)
+			=> EmitTopGenomeStatsInternal(p, gf.Genome, gf.Fitness);
 
 		protected bool EmitTopGenomeStatsInternal(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness = null)
 		{

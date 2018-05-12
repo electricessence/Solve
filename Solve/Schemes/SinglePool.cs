@@ -92,14 +92,14 @@ namespace Solve.Schemes
 						var top = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
 							.GroupBy(f => f.Fitness.SampleCount)
 							.OrderByDescending(g => g.Key).First()
-							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First().Genome;
+							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First();
 
 						Announce((p, top));
 
 						var ac = PoolSize - Pool.Count;
 						if (ac > 0)
 						{
-							foreach (var newGenome in Factory.Expand(top).Take(ac))
+							foreach (var newGenome in Factory.Expand(top.Genome).Take(ac))
 							{
 								var hash = newGenome.Hash;
 								if (Pool.TryAdd(hash, newGenome))

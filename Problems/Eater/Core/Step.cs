@@ -384,8 +384,10 @@ namespace Eater
 				last = o;
 			}
 
-			bitmap.SetPixel(first.Value.X, first.Value.Y, Color.Green);
-			bitmap.SetPixel(last.Value.X, last.Value.Y, Color.Red);
+			if (first.HasValue)
+				bitmap.SetPixel(first.Value.X, first.Value.Y, Color.Green);
+			if (last.HasValue)
+				bitmap.SetPixel(last.Value.X, last.Value.Y, Color.Red);
 
 			return bitmap;
 		}
