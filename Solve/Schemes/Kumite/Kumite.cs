@@ -22,6 +22,7 @@ namespace Solve.Schemes
 			= new ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>>();
 
 		readonly ConcurrentQueue<TGenome> PriorityContenders = new ConcurrentQueue<TGenome>();
+		readonly ConcurrentQueue<TGenome> Breeders = new ConcurrentQueue<TGenome>();
 
 		public override void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
@@ -29,7 +30,12 @@ namespace Solve.Schemes
 			{
 				var k = new KumiteTournament<TGenome>(problem, MaximumLoss);
 				var x = new ActionBlock<IGenomeFitness<TGenome, Fitness>>(
-					e => Announce((problem, e)));
+					e =>
+					{
+						Announce((problem, e));
+						Breeders.Enqueue(e.Genome);
+					});
+
 				k.LinkToWithExceptions(x);
 				Hosts.TryAdd(problem, k);
 			}
@@ -46,7 +52,7 @@ namespace Solve.Schemes
 		{
 			foreach (var host in Hosts.Values)
 			{
-				host.Post(genome).Wait();
+				host.Post(genome);
 			}
 		}
 
@@ -54,14 +60,33 @@ namespace Solve.Schemes
 		{
 			return Task.Run(cancellationToken: token, action: () =>
 			{
-				Parallel.ForEach(
-					Factory.Generate(),
-					newGenome =>
+				TGenome readyBreeder = null;
+				while (!token.IsCancellationRequested)
 				{
-					Post(newGenome);
-					while (PriorityContenders.TryDequeue(out TGenome g))
+					if (PriorityContenders.TryDequeue(out TGenome g))
+					{
 						Post(g);
-				});
+						continue;
+					}
+
+					if (Breeders.TryDequeue(out TGenome g2))
+					{
+						if (Factory.AttemptNewMutation(g2, out TGenome g3))
+							PriorityContenders.Enqueue(g3);
+
+						if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
+						else
+						{
+							var g1 = readyBreeder;
+							readyBreeder = null;
+							foreach (var child in Factory.AttemptNewCrossover(g1, g2))
+								PriorityContenders.Enqueue(child);
+						}
+						continue;
+					}
+
+					Post(Factory.GenerateOne());
+				}
 			});
 		}
 	}
