@@ -37,6 +37,8 @@ namespace Solve
 		void Reject(string hash);
 		void Reject(IEnumerable<string> hashes);
 		bool WasRejected(string hash);
+
+		IReadOnlyList<string> FitnessLabels { get; }
 	}
 
 	public static class ProblemExtensions

@@ -20,18 +20,10 @@ namespace Solve
 
 
 		static int ProblemCount = 0;
-		readonly int _id = Interlocked.Increment(ref ProblemCount);
-		public int ID { get { return _id; } }
+		public int ID { get; } = Interlocked.Increment(ref ProblemCount);
 
 		long _testCount = 0;
-		public long TestCount
-		{
-			get
-			{
-				return _testCount;
-
-			}
-		}
+		public long TestCount => _testCount;
 
 
 		protected ProblemBase()
@@ -151,6 +143,8 @@ namespace Solve
 				return LazyInitializer.EnsureInitialized(ref _testProcessor, () => ProcessTest);
 			}
 		}
+
+		public abstract IReadOnlyList<string> FitnessLabels { get; }
 
 		public void AddToGlobalFitness<T>(IEnumerable<T> results)
 			where T : IGenomeFitness<TGenome>
