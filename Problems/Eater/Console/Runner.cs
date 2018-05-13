@@ -1,5 +1,6 @@
 ﻿using Open.Dataflow;
 using Open.Threading.Tasks;
+using Solve.Experiment.Console;
 using Solve.Schemes;
 using System;
 using System.Diagnostics;
@@ -59,9 +60,10 @@ namespace Eater
 				Console.WriteLine();
 			}
 
-			var scheme = new Kumite<EaterGenome>(
-				factory,
-				5);//, 4, 2, 200);
+			//var scheme = new Kumite<EaterGenome>(factory, 5);
+
+			var scheme = new PyramidPipeline<EaterGenome>(
+				factory, 20, 4, 2, 200);
 
 			scheme.AddProblem(problem);
 			//scheme.AddProblem(new ProblemFullTest());
@@ -69,7 +71,7 @@ namespace Eater
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
-			void emitStats(SynchronizedConsole.Cursor cursor)
+			void emitStats(Cursor cursor)
 			{
 				Console.WriteLine("{0} total time                    ", sw.Elapsed.ToStringVerbose());
 				foreach (var p in scheme.Problems)
@@ -83,7 +85,7 @@ namespace Eater
 				Console.WriteLine();
 			}
 
-			SynchronizedConsole.Message lastConsoleStats = null;
+			CursorRange lastConsoleStats = null;
 			{
 				//Action<(IProblem<EaterGenome>, IGenomeFitness<EaterGenome>)> onNext;
 				//if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;

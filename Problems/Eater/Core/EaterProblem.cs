@@ -34,6 +34,10 @@ namespace Eater
 		}
 
 		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);
+
+		public override IReadOnlyList<string> FitnessLabels { get; }
+			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Hash-Length {0:n0}" }).AsReadOnly();
+
 	}
 
 	public sealed class ProblemFragmented : Problem
@@ -73,8 +77,6 @@ namespace Eater
 			fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
 		}
 
-		public static readonly IReadOnlyList<string> FitnessLabels
-			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Hash-Length {0:n0}" }).AsReadOnly();
 	}
 
 

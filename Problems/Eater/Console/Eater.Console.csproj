@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Solve.Experiment\Solve.Experiment.csproj" />
     <ProjectReference Include="..\..\..\Solve\Solve.csproj" />
     <ProjectReference Include="..\Core\Eater.Core.csproj" />
   </ItemGroup>
