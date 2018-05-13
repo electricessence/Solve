@@ -1,6 +1,5 @@
 ﻿using Open.Dataflow;
 using Open.Threading.Tasks;
-using Solve;
 using Solve.Schemes;
 using System;
 using System.Diagnostics;
@@ -62,7 +61,7 @@ namespace Eater
 
 			var scheme = new Kumite<EaterGenome>(
 				factory,
-				20);//, 4, 2, 200);
+				5);//, 4, 2, 200);
 
 			scheme.AddProblem(problem);
 			//scheme.AddProblem(new ProblemFullTest());
