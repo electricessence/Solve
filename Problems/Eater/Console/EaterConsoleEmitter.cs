@@ -9,11 +9,11 @@ using System.IO;
 
 namespace Eater
 {
-	public class ConsoleEmitter : ConsoleEmitterBase<EaterGenome>
+	public class EaterConsoleEmitter : ConsoleEmitterBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
-		public ConsoleEmitter(SampleCache samples, uint sampleMinimum = 50) : base(sampleMinimum)
+		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50) : base(sampleMinimum)
 		{
 			Samples = samples;
 		}

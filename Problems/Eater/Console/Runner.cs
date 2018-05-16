@@ -1,131 +1,74 @@
-﻿using Open.Dataflow;
-using Open.Threading.Tasks;
-using Solve.Experiment.Console;
+﻿using Solve.Experiment.Console;
 using Solve.Schemes;
 using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace Eater
 {
-	class Runner
+	class Runner : RunnerBase<EaterGenome>
 	{
 		// Keep some known viable genomes for reintroduction.
-		public static readonly string[] Seed = new string[]
+		public static readonly string[] Seed =
 		{
-			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
+			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
-		static void Main(string[] args)
-		{
-			uint minSamples = Seed.Length == 0 ? 1u : 0u;
-			Console.ResetColor();
-			Console.Clear();
-			Console.WriteLine("Solving Eater Problem... (miniumum {0:n0} samples before displaying)", minSamples);
-			Console.WriteLine();
+		readonly uint _minSamples = 10;// Seed.Length == 0 ? 1u : 0u;
 
-			Console.WriteLine("Starting...");
-			Console.SetCursorPosition(0, Console.CursorTop - 1);
+		protected Runner(uint minSamples) :base() {
+			_minSamples = minSamples;
+		}
+
+		public void Init()
+		{
 
 			var factory = new EaterFactory();
-			var problem = new ProblemFragmented(10);
-			var emitter = new ConsoleEmitter(problem.Samples, minSamples);
-
-			var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
-			for (var i = 0; i < Seed.Length; i++)
-			{
-				var genome = seeds[i];
-				var result = problem.Samples.TestAll(genome);
-
-				if (i == 0)
-				{
-					Console.WriteLine("Total possibilities: {0:n0}", result[1].Count);
-					Console.WriteLine();
-					Console.WriteLine("Seeded solutions............................");
-					Console.WriteLine();
-				}
-
-				emitter.EmitTopGenomeFullStats(problem, genome);
-				Console.WriteLine();
-			}
-
-			if (Seed.Length != 0)
-			{
-				Console.WriteLine("............................................");
-				Console.WriteLine();
-				Console.WriteLine();
-			}
-
-			//var scheme = new Kumite<EaterGenome>(factory, 5);
-
+			var problem = new EaterProblemFragmented(10);
+			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			var scheme = new PyramidPipeline<EaterGenome>(
 				factory, 20, 4, 2, 200);
 
 			scheme.AddProblem(problem);
-			//scheme.AddProblem(new ProblemFullTest());
-			//scheme.AddSeeds(seeds);
 
-			var cancel = new CancellationTokenSource();
-			var sw = new Stopwatch();
-			void emitStats(Cursor cursor)
-			{
-				Console.WriteLine("{0} total time                    ", sw.Elapsed.ToStringVerbose());
-				foreach (var p in scheme.Problems)
-				{
-					var tc = ((Problem)p).TestCount;
-					if (tc != 0)
-					{
-						Console.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, sw.ElapsedTicks / tc);
-					}
-				}
-				Console.WriteLine();
-			}
+			Init(scheme, emitter);
 
-			CursorRange lastConsoleStats = null;
-			{
-				//Action<(IProblem<EaterGenome>, IGenomeFitness<EaterGenome>)> onNext;
-				//if (Seed.Length == 0) onNext = emitter.EmitTopGenomeStats;
-				//else onNext = emitter.EmitTopGenomeFullStats;
+			//{
+			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
+			//	for (var i = 0; i < Seed.Length; i++)
+			//	{
+			//		var genome = seeds[i];
+			//		var result = problem.Samples.TestAll(genome);
 
-				scheme
-					.AsObservable()
-					.Subscribe(emitter.EmitTopGenomeStats,
-						ex => Console.WriteLine(ex.GetBaseException()),
-						() =>
-						{
-							cancel.Cancel();
-							SynchronizedConsole.OverwriteIfSame(ref lastConsoleStats, emitStats);
-						});
-			}
+			//		if (i == 0)
+			//		{
+			//			Console.WriteLine("Total possibilities: {0:n0}", result[1].Count);
+			//			Console.WriteLine();
+			//			Console.WriteLine("Seeded solutions............................");
+			//			Console.WriteLine();
+			//		}
 
+			//		emitter.EmitTopGenomeFullStats(problem, genome);
+			//		Console.WriteLine();
+			//	}
 
-			Task.Run(
-				cancellationToken: cancel.Token,
-				action: async () =>
-			{
-				while (!cancel.IsCancellationRequested)
-				{
-					await Task.Delay(5000, cancel.Token);
-					SynchronizedConsole.OverwriteIfSame(ref lastConsoleStats, emitStats);
-				}
-			});
+			//	if (Seed.Length != 0)
+			//	{
+			//		Console.WriteLine("............................................");
+			//		Console.WriteLine();
+			//		Console.WriteLine();
+			//	}
+			//}
+		}
 
-			sw.Start();
-			scheme
-				.Start()
-				.OnFullfilled(() => Console.WriteLine("Done."))
-				.OnFaulted(ex => { throw ex; })
-				.Wait();
-
-			cancel.Cancel();
-
-			Console.WriteLine();
-			Console.WriteLine("Press any key to continue.");
-			Console.ReadKey();
+		static Task Main(string[] args)
+		{
+			var runner = new Runner(10);
+			runner.Init();
+			var message = String.Format(
+				"Solving Eater Problem... (miniumum {0:n0} samples before displaying)",
+				runner._minSamples);
+			return runner.Start(message);
 		}
 	}
 }

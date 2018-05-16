@@ -13,11 +13,11 @@ namespace Eater
 {
 
 
-	public abstract class Problem : Solve.ProblemBase<EaterGenome>
+	public abstract class EaterProblem : Solve.ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
-		protected Problem(int gridSize = 10)
+		protected EaterProblem(int gridSize = 10)
 		{
 			Samples = new SampleCache();
 		}
@@ -40,9 +40,9 @@ namespace Eater
 
 	}
 
-	public sealed class ProblemFragmented : Problem
+	public sealed class EaterProblemFragmented : EaterProblem
 	{
-		public ProblemFragmented(int gridSize = 10) : base(gridSize)
+		public EaterProblemFragmented(int gridSize = 10) : base(gridSize)
 		{
 		}
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
@@ -80,7 +80,7 @@ namespace Eater
 	}
 
 
-	public sealed class ProblemFullTest : Problem
+	public sealed class ProblemFullTest : EaterProblem
 	{
 		public ProblemFullTest(int gridSize = 10) : base(gridSize)
 		{
