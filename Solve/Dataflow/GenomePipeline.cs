@@ -2,51 +2,21 @@
 using Open.Dataflow;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using KVP = Open.Collections.KeyValuePair;
-namespace Solve
+
+namespace Solve.Dataflow
 {
-	// GenomeSelection should be short lived.
-	public struct GenomeSelection<TGenome>
-		where TGenome : IGenome
-	{
-		public readonly TGenome[] All;
-		public readonly TGenome[] Selected;
-		public readonly TGenome[] Rejected;
-
-		public GenomeSelection(IEnumerable<TGenome> results) : this(results.ToArray())
-		{
-
-		}
-		public GenomeSelection(TGenome[] results)
-		{
-			int len = results.Length;
-			int selectionPoint = len / 2;
-			var all = new TGenome[len];
-			var selected = new TGenome[selectionPoint];
-			var rejected = new TGenome[len - selectionPoint];
-			for (var i = 0; i < len; i++)
-			{
-				var g = results[i];
-				all[i] = g;
-				if (i < selectionPoint)
-					selected[i] = g;
-				else
-					rejected[i - selectionPoint] = g;
-			}
-
-			All = all;
-			Selected = selected;
-			Rejected = rejected;
-		}
-
-	}
-
 	public static class GenomePipeline
 	{
 		static readonly ExecutionDataflowBlockOptions Max2Queued = new ExecutionDataflowBlockOptions()
+		{
+			BoundedCapacity = 2
+		};
+
+		static readonly ExecutionDataflowBlockOptions MaxDegreeOfParallelism64 = new ExecutionDataflowBlockOptions()
 		{
 			BoundedCapacity = 2
 		};
@@ -55,27 +25,25 @@ namespace Solve
 			IDictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]>,
 			Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>> Processor<TGenome>()
 			where TGenome : IGenome
-		{
-			return new TransformBlock<
-			IDictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]>,
-			Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>>(
-				async problems =>
-					(await Task.WhenAll(problems.Select(
+			=> new TransformBlock<IDictionary<IProblem<TGenome>, Task<IGenomeFitness<TGenome>>[]>, Dictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>>(
+				dataflowBlockOptions: MaxDegreeOfParallelism64,
+				transform: async problems =>
+				{
+					var selection = problems.Select(
 						async kvp =>
-						KVP.Create(
+						KeyValuePair.Create(
 							kvp.Key,
 							await Task.WhenAll(kvp.Value).ContinueWith(t =>
-						{
-							var a = t.Result;
-							Array.Sort(a, GenomeFitness.Comparison);
-							return a;
-						}))))
-					).ToDictionary(),
-				new ExecutionDataflowBlockOptions
-				{
-					MaxDegreeOfParallelism = 64
+							{
+								var a = t.Result;
+								Array.Sort(a, GenomeFitness.Comparison);
+								return a;
+							})));
+					var results = await Task.WhenAll(selection);
+					return results.ToDictionary();
 				});
-		}
+
+
 
 		// public static IPropagatorBlock<TGenome, GenomeFitness<TGenome>[]>
 		// 	ProcessorBatched<TGenome>(
@@ -110,8 +78,11 @@ namespace Solve
 				int size)
 			where TGenome : IGenome
 		{
+			if (problems == null)
+				throw new ArgumentNullException(nameof(problems));
 			if (size < 1)
 				throw new ArgumentOutOfRangeException(nameof(size), size, "Must be at least 1.");
+			Contract.EndContractBlock();
 
 			var output = Processor<TGenome>();
 
@@ -160,26 +131,22 @@ namespace Solve
 			return DataflowBlock.Encapsulate(input, output);
 		}
 
-		public static TransformBlock<
-			IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>,
-			GenomeSelection<TGenome>>
-		Selector<TGenome>()
+		public static TransformBlock<IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>, Selection<TGenome>> Selector<TGenome>()
 			where TGenome : IGenome
-		{
-			return new TransformBlock<IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>, GenomeSelection<TGenome>>(results =>
+			=> new TransformBlock<IDictionary<IProblem<TGenome>, IGenomeFitness<TGenome>[]>, Selection<TGenome>>(results =>
 			{
 				foreach (var kvp in results)
 					kvp.Key.AddToGlobalFitness(kvp.Value);
-				return new GenomeSelection<TGenome>(results.Select(kvp => kvp.Value).Weave().Select(r => r.Genome).Distinct());
+				return new Selection<TGenome>(results.Select(kvp => kvp.Value).Weave().Select(r => r.Genome).Distinct());
 			}, new ExecutionDataflowBlockOptions()
 			{
 				MaxDegreeOfParallelism = 2,
 				BoundedCapacity = 2
 			});
-		}
 
-		public static IPropagatorBlock<TGenome, GenomeSelection<TGenome>>
-			Selector<TGenome>(IEnumerable<IProblem<TGenome>> problems, int size, int count = 1)
+
+		public static IPropagatorBlock<TGenome, Selection<TGenome>> Selector<TGenome>(
+			IEnumerable<IProblem<TGenome>> problems, int size, int count = 1)
 			where TGenome : IGenome
 		{
 			if (problems == null)
@@ -188,6 +155,7 @@ namespace Solve
 				throw new ArgumentOutOfRangeException(nameof(size), size, "Must be at least 2.");
 			if (count < 1)
 				throw new ArgumentOutOfRangeException(nameof(count), size, "Must be at least 1.");
+			Contract.EndContractBlock();
 
 			var processor = Processor(problems, size);
 			var selector = Selector<TGenome>();
@@ -206,11 +174,12 @@ namespace Solve
 		{
 			if (selected == null)
 				throw new ArgumentNullException(nameof(selected));
+			Contract.EndContractBlock();
 
 			var input = Selector(problems, size)
 				.PropagateFaultsTo(selected, rejected);
 
-			input.LinkTo(new ActionBlock<GenomeSelection<TGenome>>(async selection =>
+			input.LinkTo(new ActionBlock<Selection<TGenome>>(async selection =>
 			{
 				await selected.SendAsync(selection.Selected);
 				if (rejected != null)
@@ -224,11 +193,12 @@ namespace Solve
 			Distributor<TGenome>(
 				IEnumerable<IProblem<TGenome>> problems,
 				int size,
-				Action<GenomeSelection<TGenome>> selection)
+				Action<Selection<TGenome>> selection)
 			where TGenome : IGenome
 		{
 			if (selection == null)
 				throw new ArgumentNullException(nameof(selection));
+			Contract.EndContractBlock();
 
 			var input = Selector(problems, size);
 			input.LinkTo(selection);
@@ -256,6 +226,13 @@ namespace Solve
 			Action<TGenome[]> globalRejectedHandler = null)
 			where TGenome : IGenome
 		{
+			if (sources == null)
+				throw new ArgumentNullException(nameof(sources));
+			if (problems == null)
+				throw new ArgumentNullException(nameof(problems));
+			Contract.EndContractBlock();
+
+
 			var output = new BufferBlock<TGenome>();
 			var processor = Distributor(problems, size,
 				selected =>
@@ -374,13 +351,13 @@ namespace Solve
 		}
 
 		public ITargetBlock<TGenome>
-			Selector(Action<GenomeSelection<TGenome>> selection)
+			Selector(Action<Selection<TGenome>> selection)
 		{
 			return GenomePipeline.Distributor(Problems, PoolSize, selection);
 		}
 
 		public ITargetBlock<TGenome>
-			Selector(int poolSize, Action<GenomeSelection<TGenome>> selection)
+			Selector(int poolSize, Action<Selection<TGenome>> selection)
 		{
 			return GenomePipeline.Distributor(Problems, poolSize, selection);
 		}

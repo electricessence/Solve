@@ -6,6 +6,7 @@
 using Open.Arithmetic;
 using Open.Collections;
 using Open.Dataflow;
+using Solve.Dataflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;

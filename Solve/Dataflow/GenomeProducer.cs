@@ -12,7 +12,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace Solve
+namespace Solve.Dataflow
 {
 
 	public class GenomeProducer<TGenome> : ISourceBlock<TGenome>
