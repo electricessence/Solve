@@ -1,5 +1,4 @@
 ﻿using Open.Dataflow;
-using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -65,22 +64,20 @@ namespace Solve.Experiment.Console
 				{
 					while (!cancel.IsCancellationRequested)
 					{
-						await Task.Delay(5000, cancel.Token).ContinueWith(t =>
+						await Task.Delay(5000, cancel.Token).ContinueWith(t => // Await but no throw due to cancellation.
 						{
-							SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+							if (t.IsCompletedSuccessfully)
+								SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
 						});
 					}
 				});
 
 			_stopwatch.Start();
-			await Environment
-				.Start()
-				.OnFullfilled(() => SystemConsole.WriteLine("Done."))
-				.OnFaulted(ex => { throw ex; });
+			await Environment.Start();
 
 			cancel.Cancel();
-
-			await status;
+			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+			SystemConsole.WriteLine("Done.");
 
 			OnComplete();
 		}
