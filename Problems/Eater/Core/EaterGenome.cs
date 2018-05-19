@@ -1,13 +1,13 @@
 ﻿using Open.Cloneable;
 using Solve;
-using System.Drawing;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Eater
 {
-
+	[DebuggerDisplay("{_hash}")]
 	public sealed class EaterGenome
 		: ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{

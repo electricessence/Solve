@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * @author electricessence / https://github.com/electricessence/
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
@@ -27,6 +27,8 @@ namespace Solve
 		bool AttemptNewMutation(TGenome[] source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
 		IEnumerable<TGenome> Mutate(TGenome source);
+
+		// These will return null if the attempt fails.
 
 		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
 

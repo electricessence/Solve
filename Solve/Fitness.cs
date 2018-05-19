@@ -102,6 +102,7 @@ namespace Solve
 
 	public interface IFitness : IComparable<IFitness>
 	{
+		bool HasSamples { get; } // Use for lightweight return.
 		int SampleCount { get; }
 		IReadOnlyList<double> Scores { get; }
 
@@ -129,6 +130,8 @@ namespace Solve
 				results[i] = source.GetResult(i);
 			_scores = Lazy.Create(() => results.Select(s => s.Average).ToList().AsReadOnly());
 		}
+
+		public bool HasSamples => Count != 0;
 
 		public int Count
 		{
@@ -209,6 +212,8 @@ namespace Solve
 				_source.Add(new SingleFitness(i));
 		}
 
+		public bool HasSamples { get; private set; }
+
 		public int SampleCount
 		{
 			get
@@ -235,6 +240,12 @@ namespace Solve
 				return Sync.Reading(() => this.Select(v => v.Result.Average).ToList())
 					.AsReadOnly();
 			}
+		}
+
+		protected override void OnModified()
+		{
+			base.OnModified();
+			HasSamples = true;
 		}
 
 		public void Add(ProcedureResult score)
