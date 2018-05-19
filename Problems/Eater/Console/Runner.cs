@@ -30,7 +30,7 @@ namespace Eater
 			//var scheme = new PyramidPipeline<EaterGenome>(
 			//	factory, 20, 4, 2, 200);
 			var scheme = new KingOfTheHill<EaterGenome>(
-				factory, 200);
+				factory, 50);
 
 			scheme.AddProblem(problem);
 
