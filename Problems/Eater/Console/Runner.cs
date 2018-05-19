@@ -16,7 +16,8 @@ namespace Eater
 
 		readonly uint _minSamples = 10;// Seed.Length == 0 ? 1u : 0u;
 
-		protected Runner(uint minSamples) :base() {
+		protected Runner(uint minSamples) : base()
+		{
 			_minSamples = minSamples;
 		}
 
@@ -26,8 +27,10 @@ namespace Eater
 			var factory = new EaterFactory();
 			var problem = new EaterProblemFragmented(10);
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
-			var scheme = new PyramidPipeline<EaterGenome>(
-				factory, 20, 4, 2, 200);
+			//var scheme = new PyramidPipeline<EaterGenome>(
+			//	factory, 20, 4, 2, 200);
+			var scheme = new KingOfTheHill<EaterGenome>(
+				factory, 200);
 
 			scheme.AddProblem(problem);
 

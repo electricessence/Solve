@@ -27,7 +27,7 @@ namespace Solve.Experiment.Console
 			EnvironmentBase<TGenome> environment,
 			ConsoleEmitterBase<TGenome> emitter)
 		{
-			if(Environment==null)
+			if (Environment == null)
 			{
 				Environment = environment;
 				Emitter = emitter;
@@ -65,8 +65,10 @@ namespace Solve.Experiment.Console
 				{
 					while (!cancel.IsCancellationRequested)
 					{
-						await Task.Delay(5000, cancel.Token);
-						SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+						await Task.Delay(5000, cancel.Token).ContinueWith(t =>
+						{
+							SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+						});
 					}
 				});
 
