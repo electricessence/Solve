@@ -102,7 +102,7 @@ namespace Solve.Experiment.Console
 		}
 
 
-		protected void OnComplete()
+		protected virtual void OnComplete()
 		{
 			SystemConsole.WriteLine();
 			SystemConsole.WriteLine("Press any key to continue.");
