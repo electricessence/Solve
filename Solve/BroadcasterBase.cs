@@ -5,13 +5,19 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Solve
 {
+	// Important Note:
+	// Tasks can build up and dominate the scheduler in ways that messages from a broadcast block won't make it out.
+	// Using a synchronous announcer delegate will guarantee the announcements are recieved.
+
 	public abstract class BroadcasterBase<T> : ISourceBlock<T>
 	{
+		protected readonly Action<T> _synchronousAnnouncer;
 		protected readonly ITargetBlock<T> Announcer;
 		readonly ISourceBlock<T> _announcerBlock; // Cast once.
 
-		protected BroadcasterBase()
+		protected BroadcasterBase(Action<T> announcer = null)
 		{
+			_synchronousAnnouncer = announcer;
 			var b = new BroadcastBlock<T>(null);
 			Announcer = b.OnlyIfChanged(DataflowMessageStatus.Accepted);
 			_announcerBlock = b;
@@ -20,7 +26,10 @@ namespace Solve
 		public Task Completion => Announcer.Completion;
 
 		internal bool Announce(T message)
-			=> Announcer.Post(message);
+		{
+			_synchronousAnnouncer?.Invoke(message);
+			return Announcer.Post(message);
+		}
 
 		public IDisposable LinkTo(
 			ITargetBlock<T> target,

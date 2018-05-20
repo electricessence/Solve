@@ -1,9 +1,8 @@
-﻿using Open.Dataflow;
+﻿using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console
@@ -12,14 +11,19 @@ namespace Solve.Experiment.Console
 		where TGenome : class, IGenome
 
 	{
+		readonly static TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
+
+		readonly ushort _minConvergenceSamples;
 		readonly Stopwatch _stopwatch;
 		EnvironmentBase<TGenome> Environment;
 		ConsoleEmitterBase<TGenome> Emitter;
 		CursorRange _lastConsoleStats = null;
 
-		protected RunnerBase()
+		protected RunnerBase(ushort minConvergenceSamples = 20)
 		{
+			_minConvergenceSamples = minConvergenceSamples;
 			_stopwatch = new Stopwatch();
+			_statusEmitter = new ActionRunner(EmitStatsAction);
 		}
 
 		public virtual void Init(
@@ -31,6 +35,26 @@ namespace Solve.Experiment.Console
 				Environment = environment;
 				Emitter = emitter;
 				OnInit();
+			}
+		}
+
+		void EmitStatsAction()
+		{
+			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+			_lastEmit = DateTime.Now;
+			_statusEmitter.Defer(StatusDelay);
+		}
+
+		readonly ActionRunner _statusEmitter;
+
+		DateTime _lastEmit = DateTime.MinValue;
+
+		protected void OnAnnouncement((IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness) announcement)
+		{
+			Emitter.EmitTopGenomeStats(announcement);
+			if (DateTime.Now - _lastEmit > StatusDelay)
+			{
+				EmitStatsAction();
 			}
 		}
 
@@ -48,35 +72,13 @@ namespace Solve.Experiment.Console
 
 			var cancel = new CancellationTokenSource();
 
-			Environment
-				.AsObservable()
-				.Subscribe(Emitter.EmitTopGenomeStats,
-					ex => SystemConsole.WriteLine(ex.GetBaseException()),
-					() =>
-					{
-						cancel.Cancel();
-						SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
-					});
-
-			var status = Task.Run(
-				cancellationToken: cancel.Token,
-				action: async () =>
-				{
-					while (!cancel.IsCancellationRequested)
-					{
-						await Task.Delay(5000, cancel.Token).ContinueWith(t => // Await but no throw due to cancellation.
-						{
-							if (t.IsCompletedSuccessfully)
-								SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
-						});
-					}
-				});
-
 			_stopwatch.Start();
-			await Environment.Start();
+			var c = _statusEmitter.Defer(StatusDelay);
 
+			await Environment.Start();
+			_statusEmitter.Dispose();
 			cancel.Cancel();
-			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+			EmitStatsAction();
 			SystemConsole.WriteLine("Done.");
 
 			OnComplete();

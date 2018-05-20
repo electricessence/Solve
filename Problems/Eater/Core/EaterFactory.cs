@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -71,22 +71,23 @@ namespace Eater
 			}
 		}
 
-		protected override EaterGenome[] CrossoverInternal(EaterGenome a, EaterGenome b)
+		protected override IEnumerable<EaterGenome> CrossoverInternal(EaterGenome a, EaterGenome b, byte maxAttempts = 3)
 		{
 			var aGenes = a.Genes;
 			var bGenes = b.Genes;
 			var aLen = aGenes.Length;
 			var bLen = bGenes.Length;
-			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
+			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) yield break;
 
-			var aPoint = Randomizer.Next(aLen - 1) + 1;
-			var bPoint = Randomizer.Next(bLen - 1) + 1;
-
-			return new EaterGenome[]
+			while (true)
 			{
-				new EaterGenome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
-				new EaterGenome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
-			};
+
+				var aPoint = Randomizer.Next(aLen - 1) + 1;
+				var bPoint = Randomizer.Next(bLen - 1) + 1;
+
+				yield return new EaterGenome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint)));
+				yield return new EaterGenome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint)));
+			}
 		}
 
 		static IEnumerable<T> Remove<T>(int index, T[] source)

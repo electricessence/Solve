@@ -1,6 +1,7 @@
 ﻿using Open.Dataflow;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -56,38 +57,40 @@ namespace Solve.Schemes
 			}
 		}
 
-		protected override Task StartInternal(CancellationToken token)
+		protected override async Task StartInternal(CancellationToken token)
 		{
-			return Task.Run(cancellationToken: token, action: () =>
+			TGenome readyBreeder = null;
+			while (!token.IsCancellationRequested)
 			{
-				TGenome readyBreeder = null;
-				while (!token.IsCancellationRequested)
+				if (PriorityContenders.TryDequeue(out TGenome g))
 				{
-					if (PriorityContenders.TryDequeue(out TGenome g))
-					{
-						Post(g);
-						continue;
-					}
-
-					if (Breeders.TryDequeue(out TGenome g2))
-					{
-						if (Factory.AttemptNewMutation(g2, out TGenome g3))
-							PriorityContenders.Enqueue(g3);
-
-						if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
-						else
-						{
-							var g1 = readyBreeder;
-							readyBreeder = null;
-							foreach (var child in Factory.AttemptNewCrossover(g1, g2))
-								PriorityContenders.Enqueue(child);
-						}
-						continue;
-					}
-
-					Post(Factory.GenerateOne());
+					Post(g);
+					continue;
 				}
-			});
+
+				if (Breeders.TryDequeue(out TGenome g2))
+				{
+					await Factory
+						.AttemptNewMutation(g2)
+						.ToAsyncEnumerable()
+						.Take(1)
+						.ForEachAsync(g3 => PriorityContenders.Enqueue(g3));
+
+					if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
+					else
+					{
+						var g1 = readyBreeder;
+						readyBreeder = null;
+						await Factory
+							.AttemptNewCrossover(g1, g2)
+							.ToAsyncEnumerable()
+							.ForEachAsync(g3 => PriorityContenders.Enqueue(g3));
+					}
+					continue;
+				}
+
+				Post(Factory.GenerateOne());
+			}
 		}
 	}
 }

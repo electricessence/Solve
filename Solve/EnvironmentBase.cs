@@ -28,7 +28,8 @@ namespace Solve
 			}
 		}
 
-		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
+		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory, Action<(IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness)> announcer = null)
+			: base(announcer)
 		{
 			Factory = genomeFactory;
 		}
