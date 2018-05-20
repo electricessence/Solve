@@ -1,4 +1,5 @@
-﻿using Open.Dataflow;
+﻿using Open.Collections;
+using Open.Dataflow;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,22 +71,22 @@ namespace Solve.Schemes
 
 				if (Breeders.TryDequeue(out TGenome g2))
 				{
-					await Factory
-						.AttemptNewMutation(g2)
-						.ToAsyncEnumerable()
-						.Take(1)
-						.ForEachAsync(g3 => PriorityContenders.Enqueue(g3));
+					var mutate = Task.Run(() =>
+					{
+						if (Factory.AttemptNewMutation(g2, out TGenome mutation))
+							PriorityContenders.Enqueue(mutation);
+					});
 
 					if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
 					else
 					{
 						var g1 = readyBreeder;
 						readyBreeder = null;
-						await Factory
-							.AttemptNewCrossover(g1, g2)
-							.ToAsyncEnumerable()
-							.ForEachAsync(g3 => PriorityContenders.Enqueue(g3));
+						Factory
+							.AttemptNewCrossover(g1, g2)?
+							.ForEach(g3 => PriorityContenders.Enqueue(g3));
 					}
+					await mutate;
 					continue;
 				}
 

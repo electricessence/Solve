@@ -71,23 +71,22 @@ namespace Eater
 			}
 		}
 
-		protected override IEnumerable<EaterGenome> CrossoverInternal(EaterGenome a, EaterGenome b, byte maxAttempts = 3)
+		protected override EaterGenome[] CrossoverInternal(EaterGenome a, EaterGenome b)
 		{
 			var aGenes = a.Genes;
 			var bGenes = b.Genes;
 			var aLen = aGenes.Length;
 			var bLen = bGenes.Length;
-			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) yield break;
+			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
 
-			while (true)
+			var aPoint = Randomizer.Next(aLen - 1) + 1;
+			var bPoint = Randomizer.Next(bLen - 1) + 1;
+
+			return new EaterGenome[]
 			{
-
-				var aPoint = Randomizer.Next(aLen - 1) + 1;
-				var bPoint = Randomizer.Next(bLen - 1) + 1;
-
-				yield return new EaterGenome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint)));
-				yield return new EaterGenome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint)));
-			}
+				new EaterGenome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
+				new EaterGenome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
+			};
 		}
 
 		static IEnumerable<T> Remove<T>(int index, T[] source)
@@ -110,7 +109,7 @@ namespace Eater
 			var g = Steps.ALL[i];
 
 			// 50/50 chance to 'splice' instead of modify.
-			if (index != 0 && Randomizer.Next(2) == 0)
+			if (Randomizer.Next(2) == 0)
 			{
 				return new EaterGenome(
 					genes.Take(index)

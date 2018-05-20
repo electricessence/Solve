@@ -10,9 +10,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Solve
 {
@@ -117,16 +115,38 @@ namespace Solve
 		// Be sure to call Registration within the GenerateOne call.
 		protected abstract TGenome GenerateOneInternal();
 
-		public IEnumerable<TGenome> Generate(params TGenome[] source)
+		public TGenome GenerateOne(TGenome[] source = null)
 		{
-			if (source != null && source.Length != 0)
+			TGenome genome = null;
+			using (TimeoutHandler.New(5000, ms =>
 			{
-				foreach (var one in AttemptNewMutation(source))
+				Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms);
+			}))
+			{
+				// Note: for now, we will only mutate by 1.
+
+				// See if it's possible to mutate from the provided genomes.
+				if (source != null && source.Length != 0)
 				{
-					yield return AssertFrozen(one);
+					AttemptNewMutation(source, out genome);
+				}
+
+				if (genome == null)
+				{
+					genome = GenerateOneInternal();
 				}
 			}
 
+			Debug.Assert(genome != null, "Converged? No solutions? Saturated?");
+			// if(genome==null)
+			// 	throw "Failed... Converged? No solutions? Saturated?";
+
+			return Registration(genome);
+
+		}
+
+		public IEnumerable<TGenome> Generate(TGenome[] source = null)
+		{
 			while (true)
 			{
 				TGenome one;
@@ -135,77 +155,69 @@ namespace Solve
 					Console.WriteLine("Warning: {0}.GenerateOne() is taking longer than {1} milliseconds.\n", this, ms);
 				}))
 				{
-					one = GenerateOneInternal();
+					one = GenerateOne(source);
 				}
 				if (one == null)
 				{
 					Console.WriteLine("GenomeFactory failed GenerateOne()");
 					break;
 				}
-
-				Registration(one);
-				yield return AssertFrozen(one);
+				yield return one;
 			}
 		}
 
+		public TGenome GenerateOne(TGenome source)
+		{
+			var one = AssertFrozen(GenerateOne(new TGenome[] { source }));
+			if (one != null)
+				RegisterProduction(one);
+			return one;
+		}
 
-		public TGenome GenerateOne(params TGenome[] source)
-			=> Generate(source).FirstOrDefault();
-
-		public Task<TGenome> GenerateOneAsync(params TGenome[] source)
-			=> Task.Run(() => GenerateOne(source));
+		public IEnumerable<TGenome> Generate(TGenome source)
+		{
+			var e = new TGenome[] { source };
+			while (true) yield return GenerateOne(e);
+		}
 
 		// Be sure to call Registration within the GenerateOne call.
 		protected abstract TGenome MutateInternal(TGenome target);
 
-		public IEnumerable<TGenome> AttemptNewMutation(TGenome source, byte triesPerMutationLevel = 5, byte maxMutations = 3)
+		public bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3)
 		{
 			if (source == null) throw new ArgumentNullException(nameof(source));
-			Contract.EndContractBlock();
-			return AttemptNewMutation(new TGenome[] { source }, triesPerMutationLevel, maxMutations);
+			return AttemptNewMutation(new TGenome[] { source }, out mutation, triesPerMutationLevel, maxMutations);
 		}
 
-		public IEnumerable<TGenome> AttemptNewMutation(TGenome[] source, byte triesPerMutationLevel = 5, byte maxMutations = 3)
+		public bool AttemptNewMutation(TGenome[] source, out TGenome genome, byte triesPerMutationLevel = 5, byte maxMutations = 3)
 		{
 			if (source == null) throw new ArgumentNullException(nameof(source));
 			Debug.Assert(source.Length != 0, "Should never pass an empty source for mutation.");
-			Contract.EndContractBlock();
-
 			source = source.Where(g => g.Hash.Length != 0).ToArray();
-
-			IEnumerable<TGenome> rest()
+			if (source.Length != 0)
 			{
-				bool next(out TGenome genome)
+				// Find one that will mutate well and use it.
+				for (byte m = 1; m <= maxMutations; m++)
 				{
-					using (TimeoutHandler.New(5000, ms =>
+					for (byte t = 0; t < triesPerMutationLevel; t++)
 					{
-						Console.WriteLine("Warning: {0}.AttemptNewMutation() is taking longer than {1} milliseconds.\n", this, ms);
-					}))
-					{
-						// Find one that will mutate well and use it.
-						for (byte m = 1; m <= maxMutations; m++)
-						{
-							for (byte t = 0; t < triesPerMutationLevel; t++)
-							{
-								genome = Mutate(source.RandomSelectOne(), m);
-								if (genome != null && RegisterProduction(genome))
-									return true;
-							}
-						}
+						genome = Mutate(source.RandomSelectOne(), m);
+						if (genome != null && RegisterProduction(genome))
+							return true;
 					}
-					genome = null;
-					return false;
-				}
-
-				while (next(out TGenome g))
-				{
-					yield return g;
 				}
 			}
+			genome = null;
+			return false;
+		}
 
-			return source.Length == 0
-				? Enumerable.Empty<TGenome>()
-				: rest();
+
+		public IEnumerable<TGenome> Mutate(TGenome source)
+		{
+			while (AttemptNewMutation(source, out TGenome next))
+			{
+				yield return next;
+			}
 		}
 
 		protected TGenome Mutate(TGenome source, byte mutations = 1)
@@ -238,68 +250,80 @@ namespace Solve
 		}
 
 
-		protected abstract IEnumerable<TGenome> CrossoverInternal(TGenome a, TGenome b, byte maxAttempts = 3);
+		protected abstract TGenome[] CrossoverInternal(TGenome a, TGenome b);
 
-		protected IEnumerable<TGenome> Crossover(TGenome a, TGenome b, byte maxAttempts = 3)
+		protected TGenome[] Crossover(TGenome a, TGenome b)
 		{
-			foreach (var r in CrossoverInternal(a, b, maxAttempts))
+			var result = CrossoverInternal(a, b);
+			if (result != null)
 			{
-				if (r.Hash.Length == 0)
-					throw new InvalidOperationException("Cannot process a genome with an empty hash.");
-				Registration(r);
-				yield return r;
+				foreach (var r in result)
+				{
+					if (r.Hash.Length == 0)
+						throw new InvalidOperationException("Cannot process a genome with an empty hash.");
+					Registration(r);
+				}
 			}
+			return result;
 		}
 
-		public virtual IEnumerable<TGenome> AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
+		public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
-			if (a == null || b == null || a == b) return Enumerable.Empty<TGenome>();
+			if (a == null || b == null) return null;
 
-			return Crossover(a, b, maxAttempts).Where(g => RegisterProduction(g));
+			// Avoid inbreeding. :P
+			if (a == b) return null;
+
+			while (maxAttempts != 0)
+			{
+				var offspring = Crossover(a, b)?.Where(g => RegisterProduction(g)).ToArray();
+				if (offspring != null && offspring.Length != 0) return offspring;
+				--maxAttempts;
+			}
+
+			return null;
 		}
 
 		// Random matchmaking...  It's possible to include repeats in the source to improve their chances. Possile O(n!) operaion.
-		public IEnumerable<TGenome> AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3)
+		public TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3)
 		{
 			if (source == null)
 				throw new ArgumentNullException(nameof(source));
 			if (source.Length == 2 && source[0] != source[1]) return AttemptNewCrossover(source[0], source[1], maxAttemptsPerCombination);
 			if (source.Length <= 2)
-				return Enumerable.Empty<TGenome>(); //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
+				return null; //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 
-			IEnumerable<TGenome> rest()
+			bool isFirst = true;
+			do
 			{
-				do
+				// Take one.
+				var a = RandomUtilities.RandomSelectOne(source);
+				// Get all others (in orignal order/duplicates).
+				var s1 = source.Where(g => g != a).ToArray();
+
+				// Any left?
+				while (s1.Length != 0)
 				{
-					// Take one.
-					var a = RandomUtilities.RandomSelectOne(source);
-					// Get all others (in orignal order/duplicates).
-					var s1 = source.Where(g => g != a).ToArray();
-					if (s1.Length == 0) break; // There were no more available candicates to cross over with. :(
-
-					// Any left?
-					while (s1.Length != 0)
-					{
-						var b = s1.RandomSelectOne();
-						foreach (var c in AttemptNewCrossover(a, b, maxAttemptsPerCombination))
-						{
-							yield return c;
-						}
-
-						// Reduce the possibilites.
-						s1 = s1.Where(g => g != b).ToArray();
-					}
-
-					// Okay so we've been through all of them with 'a' Now move on to another.
-					source = source.Where(g => g != a).ToArray();
+					isFirst = false;
+					var b = s1.RandomSelectOne();
+					var offspring = AttemptNewCrossover(a, b, maxAttemptsPerCombination);
+					if (offspring != null && offspring.Length != 0) return offspring;
+					// Reduce the possibilites.
+					s1 = s1.Where(g => g != b).ToArray();
 				}
-				while (source.Length > 1); // Less than 2 left? Then we have no other options.
-			}
 
-			return rest();
+				if (isFirst) // There were no other available candicates to cross over with. :(
+					return null; //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
+
+				// Okay so we've been through all of them with 'a' Now move on to another.
+				source = source.Where(g => g != a).ToArray();
+			}
+			while (source.Length > 1); // Less than 2 left? Then we have no other options.
+
+			return null;
 		}
 
-		public IEnumerable<TGenome> AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3)
+		public TGenome[] AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3)
 		{
 			if (primary == null)
 				throw new ArgumentNullException(nameof(primary));
@@ -309,25 +333,20 @@ namespace Solve
 				return null;// throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 			if (others.Length == 1 && primary != others[0]) return AttemptNewCrossover(primary, others[0], maxAttemptsPerCombination);
 			var source = others.Where(g => g != primary).ToArray();
-			if (source.Length == 0) return Enumerable.Empty<TGenome>();
 
-			IEnumerable<TGenome> rest()
+			// Any left?
+			while (source.Length != 0)
 			{
-				// Any left?
-				while (source.Length != 0)
-				{
-					var b = source.RandomSelectOne();
-					foreach (var g in AttemptNewCrossover(primary, b, maxAttemptsPerCombination))
-						yield return g;
-
-					// Reduce the possibilites.
-					source = source.Where(g => g != b).ToArray();
-					/* ^^^ Why are we filtering like this you might ask? 
-						   Because the source can have duplicates in order to bias randomness. */
-				}
+				var b = source.RandomSelectOne();
+				var offspring = AttemptNewCrossover(primary, b, maxAttemptsPerCombination);
+				if (offspring != null && offspring.Length != 0) return offspring;
+				// Reduce the possibilites.
+				source = source.Where(g => g != b).ToArray();
+				/* ^^^ Why are we filtering like this you might ask? 
+					   Because the source can have duplicates in order to bias randomness. */
 			}
 
-			return rest();
+			return null;
 		}
 
 		public virtual IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null)

@@ -31,7 +31,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(
 			//	factory, 20, 4, 2, 200);
-			var scheme = new KingOfTheHill<EaterGenome>(OnAnnouncement, factory, 10, _minConvSamples);
+			var scheme = new KingOfTheHill<EaterGenome>(OnAnnouncement, factory, 150, _minConvSamples);
 
 			scheme.AddProblem(problem);
 

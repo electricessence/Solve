@@ -38,11 +38,15 @@ namespace Solve.Experiment.Console
 			}
 		}
 
-		void EmitStatsAction()
+		void EmitStatsAction() => EmitStatsAction(true);
+		void EmitStatsAction(bool restartEmitter)
 		{
-			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
 			_lastEmit = DateTime.Now;
-			_statusEmitter.Defer(StatusDelay);
+			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+			if (restartEmitter)
+				_statusEmitter.Defer(StatusDelay);
+			else
+				_statusEmitter.Cancel();
 		}
 
 		readonly ActionRunner _statusEmitter;
@@ -76,9 +80,8 @@ namespace Solve.Experiment.Console
 			var c = _statusEmitter.Defer(StatusDelay);
 
 			await Environment.Start();
-			_statusEmitter.Dispose();
 			cancel.Cancel();
-			EmitStatsAction();
+			EmitStatsAction(false);
 			SystemConsole.WriteLine("Done.");
 
 			OnComplete();
@@ -106,6 +109,8 @@ namespace Solve.Experiment.Console
 
 		protected virtual void OnComplete()
 		{
+			_statusEmitter.Dispose();
+
 			SystemConsole.WriteLine();
 			SystemConsole.WriteLine("Press any key to continue.");
 			SystemConsole.ReadKey();

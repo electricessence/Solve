@@ -212,7 +212,12 @@ namespace Solve
 				_source.Add(new SingleFitness(i));
 		}
 
-		public bool HasSamples => SampleCount != 0;
+		/* 
+		 * Concurrency rules dictate that if this is false, then there may still be a slight chance that it's in transition.
+		 * If true, then it's assertive that samples have been added.
+		 */
+		bool _hasSamples = false;
+		public bool HasSamples => _hasSamples || SampleCount != 0;
 
 		public int SampleCount
 		{
@@ -240,6 +245,12 @@ namespace Solve
 				return Sync.Reading(() => this.Select(v => v.Result.Average).ToList())
 					.AsReadOnly();
 			}
+		}
+
+		protected override void OnModified()
+		{
+			_hasSamples = true;
+			base.OnModified();
 		}
 
 		public void Add(ProcedureResult score)
