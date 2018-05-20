@@ -52,17 +52,18 @@ namespace Solve.Schemes
 			//throw new NotImplementedException();
 		}
 
-		Task QueueNewContenderAsync()
-			=> Task.Run(QueueNewContender);
-
-		void QueueNewContender()
+		async Task QueueNewContenderAsync()
 		{
 			var reader = Generated.Reader;
 			if (reader.TryRead(out TGenome g))
 				QueueNewContender(g);
 			else
+			{
 				QueueNewContender(Factory.GenerateOne());
+				await Generated.Writer.WriteAsync(Factory.GenerateOne());
+			}
 		}
+
 
 		internal void QueueNewContender(TGenome genome)
 		{
@@ -70,49 +71,41 @@ namespace Solve.Schemes
 				host.QueueNewContender(genome);
 		}
 
+		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _unbredChampions = new ConcurrentQueue<IGenomeFitness<TGenome>>();
 		readonly ConcurrentDictionary<TGenome, Fitness> _breeders = new ConcurrentDictionary<TGenome, Fitness>();
 
-		internal Task ProcessNewChampion(IGenomeFitness<TGenome, Fitness> champion)
+		internal void ProcessNewChampion(IGenomeFitness<TGenome, Fitness> champion)
 		{
 			if (champion.Fitness.HasConverged(MinimumConvergenceSamples))
-			{
 				Cancel();
-				return Task.CompletedTask;
-			}
-
-			void run()
-			{
-				// Step 1: Get a sorted snapshot of the current breeding stock.
-				var breedingStock = _breeders.ToArray().Sort();
-				if (breedingStock.Length != 0)
-				{
-					// Step 2: Remove any excess lower performers.
-					foreach (var toRemove in breedingStock.Skip(MaximumBreedingStock))
-						_breeders.TryRemove(toRemove.Key, out Fitness f);
-
-					// Step 3: Breed all the existing stock with the new champion.
-					Factory
-						.AttemptNewCrossover(champion.Genome, breedingStock.Select(c => c.Key).ToArray())
-						.Take(2)
-						.ForEach(child => QueueNewContender(child));
-				}
-
-				// Step 4: Add the new champion to the stock.
-				_breeders.TryAdd(champion.Genome, champion.Fitness);
-
-				// NOTE: Since fitnesses can be changing on the fly, there is no need to retain a sorted order.
-
-				// Step 5: Mutate the new champion.
-				Factory
-					.AttemptNewMutation(champion.Genome)
-					.Take(1)
-					.ForEach(mutation => QueueNewContender(mutation));
-			}
-
-			return Task.Run(run);
+			//			_unbredChampions.Enqueue(champion);
+			QueueChampion(champion);
 		}
 
+		void QueueChampion(IGenomeFitness<TGenome, Fitness> champion)
+		{
+			// Step 1: Get a sorted snapshot of the current breeding stock.
+			var breedingStock = _breeders.ToArray().Sort();
+			if (breedingStock.Length != 0)
+			{
+				// Step 2: Remove any excess lower performers.
+				foreach (var toRemove in breedingStock.Skip(MaximumBreedingStock))
+					_breeders.TryRemove(toRemove.Key, out Fitness f);
 
+				// Step 3: Breed all the existing stock with the new champion.
+				Factory.AttemptNewCrossover(champion.Genome, breedingStock.Select(c => c.Key).ToArray())?
+					.ForEach(child => QueueNewContender(child));
+			}
+
+			// Step 4: Add the new champion to the stock.
+			_breeders.TryAdd(champion.Genome, champion.Fitness);
+
+			// NOTE: Since fitnesses can be changing on the fly, there is no need to retain a sorted order.
+
+			// Step 5: Mutate the new champion.
+			if (Factory.AttemptNewMutation(champion.Genome, out TGenome mutation))
+				QueueNewContender(mutation);
+		}
 
 		async Task RunTournament(KingOfTheHillTournament<TGenome> tournament, CancellationToken token)
 		{
@@ -123,26 +116,7 @@ namespace Solve.Schemes
 		}
 
 		protected override Task StartInternal(CancellationToken token)
-		{
-			async Task queueNew()
-			{
-				var generator = Factory.Generate().GetEnumerator();
-				Task<TGenome> nextGenome() => Task.Run(() =>
-				{
-					generator.MoveNext();
-					return generator.Current;
-				});
+			=> Task.WhenAll(Hosts.Values.Select(tournament => RunTournament(tournament, token)));
 
-				var writer = Generated.Writer;
-				do
-				{
-					var next = nextGenome();
-					await writer.WriteAsync(await next, token);
-				}
-				while (await writer.WaitToWriteAsync(token));
-			}
-			queueNew().ConfigureAwait(false);
-			return Task.WhenAll(Hosts.Values.Select(tournament => RunTournament(tournament, token)));
-		}
 	}
 }

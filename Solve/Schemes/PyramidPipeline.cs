@@ -32,7 +32,7 @@ namespace Solve.Schemes
 
 		readonly ActionBlock<TGenome> VipPool;
 
-		const int ConvergenceThreshold = 20;
+		readonly ushort _minConvSamples;
 
 
 
@@ -41,13 +41,16 @@ namespace Solve.Schemes
 			ushort poolSize,
 			uint networkDepth = 3,
 			byte nodeSize = 2,
-			ushort finalistPoolSize = 0) : base(genomeFactory)
+			ushort finalistPoolSize = 0,
+			ushort minConvSamples = 20) : base(genomeFactory)
 		{
 			if (poolSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must have a pool size of at least 2");
 
 			if (finalistPoolSize == 0)
 				finalistPoolSize = poolSize;
+
+			_minConvSamples = minConvSamples;
 
 			Producer = new GenomeProducer<TGenome>(Factory.Generate());
 
@@ -92,7 +95,7 @@ namespace Solve.Schemes
 						var fitness = problem.GetFitnessFor(genome).Value.Fitness;
 						if (fitness.HasConverged(0))
 						{
-							if (!fitness.HasConverged(ConvergenceThreshold)) // should be enough for perfect convergence.
+							if (!fitness.HasConverged(_minConvSamples)) // should be enough for perfect convergence.
 							{
 								if (!batchID.HasValue) batchID = SampleID.Next();
 								// Give it some unseen data...
@@ -131,7 +134,7 @@ namespace Solve.Schemes
 						{
 							var gf = problem.GetFitnessFor(top).Value;
 							var fitness = gf.Fitness;
-							if (fitness.HasConverged(ConvergenceThreshold))
+							if (fitness.HasConverged(_minConvSamples))
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
@@ -182,8 +185,8 @@ namespace Solve.Schemes
 								addToBreeders(top);
 
 							// Crossover.
-							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray()).Take(2).ToArray();
-							if (o2.Length != 0)
+							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray());
+							if (o2 != null && o2.Length != 0)
 								Producer.TryEnqueue(o2.Select(o => problem.GetFitnessFor(o)?.Genome ?? o)); // Get potential stored variation.
 						}
 

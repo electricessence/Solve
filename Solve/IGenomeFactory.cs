@@ -5,7 +5,6 @@
 
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Solve
 {
@@ -21,19 +20,21 @@ namespace Solve
 
 		TGenome GenerateOne(params TGenome[] source);
 
-		Task<TGenome> GenerateOneAsync(params TGenome[] source);
-
 		IEnumerable<TGenome> Generate(params TGenome[] source);
 
-		IEnumerable<TGenome> AttemptNewMutation(TGenome source, byte triesPerMutationLevel = 5, byte maxMutations = 3);
+		bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
-		IEnumerable<TGenome> AttemptNewMutation(TGenome[] source, byte triesPerMutationLevel = 5, byte maxMutations = 3);
+		bool AttemptNewMutation(TGenome[] source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
-		IEnumerable<TGenome> AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
+		IEnumerable<TGenome> Mutate(TGenome source);
 
-		IEnumerable<TGenome> AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3);
+		// These will return null if the attempt fails.
 
-		IEnumerable<TGenome> AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3);
+		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
+
+		TGenome[] AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3);
+
+		TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3);
 
 		IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null);
 

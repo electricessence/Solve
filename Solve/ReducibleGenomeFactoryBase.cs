@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Solve
 {
@@ -30,10 +29,12 @@ namespace Solve
 			return target;
 		}
 
-		public override IEnumerable<TGenome> AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
+		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
-			if (a == null || b == null || a == b || a.AsReduced().Hash == b.AsReduced().Hash)
-				return Enumerable.Empty<TGenome>();
+			if (a == null || b == null) return null;
+
+			// Avoid inbreeding. :P
+			if (a == b || a.AsReduced().Hash == b.AsReduced().Hash) return null;
 
 			return base.AttemptNewCrossover(a, b, maxAttempts);
 		}
