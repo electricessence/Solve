@@ -212,7 +212,7 @@ namespace Solve
 				_source.Add(new SingleFitness(i));
 		}
 
-		public bool HasSamples { get; private set; }
+		public bool HasSamples => SampleCount != 0;
 
 		public int SampleCount
 		{
@@ -240,12 +240,6 @@ namespace Solve
 				return Sync.Reading(() => this.Select(v => v.Result.Average).ToList())
 					.AsReadOnly();
 			}
-		}
-
-		protected override void OnModified()
-		{
-			base.OnModified();
-			HasSamples = true;
 		}
 
 		public void Add(ProcedureResult score)

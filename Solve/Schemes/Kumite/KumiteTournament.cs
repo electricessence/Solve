@@ -12,7 +12,9 @@ namespace Solve.Schemes
 		internal ushort MaximumAllowedLosses;
 		internal ITargetBlock<IGenomeFitness<TGenome, Fitness>> LoserPool;
 
-		public KumiteTournament(IProblem<TGenome> problem, ushort maximumLoss = ushort.MaxValue, ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
+		public KumiteTournament(IProblem<TGenome> problem,
+			ushort maximumLoss = ushort.MaxValue,
+			ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
 		{
 			Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 			Root = new KumiteLevel<TGenome>(0, this);

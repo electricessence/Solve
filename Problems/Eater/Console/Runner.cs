@@ -14,11 +14,13 @@ namespace Eater
 			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
 		};
 
-		readonly uint _minSamples = 10;// Seed.Length == 0 ? 1u : 0u;
+		readonly ushort _minSamples;
+		readonly ushort _minConvSamples;
 
-		protected Runner(uint minSamples) : base()
+		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
 		{
 			_minSamples = minSamples;
+			_minConvSamples = minConvSamples;
 		}
 
 		public void Init()
@@ -29,8 +31,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(
 			//	factory, 20, 4, 2, 200);
-			var scheme = new KingOfTheHill<EaterGenome>(
-				factory, 50);
+			var scheme = new KingOfTheHill<EaterGenome>(OnAnnouncement, factory, 10, _minConvSamples);
 
 			scheme.AddProblem(problem);
 

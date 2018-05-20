@@ -182,8 +182,8 @@ namespace Solve.Schemes
 								addToBreeders(top);
 
 							// Crossover.
-							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray());
-							if (o2 != null && o2.Length != 0)
+							TGenome[] o2 = Factory.AttemptNewCrossover(top, Triangular.Disperse.Decreasing(selected).ToArray()).Take(2).ToArray();
+							if (o2.Length != 0)
 								Producer.TryEnqueue(o2.Select(o => problem.GetFitnessFor(o)?.Genome ?? o)); // Get potential stored variation.
 						}
 
