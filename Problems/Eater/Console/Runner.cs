@@ -29,9 +29,9 @@ namespace Eater
 			var factory = new EaterFactory();
 			var problem = new EaterProblemFragmented(10);
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
-			//var scheme = new PyramidPipeline<EaterGenome>(
-			//	factory, 20, 4, 2, 200);
-			var scheme = new KingOfTheHill<EaterGenome>(factory, 400, _minConvSamples);
+			var scheme = new PyramidPipeline<EaterGenome>(
+				factory, 20, 4, 2, 200);
+			//var scheme = new KingOfTheHill<EaterGenome>(factory, 400, _minConvSamples);
 
 			scheme.AddProblem(problem);
 

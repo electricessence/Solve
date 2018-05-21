@@ -9,7 +9,7 @@ namespace Solve
 
 	public abstract class GenomeBase : FreezableBase, IGenome
 	{
-		public GenomeBase() : base()
+		protected GenomeBase() : base()
 		{
 
 		}
