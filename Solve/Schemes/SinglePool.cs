@@ -39,7 +39,7 @@ namespace Solve.Schemes
 					var addCount = PoolSize - Pool.Count;
 					if (addCount > 0)
 					{
-						foreach (var newGenome in Factory.Generate().Take(addCount))
+						foreach (var newGenome in Factory.GenerateNew().Take(addCount))
 						{
 							if (Pool.TryAdd(newGenome.Hash, newGenome))
 							{

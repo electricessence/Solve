@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Collections.Synchronized;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,9 +14,8 @@ namespace Solve.Schemes
 		where TGenome : class, IGenome
 	{
 		public KingOfTheHill(
-			Action<(IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness)> announcer,
 			IGenomeFactory<TGenome> genomeFactory, ushort maxLevel = ushort.MaxValue, ushort minConvSamples = 20, ushort maximumLoss = ushort.MaxValue, ushort maxBreedingStock = 10)
-			: base(genomeFactory, announcer)
+			: base(genomeFactory)
 		{
 			MaximumLevel = maxLevel;
 			MinimumConvergenceSamples = minConvSamples;
@@ -54,47 +54,68 @@ namespace Solve.Schemes
 
 		async Task QueueNewContenderAsync()
 		{
-			var reader = Generated.Reader;
-			if (reader.TryRead(out TGenome g))
-				QueueNewContender(g);
-			else
+			if (!_unbredChampions.TryDequeue(out IGenomeFitness<TGenome> champion) || !QueueChampion(champion))
 			{
-				QueueNewContender(Factory.GenerateOne());
-				await Generated.Writer.WriteAsync(Factory.GenerateOne());
+				var reader = Generated.Reader;
+				if (reader.TryRead(out TGenome g))
+					QueueNewContender(g);
+				else
+				{
+					var newGenomes = Factory.GenerateNew();
+					QueueNewContender(newGenomes.First());
+					await Generated.Writer.WriteAsync(newGenomes.First());
+				}
 			}
 		}
 
 
 		internal void QueueNewContender(TGenome genome)
 		{
+#if DEBUG
+			if (!_seen.Add(genome.Hash))
+			{
+				Console.WriteLine("Already Seen: {0}", genome.Hash);
+			}
+#endif
+
 			foreach (var host in Hosts.Values)
 				host.QueueNewContender(genome);
 		}
 
-		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _unbredChampions = new ConcurrentQueue<IGenomeFitness<TGenome>>();
-		readonly ConcurrentDictionary<TGenome, Fitness> _breeders = new ConcurrentDictionary<TGenome, Fitness>();
 
-		internal void ProcessNewChampion(IGenomeFitness<TGenome, Fitness> champion)
+		void QueueNewContender(TGenome genome, ref bool queued)
+		{
+			QueueNewContender(genome);
+			queued = true;
+		}
+
+#if DEBUG
+		readonly LockSynchronizedHashSet<string> _seen = new LockSynchronizedHashSet<string>();
+#endif
+		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _unbredChampions = new ConcurrentQueue<IGenomeFitness<TGenome>>();
+		readonly ConcurrentDictionary<TGenome, IFitness> _breeders = new ConcurrentDictionary<TGenome, IFitness>();
+
+		internal void ProcessNewChampion(IGenomeFitness<TGenome> champion)
 		{
 			if (champion.Fitness.HasConverged(MinimumConvergenceSamples))
 				Cancel();
-			//			_unbredChampions.Enqueue(champion);
-			QueueChampion(champion);
+			_unbredChampions.Enqueue(champion);
 		}
 
-		void QueueChampion(IGenomeFitness<TGenome, Fitness> champion)
+		bool QueueChampion(IGenomeFitness<TGenome> champion)
 		{
+			var queued = false;
 			// Step 1: Get a sorted snapshot of the current breeding stock.
 			var breedingStock = _breeders.ToArray().Sort();
 			if (breedingStock.Length != 0)
 			{
 				// Step 2: Remove any excess lower performers.
 				foreach (var toRemove in breedingStock.Skip(MaximumBreedingStock))
-					_breeders.TryRemove(toRemove.Key, out Fitness f);
+					_breeders.TryRemove(toRemove.Key, out IFitness f);
 
 				// Step 3: Breed all the existing stock with the new champion.
 				Factory.AttemptNewCrossover(champion.Genome, breedingStock.Select(c => c.Key).ToArray())?
-					.ForEach(child => QueueNewContender(child));
+					.ForEach(child => QueueNewContender(child, ref queued));
 			}
 
 			// Step 4: Add the new champion to the stock.
@@ -104,7 +125,9 @@ namespace Solve.Schemes
 
 			// Step 5: Mutate the new champion.
 			if (Factory.AttemptNewMutation(champion.Genome, out TGenome mutation))
-				QueueNewContender(mutation);
+				QueueNewContender(mutation, ref queued);
+
+			return queued;
 		}
 
 		async Task RunTournament(KingOfTheHillTournament<TGenome> tournament, CancellationToken token)

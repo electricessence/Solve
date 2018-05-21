@@ -10,6 +10,7 @@ using Solve.Dataflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -52,7 +53,7 @@ namespace Solve.Schemes
 
 			_minConvSamples = minConvSamples;
 
-			Producer = new GenomeProducer<TGenome>(Factory.Generate());
+			Producer = new GenomeProducer<TGenome>(Factory.GenerateNew());
 
 			Breeders = new ActionBlock<TGenome>(
 				genome => Producer.TryEnqueue(Factory.Expand(genome)),
@@ -83,7 +84,6 @@ namespace Solve.Schemes
 
 			Pipeline = PipelineBuilder.CreateNetwork(networkDepth); // 3? Start small?
 
-			var TopGenomeFilter = Announcer.OnlyIfChanged(DataflowMessageStatus.Accepted);
 			bool converged = false;
 			VipPool = new ActionBlock<TGenome>(
 				async genome =>
@@ -138,7 +138,7 @@ namespace Solve.Schemes
 							{
 								top = gf.Genome;
 								Console.WriteLine("Converged: " + top);
-								Announcer.Post((problem, gf));
+								Announce((problem, gf));
 
 								//// Need at least 200 samples to wash out any double precision issues.
 								//Problems.Process(
@@ -167,11 +167,11 @@ namespace Solve.Schemes
 								//		}
 								//		TopGenome.Complete();
 								//	});
-								Announcer.Complete();
+								Complete();
 								return true;
 							}
 
-							TopGenomeFilter.Post((problem, gf));
+							Announce((problem, gf), true);
 
 							// You made it all the way back to the top?  Forget about what I said...
 							fitness.RejectionCount = -3; // VIPs get their rejection count augmented so they aren't easily dethroned.
@@ -254,8 +254,9 @@ namespace Solve.Schemes
 
 					}
 				})
-				.PropagateFaultsTo(Announcer)
-				.PropagateCompletionTo(Announcer, VipPool, Breeders, Pipeline);
+				.OnFault(Fault)
+				.OnComplete(Complete)
+				.PropagateCompletionTo(VipPool, Breeders, Pipeline);
 
 
 			Pipeline.LinkToWithExceptions(FinalistPool);
@@ -266,7 +267,7 @@ namespace Solve.Schemes
 
 
 
-			Announcer.PropagateCompletionTo(Pipeline);
+			DataFlowExtensions.Subscribe(this, n => { }, f => Pipeline.Fault(f), () => Pipeline.Complete());
 			VipPool.PropagateFaultsTo(Pipeline);
 			Producer.PropagateFaultsTo(Pipeline);
 			Breeders.PropagateFaultsTo(Pipeline);
@@ -301,9 +302,8 @@ namespace Solve.Schemes
 
 		protected override Task StartInternal(CancellationToken token)
 		{
-			var completed = Announcer.Completion;
 			Producer.Poke();
-			return completed;
+			return this.ToTask();
 		}
 	}
 

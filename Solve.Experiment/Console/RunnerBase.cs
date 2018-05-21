@@ -76,6 +76,15 @@ namespace Solve.Experiment.Console
 
 			var cancel = new CancellationTokenSource();
 
+			Environment
+				.Subscribe(Emitter.EmitTopGenomeStats,
+					ex => SystemConsole.WriteLine(ex.GetBaseException()),
+					() =>
+					{
+						cancel.Cancel();
+						SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+					});
+
 			_stopwatch.Start();
 			var c = _statusEmitter.Defer(StatusDelay);
 

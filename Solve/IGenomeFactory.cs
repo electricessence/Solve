@@ -22,6 +22,10 @@ namespace Solve
 
 		IEnumerable<TGenome> Generate(params TGenome[] source);
 
+		bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source);
+
+		IEnumerable<TGenome> GenerateNew(params TGenome[] source);
+
 		bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
 		bool AttemptNewMutation(TGenome[] source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
