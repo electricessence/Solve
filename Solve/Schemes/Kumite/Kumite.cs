@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace Solve.Schemes
 {
@@ -31,14 +30,11 @@ namespace Solve.Schemes
 			foreach (var problem in problems)
 			{
 				var k = new KumiteTournament<TGenome>(problem, MaximumLoss);
-				var x = new ActionBlock<IGenomeFitness<TGenome, Fitness>>(
-					e =>
-					{
-						Announce((problem, e));
-						Breeders.Enqueue(e.Genome);
-					});
-
-				k.LinkToWithExceptions(x);
+				k.Subscribe(e =>
+				{
+					Announce((problem, e));
+					Breeders.Enqueue(e.Genome);
+				});
 				Hosts.TryAdd(problem, k);
 			}
 
@@ -90,7 +86,7 @@ namespace Solve.Schemes
 					continue;
 				}
 
-				Post(Factory.GenerateOne());
+				Post(Factory.GenerateNew().First());
 			}
 		}
 	}

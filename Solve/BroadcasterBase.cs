@@ -1,7 +1,7 @@
-﻿using Open.Dataflow;
+﻿using Open.Collections.Synchronized;
 using System;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
+using System.Reactive.Linq;
+using System.Threading;
 
 namespace Solve
 {
@@ -9,53 +9,68 @@ namespace Solve
 	// Tasks can build up and dominate the scheduler in ways that messages from a broadcast block won't make it out.
 	// Using a synchronous announcer delegate will guarantee the announcements are recieved.
 
-	public abstract class BroadcasterBase<T> : ISourceBlock<T>
+	public abstract class BroadcasterBase<T> : IObservable<T>
 	{
-		protected readonly Action<T> _synchronousAnnouncer;
-		protected readonly ITargetBlock<T> Announcer;
-		readonly ISourceBlock<T> _announcerBlock; // Cast once.
+		readonly IObservable<T> _subscribable;
+		ReadWriteSynchronizedLinkedList<IObserver<T>> _observers;
 
-		protected BroadcasterBase(Action<T> announcer = null)
+		protected BroadcasterBase()
 		{
-			_synchronousAnnouncer = announcer;
-			var b = new BroadcastBlock<T>(null);
-			Announcer = b.OnlyIfChanged(DataflowMessageStatus.Accepted);
-			_announcerBlock = b;
+			_observers = new ReadWriteSynchronizedLinkedList<IObserver<T>>();
+			_subscribable = Observable.Create<T>(observer =>
+			{
+				_observers?.Add(observer);
+				return () => _observers?.Remove(observer);
+			});
 		}
 
-		public Task Completion => Announcer.Completion;
-
-		internal bool Announce(T message)
+		T _previous;
+		internal void Announce(T message, bool uniqueOnly = false)
 		{
-			_synchronousAnnouncer?.Invoke(message);
-			return Announcer.Post(message);
+			if (!uniqueOnly || !message.Equals(_previous))
+			{
+				_previous = message;
+				var observers = _observers;
+				if (observers != null)
+				{
+					foreach (var o in observers)
+					{
+						o.OnNext(message);
+					}
+				}
+			}
+
 		}
 
-		public IDisposable LinkTo(
-			ITargetBlock<T> target,
-			DataflowLinkOptions linkOptions)
-			=> _announcerBlock.LinkTo(target, linkOptions);
-
-		public T ConsumeMessage(
-			DataflowMessageHeader messageHeader,
-			ITargetBlock<T> target,
-			out bool messageConsumed)
-			=> _announcerBlock.ConsumeMessage(messageHeader, target, out messageConsumed);
-
-		public bool ReserveMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target)
-			=> _announcerBlock.ReserveMessage(messageHeader, target);
-
-		public void ReleaseReservation(DataflowMessageHeader messageHeader, ITargetBlock<T> target)
-			=> _announcerBlock.ReleaseReservation(messageHeader, target);
-
-		public virtual void Complete()
+		protected void Complete()
 		{
-			_announcerBlock.Complete();
+			var observers = Interlocked.Exchange(ref _observers, null);
+			if (observers != null)
+			{
+				using (observers)
+				{
+					foreach (var observer in observers)
+						observer.OnCompleted();
+				}
+			}
 		}
 
-		public virtual void Fault(Exception exception)
+		protected void Fault(Exception exception)
 		{
-			_announcerBlock.Fault(exception);
+			var observers = Interlocked.Exchange(ref _observers, null);
+			if (observers != null)
+			{
+				using (observers)
+				{
+					foreach (var observer in observers)
+						observer.OnError(exception);
+				}
+			}
+		}
+
+		public IDisposable Subscribe(IObserver<T> observer)
+		{
+			return _subscribable.Subscribe(observer);
 		}
 	}
 }

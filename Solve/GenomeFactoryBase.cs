@@ -112,12 +112,11 @@ namespace Solve
 			return RegistryOrder.Snapshot();
 		}
 
-		// Be sure to call Registration within the GenerateOne call.
+		// Be sure to call Registration within the GenerateNew call.
 		protected abstract TGenome GenerateOneInternal();
 
-		public TGenome GenerateOne(TGenome[] source = null)
+		public bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source)
 		{
-			TGenome genome = null;
 			using (TimeoutHandler.New(5000, ms =>
 			{
 				Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms);
@@ -126,26 +125,47 @@ namespace Solve
 				// Note: for now, we will only mutate by 1.
 
 				// See if it's possible to mutate from the provided genomes.
-				if (source != null && source.Length != 0)
-				{
-					AttemptNewMutation(source, out genome);
-				}
+				if (source != null && source.Length != 0 && AttemptNewMutation(source, out potentiallyNew))
+					return true;
 
-				if (genome == null)
-				{
-					genome = GenerateOneInternal();
-				}
+				potentiallyNew = Registration(GenerateOneInternal());
 			}
 
-			Debug.Assert(genome != null, "Converged? No solutions? Saturated?");
+			Debug.Assert(potentiallyNew != null, "Converged? No solutions? Saturated?");
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
-			return Registration(genome);
-
+			return potentiallyNew != null && RegisterProduction(potentiallyNew);
 		}
 
-		public IEnumerable<TGenome> Generate(TGenome[] source = null)
+		public TGenome GenerateOne(params TGenome[] source)
+			=> GenerateNew(out TGenome one, source) ? one : one;
+
+		public IEnumerable<TGenome> GenerateNew(params TGenome[] source)
+		{
+			while (true)
+			{
+				TGenome one = null;
+				using (TimeoutHandler.New(9000, ms =>
+				{
+					Console.WriteLine("Warning: {0}.GenerateNew() is taking longer than {1} milliseconds.\n", this, ms);
+				}))
+				{
+					int attempts = 0;
+					while (attempts < 100 && !GenerateNew(out one, source))
+						attempts++;
+				}
+				if (one == null)
+				{
+					Console.WriteLine("GenomeFactory failed GenerateNew()");
+					break;
+				}
+
+				yield return one;
+			}
+		}
+
+		public IEnumerable<TGenome> Generate(params TGenome[] source)
 		{
 			while (true)
 			{
@@ -166,19 +186,6 @@ namespace Solve
 			}
 		}
 
-		public TGenome GenerateOne(TGenome source)
-		{
-			var one = AssertFrozen(GenerateOne(new TGenome[] { source }));
-			if (one != null)
-				RegisterProduction(one);
-			return one;
-		}
-
-		public IEnumerable<TGenome> Generate(TGenome source)
-		{
-			var e = new TGenome[] { source };
-			while (true) yield return GenerateOne(e);
-		}
 
 		// Be sure to call Registration within the GenerateOne call.
 		protected abstract TGenome MutateInternal(TGenome target);
