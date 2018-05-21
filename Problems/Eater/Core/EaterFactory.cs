@@ -1,21 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Eater
 {
 
 	public class EaterFactory : Solve.ReducibleGenomeFactoryBase<EaterGenome>
 	{
-		int _generatedCount = 0;
-		public int GeneratedCount
-		{
-			get { return _generatedCount; }
-		}
+		public int GeneratedCount { get; private set; } = 0;
 
-		LinkedList<Step> _lastGenerated = new LinkedList<Step>();
-		Random Randomizer = new Random();
+		readonly LinkedList<Step> _lastGenerated = new LinkedList<Step>();
+		readonly Random Randomizer = new Random();
 
 		/*
          * The goal here is to produce unique eaters.
@@ -66,7 +61,7 @@ namespace Eater
 				}
 
 
-				Interlocked.Increment(ref _generatedCount);
+				GeneratedCount++;
 				return new EaterGenome(_lastGenerated);
 			}
 		}
@@ -75,8 +70,8 @@ namespace Eater
 		{
 			var aGenes = a.Genes;
 			var bGenes = b.Genes;
-			var aLen = aGenes.Length;
-			var bLen = bGenes.Length;
+			var aLen = aGenes.Count;
+			var bLen = bGenes.Count;
 			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
 
 			var aPoint = Randomizer.Next(aLen - 1) + 1;
@@ -96,7 +91,7 @@ namespace Eater
 
 		protected override EaterGenome MutateInternal(EaterGenome target)
 		{
-			var genes = target.Genes;
+			var genes = target.GetGenes();
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
@@ -123,11 +118,11 @@ namespace Eater
 			}
 		}
 
-		protected IEnumerable<EaterGenome> ExpandInternal(EaterGenome genome)
+		static IEnumerable<EaterGenome> ExpandInternal(EaterGenome genome)
 		{
 			var genes = AssertFrozen(genome.AsReduced()).Genes;
 
-			var len = genes.Length - 1;
+			var len = genes.Count - 1;
 			if (len > 1) yield return new EaterGenome(genes.Take(len));
 
 			if (len > 1) yield return new EaterGenome(genes.Skip(1));

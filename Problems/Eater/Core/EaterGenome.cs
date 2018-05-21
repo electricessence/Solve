@@ -12,11 +12,11 @@ namespace Eater
 		: ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{
 
-		static readonly Step[] EMPTY = new Step[0];
+		static readonly Step[] EMPTY = System.Array.Empty<Step>();
 
 		public EaterGenome() : base()
 		{
-			_steps = EMPTY;
+			Genes = EMPTY;
 		}
 
 		public EaterGenome(IEnumerable<Step> steps) : base()
@@ -29,72 +29,45 @@ namespace Eater
 			Freeze(Steps.FromGenomeHash(steps));
 		}
 
-
-		Step[] _steps;
-
 		string _hash;
 		public override string Hash
-		{
-			get
-			{
-				return _hash ?? _steps.ToGenomeHash();
-			}
-		}
+			=> _hash ?? Genes.ToGenomeHash();
 
 		public new EaterGenome Clone()
-		{
-			return new EaterGenome(this._steps);
-		}
+			=> new EaterGenome(Genes);
 
 		protected override object CloneInternal()
-		{
-			return this.Clone();
-		}
+			=> Clone();
 
-		public Step[] Genes
-		{
-			get
-			{
-				return GetGenes();
-			}
-		}
+		public IReadOnlyList<Step> Genes { get; private set; }
 
-		Step[] GetGenes()
-		{
-			return _steps.ToArray();
-		}
+		public Step[] GetGenes() => Genes.ToArray();
 
 		protected override void OnBeforeFreeze()
 		{
-			_hash = _steps.ToGenomeHash();
+			_hash = Genes.ToGenomeHash();
 			base.OnBeforeFreeze();
 		}
 
 		public void Freeze(IEnumerable<Step> steps)
 		{
-			_steps = steps.ToArray();
-			this.Freeze();
+			Genes = steps.ToList().AsReadOnly();
+			Freeze();
 		}
 
 		protected override EaterGenome Reduction()
 		{
-			var reducedSteps = _steps.Reduce();
+			var reducedSteps = Genes.Reduce();
 			return reducedSteps == null
 				? null
 				: new EaterGenome(reducedSteps);
 		}
 
 		public IEnumerator<Step> GetEnumerator()
-		{
-			return ((IEnumerable<Step>)_steps)
-				.GetEnumerator();
-		}
+			=> Genes.GetEnumerator();
 
 		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return ((IEnumerable<Step>)_steps)
-				.GetEnumerator();
-		}
+			=> Genes.GetEnumerator();
 
 	}
 }

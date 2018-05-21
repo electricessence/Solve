@@ -1,9 +1,4 @@
-﻿/*!
- * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Genetic-Algorithm-Platform/blob/master/LICENSE.md
- */
-
-using Open.Numeric;
+﻿using Open.Numeric;
 using Solve;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +8,7 @@ namespace Eater
 {
 
 
-	public abstract class EaterProblem : Solve.ProblemBase<EaterGenome>
+	public abstract class EaterProblem : ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
@@ -45,9 +40,9 @@ namespace Eater
 		public EaterProblemFragmented(int gridSize = 10) : base(gridSize)
 		{
 		}
+
 		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
 		{
-
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
 			var len = 100;
@@ -60,17 +55,17 @@ namespace Eater
 				if (g.Try(boundary, s.EaterStart, s.Food, out int e))
 				{
 					found++;
-					Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+					//Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
 				}
 				else
 				{
-					Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
+					//Debug.Assert(!g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");
 				}
 
 				energy += e;
 			}
 
-			Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
+			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
 			var ave = energy / len;
 			var hlen = g.AsReduced().Hash.Length;
