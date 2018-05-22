@@ -1,7 +1,6 @@
 ﻿using Open.Numeric;
 using Solve;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Eater

@@ -16,14 +16,13 @@ namespace Solve
 {
 
 	public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
-	where TGenome : class, IGenome
+		where TGenome : class, IGenome
 	{
-
-		public GenomeFactoryBase()
+		protected GenomeFactoryBase()
 		{
 			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
-			RegistryOrder = new ReadWriteSynchronizedList<string>();
 			PreviouslyProduced = new LockSynchronizedHashSet<string>();
+			//RegistryOrder = new ConcurrentQueue<string>();
 		}
 
 		// Help to reduce copies.
@@ -32,7 +31,7 @@ namespace Solve
 
 		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced;
 
-		protected readonly ReadWriteSynchronizedList<string> RegistryOrder;
+		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
 		protected static TGenome AssertFrozen(TGenome genome)
 		{
@@ -51,7 +50,7 @@ namespace Solve
 				Debug.Assert(genome.Hash == hash);
 				onBeforeAdd(genome);
 				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
-				RegistryOrder.Add(hash);
+				//RegistryOrder.Enqueue(hash);
 				return genome;
 			})).Value;
 
@@ -67,7 +66,7 @@ namespace Solve
 				Debug.Assert(genome.Hash == hash);
 				onBeforeAdd(genome);
 				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
-				RegistryOrder.Add(hash);
+				//RegistryOrder.Enqueue(hash);
 				return genome;
 			})).Value;
 
@@ -106,11 +105,11 @@ namespace Solve
 			return AlreadyProduced(genome.Hash);
 		}
 
-		public string[] GetAllPreviousGenomesInOrder()
-		{
+		//public string[] GetAllPreviousGenomesInOrder()
+		//{
 
-			return RegistryOrder.Snapshot();
-		}
+		//	return RegistryOrder.ToArray();
+		//}
 
 		// Be sure to call Registration within the GenerateNew call.
 		protected abstract TGenome GenerateOneInternal();
