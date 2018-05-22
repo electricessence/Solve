@@ -36,12 +36,15 @@ namespace Solve.Experiment.Console
 
 		protected bool EmitTopGenomeStatsInternal(IProblem<TGenome> p, TGenome genome, IFitness fitness = null)
 		{
+			var sc = fitness.SampleCount;
+			if (sc < SampleMinimum) return false;
+
 			var f = (fitness ?? p.GetFitnessFor(genome).Value.Fitness).SnapShot();
 
 			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => f.SampleCount > SampleMinimum && (!LastScore.HasValue || LastScore.Value < f || LastHash == genome.Hash),
+				() => sc >= SampleMinimum && (!LastScore.HasValue || LastScore.Value < f || LastHash == genome.Hash),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{

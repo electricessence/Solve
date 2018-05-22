@@ -32,7 +32,7 @@ namespace Solve.Schemes
 				var k = new KumiteTournament<TGenome>(problem, MaximumLoss);
 				k.Subscribe(e =>
 				{
-					Announce((problem, e));
+					Broadcast((problem, e));
 					Breeders.Enqueue(e.Genome);
 				});
 				Hosts.TryAdd(problem, k);

@@ -94,7 +94,7 @@ namespace Solve.Schemes
 							.OrderByDescending(g => g.Key).First()
 							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First();
 
-						Announce((p, top));
+						Broadcast((p, top));
 
 						var ac = PoolSize - Pool.Count;
 						if (ac > 0)
