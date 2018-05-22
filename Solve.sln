@@ -21,9 +21,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eater.Core", "Problems\Eate
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eater.Console", "Problems\Eater\Console\Eater.Console.csproj", "{C7C6DB0F-C3A0-4135-99EC-16DDC7D73D89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Solve.Experiment", "Solve.Experiment\Solve.Experiment.csproj", "{C7E17070-0BCD-47C1-9778-6FF949E51A44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solve.Experiment", "Solve.Experiment\Solve.Experiment.csproj", "{C7E17070-0BCD-47C1-9778-6FF949E51A44}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

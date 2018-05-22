@@ -1,5 +1,4 @@
-﻿using Open.Collections;
-using Open.Collections.Synchronized;
+﻿using Open.Collections.Synchronized;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -37,11 +36,13 @@ namespace Solve.Schemes
 		{
 			foreach (var problem in problems)
 			{
-				Hosts.TryAdd(problem, new KingOfTheHillTournament<TGenome>(QueueNewContenderAsync, problem, e =>
+				var t = new KingOfTheHillTournament<TGenome>(QueueNewContenderAsync, problem, MaximumLoss);
+				t.Subscribe(e =>
 				{
-					Announce((problem, e));
+					Broadcast((problem, e));
 					ProcessNewChampion(e);
-				}, MaximumLoss));
+				});
+				Hosts.TryAdd(problem, t);
 			}
 
 			base.AddProblems(problems);
@@ -114,8 +115,10 @@ namespace Solve.Schemes
 					_breeders.TryRemove(toRemove.Key, out IFitness f);
 
 				// Step 3: Breed all the existing stock with the new champion.
-				Factory.AttemptNewCrossover(champion.Genome, breedingStock.Select(c => c.Key).ToArray())?
-					.ForEach(child => QueueNewContender(child, ref queued));
+				foreach (var child in Factory.AttemptNewCrossover(champion.Genome, breedingStock.Select(c => c.Key).ToArray()) ?? Enumerable.Empty<TGenome>())
+				{
+					QueueNewContender(child, ref queued);
+				}
 			}
 
 			// Step 4: Add the new champion to the stock.
@@ -124,18 +127,20 @@ namespace Solve.Schemes
 			// NOTE: Since fitnesses can be changing on the fly, there is no need to retain a sorted order.
 
 			// Step 5: Mutate the new champion.
-			if (Factory.AttemptNewMutation(champion.Genome, out TGenome mutation))
-				QueueNewContender(mutation, ref queued);
+			foreach (var expansion in Factory.Expand(champion.Genome))
+				QueueNewContender(expansion, ref queued);
 
 			return queued;
 		}
 
 		async Task RunTournament(KingOfTheHillTournament<TGenome> tournament, CancellationToken token)
 		{
-			var a = tournament.NextChampion(MaximumLevel);
-			//var b = tournament.NextChampion(MaximumLevel);
-			//await b;
-			await a;
+			//IGenomeFitness<TGenome, Fitness> contender = null;
+			//for (uint i = 0; i < MaximumLevel; i++)
+			//{
+			//	contender = await tournament.NextChampion(i, contender);
+			//}
+			await tournament.NextChampion(MaximumLevel);
 		}
 
 		protected override Task StartInternal(CancellationToken token)

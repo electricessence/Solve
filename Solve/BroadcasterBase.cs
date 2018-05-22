@@ -25,7 +25,7 @@ namespace Solve
 		}
 
 		T _previous;
-		internal void Announce(T message, bool uniqueOnly = false)
+		internal void Broadcast(T message, bool uniqueOnly = false)
 		{
 			if (!uniqueOnly || !message.Equals(_previous))
 			{

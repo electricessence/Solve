@@ -6,22 +6,20 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Solve.Schemes
 {
-	public sealed class KingOfTheHillTournament<TGenome>
+	public sealed class KingOfTheHillTournament<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		// Should generate a genome and queue it to all problems.
 		readonly Func<Task> Generator;
-		readonly Action<IGenomeFitness<TGenome, Fitness>> Announcer;
 		internal readonly IProblem<TGenome> Problem;
 		readonly ushort MaximumAllowedLosses;
 		readonly ConcurrentDictionary<uint, ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord)>> WaitingToCompete
 			= new ConcurrentDictionary<uint, ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord)>>();
-		internal ITargetBlock<IGenomeFitness<TGenome, Fitness>> LoserPool;
+		ITargetBlock<IGenomeFitness<TGenome, Fitness>> LoserPool;
 
-		public KingOfTheHillTournament(Func<Task> generator, IProblem<TGenome> problem, Action<IGenomeFitness<TGenome, Fitness>> announcer, ushort maximumLoss = ushort.MaxValue, ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
+		public KingOfTheHillTournament(Func<Task> generator, IProblem<TGenome> problem, ushort maximumLoss = ushort.MaxValue, ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
 		{
 			Generator = generator ?? throw new ArgumentNullException(nameof(generator));
-			Announcer = announcer;
 			Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
 			MaximumAllowedLosses = maximumLoss;
@@ -108,8 +106,16 @@ namespace Solve.Schemes
 			}
 
 			loser.LossRecord++;
-			GetWaitingToCompeteLevel(level).Enqueue(loser);
-			Announcer?.Invoke(winner);
+			if (loser.LossRecord > MaximumAllowedLosses)
+			{
+				LoserPool.Post(loser.GenomeFitness);
+			}
+			else
+			{
+				GetWaitingToCompeteLevel(level).Enqueue(loser);
+			}
+
+			Broadcast(winner);
 			return winner;
 		}
 

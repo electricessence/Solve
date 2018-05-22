@@ -57,7 +57,7 @@ namespace Solve.Schemes
 				if (m == 1)
 				{
 					Debug.WriteLine("New Kumite Level: {0}", Level);
-					Host.Announce(winner.GenomeFitness);
+					Host.Broadcast(winner.GenomeFitness);
 				}
 				await NextLevel.Post(winner.GenomeFitness);
 			}
