@@ -3,6 +3,7 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace Solve
 		protected GenomeFactoryBase()
 		{
 			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
-			PreviouslyProduced = new LockSynchronizedHashSet<string>();
+			PreviouslyProduced = new ConcurrentHashSet<string>();
 			//RegistryOrder = new ConcurrentQueue<string>();
 		}
 
@@ -29,7 +30,7 @@ namespace Solve
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry;
 
-		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced;
+		protected readonly ConcurrentHashSet<string> PreviouslyProduced;
 
 		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
