@@ -54,40 +54,43 @@ namespace Solve.Schemes
 			}
 		}
 
-		protected override async Task StartInternal(CancellationToken token)
+		protected override Task StartInternal(CancellationToken token)
+			=> Task.Run(() =>
 		{
-			TGenome readyBreeder = null;
-			while (!token.IsCancellationRequested)
+			Parallel.For(0, int.MaxValue, i =>
 			{
-				if (PriorityContenders.TryDequeue(out TGenome g))
+				TGenome readyBreeder = null;
+				while (!token.IsCancellationRequested)
 				{
-					Post(g);
-					continue;
-				}
-
-				if (Breeders.TryDequeue(out TGenome g2))
-				{
-					var mutate = Task.Run(() =>
+					if (PriorityContenders.TryDequeue(out TGenome g))
 					{
+						Post(g);
+						continue;
+					}
+
+					if (Breeders.TryDequeue(out TGenome g2))
+					{
+
+						if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
+						else
+						{
+							var g1 = readyBreeder;
+							readyBreeder = null;
+							Factory
+								.AttemptNewCrossover(g1, g2)?
+								.ForEach(g3 => PriorityContenders.Enqueue(g3));
+						}
+
 						if (Factory.AttemptNewMutation(g2, out TGenome mutation))
 							PriorityContenders.Enqueue(mutation);
-					});
 
-					if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
-					else
-					{
-						var g1 = readyBreeder;
-						readyBreeder = null;
-						Factory
-							.AttemptNewCrossover(g1, g2)?
-							.ForEach(g3 => PriorityContenders.Enqueue(g3));
+						continue;
 					}
-					await mutate;
-					continue;
-				}
 
-				Post(Factory.GenerateNew().First());
-			}
-		}
+					Post(Factory.GenerateNew().First());
+				}
+			});
+
+		});
 	}
 }
