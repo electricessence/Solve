@@ -20,7 +20,8 @@ namespace Solve
 		int ID { get; }
 
 		// 0 = acquire sampleId from sample count.  Negative numbers are allowed.
-		Task<IFitness> ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false);
+		IFitness ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false);
+		Task<IFitness> ProcessTestAsync(TGenome g, long sampleId = 0, bool mergeWithGlobal = false);
 
 		// Alternative for delegate usage.
 		GenomeTestDelegate<TGenome> TestProcessor { get; }
@@ -58,7 +59,7 @@ namespace Solve
 
 			return Task.WhenAll(
 				problems.Select(p =>
-					p.ProcessTest(genome, sampleId, mergeWithGlobal)
+					p.ProcessTestAsync(genome, sampleId, mergeWithGlobal)
 						.ContinueWith(t => (p, t.Result))
 				)
 			);
@@ -79,7 +80,7 @@ namespace Solve
 			return Task.WhenAll(problems
 				.Select(p =>
 					Task.WhenAll(
-						genomes.Select(g => p.ProcessTest(g, sampleId, mergeWithGlobal)
+						genomes.Select(g => p.ProcessTestAsync(g, sampleId, mergeWithGlobal)
 							.ContinueWith(t => (IGenomeFitness<TGenome>)new GenomeFitness<TGenome>(g, t.Result))))
 						.ContinueWith(t => (p, t.Result.Sort()))));
 		}
@@ -99,7 +100,7 @@ namespace Solve
 
 			return Task.WhenAll(
 				problems.Select(
-					p => Task.WhenAll(sampleIds.Select(id => p.ProcessTest(genome, id, id >= 0)))
+					p => Task.WhenAll(sampleIds.Select(id => p.ProcessTestAsync(genome, id, id >= 0)))
 						.ContinueWith(t =>
 						{
 							var f = (IFitness)t.Result.Merge();
@@ -124,7 +125,7 @@ namespace Solve
 
 			return Task.WhenAll(problems.Select(
 				p => Task.WhenAll(genomes.Select(
-					g => Task.WhenAll(sampleIds.Select(id => p.ProcessTest(g, id)))
+					g => Task.WhenAll(sampleIds.Select(id => p.ProcessTestAsync(g, id)))
 						.ContinueWith(t =>
 						{
 							var f = t.Result.Merge();

@@ -1,7 +1,6 @@
 ﻿using Open.Numeric;
 using Solve;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Eater
 {
@@ -21,14 +20,6 @@ namespace Eater
 			return genome;//.AsReduced(); // DO NOT measure against reduced because turns are expended energy and effect fitness.
 		}
 
-
-		protected override Task ProcessTest(EaterGenome g, Fitness fitness, long sampleId, bool useAsync = true)
-		{
-			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
-		}
-
-		protected abstract void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId);
-
 		public override IReadOnlyList<string> FitnessLabels { get; }
 			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Hash-Length {0:n0}" }).AsReadOnly();
 
@@ -40,7 +31,7 @@ namespace Eater
 		{
 		}
 
-		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
+		protected override void ProcessTest(EaterGenome g, Fitness fitness, long sampleId)
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
@@ -80,7 +71,7 @@ namespace Eater
 		{
 		}
 
-		protected override void ProcessTestInternal(EaterGenome g, Fitness fitness, long sampleId)
+		protected override void ProcessTest(EaterGenome g, Fitness fitness, long sampleId)
 		{
 			var fullTest = Samples.TestAll(g.Hash);
 			var count = fullTest[0].Count;

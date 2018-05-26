@@ -45,7 +45,7 @@ namespace Solve.Schemes
 							{
 								foreach (var p in ProblemsInternal)
 								{
-									p.ProcessTest(newGenome, 0, true);
+									p.ProcessTestAsync(newGenome, 0, true);
 								}
 							}
 						}
@@ -64,7 +64,7 @@ namespace Solve.Schemes
 
 						foreach (var gf in firstGroup)
 						{
-							p.ProcessTest(gf.Genome, 0, true);
+							p.ProcessTestAsync(gf.Genome, 0, true);
 						}
 
 						var fga = firstGroup.ToArray();
@@ -104,7 +104,7 @@ namespace Solve.Schemes
 								var hash = newGenome.Hash;
 								if (Pool.TryAdd(hash, newGenome))
 								{
-									p.ProcessTest(newGenome, 0, true);
+									p.ProcessTestAsync(newGenome, 0, true);
 								}
 							}
 						}
