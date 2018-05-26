@@ -111,21 +111,23 @@ namespace Solve
 			return Rejects.Contains(hash);
 		}
 
-		public async Task<IFitness> ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false)
+		protected abstract void ProcessTest(TGenome g, Fitness fitness, long sampleId);
+
+		public IFitness ProcessTest(TGenome g, long sampleId = 0, bool mergeWithGlobal = false)
 		{
 			var f = new Fitness();
 			if (sampleId == 0)
 			{
 				var global = GetOrCreateFitnessFor(g).Fitness;
-				using (await global.Lock.LockAsync())
+				using (global.Lock.Lock())
 				{
-					await ProcessTest(g, f, -global.SampleCount, true);
-					if (mergeWithGlobal) global.Merge(f);
+					ProcessTest(g, f, -global.SampleCount);
 				}
+				if (mergeWithGlobal) global.Merge(f);
 			}
 			else
 			{
-				await ProcessTest(g, f, sampleId, true);
+				ProcessTest(g, f, sampleId);
 				if (mergeWithGlobal) AddToGlobalFitness(g, f);
 			}
 
@@ -133,14 +135,44 @@ namespace Solve
 			return f;
 		}
 
-		protected abstract Task ProcessTest(TGenome g, Fitness fitness, long sampleId, bool useAsync = true);
+		protected virtual Task ProcessTestAsync(TGenome g, Fitness fitness, long sampleId)
+		{
+			ProcessTest(g, fitness, sampleId);
+			return Task.CompletedTask;
+		}
+
+		public async Task<IFitness> ProcessTestAsync(TGenome g, long sampleId = 0, bool mergeWithGlobal = false)
+		{
+			var f = new Fitness();
+			Task t;
+			if (sampleId == 0)
+			{
+				var global = GetOrCreateFitnessFor(g).Fitness;
+				using (await global.Lock.LockAsync())
+				{
+					t = ProcessTestAsync(g, f, -global.SampleCount);
+					if (!t.IsCompleted) await t;
+					if (mergeWithGlobal) global.Merge(f);
+				}
+			}
+			else
+			{
+				t = ProcessTestAsync(g, f, sampleId);
+				if (!t.IsCompleted) await t;
+				if (mergeWithGlobal) AddToGlobalFitness(g, f);
+			}
+
+			Interlocked.Increment(ref _testCount);
+			return f;
+		}
+
 
 		GenomeTestDelegate<TGenome> _testProcessor;
 		public GenomeTestDelegate<TGenome> TestProcessor
 		{
 			get
 			{
-				return LazyInitializer.EnsureInitialized(ref _testProcessor, () => ProcessTest);
+				return LazyInitializer.EnsureInitialized(ref _testProcessor, () => ProcessTestAsync);
 			}
 		}
 
@@ -178,5 +210,7 @@ namespace Solve
 				? fitness.Fitness.SampleCount
 				: 0;
 		}
+
+
 	}
 }

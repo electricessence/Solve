@@ -68,7 +68,7 @@ namespace Solve.Schemes
 		public async Task Post(IGenomeFitness<TGenome, Fitness> c)
 		{
 			// Process a test for this level.
-			var fitness = await Host.Problem.ProcessTest(c.Genome, Level);
+			var fitness = await Host.Problem.ProcessTestAsync(c.Genome, Level);
 			c.Fitness.Merge(fitness);
 
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) challenger = (c, 0);

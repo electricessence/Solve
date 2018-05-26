@@ -69,7 +69,7 @@ namespace Solve.Schemes
 
 			// Process the test for this level.
 			var g = contender.GenomeFitness;
-			var fitness = await Problem.ProcessTest(g.Genome, level);
+			var fitness = await Problem.ProcessTestAsync(g.Genome, level);
 			g.Fitness.Merge(fitness);
 			return contender;
 		}
