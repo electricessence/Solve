@@ -25,23 +25,33 @@ namespace Solve
 			PreviouslyProduced = new ConcurrentHashSet<string>();
 			//RegistryOrder = new ConcurrentQueue<string>();
 
-			ChampionOffspring = new ConcurrentQueue<TGenome>();
+			HighPriority = new ConcurrentQueue<TGenome>();
 			Unexpanded = new ConcurrentQueue<TGenome>();
 
-			PriorityQueues = new List<IEnumerable<TGenome>>
-			{
-				ChampionOffspring.AsDequeueingEnumerable(),
-				Unexpanded.AsDequeueingEnumerable().SelectMany(g=>Expand(g)),
-				Generate()
-			}.AsReadOnly();
+			PriorityQueues = CreatePriorityQueues().AsReadOnly();
 		}
 
-		protected readonly ConcurrentQueue<TGenome> ChampionOffspring;
+		protected readonly ConcurrentQueue<TGenome> HighPriority;
 		protected readonly ConcurrentQueue<TGenome> Unexpanded;
 		protected readonly IReadOnlyList<IEnumerable<TGenome>> PriorityQueues;
 
+		protected virtual List<IEnumerable<TGenome>> CreatePriorityQueues()
+			=> new List<IEnumerable<TGenome>>()
+			{
+				HighPriority.AsDequeueingEnumerable(),
+				Unexpanded.AsDequeueingEnumerable().SelectMany(g => Expand(g)),
+				Generate()
+			};
 
+		public void AddHighPriority(TGenome genome)
+		{
+			HighPriority.Enqueue(genome);
+		}
 
+		public void AddForExpansion(TGenome genome)
+		{
+			Unexpanded.Enqueue(genome);
+		}
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
@@ -107,6 +117,16 @@ namespace Solve
 			if (!Registry.ContainsKey(hash))
 				throw new InvalidOperationException("Registering for production before genome was in global registry.");
 			return PreviouslyProduced.Add(genome.Hash);
+		}
+
+		protected IEnumerable<TGenome> FilterRegisterNew(IEnumerable<TGenome> source)
+		{
+			foreach (var e in source)
+			{
+				var g = Registration(e);
+				if (RegisterProduction(g))
+					yield return g;
+			}
 		}
 
 		protected bool AlreadyProduced(string hash)
@@ -378,7 +398,9 @@ namespace Solve
 			if (others != null)
 			{
 				foreach (var o in others)
+				{
 					yield return o;
+				}
 			}
 
 			//var variation = (TGenome)genome.NextVariation();
