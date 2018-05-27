@@ -123,16 +123,19 @@ namespace Eater
 			var genes = AssertFrozen(genome.AsReduced()).Genes;
 
 			var len = genes.Count - 1;
-			if (len > 1) yield return new EaterGenome(genes.Take(len));
-
-			if (len > 1) yield return new EaterGenome(genes.Skip(1));
+			if (len > 1)
+			{
+				yield return new EaterGenome(genes.Take(len));
+				yield return new EaterGenome(genes.Skip(1));
+			}
 
 			yield return new EaterGenome(Enumerable.Repeat(Step.Forward, 1).Concat(genes));
 		}
 
 		public override IEnumerable<EaterGenome> Expand(EaterGenome genome, IEnumerable<EaterGenome> others = null)
 		{
-			return base.Expand(genome, others == null ? ExpandInternal(genome) : others.Concat(ExpandInternal(genome)));
+			var expansions = FilterRegisterNew(ExpandInternal(genome));
+			return base.Expand(genome, others == null ? expansions : others.Concat(expansions));
 		}
 
 	}
