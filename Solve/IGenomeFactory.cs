@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Solve
 {
-	public interface IGenomeFactory<TGenome>
+	public interface IGenomeFactory<TGenome> : IEnumerable<TGenome>
 	 where TGenome : class, IGenome
 	{
 		/*

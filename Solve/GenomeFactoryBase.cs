@@ -4,10 +4,10 @@
  */
 
 using Open.Collections;
-using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Threading.Tasks;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,7 +24,24 @@ namespace Solve
 			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
 			PreviouslyProduced = new ConcurrentHashSet<string>();
 			//RegistryOrder = new ConcurrentQueue<string>();
+
+			ChampionOffspring = new ConcurrentQueue<TGenome>();
+			Unexpanded = new ConcurrentQueue<TGenome>();
+
+			PriorityQueues = new List<IEnumerable<TGenome>>
+			{
+				ChampionOffspring.AsDequeueingEnumerable(),
+				Unexpanded.AsDequeueingEnumerable().SelectMany(g=>Expand(g)),
+				Generate()
+			}.AsReadOnly();
 		}
+
+		protected readonly ConcurrentQueue<TGenome> ChampionOffspring;
+		protected readonly ConcurrentQueue<TGenome> Unexpanded;
+		protected readonly IReadOnlyList<IEnumerable<TGenome>> PriorityQueues;
+
+
+
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
@@ -51,7 +68,7 @@ namespace Solve
 				Debug.Assert(genome.Hash == hash);
 				onBeforeAdd(genome);
 				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
-				//RegistryOrder.Enqueue(hash);
+									  //RegistryOrder.Enqueue(hash);
 				return genome;
 			})).Value;
 
@@ -67,7 +84,7 @@ namespace Solve
 				Debug.Assert(genome.Hash == hash);
 				onBeforeAdd(genome);
 				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
-				//RegistryOrder.Enqueue(hash);
+									  //RegistryOrder.Enqueue(hash);
 				return genome;
 			})).Value;
 
@@ -370,5 +387,27 @@ namespace Solve
 			var mutation = GenerateOne(genome);
 			if (mutation != null) yield return mutation;
 		}
+
+		public virtual IEnumerator<TGenome> GetEnumerator()
+		{
+			bool found;
+			do
+			{
+				found = false;
+				foreach (var e in PriorityQueues)
+				{
+					foreach (var g in e)
+					{
+						yield return g;
+						found = true;
+						break;
+					}
+					if (found) break;
+				}
+			}
+			while (found);
+		}
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 }
