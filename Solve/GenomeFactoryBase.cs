@@ -43,12 +43,12 @@ namespace Solve
 				Generate()
 			};
 
-		public void AddHighPriority(TGenome genome)
+		public void EnqueueHighPriority(TGenome genome)
 		{
 			HighPriority.Enqueue(genome);
 		}
 
-		public void AddForExpansion(TGenome genome)
+		public void EnqueueForExpansion(TGenome genome)
 		{
 			Unexpanded.Enqueue(genome);
 		}
@@ -406,8 +406,8 @@ namespace Solve
 			//var variation = (TGenome)genome.NextVariation();
 			//if (variation != null) yield return AssertFrozen(variation);
 			Debug.Assert(genome.Hash.Length != 0, "Cannot expand an empty genome.");
-			var mutation = GenerateOne(genome);
-			if (mutation != null) yield return mutation;
+			if (GenerateNew(out TGenome mutation, genome))
+				yield return mutation;
 		}
 
 		public virtual IEnumerator<TGenome> GetEnumerator()

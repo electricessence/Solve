@@ -54,8 +54,7 @@ namespace Solve.Dataflow
 				{
 					int attempts = 0;
 					bool more = false;
-					IDisposable timeout;
-					while (attempts++ < 20 && TimeoutHandler.New(TIMEOUT_MS, out timeout, TimedOut) && (more = source.MoveNext()))
+					while (attempts++ < 20 && TimeoutHandler.New(TIMEOUT_MS, out IDisposable timeout, TimedOut) && (more = source.MoveNext()))
 					{
 						timeout.Dispose();
 						var next = source.Current;
