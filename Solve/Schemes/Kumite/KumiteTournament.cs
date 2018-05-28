@@ -7,23 +7,30 @@ namespace Solve.Schemes
 	public sealed class KumiteTournament<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
+		readonly Kumite<TGenome> Environment;
 		internal readonly IProblem<TGenome> Problem;
 		internal KumiteLevel<TGenome> Root;
 		internal ushort MaximumAllowedLosses;
 		internal ITargetBlock<IGenomeFitness<TGenome, Fitness>> LoserPool;
 
 		public KumiteTournament(IProblem<TGenome> problem,
-			ushort maximumLoss = ushort.MaxValue,
+			Kumite<TGenome> environment,
 			ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base()
 		{
 			Problem = problem ?? throw new ArgumentNullException(nameof(problem));
+			Environment = environment ?? throw new ArgumentNullException(nameof(environment));
 			Root = new KumiteLevel<TGenome>(0, this);
-			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
-			MaximumAllowedLosses = maximumLoss;
+			MaximumAllowedLosses = environment.MaximumLoss;
 			LoserPool = loserPool ?? DataflowBlock.NullTarget<IGenomeFitness<TGenome, Fitness>>();
 		}
 
-		public Task Post(TGenome next)
+		public void Post(TGenome next)
 			=> Root.Post(new GenomeFitness<TGenome, Fitness>(next, new Fitness()));
+
+		public Task PostAsync(TGenome next)
+			=> Root.PostAsync(new GenomeFitness<TGenome, Fitness>(next, new Fitness()));
+
+		public void Breed(IGenomeFitness<TGenome, Fitness> genomeFitness)
+			=> Environment.Breed(genomeFitness.Genome, genomeFitness.Fitness.SampleCount);
 	}
 }

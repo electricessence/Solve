@@ -54,18 +54,55 @@ namespace Solve.Schemes
 					WaitingToCompete.Enqueue(loser);
 				}
 
+				var wgf = winner.GenomeFitness;
 				if (m == 1)
 				{
 					Debug.WriteLine("New Kumite Level: {0}", Level);
-					Host.Broadcast(winner.GenomeFitness);
+					Host.Broadcast(wgf);
 				}
-				await NextLevel.Post(winner.GenomeFitness);
+				else
+				{
+					//if (Level > 100) // Fixed minimum for now.
+					//	Host.Breed(wgf);
+				}
+
+				await NextLevel.PostAsync(wgf);
 			}
 
 
 		}
 
-		public async Task Post(IGenomeFitness<TGenome, Fitness> c)
+		public void Post(IGenomeFitness<TGenome, Fitness> c)
+		{
+			// Process a test for this level.
+			var fitness = Host.Problem.ProcessTest(c.Genome, Level);
+			c.Fitness.Merge(fitness);
+
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) challenger = (c, 0);
+
+			if (WaitingToCompete.TryDequeue(out (IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) defender))
+			{
+				// A defender is available.
+				var d = defender.GenomeFitness;
+				if (d.CompareTo(c) < 0) // NOTE: Ordering = first is better.  Ordering direction inverted.
+				{
+					// Challenger lost.  // Defender moves on.
+					Resolve(winner: defender, loser: challenger).Wait();
+				}
+				else
+				{
+					// Challenger won.  // Defender stays.
+					Resolve(winner: challenger, loser: defender).Wait();
+				}
+			}
+			else
+			{
+				// The challenger becomes a defender.
+				WaitingToCompete.Enqueue(challenger);
+			}
+		}
+
+		public async Task PostAsync(IGenomeFitness<TGenome, Fitness> c)
 		{
 			// Process a test for this level.
 			var fitness = await Host.Problem.ProcessTestAsync(c.Genome, Level);
@@ -94,5 +131,6 @@ namespace Solve.Schemes
 				WaitingToCompete.Enqueue(challenger);
 			}
 		}
+
 	}
 }

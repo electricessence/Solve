@@ -1,5 +1,6 @@
 ﻿using Open.Collections;
 using Open.Dataflow;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,29 +12,31 @@ namespace Solve.Schemes
 	public sealed class Kumite<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		public Kumite(IGenomeFactory<TGenome> genomeFactory, ushort maximumLoss = ushort.MaxValue)
+		public Kumite(IGenomeFactory<TGenome> genomeFactory, ushort maximumLoss = ushort.MaxValue, ushort maxOffspring = ushort.MaxValue)
 			: base(genomeFactory)
 		{
+			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
 			MaximumLoss = maximumLoss;
+			MaxOffspring = maxOffspring;
 		}
 
 		public readonly ushort MaximumLoss;
+		public readonly ushort MaxOffspring;
 
 		readonly ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>> Hosts
 			= new ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>>();
 
-		readonly ConcurrentQueue<TGenome> PriorityContenders = new ConcurrentQueue<TGenome>();
 		readonly ConcurrentQueue<TGenome> Breeders = new ConcurrentQueue<TGenome>();
 
 		public override void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
 			foreach (var problem in problems)
 			{
-				var k = new KumiteTournament<TGenome>(problem, MaximumLoss);
+				var k = new KumiteTournament<TGenome>(problem, this);
 				k.Subscribe(e =>
 				{
 					Broadcast((problem, e));
-					Breeders.Enqueue(e.Genome);
+					BreedChampion(e.Genome, e.Fitness.SampleCount);
 				});
 				Hosts.TryAdd(problem, k);
 			}
@@ -46,48 +49,53 @@ namespace Solve.Schemes
 			//throw new NotImplementedException();
 		}
 
+
+		TGenome _champion;
+		void BreedChampion(TGenome champion, int offspringCount)
+		{
+			var old = Interlocked.Exchange(ref _champion, champion);
+			if (old == null || old != champion && old.Hash != champion.Hash)
+				Breed(champion, offspringCount, old);
+		}
+
+		public void Breed(TGenome contender, int offspringCount, TGenome champion = null)
+		{
+			if (contender == null) throw new ArgumentNullException(nameof(contender));
+			Factory.EnqueueForExpansion(contender);
+
+			if (champion == null) champion = _champion;
+			if (champion != null && contender != champion && contender.Hash != champion.Hash)
+			{
+				// Breed 10.
+				for (ushort i = 0; i < MaxOffspring && i < offspringCount; i++)
+				{
+					var x = Factory.AttemptNewCrossover(champion, contender);
+					if (x == null) break;
+					x.ForEach(g3 =>
+					{
+						Factory.EnqueueHighPriority(g3);
+						foreach (var e in Factory.Expand(g3))
+							Factory.EnqueueHighPriority(e);
+					});
+				}
+			}
+		}
+
 		void Post(TGenome genome)
 		{
 			foreach (var host in Hosts.Values)
-			{
 				host.Post(genome);
-			}
 		}
 
-		protected override async Task StartInternal(CancellationToken token)
+		async Task PostAsync(TGenome genome)
 		{
-			TGenome readyBreeder = null;
-			while (!token.IsCancellationRequested)
-			{
-				if (PriorityContenders.TryDequeue(out TGenome g))
-				{
-					Post(g);
-					continue;
-				}
-
-				if (Breeders.TryDequeue(out TGenome g2))
-				{
-					var mutate = Task.Run(() =>
-					{
-						if (Factory.AttemptNewMutation(g2, out TGenome mutation))
-							PriorityContenders.Enqueue(mutation);
-					});
-
-					if (readyBreeder == null || readyBreeder.Hash == g2.Hash) readyBreeder = g2;
-					else
-					{
-						var g1 = readyBreeder;
-						readyBreeder = null;
-						Factory
-							.AttemptNewCrossover(g1, g2)?
-							.ForEach(g3 => PriorityContenders.Enqueue(g3));
-					}
-					await mutate;
-					continue;
-				}
-
-				Post(Factory.GenerateNew().First());
-			}
+			await Task.WhenAll(
+				Hosts.Values.Select(h => h.PostAsync(genome)));
 		}
+
+		protected override Task StartInternal(CancellationToken token)
+			=> Task.Run(cancellationToken: token, action: () =>
+				 Parallel.ForEach(Factory, new ParallelOptions { CancellationToken = token }, Post));
+
 	}
 }
