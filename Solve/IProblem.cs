@@ -35,6 +35,8 @@ namespace Solve
 
 		int GetSampleCountFor(TGenome genome);
 
+		long TestCount { get; }
+
 		void Reject(string hash);
 		void Reject(IEnumerable<string> hashes);
 		bool WasRejected(string hash);

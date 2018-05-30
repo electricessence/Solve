@@ -106,7 +106,7 @@ namespace Solve.Experiment.Console
 			SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
 			foreach (var p in Environment.Problems)
 			{
-				var tc = ((ProblemBase<TGenome>)p).TestCount;
+				var tc = p.TestCount;
 				if (tc != 0)
 				{
 					SystemConsole.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, _stopwatch.ElapsedTicks / tc);

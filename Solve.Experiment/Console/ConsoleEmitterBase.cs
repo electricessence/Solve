@@ -8,10 +8,12 @@ namespace Solve.Experiment.Console
 	public class ConsoleEmitterBase<TGenome>
 		where TGenome : IGenome
 	{
+		public readonly AsyncFileWriter LogFile;
 		public readonly uint SampleMinimum;
 
-		public ConsoleEmitterBase(uint sampleMinimum = 50)
+		public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
 		{
+			LogFile = logFilePath == null ? null : new AsyncFileWriter(logFilePath, 1000);
 			SampleMinimum = sampleMinimum;
 		}
 
@@ -59,14 +61,14 @@ namespace Solve.Experiment.Console
 						LastScore = f;
 						LastHash = genome.Hash;
 
-						OnEmittingGenome(genome);
+						OnEmittingGenome(p, genome, f);
 
 					}));
 		}
 
-		protected virtual void OnEmittingGenome(TGenome genome)
+		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, IFitness fitness)
 		{
-
+			LogFile?.AddLine($"{DateTime.Now},{p.ID},{p.TestCount},{string.Join(',', fitness.Scores.ToStringArray())},");
 		}
 
 		public static void EmitFitnessScoreWithLabels(IProblem<TGenome> problem, IFitness fitness)

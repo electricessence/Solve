@@ -13,7 +13,8 @@ namespace Eater
 	{
 		public readonly SampleCache Samples;
 
-		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50) : base(sampleMinimum)
+		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
+			: base(sampleMinimum, Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv"))
 		{
 			Samples = samples;
 		}
@@ -27,8 +28,9 @@ namespace Eater
 		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
 			=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
-		protected override void OnEmittingGenome(EaterGenome genome)
+		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness)
 		{
+			base.OnEmittingGenome(p, genome, fitness);
 			using (var bitmap = genome.Genes.Render())
 			{
 				// Expand the size for clarity.
