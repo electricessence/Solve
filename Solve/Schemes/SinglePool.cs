@@ -16,7 +16,8 @@ namespace Solve.Schemes
 		where TGenome : class, IGenome
 	{
 		readonly ushort PoolSize;
-		readonly ConcurrentDictionary<string, TGenome> Pool = new ConcurrentDictionary<string, TGenome>();
+		readonly ConcurrentDictionary<string, TGenome> Pool
+			= new ConcurrentDictionary<string, TGenome>();
 
 		public SinglePool(IGenomeFactory<TGenome> genomeFactory, ushort poolSize) : base(genomeFactory)
 		{
@@ -28,91 +29,96 @@ namespace Solve.Schemes
 
 		}
 
-		protected override Task StartInternal(CancellationToken token)
+		void FillPool()
 		{
-			return Task.Run(cancellationToken: token, action: () =>
+			var addCount = PoolSize - Pool.Count;
+			if (addCount > 0)
 			{
-
-				while (!token.IsCancellationRequested)
+				foreach (var newGenome in Factory.GenerateNew().Take(addCount))
 				{
-					// Phase 1, make sure the pool is full.
-					var addCount = PoolSize - Pool.Count;
-					if (addCount > 0)
+					if (Pool.TryAdd(newGenome.Hash, newGenome))
 					{
-						foreach (var newGenome in Factory.GenerateNew().Take(addCount))
+						foreach (var p in ProblemsInternal)
 						{
-							if (Pool.TryAdd(newGenome.Hash, newGenome))
-							{
-								foreach (var p in ProblemsInternal)
-								{
-									p.ProcessTestAsync(newGenome, 0, true);
-								}
-							}
+							p.ProcessTestAsync(newGenome, 0, true);
 						}
 					}
-
-					var pCount = 0;
-					var toRejectCount = new ConcurrentDictionary<string, int>();
-					// Phase 2, process tests in order of sample count.
-					foreach (var p in ProblemsInternal)
-					{
-						pCount++;
-						var firstGroup = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
-							.GroupBy(f => f.Fitness.SampleCount)
-							.OrderBy(g => g.Key).First()
-							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance);
-
-						foreach (var gf in firstGroup)
-						{
-							p.ProcessTestAsync(gf.Genome, 0, true);
-						}
-
-						var fga = firstGroup.ToArray();
-						if (fga.Length > 1)
-						{
-							foreach (var gf in fga.Skip(fga.Length / 2))
-							{
-								toRejectCount.AddValue(gf.Genome.Hash, 1);
-							}
-						}
-					}
-
-					var rejects = toRejectCount.Where(kvp => kvp.Value == pCount).Select(kvp => kvp.Key).ToArray();
-					//foreach (var p in Problems)
-					//{
-					//	p.Reject(rejects);
-					//}
-					foreach (var reject in rejects)
-					{
-						Pool.TryRemove(reject);
-					}
-
-					foreach (var p in ProblemsInternal)
-					{
-						var top = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
-							.GroupBy(f => f.Fitness.SampleCount)
-							.OrderByDescending(g => g.Key).First()
-							.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First();
-
-						Broadcast((p, top));
-
-						var ac = PoolSize - Pool.Count;
-						if (ac > 0)
-						{
-							foreach (var newGenome in Factory.Expand(top.Genome).Take(ac))
-							{
-								var hash = newGenome.Hash;
-								if (Pool.TryAdd(hash, newGenome))
-								{
-									p.ProcessTestAsync(newGenome, 0, true);
-								}
-							}
-						}
-
-					}
-
 				}
-			});
+			}
 		}
+
+		async Task ProcessAndReject()
+		{
+			var toRejectCount = new ConcurrentDictionary<string, int>();
+
+			await Task.WhenAll(ProblemsInternal.Select(async p =>
+			{
+				var firstGroup = Pool
+					.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
+					.GroupBy(f => f.Fitness.SampleCount)
+					.OrderBy(g => g.Key).First();
+
+				await Task.WhenAll(firstGroup.Select(gf => p.ProcessTestAsync(gf.Genome, 0, true)));
+
+				var firstGroupResults = firstGroup
+					.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance)
+					.ToArray();
+
+				if (firstGroupResults.Length > 1)
+				{
+					foreach (var gf in firstGroupResults.Skip(firstGroupResults.Length / 2))
+					{
+						toRejectCount.AddValue(gf.Genome.Hash, 1);
+					}
+				}
+			}));
+
+			var pCount = ProblemsInternal.Count;
+			var rejects = toRejectCount
+				.Where(kvp => kvp.Value == pCount)
+				.Select(kvp => kvp.Key)
+				.ToArray();
+
+			//foreach (var p in Problems)
+			//{
+			//	p.Reject(rejects);
+			//}
+			foreach (var reject in rejects)
+			{
+				Pool.TryRemove(reject);
+			}
+		}
+
+		void EnqueueTopForExpansion()
+		{
+			foreach (var p in ProblemsInternal)
+			{
+				var top = Pool.Select(kvp => p.GetFitnessFor(kvp.Value).Value)
+					.GroupBy(f => f.Fitness.SampleCount)
+					.OrderByDescending(g => g.Key).First()
+					.OrderBy(g => g, GenomeFitness.Comparer<TGenome, Fitness>.Instance).First();
+
+				Broadcast((p, top));
+
+				Factory.EnqueueForExpansion(top.Genome);
+			}
+		}
+
+		protected override async Task StartInternal(CancellationToken token)
+		{
+
+			while (!token.IsCancellationRequested)
+			{
+				// Phase 1, make sure the pool is full.
+				FillPool();
+
+				// Phase 2, process tests in order of sample count.
+				await ProcessAndReject();
+
+				// Phase 3, take the top gene and expand on it.
+				EnqueueTopForExpansion();
+			}
+		}
+
 	}
 }
