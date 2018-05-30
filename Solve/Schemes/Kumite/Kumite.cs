@@ -95,7 +95,23 @@ namespace Solve.Schemes
 
 		protected override Task StartInternal(CancellationToken token)
 			=> Task.Run(cancellationToken: token, action: () =>
-				 Parallel.ForEach(Factory, new ParallelOptions { CancellationToken = token }, Post));
+			{
+				//foreach (var g in Factory.AsParallel())
+				//	PostAsync(g).ConfigureAwait(false);
+
+				var pc = Environment.ProcessorCount;
+				//Console.WriteLine("PROCESSOR COUNT: {0}", pc);
+				Parallel.ForEach(Factory, new ParallelOptions
+				{
+					CancellationToken = token,
+					MaxDegreeOfParallelism = 2 * pc - 1
+				}, Post);
+
+				//Parallel.ForEach(Factory, new ParallelOptions
+				//{
+				//	CancellationToken = token,
+				//}, Post);
+			});
 
 	}
 }

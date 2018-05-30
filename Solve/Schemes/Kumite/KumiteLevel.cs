@@ -62,8 +62,8 @@ namespace Solve.Schemes
 				}
 				else
 				{
-					//if (Level > 100) // Fixed minimum for now.
-					//	Host.Breed(wgf);
+					if (Level > 100) // Fixed minimum for now.
+						Host.Breed(wgf);
 				}
 
 				await NextLevel.PostAsync(wgf);

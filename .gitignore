@@ -255,4 +255,6 @@ ModelManifest.xml
 .history
 
 # End of https://www.gitignore.io/api/visualstudiocode
+
 Problems/Eater/Console/LatestWinner.jpg
+Problems/Eater/Console/Log-*.csv
