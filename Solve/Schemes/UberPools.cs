@@ -25,11 +25,6 @@ namespace Solve.Schemes
 			PoolSize = poolSize;
 		}
 
-		protected override void OnCancelled()
-		{
-			throw new NotImplementedException();
-		}
-
 		protected override Task StartInternal(CancellationToken token)
 		{
 			throw new NotImplementedException();

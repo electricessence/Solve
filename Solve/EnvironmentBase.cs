@@ -76,7 +76,7 @@ namespace Solve
 
 		protected abstract Task StartInternal(CancellationToken token);
 
-		protected abstract void OnCancelled();
+		protected virtual void OnCancelled() { }
 
 		public void Cancel()
 		{
