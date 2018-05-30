@@ -29,8 +29,5 @@ namespace Solve.Schemes
 
 		public Task PostAsync(TGenome next)
 			=> Root.PostAsync(new GenomeFitness<TGenome, Fitness>(next, new Fitness()));
-
-		public void Breed(IGenomeFitness<TGenome, Fitness> genomeFitness)
-			=> Environment.Breed(genomeFitness.Genome, genomeFitness.Fitness.SampleCount);
 	}
 }

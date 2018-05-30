@@ -31,6 +31,76 @@ namespace Solve
 			PriorityQueues = CreatePriorityQueues().AsReadOnly();
 		}
 
+		/**
+		 * It's very important to avoid any contention.
+		 * 
+		 * In order to do so we use a concurrent queue (fast).
+		 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
+		 * Returning any valid breeders whom haven't mated enough.
+		 */
+		readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
+			= new ConcurrentQueue<(TGenome Genome, int Count)>();
+
+		public void EnqueueForBreeding(TGenome genome, int count = 1)
+		{
+			if (count > 0)
+				BreedingStock.Enqueue((genome, count));
+		}
+
+		public void EnqueueForBreeding((TGenome genome, int count) breeder)
+		{
+			if (breeder.count > 0)
+				BreedingStock.Enqueue(breeder);
+		}
+
+		public void Breed(params TGenome[] genomes)
+		{
+			if (genomes.Length == 0)
+				BreedOne(null);
+			else
+				foreach (var g in genomes)
+					BreedOne(g);
+		}
+
+		protected void BreedOne(TGenome genome)
+		{
+			// Setup incomming...
+			(TGenome genome, int count) current;
+
+			if (genome != null)
+				current = (genome, 1);
+			else if (!BreedingStock.TryDequeue(out current))
+				return;
+
+			// Start dequeueing possbile mates, where any of them could be a requeue of current.
+			while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
+			{
+				var mateGenome = mate.genome;
+				if (mateGenome == genome || mateGenome.Hash == genome.Hash)
+				{
+					// A repeat of the current?  Increment breeding count and try again.
+					current.count++;
+				}
+				else
+				{
+					// We have a valid mate!
+					EnqueueHighPriority(AttemptNewCrossover(genome, mateGenome));
+
+					// After breeding, decrease their counts.
+					current.count--;
+					mate.count--;
+
+					// Might still need more funtime.
+					EnqueueForBreeding(mate);
+
+					break;
+				}
+			}
+
+			// Might still need more funtime.
+			EnqueueForBreeding(current);
+		}
+
 		protected readonly ConcurrentQueue<TGenome> HighPriority;
 		protected readonly ConcurrentQueue<TGenome> Unexpanded;
 		protected readonly IReadOnlyList<IEnumerable<TGenome>> PriorityQueues;
@@ -43,14 +113,18 @@ namespace Solve
 				Generate()
 			};
 
-		public void EnqueueHighPriority(TGenome genome)
+		public void EnqueueHighPriority(params TGenome[] genomes)
 		{
-			HighPriority.Enqueue(genome);
+			if (genomes == null) return;
+			foreach (var g in genomes)
+				if(g!=null) HighPriority.Enqueue(g);
 		}
 
-		public void EnqueueForExpansion(TGenome genome)
+		public void EnqueueForExpansion(params TGenome[] genomes)
 		{
-			Unexpanded.Enqueue(genome);
+			if (genomes == null) return;
+			foreach (var g in genomes)
+				if (g != null) Unexpanded.Enqueue(g);
 		}
 
 		// Help to reduce copies.

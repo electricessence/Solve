@@ -1,5 +1,4 @@
-﻿using Open.Collections;
-using Open.Dataflow;
+﻿using Open.Dataflow;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -36,49 +35,13 @@ namespace Solve.Schemes
 				k.Subscribe(e =>
 				{
 					Broadcast((problem, e));
-					BreedChampion(e.Genome, e.Fitness.SampleCount);
+					Factory.EnqueueForExpansion(e.Genome);
+					Factory.Breed(e.Genome);
 				});
 				Hosts.TryAdd(problem, k);
 			}
 
 			base.AddProblems(problems);
-		}
-
-		protected override void OnCancelled()
-		{
-			//throw new NotImplementedException();
-		}
-
-
-		TGenome _champion;
-		void BreedChampion(TGenome champion, int offspringCount)
-		{
-			var old = Interlocked.Exchange(ref _champion, champion);
-			if (old == null || old != champion && old.Hash != champion.Hash)
-				Breed(champion, offspringCount, old);
-		}
-
-		public void Breed(TGenome contender, int offspringCount, TGenome champion = null)
-		{
-			if (contender == null) throw new ArgumentNullException(nameof(contender));
-			Factory.EnqueueForExpansion(contender);
-
-			if (champion == null) champion = _champion;
-			if (champion != null && contender != champion && contender.Hash != champion.Hash)
-			{
-				// Breed 10.
-				for (ushort i = 0; i < MaxOffspring && i < offspringCount; i++)
-				{
-					var x = Factory.AttemptNewCrossover(champion, contender);
-					if (x == null) break;
-					x.ForEach(g3 =>
-					{
-						Factory.EnqueueHighPriority(g3);
-						foreach (var e in Factory.Expand(g3))
-							Factory.EnqueueHighPriority(e);
-					});
-				}
-			}
 		}
 
 		void Post(TGenome genome)

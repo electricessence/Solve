@@ -29,7 +29,7 @@ namespace Solve.Schemes
 			Host = host;
 		}
 
-		async Task Resolve(
+		IGenomeFitness<TGenome, Fitness> Resolution(
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
 		{
@@ -38,6 +38,7 @@ namespace Solve.Schemes
 			{
 				Debug.WriteLine($"Level {Level}: Contender fought itself: {winnerHash}");
 				WaitingToCompete.Enqueue(winner);
+				return null;
 			}
 			else
 			{
@@ -62,14 +63,28 @@ namespace Solve.Schemes
 				}
 				else
 				{
-					if (Level > 100) // Fixed minimum for now.
-						Host.Breed(wgf);
+					//if (Level > 100) // Fixed minimum for now.
+					//	Host.Breed(wgf);
 				}
 
-				await NextLevel.PostAsync(wgf);
+				return wgf;
 			}
+		}
 
+		void Resolve(
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
+		{
+			var resolution = Resolution(winner, loser);
+			if (resolution != null) NextLevel.Post(resolution);
+		}
 
+		async Task ResolveAsync(
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
+			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
+		{
+			var resolution = Resolution(winner, loser);
+			if(resolution!=null) await NextLevel.PostAsync(resolution);
 		}
 
 		public void Post(IGenomeFitness<TGenome, Fitness> c)
@@ -87,12 +102,12 @@ namespace Solve.Schemes
 				if (d.CompareTo(c) < 0) // NOTE: Ordering = first is better.  Ordering direction inverted.
 				{
 					// Challenger lost.  // Defender moves on.
-					Resolve(winner: defender, loser: challenger).Wait();
+					Resolve(winner: defender, loser: challenger);
 				}
 				else
 				{
 					// Challenger won.  // Defender stays.
-					Resolve(winner: challenger, loser: defender).Wait();
+					Resolve(winner: challenger, loser: defender);
 				}
 			}
 			else
@@ -117,12 +132,12 @@ namespace Solve.Schemes
 				if (d.CompareTo(c) < 0) // NOTE: Ordering = first is better.  Ordering direction inverted.
 				{
 					// Challenger lost.  // Defender moves on.
-					await Resolve(winner: defender, loser: challenger);
+					await ResolveAsync(winner: defender, loser: challenger);
 				}
 				else
 				{
 					// Challenger won.  // Defender stays.
-					await Resolve(winner: challenger, loser: defender);
+					await ResolveAsync(winner: challenger, loser: defender);
 				}
 			}
 			else
