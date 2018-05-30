@@ -42,9 +42,11 @@ namespace Solve
 
 		IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null);
 
-		void EnqueueHighPriority(TGenome genome);
+		void EnqueueHighPriority(params TGenome[] genomes);
 
-		void EnqueueForExpansion(TGenome genome);
+		void EnqueueForExpansion(params TGenome[] genomes);
+
+		void Breed(params TGenome[] genomes);
 
 	}
 }

@@ -19,12 +19,8 @@ namespace Solve.Schemes
 			MaximumLevel = maxLevel;
 			MinimumConvergenceSamples = minConvSamples;
 			MaximumLoss = maximumLoss;
-			MaximumBreedingStock = maxBreedingStock;
 		}
 
-		readonly Channel<TGenome> Generated = Channel.CreateBounded<TGenome>(50);
-
-		public readonly ushort MaximumBreedingStock;
 		public readonly ushort MaximumLevel;
 		public readonly ushort MaximumLoss;
 		public readonly ushort MinimumConvergenceSamples;
@@ -46,11 +42,6 @@ namespace Solve.Schemes
 			}
 
 			base.AddProblems(problems);
-		}
-
-		protected override void OnCancelled()
-		{
-			//throw new NotImplementedException();
 		}
 
 		async Task QueueNewContenderAsync()
@@ -90,17 +81,11 @@ namespace Solve.Schemes
 			queued = true;
 		}
 
-#if DEBUG
-		readonly LockSynchronizedHashSet<string> _seen = new LockSynchronizedHashSet<string>();
-#endif
-		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _unbredChampions = new ConcurrentQueue<IGenomeFitness<TGenome>>();
-		readonly ConcurrentDictionary<TGenome, IFitness> _breeders = new ConcurrentDictionary<TGenome, IFitness>();
-
 		internal void ProcessNewChampion(IGenomeFitness<TGenome> champion)
 		{
 			if (champion.Fitness.HasConverged(MinimumConvergenceSamples))
 				Cancel();
-			_unbredChampions.Enqueue(champion);
+			Factory.E(champion);
 		}
 
 		bool QueueChampion(IGenomeFitness<TGenome> champion)
