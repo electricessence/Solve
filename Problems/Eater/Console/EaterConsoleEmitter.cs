@@ -14,7 +14,7 @@ namespace Eater
 		public readonly SampleCache Samples;
 
 		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
-			: base(sampleMinimum, Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv"))
+			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
 			Samples = samples;
 		}
@@ -36,7 +36,7 @@ namespace Eater
 				// Expand the size for clarity.
 				var newDim = new Rectangle(0, 0, bitmap.Width * 4, bitmap.Height * 4);
 				using (var newImage = new Bitmap(newDim.Width, newDim.Height))
-				using (Graphics gr = Graphics.FromImage(newImage))
+				using (var gr = Graphics.FromImage(newImage))
 				{
 					gr.SmoothingMode = SmoothingMode.None;
 					gr.InterpolationMode = InterpolationMode.NearestNeighbor;

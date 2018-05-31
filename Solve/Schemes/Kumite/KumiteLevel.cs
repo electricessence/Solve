@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace Solve.Schemes
 			Host = host;
 		}
 
-		IGenomeFitness<TGenome, Fitness> Resolution(
+		IEnumerable<IGenomeFitness<TGenome, Fitness>> Resolution(
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
 		{
@@ -38,23 +39,11 @@ namespace Solve.Schemes
 			{
 				Debug.WriteLine($"Level {Level}: Contender fought itself: {winnerHash}");
 				WaitingToCompete.Enqueue(winner);
-				return null;
 			}
 			else
 			{
+
 				var m = Interlocked.Increment(ref _matches);
-
-				ushort maxLoss = Host.MaximumAllowedLosses;
-				if (loser.LossRecord == maxLoss)
-				{
-					Host.LoserPool.Post(loser.GenomeFitness);
-				}
-				else
-				{
-					loser.LossRecord++;
-					WaitingToCompete.Enqueue(loser);
-				}
-
 				var wgf = winner.GenomeFitness;
 				if (m == 1)
 				{
@@ -63,11 +52,26 @@ namespace Solve.Schemes
 				}
 				else
 				{
-					//if (Level > 100) // Fixed minimum for now.
-					//	Host.Breed(wgf);
+					if (Level > 59) // Fixed minimum for now.
+						Host.Broadcast(wgf);
 				}
 
-				return wgf;
+				yield return wgf;
+
+				ushort maxLoss = Host.MaximumAllowedLosses;
+				if (loser.LossRecord == maxLoss)
+				{
+					// Loss record simply 'slows down' the losers allowing the winners to produce offspring.
+					if (Level < 20)
+						yield return loser.GenomeFitness;
+					else
+						Host.LoserPool.Post(loser.GenomeFitness);
+				}
+				else
+				{
+					loser.LossRecord++;
+					WaitingToCompete.Enqueue(loser);
+				}
 			}
 		}
 
@@ -75,16 +79,16 @@ namespace Solve.Schemes
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
 		{
-			var resolution = Resolution(winner, loser);
-			if (resolution != null) NextLevel.Post(resolution);
+			foreach (var next in Resolution(winner, loser))
+				NextLevel.Post(next);
 		}
 
 		async Task ResolveAsync(
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) winner,
 			(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LossRecord) loser)
 		{
-			var resolution = Resolution(winner, loser);
-			if(resolution!=null) await NextLevel.PostAsync(resolution);
+			foreach (var next in Resolution(winner, loser))
+				await NextLevel.PostAsync(next);
 		}
 
 		public void Post(IGenomeFitness<TGenome, Fitness> c)
