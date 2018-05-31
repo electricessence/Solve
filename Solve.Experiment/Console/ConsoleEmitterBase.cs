@@ -46,7 +46,7 @@ namespace Solve.Experiment.Console
 			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => sc >= SampleMinimum && (!LastScore.HasValue || LastScore.Value < f || LastHash == genome.Hash),
+				() => sc >= SampleMinimum && (!LastScore.HasValue || (LastScore.Value < f && LastScore.Value.SampleCount < f.SampleCount)),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{

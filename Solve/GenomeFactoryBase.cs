@@ -27,8 +27,6 @@ namespace Solve
 
 			HighPriority = new ConcurrentQueue<TGenome>();
 			Unexpanded = new ConcurrentQueue<TGenome>();
-
-			PriorityQueues = CreatePriorityQueues().AsReadOnly();
 		}
 
 		/**
@@ -41,7 +39,14 @@ namespace Solve
 		readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
 			= new ConcurrentQueue<(TGenome Genome, int Count)>();
 
-		public void EnqueueForBreeding(TGenome genome, int count = 1)
+		public void EnqueueForBreeding(params TGenome[] genomes)
+		{
+			if (genomes != null)
+				foreach (var g in genomes)
+					EnqueueForBreeding(g, 1);
+		}
+
+		public void EnqueueForBreeding(TGenome genome, int count)
 		{
 			if (count > 0)
 				BreedingStock.Enqueue((genome, count));
@@ -68,9 +73,17 @@ namespace Solve
 			(TGenome genome, int count) current;
 
 			if (genome != null)
+			{
 				current = (genome, 1);
-			else if (!BreedingStock.TryDequeue(out current))
+			}
+			else if (BreedingStock.TryDequeue(out current))
+			{
+				genome = current.genome;
+			}
+			else
+			{
 				return;
+			}
 
 			// Start dequeueing possbile mates, where any of them could be a requeue of current.
 			while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
@@ -103,21 +116,77 @@ namespace Solve
 
 		protected readonly ConcurrentQueue<TGenome> HighPriority;
 		protected readonly ConcurrentQueue<TGenome> Unexpanded;
-		protected readonly IReadOnlyList<IEnumerable<TGenome>> PriorityQueues;
 
-		protected virtual List<IEnumerable<TGenome>> CreatePriorityQueues()
-			=> new List<IEnumerable<TGenome>>()
+		public virtual IEnumerator<TGenome> GetEnumerator()
+		{
+			var unexpandedLock = new Object();
+			IEnumerator<TGenome> lastExpanded = null;
+
+			next:
+
+			// First check for high priority items..
+			if (HighPriority.TryDequeue(out TGenome hpGenome))
 			{
-				HighPriority.AsDequeueingEnumerable(),
-				Unexpanded.AsDequeueingEnumerable().SelectMany(g => Expand(g)),
-				Generate()
-			};
+				yield return hpGenome;
+				goto next;
+			}
+
+			// Do we have one that we are expanding on?
+			var le = lastExpanded;
+			if (le != null)
+			{
+				if (le.ConcurrentTryMoveNext(out TGenome leGenome))
+				{
+					yield return leGenome;
+					goto next;
+				}
+				else
+				{
+					lock (unexpandedLock)
+					{
+						if (lastExpanded == le)
+							lastExpanded = null;
+					}
+				}
+			}
+
+			if (lastExpanded != null)
+			{
+				goto next;
+			}
+			else
+			{
+				lock (unexpandedLock)
+				{
+					if (lastExpanded != null)
+						goto next;
+
+					if (Unexpanded.TryDequeue(out TGenome unexGenome))
+					{
+						lastExpanded = Expand(unexGenome).GetEnumerator();
+						goto next;
+					}
+				}
+			}
+
+			Breed();
+
+			if (!HighPriority.IsEmpty)
+				goto next;
+
+			var newGenome = GenerateOne();
+			if (newGenome != null)
+			{
+				yield return newGenome;
+				goto next;
+			}
+		}
 
 		public void EnqueueHighPriority(params TGenome[] genomes)
 		{
 			if (genomes == null) return;
 			foreach (var g in genomes)
-				if(g!=null) HighPriority.Enqueue(g);
+				if (g != null) HighPriority.Enqueue(g);
 		}
 
 		public void EnqueueForExpansion(params TGenome[] genomes)
@@ -484,25 +553,7 @@ namespace Solve
 				yield return mutation;
 		}
 
-		public virtual IEnumerator<TGenome> GetEnumerator()
-		{
-			bool found;
-			do
-			{
-				found = false;
-				foreach (var e in PriorityQueues)
-				{
-					foreach (var g in e)
-					{
-						yield return g;
-						found = true;
-						break;
-					}
-					if (found) break;
-				}
-			}
-			while (found);
-		}
+
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}

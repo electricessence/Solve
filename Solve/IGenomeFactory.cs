@@ -46,6 +46,9 @@ namespace Solve
 
 		void EnqueueForExpansion(params TGenome[] genomes);
 
+		void EnqueueForBreeding(params TGenome[] genomes);
+		void EnqueueForBreeding(TGenome genomes, int count);
+
 		void Breed(params TGenome[] genomes);
 
 	}

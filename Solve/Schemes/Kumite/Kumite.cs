@@ -36,7 +36,7 @@ namespace Solve.Schemes
 				{
 					Broadcast((problem, e));
 					Factory.EnqueueForExpansion(e.Genome);
-					Factory.Breed(e.Genome);
+					Factory.EnqueueForBreeding(e.Genome, (int)Math.Ceiling(e.Fitness.SampleCount / 2d));
 				});
 				Hosts.TryAdd(problem, k);
 			}
@@ -67,7 +67,7 @@ namespace Solve.Schemes
 				Parallel.ForEach(Factory, new ParallelOptions
 				{
 					CancellationToken = token,
-					MaxDegreeOfParallelism = 2 * pc - 1
+					//MaxDegreeOfParallelism = 2 * pc - 1
 				}, Post);
 
 				//Parallel.ForEach(Factory, new ParallelOptions
