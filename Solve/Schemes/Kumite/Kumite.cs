@@ -1,7 +1,12 @@
-﻿using Open.Dataflow;
+﻿using Open.Arithmetic;
+using Open.Dataflow;
+using Open.Disposable;
+using Open.Numeric;
+using Open.Threading;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +30,8 @@ namespace Solve.Schemes
 		readonly ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>> Hosts
 			= new ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>>();
 
-		readonly ConcurrentQueue<TGenome> Breeders = new ConcurrentQueue<TGenome>();
+		readonly object BreederLock = new object();
+		ConcurrentDictionary<TGenome, IFitness> Breeders = new ConcurrentDictionary<TGenome, IFitness>();
 
 		public override void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
@@ -35,13 +41,78 @@ namespace Solve.Schemes
 				k.Subscribe(e =>
 				{
 					Broadcast((problem, e));
-					Factory.EnqueueForExpansion(e.Genome);
-					Factory.EnqueueForBreeding(e.Genome, (int)Math.Ceiling(e.Fitness.SampleCount / 2d));
+					var genome = e.Genome;
+					EnqueueForBreeding(e, true);
+					Factory.EnqueueForProcessing(genome);
 				});
 				Hosts.TryAdd(problem, k);
 			}
 
 			base.AddProblems(problems);
+		}
+
+		const ushort MaximumBreederPoolSize = 100;
+
+		static readonly OptimisticArrayObjectPool<ConcurrentDictionary<TGenome, IFitness>> BreedingPools
+			= new OptimisticArrayObjectPool<ConcurrentDictionary<TGenome, IFitness>>(
+				() => new ConcurrentDictionary<TGenome, IFitness>(), cd => cd.Clear());
+
+		internal void EnqueueForBreeding(IGenomeFitness<TGenome> gf, bool addOnly = false)
+		{
+			if (gf.Fitness.SampleCount < 100) return;
+			bool returnAfterUpdate = addOnly || Breeders.IsEmpty;
+			lock (BreederLock) Breeders[gf.Genome] = gf.Fitness.SnapShot();
+			if (returnAfterUpdate) return;
+
+			SelectFromBreedingPool();
+		}
+
+		void SelectFromBreedingPool()
+		{
+
+			ConcurrentDictionary<TGenome, IFitness> breeders = null;
+			if (ThreadSafety.TryLock(BreederLock,
+				() => breeders = Interlocked.Exchange(ref Breeders, BreedingPools.Take())))
+			{
+				var breederList = breeders.ToArray();
+				uint len = (uint)breederList.Length;
+				if (len > 1)
+				{
+					breederList = breederList.Sort(true); // best fitness is near beginning (reversed order);
+					if (len > MaximumBreederPoolSize)
+					{
+						breederList = breederList.Take(MaximumBreederPoolSize).ToArray();
+						len = 100;
+					}
+
+					// Add the primary champion for sure.
+					Factory.EnqueueForProcessing(breederList[0].Key);
+
+					// Pick a random one.
+					uint nextIndex() => len - GetRandomTriangularFavoredIndex(len) - 1;
+					Factory.EnqueueForProcessing(breederList[nextIndex()].Key);
+
+					//// Add pareto genomes.
+					//foreach (var p in GenomeFitness.Pareto(breederList))
+					//	Factory.EnqueueForProcessing(p.Genome);
+				}
+
+				lock (BreederLock)
+				{
+					foreach (var e in breederList)
+						Breeders.TryAdd(e.Key, e.Value);
+				}
+				BreedingPools.Give(breeders);
+			}
+		}
+
+		static uint GetRandomTriangularFavoredIndex(uint length)
+		{
+			var possibilities = Triangular.Forward(length);
+			var selected = RandomUtilities.Random.Next((int)possibilities);
+			var r = Triangular.Reverse((uint)selected);
+			Debug.Assert(r < length);
+			return r;
 		}
 
 		void Post(TGenome genome)

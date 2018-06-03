@@ -7,7 +7,7 @@ namespace Solve.Schemes
 	public sealed class KumiteTournament<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		readonly Kumite<TGenome> Environment;
+		internal readonly Kumite<TGenome> Environment;
 		internal readonly IProblem<TGenome> Problem;
 		internal KumiteLevel<TGenome> Root;
 		internal ushort MaximumAllowedLosses;

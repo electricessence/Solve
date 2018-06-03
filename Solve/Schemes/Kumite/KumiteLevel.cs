@@ -52,8 +52,7 @@ namespace Solve.Schemes
 				}
 				else
 				{
-					if (Level > 59) // Fixed minimum for now.
-						Host.Broadcast(wgf);
+					Host.Environment.EnqueueForBreeding(wgf);
 				}
 
 				yield return wgf;
