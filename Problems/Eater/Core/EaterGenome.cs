@@ -41,7 +41,8 @@ namespace Eater
 
 		public IReadOnlyList<Step> Genes { get; private set; }
 
-		public Step[] GetGenes() => Genes.ToArray();
+		public Step[] GetGenes()
+			=> Genes.ToArray();
 
 		protected override void OnBeforeFreeze()
 		{
@@ -52,6 +53,7 @@ namespace Eater
 		public void Freeze(IEnumerable<Step> steps)
 		{
 			Genes = steps.ToList().AsReadOnly();
+			_remainingVariations = GetVariations();
 			Freeze();
 		}
 
@@ -68,6 +70,35 @@ namespace Eater
 
 		IEnumerator IEnumerable.GetEnumerator()
 			=> Genes.GetEnumerator();
+
+		static readonly IEnumerable<Step> ForwardOne = Enumerable.Repeat(Step.Forward, 1);
+
+		IEnumerator<EaterGenome> GetVariations()
+		{
+			var lenMinusOne = Genes.Count - 1;
+			if (lenMinusOne > 1)
+			{
+				{
+					var removeTail = Genes.Take(lenMinusOne).ToList();
+					yield return new EaterGenome(removeTail);
+					yield return new EaterGenome(Enumerable.Repeat(Genes[lenMinusOne], 1).Concat(removeTail));
+				}
+				{
+					var removeHead = Genes.Skip(1).ToList();
+					yield return new EaterGenome(removeHead);
+					yield return new EaterGenome(removeHead.Concat(Enumerable.Repeat(Genes[0], 1)));
+				}
+
+			}
+
+			yield return new EaterGenome(ForwardOne.Concat(Genes));
+			yield return new EaterGenome(Genes.Concat(ForwardOne));
+		}
+
+		IEnumerator<EaterGenome> _remainingVariations;
+
+		public override IEnumerator<IGenome> RemainingVariations
+			=> _remainingVariations ?? GetVariations();
 
 	}
 }

@@ -103,7 +103,12 @@ namespace Solve
 			where TGenome : IGenome
 		{
 			int c = Fitness.ValueComparison(xF, yF);
+			//#if DEBUG
+			//			int c2 = Fitness.ValueComparison(yF, xF);
+			//			Debug.Assert(c == -c2, "Value comparison failed symmetry.");
+			//#endif
 			if (c != 0) return c;
+			if (xG.Hash == yG.Hash) return 0;
 
 			var xLen = xG.Hash.Length;
 			var yLen = yG.Hash.Length;
@@ -123,32 +128,70 @@ namespace Solve
 			where TFitness : IFitness
 			=> Comparison(x.Key, x.Value, y.Key, y.Value);
 
-
 		public static int Comparison<TGenome, TFitness>((TGenome, TFitness) x, (TGenome, TFitness) y)
 			where TGenome : IGenome
 			where TFitness : IFitness
 			=> Comparison(x.Item1, x.Item2, y.Item1, y.Item2);
 
-		public static IGenomeFitness<TGenome>[] Sort<TGenome>(this IGenomeFitness<TGenome>[] target)
+		public static IGenomeFitness<TGenome>[] Sort<TGenome>(this IGenomeFitness<TGenome>[] target, bool useSnapShots = false)
 			where TGenome : IGenome
 		{
-			Array.Sort(target, Comparison);
+			if (useSnapShots)
+			{
+				var len = target.Length;
+				var snapshotMap = target.ToDictionary(gf => (gf.Genome, gf.Fitness.SnapShot()), gf => gf);
+				var temp = snapshotMap.Keys.ToArray();
+				Array.Sort(temp, Comparison);
+				for (var i = 0; i < len; i++)
+					target[i] = snapshotMap[temp[i]];
+			}
+			else
+			{
+				Array.Sort(target, Comparison);
+			}
+
 			return target;
 		}
 
-		public static KeyValuePair<TGenome, TFitness>[] Sort<TGenome, TFitness>(this KeyValuePair<TGenome, TFitness>[] target)
+		public static KeyValuePair<TGenome, TFitness>[] Sort<TGenome, TFitness>(this KeyValuePair<TGenome, TFitness>[] target, bool useSnapShots = false)
 			where TGenome : IGenome
 			where TFitness : IFitness
 		{
-			Array.Sort(target, Comparison);
+			if (useSnapShots)
+			{
+				var len = target.Length;
+				var snapshotMap = target.ToDictionary(gf => (gf.Key, gf.Value.SnapShot()), gf => gf);
+				var temp = snapshotMap.Keys.ToArray();
+				Array.Sort(temp, Comparison);
+				for (var i = 0; i < len; i++)
+					target[i] = snapshotMap[temp[i]];
+			}
+			else
+			{
+				Array.Sort(target, Comparison);
+			}
+
 			return target;
 		}
 
-		public static (TGenome, TFitness)[] Sort<TGenome, TFitness>(this (TGenome, TFitness)[] target)
+		public static (TGenome, TFitness)[] Sort<TGenome, TFitness>(this (TGenome Genome, TFitness Fitness)[] target, bool useSnapShots = false)
 			where TGenome : IGenome
 			where TFitness : IFitness
 		{
-			Array.Sort(target, Comparison);
+			if (useSnapShots)
+			{
+				var len = target.Length;
+				var snapshotMap = target.ToDictionary(gf => (gf.Genome, gf.Fitness.SnapShot()), gf => gf);
+				var temp = snapshotMap.Keys.ToArray();
+				Array.Sort(temp, Comparison);
+				for (var i = 0; i < len; i++)
+					target[i] = snapshotMap[temp[i]];
+			}
+			else
+			{
+				Array.Sort(target, Comparison);
+			}
+
 			return target;
 		}
 
@@ -187,6 +230,12 @@ namespace Solve
 			return new GenomeFitness<TGenome>(source.Genome, source.Fitness.SnapShot());
 		}
 
+		public static GenomeFitness<TGenome> SnapShot<TGenome>(this (TGenome Genome, IFitness Fitness) source)
+			where TGenome : IGenome
+		{
+			return new GenomeFitness<TGenome>(source.Genome, source.Fitness.SnapShot());
+		}
+
 		public static GenomeFitness<TGenome, TFitness> New<TGenome, TFitness>(TGenome genome, TFitness fitness)
 			where TGenome : IGenome
 			where TFitness : IFitness
@@ -194,7 +243,20 @@ namespace Solve
 			return new GenomeFitness<TGenome, TFitness>(genome, fitness);
 		}
 
-		public static List<GenomeFitness<TGenome>> Pareto<TGenome>(this IEnumerable<IGenomeFitness<TGenome>> population)
+		public static List<GenomeFitness<TGenome>> Pareto<TGenome, TFitness>(
+			this IEnumerable<KeyValuePair<TGenome, TFitness>> population)
+			where TGenome : IGenome
+			where TFitness : IFitness
+			=> Pareto(population.Select(gf => (IGenomeFitness<TGenome>)new GenomeFitness<TGenome>(gf.Key, gf.Value)));
+
+		public static List<GenomeFitness<TGenome>> Pareto<TGenome, TFitness>(
+			this IEnumerable<(TGenome Genome, IFitness Fitness)> population)
+			where TGenome : IGenome
+			where TFitness : IFitness
+			=> Pareto(population.Select(gf => (IGenomeFitness<TGenome>)new GenomeFitness<TGenome>(gf.Genome, gf.Fitness)));
+
+		public static List<GenomeFitness<TGenome>> Pareto<TGenome>(
+			this IEnumerable<IGenomeFitness<TGenome>> population)
 			where TGenome : IGenome
 		{
 			if (population == null)

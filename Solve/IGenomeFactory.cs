@@ -44,10 +44,14 @@ namespace Solve
 
 		void EnqueueHighPriority(params TGenome[] genomes);
 
-		void EnqueueForExpansion(params TGenome[] genomes);
+		void EnqueueForVariation(params TGenome[] genomes);
+
+		void EnqueueForMutation(params TGenome[] genomes);
 
 		void EnqueueForBreeding(params TGenome[] genomes);
 		void EnqueueForBreeding(TGenome genomes, int count);
+
+		void EnqueueForProcessing(params TGenome[] genomes);
 
 		void Breed(params TGenome[] genomes);
 

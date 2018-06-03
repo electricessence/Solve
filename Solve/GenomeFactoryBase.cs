@@ -3,6 +3,7 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using App.Metrics;
 using Open.Collections;
 using Open.Numeric;
 using Open.Threading.Tasks;
@@ -19,14 +20,13 @@ namespace Solve
 	public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		where TGenome : class, IGenome
 	{
+		public readonly IMetricsRoot Metrics;
+		readonly MetricCollection MetricsCounter;
+
 		protected GenomeFactoryBase()
 		{
-			Registry = new ConcurrentDictionary<string, Lazy<TGenome>>();
-			PreviouslyProduced = new ConcurrentHashSet<string>();
-			//RegistryOrder = new ConcurrentQueue<string>();
-
-			HighPriority = new ConcurrentQueue<TGenome>();
-			Unexpanded = new ConcurrentQueue<TGenome>();
+			Metrics = new MetricsBuilder().Build();
+			MetricsCounter = new MetricCollection(Metrics, HIGH_PRIORITY, AWAITING_VARIATION, BREEDING_STOCK);
 		}
 
 		/**
@@ -39,6 +39,13 @@ namespace Solve
 		readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
 			= new ConcurrentQueue<(TGenome Genome, int Count)>();
 
+		public void EnqueueForProcessing(params TGenome[] genomes)
+		{
+			EnqueueForVariation(genomes);
+			EnqueueForBreeding(genomes);
+			EnqueueForMutation(genomes);
+		}
+
 		public void EnqueueForBreeding(params TGenome[] genomes)
 		{
 			if (genomes != null)
@@ -46,16 +53,23 @@ namespace Solve
 					EnqueueForBreeding(g, 1);
 		}
 
+		const string BREEDING_STOCK = "BreedingStock";
 		public void EnqueueForBreeding(TGenome genome, int count)
 		{
 			if (count > 0)
+			{
+				MetricsCounter.Increment(BREEDING_STOCK);
 				BreedingStock.Enqueue((genome, count));
+			}
 		}
 
 		public void EnqueueForBreeding((TGenome genome, int count) breeder)
 		{
 			if (breeder.count > 0)
+			{
+				MetricsCounter.Increment(BREEDING_STOCK);
 				BreedingStock.Enqueue(breeder);
+			}
 		}
 
 		public void Breed(params TGenome[] genomes)
@@ -67,6 +81,7 @@ namespace Solve
 					BreedOne(g);
 		}
 
+		const string BREED_ONE = "BreedOne";
 		protected void BreedOne(TGenome genome)
 		{
 			// Setup incomming...
@@ -78,6 +93,7 @@ namespace Solve
 			}
 			else if (BreedingStock.TryDequeue(out current))
 			{
+				MetricsCounter.Decrement(BREEDING_STOCK);
 				genome = current.genome;
 			}
 			else
@@ -88,6 +104,7 @@ namespace Solve
 			// Start dequeueing possbile mates, where any of them could be a requeue of current.
 			while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
 			{
+				MetricsCounter.Decrement(BREEDING_STOCK);
 				var mateGenome = mate.genome;
 				if (mateGenome == genome || mateGenome.Hash == genome.Hash)
 				{
@@ -96,6 +113,8 @@ namespace Solve
 				}
 				else
 				{
+					MetricsCounter.Increment(BREED_ONE);
+
 					// We have a valid mate!
 					EnqueueHighPriority(AttemptNewCrossover(genome, mateGenome));
 
@@ -114,65 +133,68 @@ namespace Solve
 			EnqueueForBreeding(current);
 		}
 
-		protected readonly ConcurrentQueue<TGenome> HighPriority;
-		protected readonly ConcurrentQueue<TGenome> Unexpanded;
+		const string HIGH_PRIORITY = "HighPriority";
+		protected readonly ConcurrentQueue<TGenome> HighPriority
+			= new ConcurrentQueue<TGenome>();
+
+		const string AWAITING_VARIATION = "AwaitingVariation";
+		protected readonly ConcurrentQueue<TGenome> AwaitingVariation
+			= new ConcurrentQueue<TGenome>();
+
+		const string AWAITING_MUTATION = "AwaitingMutation";
+		protected readonly ConcurrentQueue<TGenome> AwaitingMutation
+			= new ConcurrentQueue<TGenome>();
+
 
 		public virtual IEnumerator<TGenome> GetEnumerator()
 		{
-			var unexpandedLock = new Object();
-			IEnumerator<TGenome> lastExpanded = null;
-
 			next:
 
 			// First check for high priority items..
 			if (HighPriority.TryDequeue(out TGenome hpGenome))
 			{
+				MetricsCounter.Decrement(HIGH_PRIORITY);
 				yield return hpGenome;
 				goto next;
 			}
 
-			// Do we have one that we are expanding on?
-			var le = lastExpanded;
-			if (le != null)
+			if (AwaitingVariation.TryDequeue(out TGenome vGenome))
 			{
-				if (le.ConcurrentTryMoveNext(out TGenome leGenome))
+				MetricsCounter.Decrement(AWAITING_VARIATION);
+				bool more = false;
+				while (vGenome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
 				{
-					yield return leGenome;
+					if (v is TGenome t)
+					{
+						t = Registration(t);
+						if (RegisterProduction(t))
+						{
+							EnqueueHighPriority(t);
+							more = true;
+						}
+					}
+					else
+					{
+						Debug.Fail("Genome variation does not match the source type.");
+					}
+				}
+				if (more)
 					goto next;
-				}
-				else
-				{
-					lock (unexpandedLock)
-					{
-						if (lastExpanded == le)
-							lastExpanded = null;
-					}
-				}
-			}
-
-			if (lastExpanded != null)
-			{
-				goto next;
-			}
-			else
-			{
-				lock (unexpandedLock)
-				{
-					if (lastExpanded != null)
-						goto next;
-
-					if (Unexpanded.TryDequeue(out TGenome unexGenome))
-					{
-						lastExpanded = Expand(unexGenome).GetEnumerator();
-						goto next;
-					}
-				}
 			}
 
 			Breed();
 
 			if (!HighPriority.IsEmpty)
 				goto next;
+
+			if (AwaitingMutation.TryDequeue(out TGenome mGenome))
+			{
+				MetricsCounter.Decrement(AWAITING_MUTATION);
+				if (AttemptNewMutation(mGenome, out TGenome mutation))
+					EnqueueHighPriority(mutation);
+				goto next;
+			}
+
 
 			var newGenome = GenerateOne();
 			if (newGenome != null)
@@ -182,25 +204,57 @@ namespace Solve
 			}
 		}
 
+
 		public void EnqueueHighPriority(params TGenome[] genomes)
 		{
 			if (genomes == null) return;
 			foreach (var g in genomes)
-				if (g != null) HighPriority.Enqueue(g);
+			{
+				if (g != null)
+				{
+					MetricsCounter.Increment(HIGH_PRIORITY);
+					HighPriority.Enqueue(g);
+				}
+				else
+				{
+					Debug.Fail("A null geneome was provided.");
+				}
+			}
 		}
 
-		public void EnqueueForExpansion(params TGenome[] genomes)
+		public void EnqueueForVariation(params TGenome[] genomes)
 		{
 			if (genomes == null) return;
 			foreach (var g in genomes)
-				if (g != null) Unexpanded.Enqueue(g);
+			{
+				if (g != null)
+				{
+					MetricsCounter.Increment(AWAITING_VARIATION);
+					AwaitingVariation.Enqueue(g);
+				}
+			}
+		}
+
+		public void EnqueueForMutation(params TGenome[] genomes)
+		{
+			if (genomes == null) return;
+			foreach (var g in genomes)
+			{
+				if (g != null)
+				{
+					MetricsCounter.Increment(AWAITING_MUTATION);
+					AwaitingMutation.Enqueue(g);
+				}
+			}
 		}
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
-		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry;
+		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry
+			= new ConcurrentDictionary<string, Lazy<TGenome>>();
 
-		protected readonly ConcurrentHashSet<string> PreviouslyProduced;
+		protected readonly ConcurrentHashSet<string> PreviouslyProduced
+			 = new ConcurrentHashSet<string>();
 
 		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
@@ -295,6 +349,9 @@ namespace Solve
 		// Be sure to call Registration within the GenerateNew call.
 		protected abstract TGenome GenerateOneInternal();
 
+		const string GENERATE_NEW_SUCCESS = "GenerateNew: SUCCESS";
+		const string GENERATE_NEW_FAIL = "GenerateNew: FAIL";
+
 		public bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source)
 		{
 			using (TimeoutHandler.New(5000, ms =>
@@ -306,7 +363,10 @@ namespace Solve
 
 				// See if it's possible to mutate from the provided genomes.
 				if (source != null && source.Length != 0 && AttemptNewMutation(source, out potentiallyNew))
+				{
+					MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
 					return true;
+				}
 
 				potentiallyNew = Registration(GenerateOneInternal());
 			}
@@ -315,7 +375,16 @@ namespace Solve
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
-			return potentiallyNew != null && RegisterProduction(potentiallyNew);
+			var generated = potentiallyNew != null && RegisterProduction(potentiallyNew);
+			if (generated)
+			{
+				MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
+			}
+			else
+			{
+				MetricsCounter.Increment(GENERATE_NEW_FAIL);
+			}
+			return generated;
 		}
 
 		public TGenome GenerateOne(params TGenome[] source)
@@ -398,7 +467,6 @@ namespace Solve
 			return false;
 		}
 
-
 		public IEnumerable<TGenome> Mutate(TGenome source)
 		{
 			while (AttemptNewMutation(source, out TGenome next))
@@ -435,7 +503,6 @@ namespace Solve
 			}
 			return Registration(genome);
 		}
-
 
 		protected abstract TGenome[] CrossoverInternal(TGenome a, TGenome b);
 
@@ -553,8 +620,7 @@ namespace Solve
 				yield return mutation;
 		}
 
-
-
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
 	}
 }

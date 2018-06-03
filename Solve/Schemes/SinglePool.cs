@@ -100,7 +100,7 @@ namespace Solve.Schemes
 
 				Broadcast((p, top));
 
-				Factory.EnqueueForExpansion(top.Genome);
+				Factory.EnqueueForVariation(top.Genome);
 			}
 		}
 
