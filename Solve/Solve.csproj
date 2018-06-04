@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="App.Metrics" Version="2.1.0" />
     <PackageReference Include="Nito.AsyncEx" Version="5.0.0-pre-05" />
-    <PackageReference Include="Open.Arithmetic" Version="1.1.0" />
+    <PackageReference Include="Open.Arithmetic" Version="1.1.1" />
     <PackageReference Include="Open.Cloneable" Version="1.1.0" />
     <PackageReference Include="Open.Collections" Version="2.2.3" />
     <PackageReference Include="Open.Collections.Numeric" Version="1.1.0" />

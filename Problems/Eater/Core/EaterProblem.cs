@@ -12,7 +12,7 @@ namespace Eater
 
 		protected EaterProblem(int gridSize = 10)
 		{
-			Samples = new SampleCache();
+			Samples = new SampleCache(gridSize);
 		}
 
 		protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
