@@ -43,7 +43,7 @@ namespace Solve.Schemes
 					Broadcast((problem, e));
 					var genome = e.Genome;
 					EnqueueForBreeding(e, true);
-					Factory.EnqueueForProcessing(genome);
+					Factory[0].EnqueueChampion(genome);
 				});
 				Hosts.TryAdd(problem, k);
 			}
@@ -86,14 +86,14 @@ namespace Solve.Schemes
 					}
 					 
 					// Add the primary champion for sure.
-					Factory.EnqueueForProcessing(breederList[0].Key);
+					Factory[0].EnqueueChampion(breederList[0].Key);
 
 					// Pick a random one.
-					Factory.EnqueueForProcessing(TriangularSelection.Descending.RandomOne(breederList).Key);
+					Factory[1].EnqueueChampion(TriangularSelection.Descending.RandomOne(breederList).Key);
 
-					//// Add pareto genomes.
-					//foreach (var p in GenomeFitness.Pareto(breederList))
-					//	Factory.EnqueueForProcessing(p.Genome);
+					// Add pareto genomes.
+					foreach (var p in GenomeFitness.Pareto(breederList))
+						Factory[2].EnqueueChampion(p.Genome);
 				}
 
 				lock (BreederLock)
