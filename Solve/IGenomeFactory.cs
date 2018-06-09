@@ -55,5 +55,6 @@ namespace Solve
 
 		void Breed(params TGenome[] genomes);
 
+		TGenome Next();
 	}
 }

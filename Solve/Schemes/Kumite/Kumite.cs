@@ -84,13 +84,12 @@ namespace Solve.Schemes
 						breederList = breederList.Take(MaximumBreederPoolSize).ToArray();
 						len = 100;
 					}
-
+					 
 					// Add the primary champion for sure.
 					Factory.EnqueueForProcessing(breederList[0].Key);
 
 					// Pick a random one.
-					uint nextIndex() => len - GetRandomTriangularFavoredIndex(len) - 1;
-					Factory.EnqueueForProcessing(breederList[nextIndex()].Key);
+					Factory.EnqueueForProcessing(TriangularSelection.Descending.RandomOne(breederList).Key);
 
 					//// Add pareto genomes.
 					//foreach (var p in GenomeFitness.Pareto(breederList))
@@ -106,14 +105,6 @@ namespace Solve.Schemes
 			}
 		}
 
-		static uint GetRandomTriangularFavoredIndex(uint length)
-		{
-			var possibilities = Triangular.Forward(length);
-			var selected = RandomUtilities.Random.Next((int)possibilities);
-			var r = Triangular.Reverse((uint)selected);
-			Debug.Assert(r < length);
-			return r;
-		}
 
 		void Post(TGenome genome)
 		{
@@ -133,7 +124,7 @@ namespace Solve.Schemes
 				//foreach (var g in Factory.AsParallel())
 				//	PostAsync(g).ConfigureAwait(false);
 
-				var pc = Environment.ProcessorCount;
+				//var pc = Environment.ProcessorCount;
 				//Console.WriteLine("PROCESSOR COUNT: {0}", pc);
 				Parallel.ForEach(Factory, new ParallelOptions
 				{

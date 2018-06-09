@@ -89,7 +89,7 @@ namespace Solve.Schemes
 			}
 		}
 
-		void EnqueueTopForExpansion()
+		void EnqueueTop()
 		{
 			foreach (var p in ProblemsInternal)
 			{
@@ -116,7 +116,7 @@ namespace Solve.Schemes
 				await ProcessAndReject();
 
 				// Phase 3, take the top gene and expand on it.
-				EnqueueTopForExpansion();
+				EnqueueTop();
 			}
 		}
 
