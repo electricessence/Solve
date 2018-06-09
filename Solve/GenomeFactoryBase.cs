@@ -20,6 +20,7 @@ namespace Solve
 	public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		where TGenome : class, IGenome
 	{
+
 		public readonly IMetricsRoot Metrics;
 		readonly MetricCollection MetricsCounter;
 
@@ -27,246 +28,16 @@ namespace Solve
 		{
 			Metrics = new MetricsBuilder().Build();
 			MetricsCounter = new MetricCollection(Metrics);
-			MetricsCounter.Ignore(HIGH_PRIORITY, AWAITING_VARIATION, BREEDING_STOCK, LOW_PRIORITY);
-		}
+			MetricsCounter.Ignore(AWAITING_VARIATION, BREEDING_STOCK);
 
-		/**
-		 * It's very important to avoid any contention.
-		 * 
-		 * In order to do so we use a concurrent queue (fast).
-		 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
-		 * Returning any valid breeders whom haven't mated enough.
-		 */
-		readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
-			= new ConcurrentQueue<(TGenome Genome, int Count)>();
-
-		public void EnqueueForProcessing(params TGenome[] genomes)
-		{
-			EnqueueForVariation(genomes);
-			EnqueueForBreeding(genomes);
-			EnqueueForMutation(genomes);
-		}
-
-		public void EnqueueForBreeding(params TGenome[] genomes)
-		{
-			if (genomes != null)
-				foreach (var g in genomes)
-					EnqueueForBreeding(g, 1);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
-		public void EnqueueForBreeding(TGenome genome, int count)
-		{
-			if (count > 0)
-			{
-				MetricsCounter.Increment(BREEDING_STOCK);
-				BreedingStock.Enqueue((genome, count));
-			}
-		}
-
-		public void EnqueueForBreeding((TGenome genome, int count) breeder)
-		{
-			if (breeder.count > 0)
-			{
-				MetricsCounter.Increment(BREEDING_STOCK);
-				BreedingStock.Enqueue(breeder);
-			}
-		}
-
-		public void Breed(params TGenome[] genomes)
-		{
-			if (genomes.Length == 0)
-				BreedOne(null);
-			else
-				foreach (var g in genomes)
-					BreedOne(g);
-		}
-
 		const string BREED_ONE = "BreedOne";
-		protected void BreedOne(TGenome genome)
-		{
-			// Setup incomming...
-			(TGenome genome, int count) current;
-
-			if (genome != null)
-			{
-				current = (genome, 1);
-			}
-			else if (BreedingStock.TryDequeue(out current))
-			{
-				MetricsCounter.Decrement(BREEDING_STOCK);
-				genome = current.genome;
-			}
-			else
-			{
-				return;
-			}
-
-			// Start dequeueing possbile mates, where any of them could be a requeue of current.
-			while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
-			{
-				MetricsCounter.Decrement(BREEDING_STOCK);
-				var mateGenome = mate.genome;
-				if (mateGenome == genome || mateGenome.Hash == genome.Hash)
-				{
-					// A repeat of the current?  Increment breeding count and try again.
-					current.count++;
-				}
-				else
-				{
-					MetricsCounter.Increment(BREED_ONE);
-
-					// We have a valid mate!
-					EnqueueHighPriority(AttemptNewCrossover(genome, mateGenome));
-
-					// After breeding, decrease their counts.
-					current.count--;
-					mate.count--;
-
-					// Might still need more funtime.
-					EnqueueForBreeding(mate);
-
-					break;
-				}
-			}
-
-			// Might still need more funtime.
-			EnqueueForBreeding(current);
-		}
-
-		const string HIGH_PRIORITY = "HighPriority";
-		protected readonly ConcurrentQueue<TGenome> HighPriority
-			= new ConcurrentQueue<TGenome>();
-
 		const string AWAITING_VARIATION = "AwaitingVariation";
-		protected readonly ConcurrentQueue<TGenome> AwaitingVariation
-			= new ConcurrentQueue<TGenome>();
-
 		const string AWAITING_MUTATION = "AwaitingMutation";
-		protected readonly ConcurrentQueue<TGenome> AwaitingMutation
-			= new ConcurrentQueue<TGenome>();
-
-		const string LOW_PRIORITY = "LowPriority";
-		protected readonly ConcurrentQueue<TGenome> LowPriority
-			= new ConcurrentQueue<TGenome>();
-
-		public virtual TGenome Next()
-		{
-			next:
-
-			// First check for high priority items..
-			if (HighPriority.TryDequeue(out TGenome hpGenome))
-			{
-				MetricsCounter.Decrement(HIGH_PRIORITY);
-				return hpGenome;
-			}
-
-			if (AwaitingVariation.TryDequeue(out TGenome vGenome))
-			{
-				MetricsCounter.Decrement(AWAITING_VARIATION);
-				bool more = false;
-				while (vGenome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
-				{
-					if (v is TGenome t)
-					{
-						t = Registration(t);
-						if (RegisterProduction(t))
-						{
-							EnqueueHighPriority(t);
-							more = true;
-						}
-					}
-					else
-					{
-						Debug.Fail("Genome variation does not match the source type.");
-					}
-				}
-				if (more)
-					goto next;
-			}
-
-			Breed();
-
-			if (!HighPriority.IsEmpty)
-				goto next;
-
-			if (AwaitingMutation.TryDequeue(out TGenome mGenome))
-			{
-				MetricsCounter.Decrement(AWAITING_MUTATION);
-				if (AttemptNewMutation(mGenome, out TGenome mutation))
-					EnqueueHighPriority(mutation);
-				goto next;
-			}
-
-			if (LowPriority.TryDequeue(out TGenome lpGenome))
-			{
-				MetricsCounter.Decrement(LOW_PRIORITY);
-				return lpGenome;
-			}
-
-			return GenerateOne();
-		}
 
 
-		public void EnqueueHighPriority(params TGenome[] genomes)
-		{
-			if (genomes == null) return;
-			foreach (var g in genomes)
-			{
-				if (g != null)
-				{
-					MetricsCounter.Increment(HIGH_PRIORITY);
-					HighPriority.Enqueue(g);
-				}
-				else
-				{
-					Debug.Fail("A null geneome was provided.");
-				}
-			}
-		}
-
-		public void EnqueueForVariation(params TGenome[] genomes)
-		{
-			if (genomes == null) return;
-			foreach (var g in genomes)
-			{
-				if (g != null)
-				{
-					MetricsCounter.Increment(AWAITING_VARIATION);
-					AwaitingVariation.Enqueue(g);
-				}
-			}
-		}
-
-		public void EnqueueForMutation(params TGenome[] genomes)
-		{
-			if (genomes == null) return;
-			foreach (var g in genomes)
-			{
-				if (g != null)
-				{
-					MetricsCounter.Increment(AWAITING_MUTATION);
-					AwaitingMutation.Enqueue(g);
-				}
-			}
-		}
-
-		public void EnqueueLowPriority(params TGenome[] genomes)
-		{
-			if (genomes == null) return;
-			foreach (var g in genomes)
-			{
-				if (g != null)
-				{
-					MetricsCounter.Increment(LOW_PRIORITY);
-					LowPriority.Enqueue(g);
-				}
-				else
-				{
-					Debug.Fail("A null geneome was provided.");
-				}
-			}
-		}
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
@@ -647,6 +418,252 @@ namespace Solve
 			TGenome next;
 			while ((next = Next()) != null)
 				yield return next;
+		}
+
+		public TGenome Next()
+		{
+			int q = 0;
+			while(q<PriorityQueues.Count)
+			{
+				if (PriorityQueues[q].TryGetNext(out TGenome genome))
+					return genome;
+				else
+					q++;
+			}
+			return GenerateOne();
+		}
+
+		protected List<PriorityQueue> PriorityQueues
+			= new List<PriorityQueue>();
+
+		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
+		{
+			get
+			{
+				if (index < 0)
+					throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
+
+				if (PriorityQueues.Count<=index)
+				{
+					lock(PriorityQueues)
+					{
+						while (PriorityQueues.Count <= index)
+							PriorityQueues.Add(new PriorityQueue(this));
+					}
+				}
+
+				return PriorityQueues[index];
+			}
+		}
+			 
+
+		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
+		{
+			readonly GenomeFactoryBase<TGenome> Factory;
+
+			public PriorityQueue(GenomeFactoryBase<TGenome> factory) {
+				Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+			}
+			/**
+			 * It's very important to avoid any contention.
+			 * 
+			 * In order to do so we use a concurrent queue (fast).
+			 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
+			 * Returning any valid breeders whom haven't mated enough.
+			 */
+			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
+				= new ConcurrentQueue<(TGenome Genome, int Count)>();
+
+			public void EnqueueChampion(params TGenome[] genomes)
+			{
+				EnqueueForVariation(genomes);
+				EnqueueForBreeding(genomes);
+				EnqueueForMutation(genomes);
+			}
+
+			public void EnqueueForBreeding(params TGenome[] genomes)
+			{
+				if (genomes != null)
+					foreach (var g in genomes)
+						EnqueueForBreeding(g, 1);
+			}
+
+			public void EnqueueForBreeding(TGenome genome, int count)
+			{
+				if (count > 0)
+				{
+					Factory.MetricsCounter.Increment(BREEDING_STOCK);
+					BreedingStock.Enqueue((genome, count));
+				}
+			}
+
+			public void EnqueueForBreeding((TGenome genome, int count) breeder)
+			{
+				if (breeder.count > 0)
+				{
+					Factory.MetricsCounter.Increment(BREEDING_STOCK);
+					BreedingStock.Enqueue(breeder);
+				}
+			}
+
+			public void Breed(params TGenome[] genomes)
+			{
+				if (genomes.Length == 0)
+					BreedOne(null);
+				else
+					foreach (var g in genomes)
+						BreedOne(g);
+			}
+
+			protected void BreedOne(TGenome genome)
+			{
+				// Setup incomming...
+				(TGenome genome, int count) current;
+
+				if (genome != null)
+				{
+					current = (genome, 1);
+				}
+				else if (BreedingStock.TryDequeue(out current))
+				{
+					Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+					genome = current.genome;
+				}
+				else
+				{
+					return;
+				}
+
+				// Start dequeueing possbile mates, where any of them could be a requeue of current.
+				while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
+				{
+					Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+					var mateGenome = mate.genome;
+					if (mateGenome == genome || mateGenome.Hash == genome.Hash)
+					{
+						// A repeat of the current?  Increment breeding count and try again.
+						current.count++;
+					}
+					else
+					{
+						Factory.MetricsCounter.Increment(BREED_ONE);
+
+						// We have a valid mate!
+						EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome));
+
+						// After breeding, decrease their counts.
+						current.count--;
+						mate.count--;
+
+						// Might still need more funtime.
+						EnqueueForBreeding(mate);
+
+						break;
+					}
+				}
+
+				// Might still need more funtime.
+				EnqueueForBreeding(current);
+			}
+
+			protected void EnqueueInternal(params TGenome[] genomes)
+			{
+				if (genomes == null) return;
+				foreach (var g in genomes)
+				{
+					if (g != null)
+					{
+						InternalQueue.Enqueue(g);
+					}
+					else
+					{
+						Debug.Fail("A null geneome was provided.");
+					}
+				}
+			}
+
+			public void EnqueueForVariation(params TGenome[] genomes)
+			{
+				if (genomes == null) return;
+				foreach (var g in genomes)
+				{
+					if (g != null)
+					{
+						Factory.MetricsCounter.Increment(AWAITING_VARIATION);
+						AwaitingVariation.Enqueue(g);
+					}
+				}
+			}
+
+			public void EnqueueForMutation(params TGenome[] genomes)
+			{
+				if (genomes == null) return;
+				foreach (var g in genomes)
+				{
+					if (g != null)
+					{
+						Factory.MetricsCounter.Increment(AWAITING_MUTATION);
+						AwaitingMutation.Enqueue(g);
+					}
+				}
+			}
+
+			protected readonly ConcurrentQueue<TGenome> InternalQueue
+				= new ConcurrentQueue<TGenome>();
+
+			protected readonly ConcurrentQueue<TGenome> AwaitingVariation
+				= new ConcurrentQueue<TGenome>();
+
+			protected readonly ConcurrentQueue<TGenome> AwaitingMutation
+				= new ConcurrentQueue<TGenome>();
+
+			public bool TryGetNext(out TGenome genome)
+			{
+				next:
+
+				// First check for high priority items..
+				if (InternalQueue.TryDequeue(out genome))
+					return true;
+
+				if (AwaitingVariation.TryDequeue(out TGenome vGenome))
+				{
+					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
+					bool more = false;
+					while (vGenome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
+					{
+						if (v is TGenome t)
+						{
+							t = Factory.Registration(t);
+							if (Factory.RegisterProduction(t))
+							{
+								EnqueueInternal(t);
+								more = true;
+							}
+						}
+						else
+						{
+							Debug.Fail("Genome variation does not match the source type.");
+						}
+					}
+					if (more)
+						goto next;
+				}
+
+				Breed();
+
+				if (!InternalQueue.IsEmpty)
+					goto next;
+
+				if (AwaitingMutation.TryDequeue(out TGenome mGenome))
+				{
+					Factory.MetricsCounter.Decrement(AWAITING_MUTATION);
+					if (Factory.AttemptNewMutation(mGenome, out TGenome mutation))
+						EnqueueInternal(mutation);
+					goto next;
+				}
+
+				return false;
+			}
 		}
 	}
 }
