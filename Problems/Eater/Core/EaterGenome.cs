@@ -95,14 +95,14 @@ namespace Eater
 			yield return new EaterGenome(ForwardOne.Concat(Genes));
 			yield return new EaterGenome(Genes.Concat(ForwardOne));
 
-			var doubled = new List<Step>();
-			foreach (var s in Genes)
-			{
-				doubled.Add(s);
-				if (s == Step.Forward)
-					doubled.Add(s);
-			}
-			yield return new EaterGenome(doubled);
+			//var doubled = new List<Step>();
+			//foreach (var s in Genes)
+			//{
+			//	doubled.Add(s);
+			//	if (s == Step.Forward)
+			//		doubled.Add(s);
+			//}
+			//yield return new EaterGenome(doubled);
 		}
 
 		IEnumerator<EaterGenome> _remainingVariations;

@@ -10,8 +10,8 @@ namespace Solve
 		readonly IMetricsRoot Metrics;
 		readonly ISet<string> Ignored;
 
-		public MetricCollection(IMetricsRoot metrics, params string[] ignored)
-			: this(metrics, new HashSet<string>(ignored))
+		public MetricCollection(IMetricsRoot metrics)
+			: this(metrics, new HashSet<string>())
 		{
 
 		}
@@ -20,6 +20,11 @@ namespace Solve
 		{
 			Metrics = metrics;
 			Ignored = ignored;
+		}
+
+		public void Ignore(params string[] ignore)
+		{
+			foreach (var i in ignore) Ignored.Add(i);
 		}
 
 		readonly ConcurrentDictionary<string, CounterOptions> Counters = new ConcurrentDictionary<string, CounterOptions>();

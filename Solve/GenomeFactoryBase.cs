@@ -26,7 +26,8 @@ namespace Solve
 		protected GenomeFactoryBase()
 		{
 			Metrics = new MetricsBuilder().Build();
-			MetricsCounter = new MetricCollection(Metrics, HIGH_PRIORITY, AWAITING_VARIATION, BREEDING_STOCK);
+			MetricsCounter = new MetricCollection(Metrics);
+			MetricsCounter.Ignore(HIGH_PRIORITY, AWAITING_VARIATION, BREEDING_STOCK, LOW_PRIORITY);
 		}
 
 		/**
@@ -145,8 +146,11 @@ namespace Solve
 		protected readonly ConcurrentQueue<TGenome> AwaitingMutation
 			= new ConcurrentQueue<TGenome>();
 
+		const string LOW_PRIORITY = "LowPriority";
+		protected readonly ConcurrentQueue<TGenome> LowPriority
+			= new ConcurrentQueue<TGenome>();
 
-		public virtual IEnumerator<TGenome> GetEnumerator()
+		public virtual TGenome Next()
 		{
 			next:
 
@@ -154,8 +158,7 @@ namespace Solve
 			if (HighPriority.TryDequeue(out TGenome hpGenome))
 			{
 				MetricsCounter.Decrement(HIGH_PRIORITY);
-				yield return hpGenome;
-				goto next;
+				return hpGenome;
 			}
 
 			if (AwaitingVariation.TryDequeue(out TGenome vGenome))
@@ -195,13 +198,13 @@ namespace Solve
 				goto next;
 			}
 
-
-			var newGenome = GenerateOne();
-			if (newGenome != null)
+			if (LowPriority.TryDequeue(out TGenome lpGenome))
 			{
-				yield return newGenome;
-				goto next;
+				MetricsCounter.Decrement(LOW_PRIORITY);
+				return lpGenome;
 			}
+
+			return GenerateOne();
 		}
 
 
@@ -244,6 +247,23 @@ namespace Solve
 				{
 					MetricsCounter.Increment(AWAITING_MUTATION);
 					AwaitingMutation.Enqueue(g);
+				}
+			}
+		}
+
+		public void EnqueueLowPriority(params TGenome[] genomes)
+		{
+			if (genomes == null) return;
+			foreach (var g in genomes)
+			{
+				if (g != null)
+				{
+					MetricsCounter.Increment(LOW_PRIORITY);
+					LowPriority.Enqueue(g);
+				}
+				else
+				{
+					Debug.Fail("A null geneome was provided.");
 				}
 			}
 		}
@@ -622,5 +642,11 @@ namespace Solve
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+		public IEnumerator<TGenome> GetEnumerator()
+		{
+			TGenome next;
+			while ((next = Next()) != null)
+				yield return next;
+		}
 	}
 }
