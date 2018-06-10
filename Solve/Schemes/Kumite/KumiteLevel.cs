@@ -58,18 +58,19 @@ namespace Solve.Schemes
 				yield return wgf;
 
 				ushort maxLoss = Host.MaximumAllowedLosses;
-				if (loser.LossRecord == maxLoss)
-				{
-					// Loss record simply 'slows down' the losers allowing the winners to produce offspring.
-					if (Level < 20)
-						yield return loser.GenomeFitness;
-					else
-						Host.LoserPool.Post(loser.GenomeFitness);
-				}
-				else
+				ushort losses = loser.LossRecord;
+				if (losses <= Level)
 				{
 					loser.LossRecord++;
 					WaitingToCompete.Enqueue(loser);
+				}
+				else if (losses >= maxLoss)
+				{
+					Host.LoserPool.Post(loser.GenomeFitness);
+				}
+				else
+				{
+					yield return loser.GenomeFitness;
 				}
 			}
 		}
