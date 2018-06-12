@@ -81,16 +81,16 @@ namespace Solve.Schemes
 						breederList = breederList.Take(MaximumBreederPoolSize).ToArray();
 						len = 100;
 					}
-					 
+
 					// Add the primary champion for sure.
-					Factory[0].EnqueueChampion(breederList[0].Key);
+					Factory[0].EnqueueForBreeding(breederList[0].Key);
 
 					// Pick a random one.
-					Factory[1].EnqueueChampion(TriangularSelection.Descending.RandomOne(breederList).Key);
+					Factory[1].EnqueueForBreeding(TriangularSelection.Descending.RandomOne(breederList).Key);
 
 					// Add pareto genomes.
 					foreach (var p in GenomeFitness.Pareto(breederList))
-						Factory[2].EnqueueChampion(p.Genome);
+						Factory[2].EnqueueForBreeding(p.Genome);
 				}
 
 				lock (BreederLock)
