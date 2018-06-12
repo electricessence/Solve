@@ -59,14 +59,16 @@ namespace Solve.Schemes
 
 				ushort maxLoss = Host.MaximumAllowedLosses;
 				ushort losses = loser.LossRecord;
-				if (losses <= Level)
+
+				if (losses >= maxLoss)
+				{
+					Host.LoserPool.Post(loser.GenomeFitness);
+				}
+				// The smaller the level the more expedient losers are allowed to progress up the tournament.
+				else if (losses <= Level)
 				{
 					loser.LossRecord++;
 					WaitingToCompete.Enqueue(loser);
-				}
-				else if (losses >= maxLoss)
-				{
-					Host.LoserPool.Post(loser.GenomeFitness);
 				}
 				else
 				{
