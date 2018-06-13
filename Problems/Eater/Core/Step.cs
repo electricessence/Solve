@@ -15,12 +15,71 @@ namespace Eater
 		TurnRight
 	}
 
+	public struct StepCount
+	{
+		public int Count;
+		public Step Step;
+
+		public static StepCount operator +(StepCount a, StepCount b)
+		{
+			if (a.Step != b.Step)
+				throw new InvalidOperationException("Attempting to combine two StepCounts with different steps.");
+			return new StepCount() { Step = a.Step, Count = a.Count + b.Count };
+		}
+
+		public static StepCount operator ++(StepCount a)
+		{
+			return new StepCount() { Step = a.Step, Count = a.Count + 1 };
+		}
+
+		public static StepCount operator --(StepCount a)
+		{
+			return new StepCount() { Step = a.Step, Count = a.Count - 1 };
+		}
+	}
+
 	public enum Orientation
 	{
 		Up,
 		Right,
 		Down,
 		Left
+	}
+
+	public static class StepExtensions
+	{
+		public static IEnumerable<Step> Steps(this IEnumerable<StepCount> steps)
+			=> steps.SelectMany(s => Enumerable.Repeat(s.Step, s.Count));
+
+		public static IEnumerable<StepCount> ToStepCounts(this IEnumerable<Step> steps)
+		{
+			if (steps.Any())
+			{
+				var last = new StepCount()
+				{
+					Step = steps.First(),
+					Count = 1
+				};
+				foreach (var step in steps.Skip(1))
+				{
+					if (step == last.Step)
+					{
+						last.Count++;
+					}
+					else
+					{
+						yield return last;
+
+						last = new StepCount()
+						{
+							Step = step,
+							Count = 1
+						};
+					}
+				}
+				yield return last;
+			}
+		}
 	}
 
 	public static class Steps
@@ -230,7 +289,6 @@ namespace Eater
 			var red = ReduceLoop(steps.ToGenomeHash());
 			return red == null ? null : Steps.FromGenomeHash(red);
 		}
-
 
 		static readonly string TURN_LEFT_4 = new String(Steps.TURN_LEFT, 4);
 		static readonly string TURN_RIGHT_4 = new String(Steps.TURN_RIGHT, 4);

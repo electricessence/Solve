@@ -2,8 +2,6 @@
 using Solve.Schemes;
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Eater
@@ -34,7 +32,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(factory, 20, 4, 2, 200);
 			//var scheme = new KingOfTheHill<EaterGenome>(factory, 300, _minConvSamples, 5);
-			var scheme = new Kumite<EaterGenome>(Factory, 10);
+			var scheme = new Classic<EaterGenome>(Factory, 100);
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 
 			scheme.AddProblem(problem);
@@ -69,26 +67,29 @@ namespace Eater
 			//}
 		}
 
-		static readonly byte[] DebugSeparator = Encoding.UTF8.GetBytes("\n==============================================================\n");
-
+#if DEBUG
 		protected override void EmitStats(Cursor cursor)
 		{
 			base.EmitStats(cursor);
 
 			var metrics = Factory.Metrics;
 			var snapshot = metrics.Snapshot.Get();
+			Debug.WriteLine("\n==============================================================");
+			Debug.WriteLine($"Timestamp:");
+			Debug.WriteLine(snapshot.Timestamp);
+			Debug.WriteLine("--------------------------------------------------------------");
 
-			foreach (var formatter in metrics.OutputMetricsFormatters)
+			foreach (var context in snapshot.Contexts)
 			{
-				using (var stream = new MemoryStream())
+				foreach (var counter in context.Counters)
 				{
-					stream.Write(DebugSeparator, 0, DebugSeparator.Length);
-					formatter.WriteAsync(stream, snapshot).Wait();
-
-					Debug.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
+					Debug.WriteLine($"{counter.Name}:");
+					Debug.WriteLine(counter.Value.Count);
+					Debug.WriteLine("--------------------------------------------------------------");
 				}
 			}
 		}
+#endif
 
 		static Task Main(string[] args)
 		{

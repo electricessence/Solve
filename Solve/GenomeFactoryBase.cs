@@ -28,12 +28,12 @@ namespace Solve
 		{
 			Metrics = new MetricsBuilder().Build();
 			MetricsCounter = new MetricCollection(Metrics);
-			MetricsCounter.Ignore(AWAITING_VARIATION, BREEDING_STOCK);
-
+			//MetricsCounter.Ignore(INTERNAL_QUEUE_COUNT);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
 		const string BREED_ONE = "BreedOne";
+		const string INTERNAL_QUEUE_COUNT = "InternalQueue.Count";
 		const string AWAITING_VARIATION = "AwaitingVariation";
 		const string AWAITING_MUTATION = "AwaitingMutation";
 
@@ -423,7 +423,7 @@ namespace Solve
 		public TGenome Next()
 		{
 			int q = 0;
-			while(q<PriorityQueues.Count)
+			while (q < PriorityQueues.Count)
 			{
 				if (PriorityQueues[q].TryGetNext(out TGenome genome))
 					return genome;
@@ -443,9 +443,9 @@ namespace Solve
 				if (index < 0)
 					throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
 
-				if (PriorityQueues.Count<=index)
+				if (PriorityQueues.Count <= index)
 				{
-					lock(PriorityQueues)
+					lock (PriorityQueues)
 					{
 						while (PriorityQueues.Count <= index)
 							PriorityQueues.Add(new PriorityQueue(this));
@@ -455,13 +455,14 @@ namespace Solve
 				return PriorityQueues[index];
 			}
 		}
-			 
+
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
 		{
 			readonly GenomeFactoryBase<TGenome> Factory;
 
-			public PriorityQueue(GenomeFactoryBase<TGenome> factory) {
+			public PriorityQueue(GenomeFactoryBase<TGenome> factory)
+			{
 				Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			}
 			/**
@@ -573,12 +574,45 @@ namespace Solve
 				{
 					if (g != null)
 					{
+						Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
 						InternalQueue.Enqueue(g);
 					}
 					else
 					{
 						Debug.Fail("A null geneome was provided.");
 					}
+				}
+			}
+
+			public bool AttemptEnqueueVariation(TGenome genome)
+			{
+				if (genome == null) return false;
+				if (genome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
+				{
+					if (v is TGenome t)
+					{
+						t = Factory.Registration(t);
+						if (Factory.RegisterProduction(t))
+						{
+							EnqueueInternal(t);
+							return true;
+						}
+					}
+					else
+					{
+						Debug.Fail("Genome variation does not match the source type.");
+					}
+				}
+				return false;
+			}
+
+			public void EnqueueVariations(params TGenome[] genomes)
+			{
+				if (genomes == null) return;
+				foreach (var g in genomes)
+				{
+					if (g == null) continue;
+					while (AttemptEnqueueVariation(g)) { }
 				}
 			}
 
@@ -617,50 +651,61 @@ namespace Solve
 			protected readonly ConcurrentQueue<TGenome> AwaitingMutation
 				= new ConcurrentQueue<TGenome>();
 
+			bool ProcessVariation()
+			{
+				while (AwaitingVariation.TryDequeue(out TGenome vGenome))
+				{
+					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
+					if (AttemptEnqueueVariation(vGenome))
+					{
+						// Taken one off, now put it back.
+						EnqueueForVariation(vGenome);
+						return true;
+					}
+				}
+				return false;
+			}
+
+			bool ProcessMutation()
+			{
+				while (AwaitingMutation.TryDequeue(out TGenome mGenome))
+				{
+					Factory.MetricsCounter.Decrement(AWAITING_MUTATION);
+					if (Factory.AttemptNewMutation(mGenome, out TGenome mutation))
+					{
+						EnqueueInternal(mutation);
+						return true;
+					}
+				}
+				return false;
+			}
+
 			public bool TryGetNext(out TGenome genome)
 			{
 				next:
 
-				// First check for high priority items..
+				// Next check for high priority items..
 				if (InternalQueue.TryDequeue(out genome))
-					return true;
-
-				if (AwaitingVariation.TryDequeue(out TGenome vGenome))
 				{
-					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
-					bool more = false;
-					while (vGenome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
-					{
-						if (v is TGenome t)
-						{
-							t = Factory.Registration(t);
-							if (Factory.RegisterProduction(t))
-							{
-								EnqueueInternal(t);
-								more = true;
-							}
-						}
-						else
-						{
-							Debug.Fail("Genome variation does not match the source type.");
-						}
-					}
-					if (more)
-						goto next;
+					Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
+					return true;
 				}
+
+				// If queues are overflowing, dedicate processes to drain them.
+				//while (AwaitingVariation.Count > 1000) ProcessVariation();
+				//while (AwaitingMutation.Count > 1000) ProcessMutation();
+				//while (BreedingStock.Count > 1000) Breed();
+
+				if (ProcessVariation())
+					goto next;
 
 				Breed();
 
 				if (!InternalQueue.IsEmpty)
 					goto next;
 
-				if (AwaitingMutation.TryDequeue(out TGenome mGenome))
-				{
-					Factory.MetricsCounter.Decrement(AWAITING_MUTATION);
-					if (Factory.AttemptNewMutation(mGenome, out TGenome mutation))
-						EnqueueInternal(mutation);
+				if (ProcessMutation())
 					goto next;
-				}
 
 				return false;
 			}
