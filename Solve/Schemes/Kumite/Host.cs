@@ -24,7 +24,7 @@ namespace Solve.Schemes
 		public readonly ushort MaximumLoss;
 		public readonly ushort MaxOffspring;
 
-		readonly ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>> Hosts
+		readonly ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>> ProblemHosts
 			= new ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>>();
 
 		readonly object BreederLock = new object();
@@ -42,7 +42,7 @@ namespace Solve.Schemes
 					EnqueueForBreeding(e, true);
 					Factory[0].EnqueueChampion(genome);
 				});
-				Hosts.TryAdd(problem, k);
+				ProblemHosts.TryAdd(problem, k);
 			}
 
 			base.AddProblems(problems);
@@ -56,7 +56,6 @@ namespace Solve.Schemes
 
 		internal void EnqueueForBreeding(IGenomeFitness<TGenome> gf, bool addOnly = false)
 		{
-			if (gf.Fitness.SampleCount < 100) return;
 			bool returnAfterUpdate = addOnly || Breeders.IsEmpty;
 			lock (BreederLock) Breeders[gf.Genome] = gf.Fitness.SnapShot();
 			if (returnAfterUpdate) return;
@@ -64,55 +63,75 @@ namespace Solve.Schemes
 			SelectFromBreedingPool();
 		}
 
+		Lazy<Task> SelectionTask;
 		void SelectFromBreedingPool()
 		{
-
-			ConcurrentDictionary<TGenome, IFitness> breeders = null;
-			if (ThreadSafety.TryLock(BreederLock,
-				() => breeders = Interlocked.Exchange(ref Breeders, BreedingPools.Take())))
+			bool isOwned = false;
+			var t = LazyInitializer.EnsureInitialized(ref SelectionTask, () => new Lazy<Task>(() =>
 			{
-				var breederList = breeders.ToArray();
-				uint len = (uint)breederList.Length;
-				if (len > 1)
+				isOwned = true;
+				return new Task(() =>
 				{
-					breederList = breederList.Sort(true); // best fitness is near beginning (reversed order);
-					if (len > MaximumBreederPoolSize)
+					ConcurrentDictionary<TGenome, IFitness> breeders = null;
+					if (ThreadSafety.TryLock(BreederLock,
+						() => breeders = Interlocked.Exchange(ref Breeders, BreedingPools.Take())))
 					{
-						breederList = breederList.Take(MaximumBreederPoolSize).ToArray();
-						len = 100;
+						var breederList = breeders.ToArray();
+						uint len = (uint)breederList.Length;
+						if (len > 1)
+						{
+							breederList = breederList.Sort(true); // best fitness is near beginning (reversed order);
+							if (len > MaximumBreederPoolSize)
+							{
+								breederList = breederList.Take(MaximumBreederPoolSize).ToArray();
+								len = MaximumBreederPoolSize;
+							}
+
+							// Add the primary champion for sure.
+							Factory[0].EnqueueForBreeding(breederList[0].Key);
+
+							// Pick a random one.
+							Factory[1].EnqueueForBreeding(TriangularSelection.Descending.RandomOne(breederList).Key);
+
+							// Add pareto genomes.
+							foreach (var p in GenomeFitness.Pareto(breederList))
+								Factory[2].EnqueueForBreeding(p.Genome);
+						}
+
+						lock (BreederLock)
+						{
+							foreach (var e in breederList)
+								Breeders.TryAdd(e.Key, e.Value);
+						}
+						BreedingPools.Give(breeders);
 					}
+				});
+			}));
 
-					// Add the primary champion for sure.
-					Factory[0].EnqueueForBreeding(breederList[0].Key);
-
-					// Pick a random one.
-					Factory[1].EnqueueForBreeding(TriangularSelection.Descending.RandomOne(breederList).Key);
-
-					// Add pareto genomes.
-					foreach (var p in GenomeFitness.Pareto(breederList))
-						Factory[2].EnqueueForBreeding(p.Genome);
-				}
-
-				lock (BreederLock)
+			if (isOwned)
+			{
+				try
 				{
-					foreach (var e in breederList)
-						Breeders.TryAdd(e.Key, e.Value);
+					t.Value.RunSynchronously();
 				}
-				BreedingPools.Give(breeders);
+				finally
+				{
+					Interlocked.Exchange(ref SelectionTask, null);
+				}
 			}
 		}
 
 
 		void Post(TGenome genome)
 		{
-			foreach (var host in Hosts.Values)
+			foreach (var host in ProblemHosts.Values)
 				host.Post(genome);
 		}
 
 		async Task PostAsync(TGenome genome)
 		{
 			await Task.WhenAll(
-				Hosts.Values.Select(h => h.PostAsync(genome)));
+				ProblemHosts.Values.Select(h => h.PostAsync(genome)));
 		}
 
 		protected override Task StartInternal(CancellationToken token)

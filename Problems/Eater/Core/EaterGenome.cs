@@ -1,5 +1,4 @@
 ﻿using Open.Cloneable;
-using Open.Collections;
 using Solve;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,6 +22,10 @@ namespace Eater
 		public EaterGenome(IEnumerable<Step> steps) : base()
 		{
 			Freeze(steps);
+		}
+
+		public EaterGenome(IEnumerable<StepCount> steps) : this(steps.Steps())
+		{
 		}
 
 		public EaterGenome(string steps) : base()
@@ -92,17 +95,19 @@ namespace Eater
 
 			}
 
+			// All forward movement lengths reduced by 1.
+			yield return new EaterGenome(Genes.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? sc-- : sc));
+
+
 			yield return new EaterGenome(ForwardOne.Concat(Genes));
 			yield return new EaterGenome(Genes.Concat(ForwardOne));
 
-			//var doubled = new List<Step>();
-			//foreach (var s in Genes)
-			//{
-			//	doubled.Add(s);
-			//	if (s == Step.Forward)
-			//		doubled.Add(s);
-			//}
-			//yield return new EaterGenome(doubled);
+			// All forward movement lengths doubled...
+			yield return new EaterGenome(Genes.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1)));
+
+			// Pattern is doubled.
+			yield return new EaterGenome(Enumerable.Repeat(Genes, 2).SelectMany(s => s));
+
 		}
 
 		IEnumerator<EaterGenome> _remainingVariations;
