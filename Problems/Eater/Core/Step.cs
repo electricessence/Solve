@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -343,32 +344,40 @@ namespace Eater
 			return reduced != hash ? reduced : null;
 		}
 
-		public static IEnumerable<Point> Draw(this IEnumerable<Step> steps)
+		public static IEnumerable<Point> Draw(this IEnumerable<Step> steps, bool pointToPoint = false)
 		{
 			var current = new Point(0, 0);
 			var orientation = Orientation.Up;
-
-			yield return current;
+			var moved = false;
 
 			foreach (var step in steps)
 			{
 				switch (step)
 				{
 					case Step.Forward:
+						if (!pointToPoint || !moved)
+							yield return current;
+
 						current = current.Forward(current, orientation);
-						yield return current;
+						moved = true;
 						break;
 
 					case Step.TurnLeft:
+						moved = false;
 						orientation = orientation.TurnLeft();
 						break;
 
 					case Step.TurnRight:
+						moved = false;
 						orientation = orientation.TurnRight();
 						break;
 				}
 			}
+
+			if (moved)
+				yield return current;
 		}
+
 
 		public static void Fill(this Bitmap target, Color color)
 		{
@@ -407,7 +416,7 @@ namespace Eater
 			bitmap.Fill(Color.White);
 			Point? first = null;
 			Point? last = null;
-			for (var i = 1; i < length; i++)
+			for (var i = 0; i < length; i++)
 			{
 				var p = points[i];
 				var o = new Point((p.X + offset.X) * bitScale + bitScale, (p.Y + offset.Y) * bitScale + bitScale);
@@ -419,6 +428,7 @@ namespace Eater
 					last = o;
 				}
 				p = last.Value;
+
 				for (var y = Math.Min(p.Y, o.Y); y <= Math.Max(p.Y, o.Y); y++)
 				{
 					for (var x = Math.Min(p.X, o.X); x <= Math.Max(p.X, o.X); x++)
@@ -448,6 +458,70 @@ namespace Eater
 
 			return bitmap;
 		}
+
+		public static Bitmap Render2(this IEnumerable<Step> steps, ushort scaleMultiple = 1)
+		{
+			int scale = 4 * scaleMultiple;
+			int bitScale = 16 * scale;
+			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
+			var points = steps.Draw(true).ToArray();
+			var length = points.Length;
+			double maxPenBrightness = 160d;
+			double colorStep = maxPenBrightness / length;
+
+			var pointsX = points.Select(p => p.X).ToArray();
+			var pointsY = points.Select(p => p.Y).ToArray();
+			var min = new Point(pointsX.Min(), pointsY.Min());
+			var max = new Point(pointsX.Max(), pointsY.Max());
+			var boundary = new Point(max.X - min.X, max.Y - min.Y);
+
+			// Help center it...
+			var square = Math.Max(boundary.X, boundary.Y);
+			var dXY = boundary.X - boundary.Y;
+			var dX = dXY < 0 ? (square - boundary.X) / 2 : 0;
+			var dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
+			var offset = new Point(-min.X + dX, -min.Y + dY);
+
+			var squareSize = square * bitScale + 2 * bitScale;
+			var bitmap = new Bitmap(squareSize, squareSize);
+			bitmap.Fill(Color.White);
+
+			if (points.Length != 0)
+			{
+				using (var graphic = Graphics.FromImage(bitmap))
+				{
+
+					var pointFs = points.Select(p => new PointF((p.X + offset.X) * bitScale + bitScale, (p.Y + offset.Y) * bitScale + bitScale)).ToArray();
+					var first = pointFs.First();
+					var radius = 5 * scale;
+					graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
+
+					var last = pointFs.Last();
+					graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
+
+					var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
+					outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
+					for (var i = 0; i < length; i++)
+					{
+						if (i < length - 1)
+							graphic.DrawLine(outlinePen, pointFs[i], pointFs[i + 1]);
+
+						if (i > 0)
+						{
+							var brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
+							var color = Color.FromArgb(brightness, brightness, brightness);
+							var pen = new Pen(color, 4 * scale);
+							pen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
+							graphic.DrawLine(pen, pointFs[i - 1], pointFs[i]);
+						}
+
+					}
+				}
+			}
+
+			return bitmap;
+		}
+
 	}
 
 }

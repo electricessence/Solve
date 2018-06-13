@@ -44,7 +44,7 @@ namespace Solve.Schemes
 				k.Subscribe(e =>
 				{
 					var factory = Factory[0];
-					//factory.EnqueueForVariation(e.Genome);
+					//factory.EnqueueVariations(e.Genome);
 					//factory.EnqueueForMutation(e.Genome);
 					factory.EnqueueForBreeding(e.Genome, e.Fitness.SampleCount / 2);
 					Broadcast((problem, e));
