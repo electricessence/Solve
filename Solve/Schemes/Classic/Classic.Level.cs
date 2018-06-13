@@ -30,11 +30,11 @@ namespace Solve.Schemes
 				Index = level;
 				Host = host;
 				FactoryPrimary = Host.Environment.Factory[0];
-				FactorySecondary = Host.Environment.Factory[1];
+				//FactorySecondary = Host.Environment.Factory[1];
 			}
 
 			readonly IGenomeFactoryPriorityQueue<TGenome> FactoryPrimary;
-			readonly IGenomeFactoryPriorityQueue<TGenome> FactorySecondary;
+			//readonly IGenomeFactoryPriorityQueue<TGenome> FactorySecondary;
 
 			class GFLRComparer : Comparer<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>
 			{
