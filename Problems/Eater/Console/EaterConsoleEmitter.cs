@@ -4,13 +4,25 @@ using Solve;
 using Solve.Experiment.Console;
 using System;
 using System.Collections.Concurrent;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 
 namespace Eater
 {
 	public class EaterConsoleEmitter : ConsoleEmitterBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
+
+		static readonly ImageCodecInfo JpgEncoder;
+		static readonly EncoderParameters EncParams;
+
+		static EaterConsoleEmitter()
+		{
+			JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
+			EncParams = new EncoderParameters(1);
+			EncParams.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
+		}
 
 		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
 			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
@@ -31,6 +43,7 @@ namespace Eater
 		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
 			=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
+
 		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
 		readonly object LatestWinnerImageLock = new object();
 		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness)
@@ -38,7 +51,7 @@ namespace Eater
 			base.OnEmittingGenome(p, genome, fitness);
 			var rendered = Path.Combine(ProgressionDirectory, $"{DateTime.Now.Ticks}.jpg");
 			using (var bitmap = genome.Genes.Render2())
-				bitmap.Save(rendered);
+				bitmap.Save(rendered, JpgEncoder, EncParams);
 
 			BitmapQueue.Enqueue(rendered);
 			ThreadSafety.TryLock(LatestWinnerImageLock, () =>
