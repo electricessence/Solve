@@ -30,8 +30,7 @@ namespace Solve.ProcessingSchemes
 			{
 				Index = level;
 				Tower = host;
-				FactoryPrimary = Tower.Environment.Factory[0];
-				//FactorySecondary = Tower.Environment.Factory[1];
+				Factory = Tower.Environment.Factory[1]; // Use a lower priority than the factory used by broadcasting.
 
 				var (First, Minimum, Step) = host.Environment.PoolSize;
 				var maxDelta = First - Minimum;
@@ -39,8 +38,7 @@ namespace Solve.ProcessingSchemes
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 			}
 
-			readonly IGenomeFactoryPriorityQueue<TGenome> FactoryPrimary;
-			//readonly IGenomeFactoryPriorityQueue<TGenome> FactorySecondary;
+			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 			#region GenomeFitness Loss Record Comparer
 			class GFLRComparer : Comparer<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>
@@ -52,14 +50,18 @@ namespace Solve.ProcessingSchemes
 			#endregion
 
 			IFitness BestLevelFitness;
-			bool UpdateBestLevelFitnessIfBetter(IFitness fitness)
+			bool UpdateBestLevelFitnessIfBetter(IGenomeFitness<TGenome> c)
 			{
+				IFitness fitness = c.Fitness;
 				IFitness f;
 				while ((f = BestLevelFitness) == null || fitness.IsSuperiorTo(f))
 				{
 					fitness = fitness.SnapShot(); // Safe to call multiple times.
 					if (Interlocked.CompareExchange(ref BestLevelFitness, fitness, f) == f)
+					{
+						Factory.EnqueueForBreeding(c.Genome);
 						return true;
+					}
 				}
 				return false;
 			}
@@ -68,7 +70,7 @@ namespace Solve.ProcessingSchemes
 			{
 				var fitness = Tower.Problem.ProcessTest(c.Genome, Index);
 				c.Fitness.Merge(fitness);
-				return UpdateBestLevelFitnessIfBetter(c.Fitness);
+				return UpdateBestLevelFitnessIfBetter(c);
 			}
 
 			public void Post(IGenomeFitness<TGenome, Fitness> c)
@@ -85,7 +87,6 @@ namespace Solve.ProcessingSchemes
 					}
 					else
 					{
-						FactoryPrimary.EnqueueForBreeding(c.Genome);
 						NextLevel.Post(c);
 						return; // No need to involve a obviously superior genome with this pool.
 					}
@@ -135,8 +136,8 @@ namespace Solve.ProcessingSchemes
 
 						// 4) Promote winners.
 						var top = selection[0].GenomeFitness;
-						UpdateBestLevelFitnessIfBetter(top.Fitness);
-						FactoryPrimary.EnqueueChampion(top.Genome);
+						UpdateBestLevelFitnessIfBetter(top);
+						Factory.EnqueueChampion(top.Genome);
 						NextLevel.FastTrack(top); // Push this one to the finalist pool.
 						for (var i = 1; i < midPoint; i++)
 						{
@@ -179,7 +180,7 @@ namespace Solve.ProcessingSchemes
 				{
 					// Process a test for this level.
 					if (ProcessTestAndUpdate(c))
-						FactoryPrimary.EnqueueForBreeding(c.Genome);
+						Factory.EnqueueForBreeding(c.Genome);
 
 					_nextLevel.FastTrack(c);
 					return true;
