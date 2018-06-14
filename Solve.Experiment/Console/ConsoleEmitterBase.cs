@@ -17,7 +17,7 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public FitnessScore? LastScore;
+		public FitnessScore LastScore;
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
@@ -46,7 +46,7 @@ namespace Solve.Experiment.Console
 			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => sc >= SampleMinimum && (!LastScore.HasValue || (LastScore.Value < f && LastScore.Value.SampleCount < f.SampleCount)),
+				() => sc >= SampleMinimum && (LastScore == null || (LastScore < f && LastScore.SampleCount < f.SampleCount)),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{

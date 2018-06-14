@@ -115,7 +115,7 @@ namespace Solve
 	}
 
 	[DebuggerDisplay("Count = {_results.Length}")]
-	public struct FitnessScore : IFitness
+	public class FitnessScore : IFitness
 	{
 		readonly ProcedureResult[] _results;
 
@@ -449,14 +449,13 @@ namespace Solve
 			return true;
 		}
 
+		public static bool IsSuperiorTo(this IFitness x, IFitness y)
+			=> Fitness.Comparison(x, y) == Fitness.ORDER_DIRECTION;
+
 		public static FitnessScore SnapShot(this IFitness fitness)
-		{
-			return fitness is FitnessScore f ? f : new FitnessScore(fitness);
-		}
+			=> fitness is FitnessScore f ? f : new FitnessScore(fitness);
 
 		public static Fitness Merge(this IEnumerable<IFitness> fitnesses)
-		{
-			return fitnesses.Aggregate(new Fitness(), (prev, current) => prev.Merge(current));
-		}
+			=> fitnesses.Aggregate(new Fitness(), (prev, current) => prev.Merge(current));
 	}
 }

@@ -14,6 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Progression\**" />
+    <EmbeddedResource Remove="Progression\**" />
+    <None Remove="Progression\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Open.Cloneable" Version="1.1.0" />
     <PackageReference Include="Open.DateTime.Extensions" Version="1.1.0" />
     <PackageReference Include="Open.Threading.Dataflow" Version="1.1.0" />

@@ -21,7 +21,7 @@ namespace Eater
 		}
 
 		public override IReadOnlyList<string> FitnessLabels { get; }
-			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Hash-Length {0:n0}" }).AsReadOnly();
+			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Gene-Count {0:n0}" }).AsReadOnly();
 
 	}
 
@@ -58,8 +58,8 @@ namespace Eater
 			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
 			var ave = energy / len;
-			var hlen = g.AsReduced().Hash.Length;
-			fitness.AddScores(found / len, -ave, -hlen);// - Math.Pow(ave, 2) - hlen, ave, -hlen); // Adding the hash length seems superfluous but ends up being considered in the Pareto front.
+			var geneCount = g.Genes.Count;
+			fitness.AddScores(found / len, -ave, -geneCount);// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
 
 	}
@@ -77,7 +77,7 @@ namespace Eater
 			var count = fullTest[0].Count;
 			fitness.Add(fullTest[0]);
 			fitness.Add(fullTest[1]);
-			fitness.Add(new ProcedureResult(g.Hash.Length * count, count));
+			fitness.Add(new ProcedureResult(g.Genes.Count * count, count));
 		}
 
 	}

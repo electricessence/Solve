@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace Solve.Schemes
+namespace Solve.ProcessingSchemes
 {
 
 	public sealed class PyramidPipeline<TGenome> : EnvironmentBase<TGenome>

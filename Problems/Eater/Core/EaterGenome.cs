@@ -35,7 +35,10 @@ namespace Eater
 
 		string _hash;
 		public override string Hash
-			=> _hash ?? Genes.ToGenomeHash();
+			=> _hash ?? GetHash();
+
+		string GetHash()
+			=> Genes.ToStepCounts().ToGenomeHash();
 
 		public new EaterGenome Clone()
 			=> new EaterGenome(Genes);
@@ -45,12 +48,14 @@ namespace Eater
 
 		public IReadOnlyList<Step> Genes { get; private set; }
 
+		public override int Length => Genes.Count;
+
 		public Step[] GetGenes()
 			=> Genes.ToArray();
 
 		protected override void OnBeforeFreeze()
 		{
-			_hash = Genes.ToGenomeHash();
+			_hash = GetHash();
 			base.OnBeforeFreeze();
 		}
 

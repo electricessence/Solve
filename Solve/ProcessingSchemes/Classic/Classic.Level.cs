@@ -5,68 +5,104 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Solve.Schemes
+namespace Solve.ProcessingSchemes
 {
-	public sealed partial class Classic<TGenome>
+	public sealed partial class ClassicProcessingScheme<TGenome>
 	{
-		sealed class Level
+		internal sealed class Level
 		{
-			readonly Tournament Host;
-			readonly ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)> Pool
-				= new ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>();
-			readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> Promotions
-				= new ConcurrentQueue<IGenomeFitness<TGenome, Fitness>>();
-			readonly object PoolLock = new object();
-
+			readonly Tower Tower;
+			public readonly ushort PoolSize;
 			public readonly uint Index;
 			Level _nextLevel;
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
-				() => new Level(Index + 1, Host));
+				() => new Level(Index + 1, Tower));
+
+			readonly object PoolLock = new object();
+			readonly ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)> Pool
+				= new ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>();
+			readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> FastTrackQueue
+				= new ConcurrentQueue<IGenomeFitness<TGenome, Fitness>>();
 
 			public Level(
 				uint level,
-				Tournament host)
+				Tower host)
 			{
 				Index = level;
-				Host = host;
-				FactoryPrimary = Host.Environment.Factory[0];
-				//FactorySecondary = Host.Environment.Factory[1];
+				Tower = host;
+				FactoryPrimary = Tower.Environment.Factory[0];
+				//FactorySecondary = Tower.Environment.Factory[1];
+
+				var (First, Minimum, Step) = host.Environment.PoolSize;
+				var maxDelta = First - Minimum;
+				var decrement = Index * Step;
+				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 			}
 
 			readonly IGenomeFactoryPriorityQueue<TGenome> FactoryPrimary;
 			//readonly IGenomeFactoryPriorityQueue<TGenome> FactorySecondary;
 
+			#region GenomeFitness Loss Record Comparer
 			class GFLRComparer : Comparer<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>
 			{
 				public override int Compare((IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord) x, (IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord) y)
 					=> GenomeFitness.Comparison(x.GenomeFitness, y.GenomeFitness);
 			}
-
 			readonly static GFLRComparer _GFLRComparer = new GFLRComparer();
+			#endregion
+
+			IFitness BestLevelFitness;
+			bool UpdateBestLevelFitnessIfBetter(IFitness fitness)
+			{
+				IFitness f;
+				while ((f = BestLevelFitness) == null || fitness.IsSuperiorTo(f))
+				{
+					fitness = fitness.SnapShot(); // Safe to call multiple times.
+					if (Interlocked.CompareExchange(ref BestLevelFitness, fitness, f) == f)
+						return true;
+				}
+				return false;
+			}
+
+			bool ProcessTestAndUpdate(IGenomeFitness<TGenome, Fitness> c)
+			{
+				var fitness = Tower.Problem.ProcessTest(c.Genome, Index);
+				c.Fitness.Merge(fitness);
+				return UpdateBestLevelFitnessIfBetter(c.Fitness);
+			}
 
 			public void Post(IGenomeFitness<TGenome, Fitness> c)
 			{
+				ProcessNextPromotion();
+
 				var lastLevel = _nextLevel == null;
 				// Process a test for this level.
-				var fitness = Host.Problem.ProcessTest(c.Genome, Index);
-				c.Fitness.Merge(fitness);
+				if (ProcessTestAndUpdate(c))
+				{
+					if (lastLevel)
+					{
+						Tower.Broadcast(c);
+					}
+					else
+					{
+						FactoryPrimary.EnqueueForBreeding(c.Genome);
+						NextLevel.Post(c);
+						return; // No need to involve a obviously superior genome with this pool.
+					}
+				}
 
 				(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord) challenger = (c, 0);
 				Pool.Enqueue(challenger);
 
-				// Placing this here spreads out the load.
-				ProcessNextPromotion();
-
 				// Next see if we should 'own' processing the pool.
-				var poolSize = Host.Environment.PoolSize;
-				if (Pool.Count >= poolSize)
+				if (Pool.Count >= PoolSize)
 				{
 					(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)[] selection = null;
 					// If a lock is already aquired somewhere else, then skip/ignore...
 					if (ThreadSafety.TryLock(PoolLock, () =>
 					{
-						if (Pool.Count >= poolSize)
-							selection = Pool.AsDequeueingEnumerable().Take(poolSize).ToArray();
+						if (Pool.Count >= PoolSize)
+							selection = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();
 					}) && selection != null)
 					{
 						// 1) Sort by fitness.
@@ -84,9 +120,9 @@ namespace Solve.Schemes
 							loser.LevelLossRecord++;
 							var f = loser.GenomeFitness.Fitness;
 							f.IncrementRejection();
-							if (loser.LevelLossRecord > Host.Environment.MaxLevelLosses)
+							if (loser.LevelLossRecord > Tower.Environment.MaxLevelLosses)
 							{
-								if (f.RejectionCount < Host.Environment.MaxLossesBeforeElimination)
+								if (f.RejectionCount < Tower.Environment.MaxLossesBeforeElimination)
 									losersToPromote.Add(loser.GenomeFitness);
 								//else
 								//	Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -99,11 +135,9 @@ namespace Solve.Schemes
 
 						// 4) Promote winners.
 						var top = selection[0].GenomeFitness;
+						UpdateBestLevelFitnessIfBetter(top.Fitness);
 						FactoryPrimary.EnqueueChampion(top.Genome);
-						// Use the secondary queue for mutation here so that the champion get's priority.
-						//FactorySecondary.EnqueueForVariation(top.Genome);
-						//FactorySecondary.EnqueueForMutation(top.Genome);
-						NextLevel.Promote(top); // Push this one to the finalist pool.
+						NextLevel.FastTrack(top); // Push this one to the finalist pool.
 						for (var i = 1; i < midPoint; i++)
 						{
 							NextLevel.Post(selection[i].GenomeFitness);
@@ -117,35 +151,40 @@ namespace Solve.Schemes
 
 						if (lastLevel)
 						{
-							Host.Broadcast(top);
+							Tower.Broadcast(top);
 						}
 
 					}
 				}
-
 			}
+
+
 
 			/// <summary>
 			/// Process entry all the way to the last level before queueing.
 			/// </summary>
 			/// <param name="c"></param>
-			public void Promote(IGenomeFitness<TGenome, Fitness> c)
+			public void FastTrack(IGenomeFitness<TGenome, Fitness> c)
 			{
 				if (_nextLevel == null)
 					Post(c);
 				else
-					Promotions.Enqueue(c);
+					FastTrackQueue.Enqueue(c);
 			}
 
-			public void ProcessNextPromotion()
+
+			public bool ProcessNextPromotion()
 			{
-				if (Promotions.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
+				if (FastTrackQueue.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
 				{
 					// Process a test for this level.
-					var fitness = Host.Problem.ProcessTest(c.Genome, Index);
-					c.Fitness.Merge(fitness);
-					_nextLevel.Promote(c);
+					if (ProcessTestAndUpdate(c))
+						FactoryPrimary.EnqueueForBreeding(c.Genome);
+
+					_nextLevel.FastTrack(c);
+					return true;
 				}
+				return false;
 			}
 
 		}

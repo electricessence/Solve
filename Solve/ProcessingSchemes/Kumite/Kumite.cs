@@ -1,19 +1,18 @@
-﻿using Open.Dataflow;
-using Open.Disposable;
+﻿using Open.Disposable;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Solve.Schemes
+namespace Solve.ProcessingSchemes
 {
-	public sealed class Kumite<TGenome> : EnvironmentBase<TGenome>
+	public sealed partial class KumiteProcessingScheme<TGenome>
+		: ProcessingSchemeBase<TGenome, KumiteProcessingScheme<TGenome>.Tower>
 		where TGenome : class, IGenome
 	{
-		public Kumite(IGenomeFactory<TGenome> genomeFactory, ushort maximumLoss = ushort.MaxValue, ushort maxOffspring = ushort.MaxValue)
+		public KumiteProcessingScheme(IGenomeFactory<TGenome> genomeFactory, ushort maximumLoss = ushort.MaxValue, ushort maxOffspring = ushort.MaxValue)
 			: base(genomeFactory)
 		{
 			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
@@ -24,29 +23,9 @@ namespace Solve.Schemes
 		public readonly ushort MaximumLoss;
 		public readonly ushort MaxOffspring;
 
-		readonly ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>> ProblemHosts
-			= new ConcurrentDictionary<IProblem<TGenome>, KumiteTournament<TGenome>>();
-
 		readonly object BreederLock = new object();
 		ConcurrentDictionary<TGenome, IFitness> Breeders = new ConcurrentDictionary<TGenome, IFitness>();
 
-		public override void AddProblems(IEnumerable<IProblem<TGenome>> problems)
-		{
-			foreach (var problem in problems)
-			{
-				var k = new KumiteTournament<TGenome>(problem, this);
-				k.Subscribe(e =>
-				{
-					Broadcast((problem, e));
-					var genome = e.Genome;
-					EnqueueForBreeding(e, true);
-					Factory[0].EnqueueChampion(genome);
-				});
-				ProblemHosts.TryAdd(problem, k);
-			}
-
-			base.AddProblems(problems);
-		}
 
 		const ushort MaximumBreederPoolSize = 100;
 
@@ -121,38 +100,12 @@ namespace Solve.Schemes
 			}
 		}
 
-
-		void Post(TGenome genome)
-		{
-			foreach (var host in ProblemHosts.Values)
-				host.Post(genome);
-		}
-
 		async Task PostAsync(TGenome genome)
 		{
 			await Task.WhenAll(
-				ProblemHosts.Values.Select(h => h.PostAsync(genome)));
+				Towers.Values.Select(h => h.PostAsync(genome)));
 		}
 
-		protected override Task StartInternal(CancellationToken token)
-			=> Task.Run(cancellationToken: token, action: () =>
-			{
-				//foreach (var g in Factory.AsParallel())
-				//	PostAsync(g).ConfigureAwait(false);
-
-				//var pc = Environment.ProcessorCount;
-				//Console.WriteLine("PROCESSOR COUNT: {0}", pc);
-				Parallel.ForEach(Factory, new ParallelOptions
-				{
-					CancellationToken = token,
-					//MaxDegreeOfParallelism = 2 * pc - 1
-				}, Post);
-
-				//Parallel.ForEach(Factory, new ParallelOptions
-				//{
-				//	CancellationToken = token,
-				//}, Post);
-			});
 
 	}
 }
