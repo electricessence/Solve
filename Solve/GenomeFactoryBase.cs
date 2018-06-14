@@ -447,8 +447,14 @@ namespace Solve
 				{
 					lock (PriorityQueues)
 					{
-						while (PriorityQueues.Count <= index)
-							PriorityQueues.Add(new PriorityQueue(this));
+						int i;
+						while ((i = PriorityQueues.Count) <= index)
+						{
+							var instance = new PriorityQueue(i, this);
+							PriorityQueues.Add(instance);
+							Debug.Assert(PriorityQueues[i] == instance);
+							if (i == index) return instance;
+						}
 					}
 				}
 
@@ -459,10 +465,12 @@ namespace Solve
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
 		{
+			readonly int Index;
 			readonly GenomeFactoryBase<TGenome> Factory;
 
-			public PriorityQueue(GenomeFactoryBase<TGenome> factory)
+			public PriorityQueue(int index, GenomeFactoryBase<TGenome> factory)
 			{
+				Index = index;
 				Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			}
 			/**
@@ -489,21 +497,18 @@ namespace Solve
 						EnqueueForBreeding(g, 1);
 			}
 
+			protected void EnqueueForBreeding((TGenome genome, int count) breeder)
+			{
+				if (breeder.count > 0)
+					BreedingStock.Enqueue(breeder);
+			}
+
 			public void EnqueueForBreeding(TGenome genome, int count)
 			{
 				if (count > 0)
 				{
 					Factory.MetricsCounter.Increment(BREEDING_STOCK);
 					BreedingStock.Enqueue((genome, count));
-				}
-			}
-
-			public void EnqueueForBreeding((TGenome genome, int count) breeder)
-			{
-				if (breeder.count > 0)
-				{
-					Factory.MetricsCounter.Increment(BREEDING_STOCK);
-					BreedingStock.Enqueue(breeder);
 				}
 			}
 
@@ -516,6 +521,32 @@ namespace Solve
 						BreedOne(g);
 			}
 
+			protected bool TryTakeBreeder(out (TGenome genome, int count) mate)
+			{
+				if (BreedingStock.TryDequeue(out mate) && mate.count > 0)
+				{
+					if (mate.count > 1)
+					{
+						mate.count--;
+						BreedingStock.Enqueue(mate);
+						mate = (mate.genome, 1);
+					}
+					return true;
+				}
+
+				return TryTakeBreederFromNextQueue(out mate);
+			}
+
+			bool TryTakeBreederFromNextQueue(out (TGenome genome, int count) mate)
+			{
+				var nextIndex = Index + 1;
+				if (Factory.PriorityQueues.Count > nextIndex)
+					return Factory.PriorityQueues[nextIndex].TryTakeBreeder(out mate);
+
+				mate = default;
+				return false;
+			}
+
 			protected void BreedOne(TGenome genome)
 			{
 				// Setup incomming...
@@ -525,9 +556,8 @@ namespace Solve
 				{
 					current = (genome, 1);
 				}
-				else if (BreedingStock.TryDequeue(out current))
+				else if (TryTakeBreeder(out current))
 				{
-					Factory.MetricsCounter.Decrement(BREEDING_STOCK);
 					genome = current.genome;
 				}
 				else
@@ -536,9 +566,8 @@ namespace Solve
 				}
 
 				// Start dequeueing possbile mates, where any of them could be a requeue of current.
-				while (BreedingStock.TryDequeue(out (TGenome genome, int count) mate))
+				while (TryTakeBreeder(out (TGenome genome, int count) mate))
 				{
-					Factory.MetricsCounter.Decrement(BREEDING_STOCK);
 					var mateGenome = mate.genome;
 					if (mateGenome == genome || mateGenome.Hash == genome.Hash)
 					{
@@ -554,7 +583,9 @@ namespace Solve
 
 						// After breeding, decrease their counts.
 						current.count--;
+						Factory.MetricsCounter.Decrement(BREEDING_STOCK);
 						mate.count--;
+						Factory.MetricsCounter.Decrement(BREEDING_STOCK);
 
 						// Might still need more funtime.
 						EnqueueForBreeding(mate);
