@@ -32,6 +32,8 @@ namespace Solve
 
 		public virtual IEnumerator<IGenome> RemainingVariations
 			=> EmptyVariations;
+
+		public abstract int Length { get; }
 	}
 
 }

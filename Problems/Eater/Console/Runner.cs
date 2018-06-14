@@ -1,5 +1,5 @@
 ﻿using Solve.Experiment.Console;
-using Solve.Schemes;
+using Solve.ProcessingSchemes;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -32,7 +32,8 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(factory, 20, 4, 2, 200);
 			//var scheme = new KingOfTheHill<EaterGenome>(factory, 300, _minConvSamples, 5);
-			var scheme = new Classic<EaterGenome>(Factory, 100);
+			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (100, 50, 2));
+			//var scheme = new KumiteProcessingScheme<EaterGenome>(Factory, 5);
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 
 			scheme.AddProblem(problem);

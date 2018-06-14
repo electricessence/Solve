@@ -13,14 +13,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Schemes\KingOfTheHill\**" />
-    <EmbeddedResource Remove="Schemes\KingOfTheHill\**" />
-    <None Remove="Schemes\KingOfTheHill\**" />
+    <Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
+    <None Remove="ProcessingSchemes\KingOfTheHill\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Schemes\SinglePool.cs" />
-    <Compile Remove="Schemes\UberPools.cs" />
+    <Compile Remove="ProcessingSchemes\SinglePool.cs" />
+    <Compile Remove="ProcessingSchemes\UberPools.cs" />
   </ItemGroup>
 
   <ItemGroup>

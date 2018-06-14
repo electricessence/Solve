@@ -93,7 +93,7 @@ namespace Solve
 	public static class GenomeFitness
 	{
 
-		public static bool IsGreaterThan<TGenome>(this IGenomeFitness<TGenome> x, IGenomeFitness<TGenome> y)
+		public static bool IsSuperiorTo<TGenome>(this IGenomeFitness<TGenome> x, IGenomeFitness<TGenome> y)
 			where TGenome : IGenome
 		{
 			return Comparison(x, y) == Fitness.ORDER_DIRECTION;
@@ -110,8 +110,8 @@ namespace Solve
 			if (c != 0) return c;
 			if (xG.Hash == yG.Hash) return 0;
 
-			var xLen = xG.Hash.Length;
-			var yLen = yG.Hash.Length;
+			var xLen = xG.Length;
+			var yLen = yG.Length;
 			// Smaller is better...
 			if (xLen < yLen) return +Fitness.ORDER_DIRECTION;
 			if (xLen > yLen) return -Fitness.ORDER_DIRECTION;

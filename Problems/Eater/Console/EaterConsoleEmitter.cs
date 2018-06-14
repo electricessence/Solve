@@ -49,7 +49,9 @@ namespace Eater
 		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness)
 		{
 			base.OnEmittingGenome(p, genome, fitness);
-			var rendered = Path.Combine(ProgressionDirectory, $"{DateTime.Now.Ticks}.jpg");
+			var ts = DateTime.Now.Ticks;
+			File.WriteAllText(Path.Combine(ProgressionDirectory, $"{ts}.txt"), genome.Hash);
+			var rendered = Path.Combine(ProgressionDirectory, $"{ts}.jpg");
 			using (var bitmap = genome.Genes.Render2())
 				bitmap.Save(rendered, JpgEncoder, EncParams);
 

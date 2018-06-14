@@ -37,6 +37,12 @@ namespace Eater
 		{
 			return new StepCount() { Step = a.Step, Count = a.Count - 1 };
 		}
+
+		public override string ToString()
+		{
+			if (Count < 1) throw new InvalidOperationException($"Step count is less than 1. ({Count})");
+			return (Count == 1 ? string.Empty : Count.ToString()) + Step.ToChar();
+		}
 	}
 
 	public enum Orientation
@@ -80,6 +86,28 @@ namespace Eater
 				}
 				yield return last;
 			}
+		}
+
+		public static string ToGenomeHash(this IEnumerable<Step> steps)
+		{
+			var sb = new StringBuilder();
+			foreach (var step in steps)
+			{
+				sb.Append(step.ToChar());
+			}
+			return sb.ToString();
+		}
+
+		public static string ToGenomeHash(this IEnumerable<StepCount> steps)
+		{
+			var sb = new StringBuilder();
+			foreach (var s in steps)
+			{
+				if (s.Count != 1)
+					sb.Append(s.Count);
+				sb.Append(s.Step.ToChar());
+			}
+			return sb.ToString();
 		}
 	}
 
@@ -202,15 +230,7 @@ namespace Eater
 			throw new ArgumentException("Invalid value.", nameof(step));
 		}
 
-		public static string ToGenomeHash(this IEnumerable<Step> steps)
-		{
-			var sb = new StringBuilder();
-			foreach (var step in steps)
-			{
-				sb.Append(step.ToChar());
-			}
-			return sb.ToString();
-		}
+
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
@@ -236,8 +256,7 @@ namespace Eater
 		public static bool Try(this IEnumerable<Step> steps,
 			GridLocation boundary, Point start, Point food)
 		{
-			int energy;
-			return Try(steps, boundary, start, food, out energy);
+			return Try(steps, boundary, start, food, out int energy);
 		}
 
 		public static bool Try(this string steps,
@@ -288,19 +307,19 @@ namespace Eater
 		public static IEnumerable<Step> Reduce(this IEnumerable<Step> steps)
 		{
 			var red = ReduceLoop(steps.ToGenomeHash());
-			return red == null ? null : Steps.FromGenomeHash(red);
+			return red == null ? null : FromGenomeHash(red);
 		}
 
-		static readonly string TURN_LEFT_4 = new String(Steps.TURN_LEFT, 4);
-		static readonly string TURN_RIGHT_4 = new String(Steps.TURN_RIGHT, 4);
+		static readonly string TURN_LEFT_4 = new String(TURN_LEFT, 4);
+		static readonly string TURN_RIGHT_4 = new String(TURN_RIGHT, 4);
 
-		static readonly string TURN_LEFT_3 = new String(Steps.TURN_LEFT, 3);
-		static readonly string TURN_RIGHT_3 = new String(Steps.TURN_RIGHT, 3);
+		static readonly string TURN_LEFT_3 = new String(TURN_LEFT, 3);
+		static readonly string TURN_RIGHT_3 = new String(TURN_RIGHT, 3);
 
-		static readonly string TURN_LEFT_RIGHT = String.Empty + Steps.TURN_LEFT + Steps.TURN_RIGHT;
-		static readonly string TURN_RIGHT_LEFT = String.Empty + Steps.TURN_RIGHT + Steps.TURN_LEFT;
+		static readonly string TURN_LEFT_RIGHT = String.Empty + TURN_LEFT + TURN_RIGHT;
+		static readonly string TURN_RIGHT_LEFT = String.Empty + TURN_RIGHT + TURN_LEFT;
 
-		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + Steps.TURN_LEFT + Steps.TURN_RIGHT + "]+$");
+		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + TURN_LEFT + TURN_RIGHT + "]+$");
 
 		static string ReduceLoop(string hash)
 		{
@@ -328,8 +347,8 @@ namespace Eater
 				do
 				{
 					reduced = reducedLoop;
-					reducedLoop = reducedLoop.Replace(TURN_LEFT_3, String.Empty + Steps.TURN_RIGHT);
-					reducedLoop = reducedLoop.Replace(TURN_RIGHT_3, String.Empty + Steps.TURN_LEFT);
+					reducedLoop = reducedLoop.Replace(TURN_LEFT_3, String.Empty + TURN_RIGHT);
+					reducedLoop = reducedLoop.Replace(TURN_RIGHT_3, String.Empty + TURN_LEFT);
 
 					reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, String.Empty);
 					reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, String.Empty);
@@ -381,13 +400,8 @@ namespace Eater
 
 		public static void Fill(this Bitmap target, Color color)
 		{
-			for (var y = 0; y < target.Height; y++)
-			{
-				for (var x = 0; x < target.Width; x++)
-				{
-					target.SetPixel(x, y, color);
-				}
-			}
+			using (var graphics = Graphics.FromImage(target))
+				graphics.Clear(color);
 		}
 
 		public static Bitmap Render(this IEnumerable<Step> steps, int bitScale = 3)
