@@ -30,6 +30,15 @@ namespace Solve.ProcessingSchemes
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
 		}
 
+		public ClassicProcessingScheme(
+			IGenomeFactory<TGenome> genomeFactory,
+			ushort poolSize,
+			ushort maxLevelLosses = 5,
+			ushort maxLossesBeforeElimination = 30) : this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination)
+		{
+
+		}
+
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevelLosses;
