@@ -472,6 +472,12 @@ namespace Solve
 			{
 				Index = index;
 				Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+				ProducerTriggers = new List<Func<bool>>()
+				{
+					ProcessVariation,
+					ProcessBreeder,
+					ProcessMutation
+				};
 			}
 			/**
 			 * It's very important to avoid any contention.
@@ -547,7 +553,7 @@ namespace Solve
 				return false;
 			}
 
-			protected void BreedOne(TGenome genome)
+			protected bool BreedOne(TGenome genome)
 			{
 				// Setup incomming...
 				(TGenome genome, int count) current;
@@ -562,9 +568,11 @@ namespace Solve
 				}
 				else
 				{
-					return;
+					// genome was null and nothing was available to breed with.
+					return false;
 				}
 
+				bool bred = false;
 				// Start dequeueing possbile mates, where any of them could be a requeue of current.
 				while (TryTakeBreeder(out (TGenome genome, int count) mate))
 				{
@@ -577,7 +585,7 @@ namespace Solve
 					else
 					{
 						Factory.MetricsCounter.Increment(BREED_ONE);
-
+						bred = true;
 						// We have a valid mate!
 						EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome));
 
@@ -596,6 +604,7 @@ namespace Solve
 
 				// Might still need more funtime.
 				EnqueueForBreeding(current);
+				return bred;
 			}
 
 			protected void EnqueueInternal(params TGenome[] genomes)
@@ -682,6 +691,8 @@ namespace Solve
 			protected readonly ConcurrentQueue<TGenome> AwaitingMutation
 				= new ConcurrentQueue<TGenome>();
 
+			readonly List<Func<bool>> ProducerTriggers;
+
 			bool ProcessVariation()
 			{
 				while (AwaitingVariation.TryDequeue(out TGenome vGenome))
@@ -696,6 +707,9 @@ namespace Solve
 				}
 				return false;
 			}
+
+			bool ProcessBreeder()
+				=> BreedOne(null);
 
 			bool ProcessMutation()
 			{
@@ -713,30 +727,16 @@ namespace Solve
 
 			public bool TryGetNext(out TGenome genome)
 			{
-				next:
-
-				// Next check for high priority items..
-				if (InternalQueue.TryDequeue(out genome))
+				do
 				{
-					Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
-					return true;
+					if (InternalQueue.TryDequeue(out genome))
+					{
+						Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
+						return true;
+					}
 				}
-
-				// If queues are overflowing, dedicate processes to drain them.
-				//while (AwaitingVariation.Count > 1000) ProcessVariation();
-				//while (AwaitingMutation.Count > 1000) ProcessMutation();
-				//while (BreedingStock.Count > 1000) Breed();
-
-				if (ProcessVariation())
-					goto next;
-
-				Breed();
-
-				if (!InternalQueue.IsEmpty)
-					goto next;
-
-				if (ProcessMutation())
-					goto next;
+				// Next check for high priority items..
+				while (ProducerTriggers.Any(t => t()));
 
 				return false;
 			}
