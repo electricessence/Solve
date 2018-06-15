@@ -32,7 +32,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(factory, 20, 4, 2, 200);
 			//var scheme = new KingOfTheHill<EaterGenome>(factory, 300, _minConvSamples, 5);
-			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (100, 50, 2));
+			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, 200);
 			//var scheme = new KumiteProcessingScheme<EaterGenome>(Factory, 5);
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 
