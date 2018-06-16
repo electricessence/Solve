@@ -523,8 +523,13 @@ namespace Solve
 				if (genomes.Length == 0)
 					BreedOne(null);
 				else
+				{
 					foreach (var g in genomes)
+					{
+						Factory.MetricsCounter.Increment(BREEDING_STOCK);
 						BreedOne(g);
+					}
+				}
 			}
 
 			protected bool TryTakeBreeder(out (TGenome genome, int count) mate)
@@ -572,6 +577,7 @@ namespace Solve
 					return false;
 				}
 
+				int remaining = BreedingStock.Count;
 				bool bred = false;
 				// Start dequeueing possbile mates, where any of them could be a requeue of current.
 				while (TryTakeBreeder(out (TGenome genome, int count) mate))
@@ -584,22 +590,28 @@ namespace Solve
 					}
 					else
 					{
-						Factory.MetricsCounter.Increment(BREED_ONE);
-						bred = true;
 						// We have a valid mate!
-						EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome));
+						if (EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome)))
+						{
+							bred = true;
+							Factory.MetricsCounter.Increment(BREED_ONE);
 
-						// After breeding, decrease their counts.
-						current.count--;
-						Factory.MetricsCounter.Decrement(BREEDING_STOCK);
-						mate.count--;
-						Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+							// After breeding, decrease their counts.
+							current.count--;
+							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+							mate.count--;
+							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+						}
 
 						// Might still need more funtime.
 						EnqueueForBreeding(mate);
 
 						break;
 					}
+
+					// It's possible to get stuck in a loop as entried are returned to the breeding stock.
+					// This prevents that potential infinite loop.
+					if (--remaining < 1) break;
 				}
 
 				// Might still need more funtime.
@@ -607,21 +619,24 @@ namespace Solve
 				return bred;
 			}
 
-			protected void EnqueueInternal(params TGenome[] genomes)
+			protected bool EnqueueInternal(params TGenome[] genomes)
 			{
-				if (genomes == null) return;
+				if (genomes == null) return false;
+				bool added = false;
 				foreach (var g in genomes)
 				{
 					if (g != null)
 					{
 						Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
 						InternalQueue.Enqueue(g);
+						added = true;
 					}
 					else
 					{
 						Debug.Fail("A null geneome was provided.");
 					}
 				}
+				return added;
 			}
 
 			public bool AttemptEnqueueVariation(TGenome genome)
@@ -692,6 +707,7 @@ namespace Solve
 				= new ConcurrentQueue<TGenome>();
 
 			readonly List<Func<bool>> ProducerTriggers;
+			public List<Func<bool>> ExternalProducers { get; private set; } = new List<Func<bool>>();
 
 			bool ProcessVariation()
 			{
@@ -737,6 +753,10 @@ namespace Solve
 				}
 				// Next check for high priority items..
 				while (ProducerTriggers.Any(t => t()));
+
+				// Trigger any external producers but still return false for this round.
+				// We still want random production to occur every so often.
+				ExternalProducers.Any(p => p?.Invoke() ?? false);
 
 				return false;
 			}
