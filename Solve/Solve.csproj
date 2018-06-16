@@ -39,6 +39,7 @@
     <PackageReference Include="Open.Threading.Dataflow" Version="1.1.0" />
     <PackageReference Include="Open.Threading.Tasks" Version="1.1.2" />
     <PackageReference Include="System.Interactive.Async" Version="3.1.1" />
+    <PackageReference Include="System.Memory" Version="4.5.0" />
     <PackageReference Include="System.Reactive" Version="4.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
     <PackageReference Include="System.Threading.Tasks.Channels" Version="0.1.0-alpha-001" />

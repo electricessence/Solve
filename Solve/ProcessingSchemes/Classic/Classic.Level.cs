@@ -18,7 +18,6 @@ namespace Solve.ProcessingSchemes
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
-			readonly object PoolLock = new object();
 			readonly ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)> Pool
 				= new ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)>();
 			readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> FastTrackQueue
@@ -100,7 +99,7 @@ namespace Solve.ProcessingSchemes
 				{
 					(IGenomeFitness<TGenome, Fitness> GenomeFitness, ushort LevelLossRecord)[] selection = null;
 					// If a lock is already aquired somewhere else, then skip/ignore...
-					if (ThreadSafety.TryLock(PoolLock, () =>
+					if (ThreadSafety.TryLock(Pool, () =>
 					{
 						if (Pool.Count >= PoolSize)
 							selection = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();

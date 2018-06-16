@@ -1,4 +1,7 @@
-﻿namespace Solve
+﻿using System;
+using System.Collections.Generic;
+
+namespace Solve
 {
 	public interface IGenomeFactoryPriorityQueue<TGenome>
 		where TGenome : class, IGenome
@@ -14,5 +17,7 @@
 		void Breed(params TGenome[] genomes);
 
 		bool TryGetNext(out TGenome genome);
+
+		List<Func<bool>> ExternalProducers { get; }
 	}
 }

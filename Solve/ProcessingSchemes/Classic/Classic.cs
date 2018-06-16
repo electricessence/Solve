@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Solve.ProcessingSchemes
 {
@@ -28,21 +30,54 @@ namespace Solve.ProcessingSchemes
 			PoolSize = poolSize;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
+			FactoryReserve = genomeFactory[2];
+			FactoryReserve.ExternalProducers.Add(ProduceFromReserve);
 		}
 
 		public ClassicProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevelLosses = 5,
-			ushort maxLossesBeforeElimination = 30) : this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination)
+			ushort maxLossesBeforeElimination = 30)
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination)
 		{
-
 		}
+
+		readonly IGenomeFactoryPriorityQueue<TGenome> FactoryReserve;
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
+
+		readonly ConcurrentQueue<TGenome> ReserveBreeders
+			= new ConcurrentQueue<TGenome>();
+
+		void AddReserved(TGenome genome)
+		{
+			ReserveBreeders.Enqueue(genome);
+			while (ReserveBreeders.Count > 100 && ReserveBreeders.TryDequeue(out TGenome discard)) { }
+		}
+
+		bool ProduceFromReserve()
+		{
+			// Dump and requeue...
+			var all = ReserveBreeders.AsDequeueingEnumerable().Distinct().ToArray();
+			foreach (var e in all) ReserveBreeders.Enqueue(e);
+
+			if (all.Length > 1)
+			{
+				FactoryReserve.Breed(all); // Enqueuing can be problematic so we trigger breeding immediately...
+				return true;
+			}
+			return false;
+		}
+
+		protected override bool OnTowerBroadcast(Tower source, IGenomeFitness<TGenome, Fitness> genomeFitness)
+		{
+			AddReserved(genomeFitness.Genome);
+			return base.OnTowerBroadcast(source, genomeFitness);
+		}
 	}
 
 
