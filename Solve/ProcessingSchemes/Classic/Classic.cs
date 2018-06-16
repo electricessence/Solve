@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 
 namespace Solve.ProcessingSchemes
 {
@@ -12,7 +13,8 @@ namespace Solve.ProcessingSchemes
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevelLosses = 5,
-			ushort maxLossesBeforeElimination = 30)
+			ushort maxLossesBeforeElimination = 30,
+			ushort reserveBreederPoolSize = 20)
 			: base(genomeFactory)
 		{
 			if (poolSize.Minimum < 2)
@@ -32,14 +34,16 @@ namespace Solve.ProcessingSchemes
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
 			FactoryReserve = genomeFactory[2];
 			FactoryReserve.ExternalProducers.Add(ProduceFromReserve);
+			ReserveBreederPoolSize = reserveBreederPoolSize;
 		}
 
 		public ClassicProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevelLosses = 5,
-			ushort maxLossesBeforeElimination = 30)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination)
+			ushort maxLossesBeforeElimination = 30,
+			ushort reserveBreederPoolSize = 20)
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, reserveBreederPoolSize)
 		{
 		}
 
@@ -49,33 +53,49 @@ namespace Solve.ProcessingSchemes
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
+		public readonly ushort ReserveBreederPoolSize;
 
-		readonly ConcurrentQueue<TGenome> ReserveBreeders
-			= new ConcurrentQueue<TGenome>();
+		readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> ReserveBreeders
+			= new ConcurrentQueue<IGenomeFitness<TGenome, Fitness>>();
 
-		void AddReserved(TGenome genome)
+		Lazy<TGenome[]> ReadyReserve;
+
+		void AddReserved(IGenomeFitness<TGenome, Fitness> genome)
 		{
 			ReserveBreeders.Enqueue(genome);
-			while (ReserveBreeders.Count > 100 && ReserveBreeders.TryDequeue(out TGenome discard)) { }
+			if (ReadyReserve != null)
+				Interlocked.Exchange(ref ReadyReserve, null);
+			if (ReserveBreeders.Count > ReserveBreederPoolSize * 4)
+				SortAndReturnLimited(); // Overflowing?
 		}
+
+		TGenome[] SortAndReturnLimited()
+			=> LazyInitializer.EnsureInitialized(ref ReadyReserve, () => new Lazy<TGenome[]>(() =>
+			{
+				var result = ReserveBreeders.AsDequeueingEnumerable().Distinct().ToArray();
+				result.Sort(true);
+				var limited = result.Take(ReserveBreederPoolSize);
+				foreach (var e in limited) ReserveBreeders.Enqueue(e);
+				return limited.Select(g => g.Genome).ToArray();
+			})).Value;
 
 		bool ProduceFromReserve()
 		{
-			// Dump and requeue...
-			var all = ReserveBreeders.AsDequeueingEnumerable().Distinct().ToArray();
-			foreach (var e in all) ReserveBreeders.Enqueue(e);
+			// Let it grow first...
+			if (ReserveBreeders.Count < ReserveBreederPoolSize)
+				return false;
 
-			if (all.Length > 1)
-			{
-				FactoryReserve.Breed(all); // Enqueuing can be problematic so we trigger breeding immediately...
-				return true;
-			}
-			return false;
+			var breeders = SortAndReturnLimited();
+			var len = breeders.Length;
+			for (var i = 0; i < len; i++)
+				FactoryReserve.Breed(breeders);
+
+			return len != 0;
 		}
 
 		protected override bool OnTowerBroadcast(Tower source, IGenomeFitness<TGenome, Fitness> genomeFitness)
 		{
-			AddReserved(genomeFitness.Genome);
+			AddReserved(genomeFitness);
 			return base.OnTowerBroadcast(source, genomeFitness);
 		}
 	}
