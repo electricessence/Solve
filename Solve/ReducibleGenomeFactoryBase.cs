@@ -6,6 +6,10 @@ namespace Solve
 	where TGenome : class, IReducibleGenome<TGenome>
 	{
 
+		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome> seeds = null) : base(seeds)
+		{
+		}
+
 		protected override TGenome Registration(TGenome target)
 		{
 			if (target == null) return null;

@@ -22,13 +22,15 @@ namespace Solve
 	{
 
 		public readonly IMetricsRoot Metrics;
-		readonly MetricCollection MetricsCounter;
+		internal readonly MetricCollection MetricsCounter;
 
-		protected GenomeFactoryBase()
+		protected GenomeFactoryBase(IEnumerable<TGenome> seeds = null)
 		{
 			Metrics = new MetricsBuilder().Build();
 			MetricsCounter = new MetricCollection(Metrics);
-			//MetricsCounter.Ignore(INTERNAL_QUEUE_COUNT);
+
+			var s = seeds as TGenome[] ?? seeds?.ToArray();
+			if (s != null && s.Length != 0) GetPriorityQueue(0).EnqueueInternal(s);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
@@ -436,32 +438,31 @@ namespace Solve
 		protected List<PriorityQueue> PriorityQueues
 			= new List<PriorityQueue>();
 
-		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
+		protected PriorityQueue GetPriorityQueue(int index)
 		{
-			get
-			{
-				if (index < 0)
-					throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
+			if (index < 0)
+				throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
 
-				if (PriorityQueues.Count <= index)
+			if (PriorityQueues.Count <= index)
+			{
+				lock (PriorityQueues)
 				{
-					lock (PriorityQueues)
+					int i;
+					while ((i = PriorityQueues.Count) <= index)
 					{
-						int i;
-						while ((i = PriorityQueues.Count) <= index)
-						{
-							var instance = new PriorityQueue(i, this);
-							PriorityQueues.Add(instance);
-							Debug.Assert(PriorityQueues[i] == instance);
-							if (i == index) return instance;
-						}
+						var instance = new PriorityQueue(i, this);
+						PriorityQueues.Add(instance);
+						Debug.Assert(PriorityQueues[i] == instance);
+						if (i == index) return instance;
 					}
 				}
-
-				return PriorityQueues[index];
 			}
+
+			return PriorityQueues[index];
 		}
 
+		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
+			=> GetPriorityQueue(index);
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
 		{
@@ -619,7 +620,7 @@ namespace Solve
 				return bred;
 			}
 
-			protected bool EnqueueInternal(params TGenome[] genomes)
+			internal bool EnqueueInternal(params TGenome[] genomes)
 			{
 				if (genomes == null) return false;
 				bool added = false;
