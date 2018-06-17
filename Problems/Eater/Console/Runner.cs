@@ -2,6 +2,7 @@
 using Solve.ProcessingSchemes;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Eater
@@ -12,12 +13,13 @@ namespace Eater
 		public static readonly string[] Seed =
 		{
 			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^"
+			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^",
+			"3^>6^>9^>9^>9^>8^>8^>7^>7^>6^>6^>5^>5^>4^>4^>3^>3^>2^>2^>^>5^>5^>9^>5^"
 		};
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory = new EaterFactory();
+		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s))*/);
 
 
 		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
@@ -32,7 +34,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(factory, 20, 4, 2, 200);
 			//var scheme = new KingOfTheHill<EaterGenome>(factory, 300, _minConvSamples, 5);
-			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (1000, 100, 10));
+			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (800, 40, 40));
 			//var scheme = new KumiteProcessingScheme<EaterGenome>(Factory, 5);
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 
