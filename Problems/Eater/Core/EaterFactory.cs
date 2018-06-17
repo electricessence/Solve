@@ -7,15 +7,16 @@ namespace Eater
 
 	public class EaterFactory : Solve.ReducibleGenomeFactoryBase<EaterGenome>
 	{
-		public EaterFactory(IEnumerable<EaterGenome> seeds = null) : base(seeds)
+		public EaterFactory(IEnumerable<EaterGenome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
+			LeftTurnDisabled = leftTurnDisabled;
 		}
 
 		public int GeneratedCount { get; private set; } = 0;
 
 		readonly LinkedList<Step> _lastGenerated = new LinkedList<Step>();
 		readonly Random Randomizer = new Random();
-
+		readonly bool LeftTurnDisabled;
 		/*
          * The goal here is to produce unique eaters.
          */
@@ -39,7 +40,7 @@ namespace Eater
 						switch (_node.Value)
 						{
 							case Step.Forward:
-								_node.Value = Step.TurnLeft;
+								_node.Value = LeftTurnDisabled ? Step.TurnRight : Step.TurnLeft;
 								break;
 
 							case Step.TurnLeft:
@@ -100,6 +101,7 @@ namespace Eater
 			var value = genes[index];
 
 			var stepCount = Steps.ALL.Count;
+			if (LeftTurnDisabled) stepCount--;
 			// 1 in 4 chance to remove instead of alter.
 			var i = Randomizer.Next(genes.Length > 3 ? stepCount + 1 : stepCount);
 			if (i == stepCount)

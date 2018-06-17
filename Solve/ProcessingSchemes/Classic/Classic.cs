@@ -6,12 +6,14 @@ namespace Solve.ProcessingSchemes
 	public sealed partial class ClassicProcessingScheme<TGenome> : ProcessingSchemeBase<TGenome, ClassicProcessingScheme<TGenome>.Tower>
 		where TGenome : class, IGenome
 	{
+		const ushort DEFAULT_CHAMPION_POOL_SIZE = 100;
+
 		public ClassicProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevelLosses = 5,
 			ushort maxLossesBeforeElimination = 30,
-			ushort championPoolSize = 20)
+			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE)
 			: base(genomeFactory, championPoolSize)
 		{
 			if (poolSize.Minimum < 2)
@@ -36,7 +38,7 @@ namespace Solve.ProcessingSchemes
 			ushort poolSize,
 			ushort maxLevelLosses = 5,
 			ushort maxLossesBeforeElimination = 30,
-			ushort championPoolSize = 20)
+			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE)
 			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, championPoolSize)
 		{
 		}

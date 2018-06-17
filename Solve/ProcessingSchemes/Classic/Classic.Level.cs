@@ -58,7 +58,8 @@ namespace Solve.ProcessingSchemes
 					fitness = fitness.SnapShot(); // Safe to call multiple times.
 					if (Interlocked.CompareExchange(ref BestLevelFitness, fitness, f) == f)
 					{
-						Factory.EnqueueForBreeding(c.Genome);
+						Tower.Environment.AddChampion(c);
+						Factory.EnqueueChampion(c.Genome);
 						return true;
 					}
 				}
@@ -136,11 +137,13 @@ namespace Solve.ProcessingSchemes
 						// 4) Promote winners.
 						var top = selection[0].GenomeFitness;
 						UpdateBestLevelFitnessIfBetter(top);
-						Factory.EnqueueChampion(top.Genome);
+						//Factory.EnqueueChampion(top.Genome);
 						NextLevel.FastTrack(top); // Push this one to the finalist pool.
 						for (var i = 1; i < midPoint; i++)
 						{
-							NextLevel.Post(selection[i].GenomeFitness);
+							var n = selection[i].GenomeFitness;
+							NextLevel.Post(n);
+							if (lastLevel) Tower.Environment.AddChampion(n); // Need to leverage potentially significant genetics...
 						}
 
 						// 5) Promote second chance losers
@@ -178,9 +181,7 @@ namespace Solve.ProcessingSchemes
 				if (FastTrackQueue.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
 				{
 					// Process a test for this level.
-					if (ProcessTestAndUpdate(c))
-						Factory.EnqueueForBreeding(c.Genome);
-
+					ProcessTestAndUpdate(c);
 					_nextLevel.FastTrack(c);
 					return true;
 				}
