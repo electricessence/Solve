@@ -13,7 +13,7 @@ namespace Solve.ProcessingSchemes
 		where TGenome : class, IGenome
 	{
 		public KumiteProcessingScheme(IGenomeFactory<TGenome> genomeFactory, ushort maximumLoss = ushort.MaxValue, ushort maxOffspring = ushort.MaxValue)
-			: base(genomeFactory)
+			: base(genomeFactory, 0)
 		{
 			if (maximumLoss == 0) throw new ArgumentOutOfRangeException(nameof(maximumLoss), maximumLoss, "Must be greater than zero.");
 			MaximumLoss = maximumLoss;
