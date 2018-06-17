@@ -230,10 +230,17 @@ namespace Eater
 			throw new ArgumentException("Invalid value.", nameof(step));
 		}
 
-
+		static readonly Regex StepReplace = new Regex(@"(\d+)([<>^])", RegexOptions.Compiled);
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
+			hash = StepReplace.Replace(hash, m =>
+			{
+				var sb = new StringBuilder();
+				sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value));
+				return sb.ToString();
+			});
+
 			foreach (char c in hash)
 			{
 				yield return FromChar(c);

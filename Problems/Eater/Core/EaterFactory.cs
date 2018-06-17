@@ -7,6 +7,10 @@ namespace Eater
 
 	public class EaterFactory : Solve.ReducibleGenomeFactoryBase<EaterGenome>
 	{
+		public EaterFactory(IEnumerable<EaterGenome> seeds = null) : base(seeds)
+		{
+		}
+
 		public int GeneratedCount { get; private set; } = 0;
 
 		readonly LinkedList<Step> _lastGenerated = new LinkedList<Step>();
