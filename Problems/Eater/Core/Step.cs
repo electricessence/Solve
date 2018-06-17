@@ -12,8 +12,8 @@ namespace Eater
 	public enum Step
 	{
 		Forward,
-		TurnLeft,
-		TurnRight
+		TurnRight,
+		TurnLeft
 	}
 
 	public struct StepCount
@@ -197,10 +197,10 @@ namespace Eater
 		}
 
 		public const char FORWARD = '^';
-		public const char TURN_LEFT = '<';
 		public const char TURN_RIGHT = '>';
+		public const char TURN_LEFT = '<';
 
-		public static readonly IReadOnlyList<Step> ALL = (new List<Step> { Step.Forward, Step.TurnLeft, Step.TurnRight }).AsReadOnly();
+		public static readonly IReadOnlyList<Step> ALL = (new List<Step> { Step.Forward, Step.TurnRight, Step.TurnLeft }).AsReadOnly();
 
 		public static char ToChar(this Step step)
 		{
@@ -404,6 +404,11 @@ namespace Eater
 				yield return current;
 		}
 
+		public static IEnumerable<Point> InvertY(this IEnumerable<Point> points)
+		{
+			foreach (var p in points)
+				yield return new Point(p.X, -p.Y);
+		}
 
 		public static void Fill(this Bitmap target, Color color)
 		{
@@ -414,7 +419,7 @@ namespace Eater
 		public static Bitmap Render(this IEnumerable<Step> steps, int bitScale = 3)
 		{
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
-			var points = steps.Draw().ToArray();
+			var points = steps.Draw().InvertY().ToArray();
 			var length = points.Length;
 			double maxPenBrightness = 160d;
 			double colorStep = maxPenBrightness / length;
@@ -485,7 +490,7 @@ namespace Eater
 			int scale = 4 * scaleMultiple;
 			int bitScale = 16 * scale;
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
-			var points = steps.Draw(true).ToArray();
+			var points = steps.Draw(true).InvertY().ToArray();
 			var length = points.Length;
 			double maxPenBrightness = 160d;
 			double colorStep = maxPenBrightness / length;

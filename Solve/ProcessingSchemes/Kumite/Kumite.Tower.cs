@@ -39,7 +39,7 @@ namespace Solve.ProcessingSchemes
 
 		protected override bool OnTowerBroadcast(
 			Tower source,
-			IGenomeFitness<TGenome, Fitness> genomeFitness)
+			IGenomeFitness<TGenome> genomeFitness)
 		{
 			EnqueueForBreeding(genomeFitness, true);
 			return base.OnTowerBroadcast(source, genomeFitness);

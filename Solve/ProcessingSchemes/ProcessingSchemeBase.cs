@@ -19,7 +19,7 @@ namespace Solve.ProcessingSchemes
 			ChampionPoolSize = championPoolSize;
 			if (championPoolSize != 0)
 			{
-				Champions = new ConcurrentQueue<IGenomeFitness<TGenome, Fitness>>();
+				Champions = new ConcurrentQueue<IGenomeFitness<TGenome>>();
 				FactoryReserve = genomeFactory[2];
 				FactoryReserve.ExternalProducers.Add(ProduceFromChampions);
 			}
@@ -62,7 +62,7 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract TTower NewTower(IProblem<TGenome> problem);
 
-		protected virtual bool OnTowerBroadcast(TTower source, IGenomeFitness<TGenome, Fitness> genomeFitness)
+		protected virtual bool OnTowerBroadcast(TTower source, IGenomeFitness<TGenome> genomeFitness)
 		{
 			// This includes 'variations' and at least 1 mutation.
 			Factory[0].EnqueueChampion(genomeFitness.Genome);
@@ -75,10 +75,10 @@ namespace Solve.ProcessingSchemes
 
 		public readonly ushort ChampionPoolSize;
 		protected readonly IGenomeFactoryPriorityQueue<TGenome> FactoryReserve;
-		readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> Champions;
+		readonly ConcurrentQueue<IGenomeFitness<TGenome>> Champions;
 		Lazy<TGenome[]> RankedChampions;
 
-		protected void AddChampion(IGenomeFitness<TGenome, Fitness> genome)
+		protected void AddChampion(IGenomeFitness<TGenome> genome)
 		{
 			Debug.Assert(genome != null);
 			if (Champions == null || genome == null) return;
