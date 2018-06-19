@@ -6,15 +6,23 @@ namespace Solve
 	public interface IGenomeFactoryPriorityQueue<TGenome>
 		where TGenome : class, IGenome
 	{
-		void EnqueueChampion(params TGenome[] genomes);
+		void EnqueueChampion(TGenome genome);
+		void EnqueueChampion(ReadOnlySpan<TGenome> genomes);
 
-		void EnqueueVariations(params TGenome[] genomes);
-		void EnqueueForVariation(params TGenome[] genomes);
-		void EnqueueForMutation(params TGenome[] genomes);
-		void EnqueueForBreeding(params TGenome[] genomes);
-		void EnqueueForBreeding(TGenome genomes, int count);
+		void EnqueueVariations(TGenome genome);
+		void EnqueueVariations(ReadOnlySpan<TGenome> genomes);
 
-		void Breed(params TGenome[] genomes);
+		void EnqueueForVariation(TGenome genome);
+		void EnqueueForVariation(ReadOnlySpan<TGenome> genomes);
+
+		void EnqueueForMutation(TGenome genome);
+		void EnqueueForMutation(ReadOnlySpan<TGenome> genomes);
+
+		void EnqueueForBreeding(TGenome genome, int count = 1);
+		void EnqueueForBreeding(ReadOnlySpan<TGenome> genomes);
+
+		void Breed(TGenome genome = null);
+		void Breed(ReadOnlySpan<TGenome> genomes);
 
 		bool TryGetNext(out TGenome genome);
 

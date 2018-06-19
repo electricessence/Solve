@@ -113,6 +113,9 @@ namespace Eater
 			// Pattern is doubled.
 			yield return new EaterGenome(Enumerable.Repeat(Genes, 2).SelectMany(s => s));
 
+			// Pass reduced last to allow for any interesting varations to occur above first.
+			var reduced = AsReduced();
+			if (reduced != this) yield return reduced;
 		}
 
 		IEnumerator<EaterGenome> _remainingVariations;
