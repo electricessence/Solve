@@ -4,6 +4,7 @@ using Solve;
 using Solve.Experiment.Console;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -65,7 +66,14 @@ namespace Eater
 				}
 				if (lastRendered != null)
 				{
-					File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, "LatestWinner.jpg"), true);
+					try
+					{
+						File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, "LatestWinner.jpg"), true);
+					}
+					catch (IOException)
+					{
+						Debug.WriteLine("Could not update LatestWinner.jpg.");
+					}
 				}
 			});
 

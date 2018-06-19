@@ -133,8 +133,12 @@ namespace Solve.ProcessingSchemes
 			var len = champions.Length;
 			if (champions.Length > 0)
 			{
-				FactoryReserve.EnqueueForMutation(champions[0]);
-				if (champions.Length > 1) FactoryReserve.Breed(champions);
+				FactoryReserve.EnqueueForMutation(champions[0], champions[0]);
+				if (champions.Length > 1)
+				{
+					FactoryReserve.EnqueueForMutation(champions[1]);
+					FactoryReserve.Breed(champions);
+				}
 #if DEBUG
 				((GenomeFactoryBase<TGenome>)Factory).MetricsCounter.Increment("Champion Ranking Production");
 #endif

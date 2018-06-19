@@ -75,7 +75,7 @@ namespace Solve.ProcessingSchemes
 
 			public void Post(IGenomeFitness<TGenome, Fitness> c)
 			{
-				ProcessNextPromotion();
+				ProcessPromotions();
 
 				var lastLevel = _nextLevel == null;
 				// Process a test for this level.
@@ -155,6 +155,7 @@ namespace Solve.ProcessingSchemes
 						if (lastLevel)
 						{
 							Tower.Broadcast(top);
+							//((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Top Level Pool Selected");
 						}
 
 					}
@@ -170,22 +171,25 @@ namespace Solve.ProcessingSchemes
 			public void FastTrack(IGenomeFitness<TGenome, Fitness> c)
 			{
 				if (_nextLevel == null)
+				{
+					//((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Fast Tracked");
 					Post(c);
+				}
 				else
+				{
 					FastTrackQueue.Enqueue(c);
+				}
 			}
 
 
-			public bool ProcessNextPromotion()
+			public void ProcessPromotions()
 			{
-				if (FastTrackQueue.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
+				while (FastTrackQueue.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
 				{
 					// Process a test for this level.
 					ProcessTestAndUpdate(c);
 					_nextLevel.FastTrack(c);
-					return true;
 				}
-				return false;
 			}
 
 		}

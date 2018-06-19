@@ -11,8 +11,8 @@ namespace Solve.ProcessingSchemes
 		public ClassicProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
-			ushort maxLevelLosses = 5,
-			ushort maxLossesBeforeElimination = 30,
+			ushort maxLevelLosses = 3,
+			ushort maxLossesBeforeElimination = 3 * 20,
 			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE)
 			: base(genomeFactory, championPoolSize)
 		{
