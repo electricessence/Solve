@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Solve.Metrics;
+using System;
 using System.Diagnostics.Contracts;
 
 namespace Solve.ProcessingSchemes
@@ -8,13 +9,16 @@ namespace Solve.ProcessingSchemes
 	{
 		const ushort DEFAULT_CHAMPION_POOL_SIZE = 100;
 
+		internal readonly CounterCollection Counters;
+
 		public ClassicProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevelLosses = 3,
 			ushort maxLossesBeforeElimination = 3 * 20,
-			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE)
-			: base(genomeFactory, championPoolSize)
+			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE,
+			CounterCollection counters = null)
+			: base(genomeFactory)
 		{
 			if (poolSize.Minimum < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), "Must be at least 2.");
@@ -31,6 +35,8 @@ namespace Solve.ProcessingSchemes
 			PoolSize = poolSize;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
+			ChampionPoolSize = championPoolSize;
+			Counters = counters;
 		}
 
 		public ClassicProcessingScheme(
@@ -38,8 +44,9 @@ namespace Solve.ProcessingSchemes
 			ushort poolSize,
 			ushort maxLevelLosses = 5,
 			ushort maxLossesBeforeElimination = 30,
-			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, championPoolSize)
+			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE,
+			CounterCollection counters = null)
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, championPoolSize, counters)
 		{
 		}
 
@@ -47,6 +54,7 @@ namespace Solve.ProcessingSchemes
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
+		public readonly ushort ChampionPoolSize;
 	}
 
 

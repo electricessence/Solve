@@ -58,7 +58,7 @@ namespace Solve.ProcessingSchemes
 					fitness = fitness.SnapShot(); // Safe to call multiple times.
 					if (Interlocked.CompareExchange(ref BestLevelFitness, fitness, f) == f)
 					{
-						Tower.Environment.AddChampion(c);
+						Tower.AddChampion(c);
 						Factory.EnqueueChampion(c.Genome);
 						return true;
 					}
@@ -143,7 +143,7 @@ namespace Solve.ProcessingSchemes
 						{
 							var n = selection[i].GenomeFitness;
 							NextLevel.Post(n);
-							if (lastLevel) Tower.Environment.AddChampion(n); // Need to leverage potentially significant genetics...
+							if (lastLevel) Tower.AddChampion(n); // Need to leverage potentially significant genetics...
 						}
 
 						// 5) Promote second chance losers
