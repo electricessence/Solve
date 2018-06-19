@@ -7,6 +7,7 @@ using App.Metrics;
 using Open.Collections;
 using Open.Numeric;
 using Open.Threading.Tasks;
+using Solve.Metrics;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -22,12 +23,12 @@ namespace Solve
 	{
 
 		public readonly IMetricsRoot Metrics;
-		internal readonly MetricCollection MetricsCounter;
+		internal readonly CounterCollection MetricsCounter;
 
 		protected GenomeFactoryBase(IEnumerable<TGenome> seeds = null)
 		{
 			Metrics = new MetricsBuilder().Build();
-			MetricsCounter = new MetricCollection(Metrics);
+			MetricsCounter = new CounterCollection(Metrics);
 
 			var s = seeds as TGenome[] ?? seeds?.ToArray();
 			if (s != null && s.Length != 0) GetPriorityQueue(0).EnqueueInternal(s);

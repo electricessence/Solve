@@ -3,20 +3,20 @@ using App.Metrics.Counter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Solve
+namespace Solve.Metrics
 {
-	public class MetricCollection
+	public class CounterCollection
 	{
 		readonly IMetricsRoot Metrics;
 		readonly ISet<string> Ignored;
 
-		public MetricCollection(IMetricsRoot metrics)
+		public CounterCollection(IMetricsRoot metrics)
 			: this(metrics, new HashSet<string>())
 		{
 
 		}
 
-		public MetricCollection(IMetricsRoot metrics, ISet<string> ignored)
+		public CounterCollection(IMetricsRoot metrics, ISet<string> ignored)
 		{
 			Metrics = metrics;
 			Ignored = ignored;

@@ -6,4 +6,5 @@
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "<Pending>", Scope = "type", Target = "~T:Solve.Selection`1")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>", Scope = "type", Target = "~T:Solve.ProcessingSchemes.ClassicProcessingScheme`1.Tower")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>", Scope = "type", Target = "~T:Solve.ProcessingSchemes.KumiteProcessingScheme`1.Tower")]
 

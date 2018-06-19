@@ -5,7 +5,7 @@ namespace Solve.ProcessingSchemes
 {
 	public sealed partial class KumiteProcessingScheme<TGenome>
 	{
-		public sealed class Tower : GenomeFitnessBroadcasterBase<TGenome>, IGenomeProcessor<TGenome>
+		public sealed class Tower : ProblemSpecificBroadcasterBase<TGenome>, IGenomeProcessor<TGenome>
 		{
 			internal readonly KumiteProcessingScheme<TGenome> Environment;
 			internal readonly IProblem<TGenome> Problem;
@@ -15,7 +15,7 @@ namespace Solve.ProcessingSchemes
 
 			public Tower(IProblem<TGenome> problem,
 				KumiteProcessingScheme<TGenome> environment,
-				Action<IGenomeFitness<TGenome, Fitness>> rejectionProcessor = null) : base()
+				Action<IGenomeFitness<TGenome, Fitness>> rejectionProcessor = null) : base(environment?.Factory, 0)
 			{
 				Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 				Environment = environment ?? throw new ArgumentNullException(nameof(environment));
