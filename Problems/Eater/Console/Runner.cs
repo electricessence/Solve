@@ -18,7 +18,7 @@ namespace Eater
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
+		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*//*leftTurnDisabled: true*/);
 
 
 		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
@@ -33,7 +33,7 @@ namespace Eater
 			var emitter = new EaterConsoleEmitter(problem.Samples, _minSamples);
 			//var scheme = new PyramidPipeline<EaterGenome>(factory, 20, 4, 2, 200);
 			//var scheme = new KingOfTheHill<EaterGenome>(factory, 300, _minConvSamples, 5);
-			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (800, 400, 40));
+			var scheme = new ClassicProcessingScheme<EaterGenome>(Factory, (1000, 100, 50));
 			//var scheme = new KumiteProcessingScheme<EaterGenome>(Factory, 5);
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 

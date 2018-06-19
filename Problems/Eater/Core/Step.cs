@@ -508,7 +508,7 @@ namespace Eater
 			var dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
 			var offset = new Point(-min.X + dX, -min.Y + dY);
 
-			var squareSize = square * bitScale + 2 * bitScale;
+			var squareSize = square * bitScale + 2 * bitScale + points.Length;
 			var bitmap = new Bitmap(squareSize, squareSize);
 			bitmap.Fill(Color.White);
 
@@ -516,14 +516,14 @@ namespace Eater
 			{
 				using (var graphic = Graphics.FromImage(bitmap))
 				{
-
-					var pointFs = points.Select(p => new PointF((p.X + offset.X) * bitScale + bitScale, (p.Y + offset.Y) * bitScale + bitScale)).ToArray();
+					var pointFs = points.Select((p, i) => new PointF((p.X + offset.X) * bitScale + bitScale + i, (p.Y + offset.Y) * bitScale + bitScale + i)).ToArray();
 					var first = pointFs.First();
-					var radius = 5 * scale;
-					graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
-
 					var last = pointFs.Last();
+					var radius = 5 * scale;
+
+					graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
 					graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
+
 
 					var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
 					outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
@@ -542,6 +542,11 @@ namespace Eater
 						}
 
 					}
+
+
+					graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Green), 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
+					graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Red), 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
+
 				}
 			}
 

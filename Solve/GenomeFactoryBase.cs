@@ -34,7 +34,6 @@ namespace Solve
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
-		const string BREED_ONE = "BreedOne";
 		const string INTERNAL_QUEUE_COUNT = "InternalQueue.Count";
 		const string AWAITING_VARIATION = "AwaitingVariation";
 		const string AWAITING_MUTATION = "AwaitingMutation";
@@ -142,8 +141,8 @@ namespace Solve
 		// Be sure to call Registration within the GenerateNew call.
 		protected abstract TGenome GenerateOneInternal();
 
-		const string GENERATE_NEW_SUCCESS = "GenerateNew: SUCCESS";
-		const string GENERATE_NEW_FAIL = "GenerateNew: FAIL";
+		const string GENERATE_NEW_SUCCESS = "Generate New SUCCEDED";
+		const string GENERATE_NEW_FAIL = "Generate New FAILED";
 
 		public bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source)
 		{
@@ -252,9 +251,13 @@ namespace Solve
 					{
 						genome = Mutate(source.RandomSelectOne(), m);
 						if (genome != null && RegisterProduction(genome))
+						{
+							MetricsCounter.Increment("Mutation SUCCEDED");
 							return true;
+						}
 					}
 				}
+				MetricsCounter.Increment("Mutation FAILED");
 			}
 			genome = null;
 			return false;
@@ -324,10 +327,15 @@ namespace Solve
 			while (maxAttempts != 0)
 			{
 				var offspring = Crossover(a, b)?.Where(g => RegisterProduction(g)).ToArray();
-				if (offspring != null && offspring.Length != 0) return offspring;
+				if (offspring != null && offspring.Length != 0)
+				{
+					MetricsCounter.Increment("Crossover SUCCEDED");
+					return offspring;
+				}
 				--maxAttempts;
 			}
 
+			MetricsCounter.Increment("Crossover Failed");
 			return null;
 		}
 
@@ -595,8 +603,6 @@ namespace Solve
 						if (EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome)))
 						{
 							bred = true;
-							Factory.MetricsCounter.Increment(BREED_ONE);
-
 							// After breeding, decrease their counts.
 							current.count--;
 							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
@@ -744,6 +750,12 @@ namespace Solve
 
 			public bool TryGetNext(out TGenome genome)
 			{
+				//int av = AwaitingVariation.Count, am = AwaitingMutation.Count, bs = BreedingStock.Count;
+				//if (av > 10000 || am > 10000 || bs > 10000)
+				//{
+				//	throw new Exception($"AwaitingVariation.Count: {av}\nAwaitingMutation.Count: {am}\nBreedingStock.Count: {bs}");
+				//}
+
 				do
 				{
 					if (InternalQueue.TryDequeue(out genome))
