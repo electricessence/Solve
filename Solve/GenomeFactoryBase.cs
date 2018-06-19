@@ -405,23 +405,6 @@ namespace Solve
 			return null;
 		}
 
-		public virtual IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null)
-		{
-			if (others != null)
-			{
-				foreach (var o in others)
-				{
-					yield return o;
-				}
-			}
-
-			//var variation = (TGenome)genome.NextVariation();
-			//if (variation != null) yield return AssertFrozen(variation);
-			Debug.Assert(genome.Hash.Length != 0, "Cannot expand an empty genome.");
-			if (GenerateNew(out TGenome mutation, genome))
-				yield return mutation;
-		}
-
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 		public IEnumerator<TGenome> GetEnumerator()
@@ -499,47 +482,52 @@ namespace Solve
 			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
 				= new ConcurrentQueue<(TGenome Genome, int Count)>();
 
-			public void EnqueueChampion(params TGenome[] genomes)
+			public void EnqueueChampion(ReadOnlySpan<TGenome> genomes)
 			{
-				EnqueueForVariation(genomes);
-				EnqueueForBreeding(genomes);
-				EnqueueForMutation(genomes);
+				foreach (var genome in genomes)
+					EnqueueChampion(genome);
+			}
+			public void EnqueueChampion(TGenome genome)
+			{
+				EnqueueForVariation(genome);
+				EnqueueForBreeding(genome);
+				EnqueueForMutation(genome);
 			}
 
-			public void EnqueueForBreeding(params TGenome[] genomes)
+			public void EnqueueForBreeding(ReadOnlySpan<TGenome> genomes)
 			{
 				if (genomes != null)
 					foreach (var g in genomes)
-						EnqueueForBreeding(g, 1);
+						EnqueueForBreeding(g);
 			}
 
-			protected void EnqueueForBreeding((TGenome genome, int count) breeder)
+			protected void EnqueueForBreeding((TGenome genome, int count) breeder, bool incrementMetrics)
 			{
-				if (breeder.count > 0)
-					BreedingStock.Enqueue(breeder);
-			}
-
-			public void EnqueueForBreeding(TGenome genome, int count)
-			{
+				var count = breeder.count;
 				if (count > 0)
 				{
-					Factory.MetricsCounter.Increment(BREEDING_STOCK);
-					BreedingStock.Enqueue((genome, count));
+					if (incrementMetrics) Factory.MetricsCounter.Increment(BREEDING_STOCK, count);
+					BreedingStock.Enqueue(breeder);
 				}
 			}
 
-			public void Breed(params TGenome[] genomes)
+			public void EnqueueForBreeding(TGenome genome, int count = 1)
 			{
-				if (genomes.Length == 0)
-					BreedOne(null);
-				else
-				{
-					foreach (var g in genomes)
-					{
-						Factory.MetricsCounter.Increment(BREEDING_STOCK);
-						BreedOne(g);
-					}
-				}
+				if (count > 0)
+					EnqueueForBreeding((genome, count), true);
+			}
+
+			public void Breed(ReadOnlySpan<TGenome> genomes)
+			{
+				foreach (var g in genomes)
+					Breed(g);
+			}
+
+			public void Breed(TGenome genome = null)
+			{
+				if (genome != null)
+					Factory.MetricsCounter.Increment(BREEDING_STOCK);
+				BreedOne(genome);
 			}
 
 			protected bool TryTakeBreeder(out (TGenome genome, int count) mate)
@@ -549,7 +537,7 @@ namespace Solve
 					if (mate.count > 1)
 					{
 						mate.count--;
-						BreedingStock.Enqueue(mate);
+						if (mate.count > 0) BreedingStock.Enqueue(mate);
 						mate = (mate.genome, 1);
 					}
 					return true;
@@ -600,19 +588,38 @@ namespace Solve
 					}
 					else
 					{
+						void decrementCurrent()
+						{
+							current.count--;
+							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+						}
+						void decrementMate()
+						{
+							mate.count--;
+							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+						}
+
 						// We have a valid mate!
 						if (EnqueueInternal(Factory.AttemptNewCrossover(genome, mateGenome)))
 						{
 							bred = true;
 							// After breeding, decrease their counts.
-							current.count--;
-							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
-							mate.count--;
-							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+							decrementCurrent();
+							decrementMate();
+						}
+						else
+						{
+							// Breeding failures almost always happen early on when genomes are short in length and have already been introduced.
+							if (genome.Length < 4) decrementCurrent();
+							if (mate.genome.Length < 4) decrementMate();
+
+							// Generate more (and insert at higher priority) to improve the pool;
+							EnqueueInternal(Factory.GenerateOne());
+							Factory.GetPriorityQueue(Index + 1).EnqueueInternal(Factory.GenerateOne());
 						}
 
 						// Might still need more funtime.
-						EnqueueForBreeding(mate);
+						EnqueueForBreeding(mate, false);
 
 						break;
 					}
@@ -623,26 +630,32 @@ namespace Solve
 				}
 
 				// Might still need more funtime.
-				EnqueueForBreeding(current);
+				EnqueueForBreeding(current, false);
 				return bred;
 			}
 
-			internal bool EnqueueInternal(params TGenome[] genomes)
+			internal bool EnqueueInternal(TGenome genome)
 			{
-				if (genomes == null) return false;
+				if (genome != null)
+				{
+					Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
+					InternalQueue.Enqueue(genome);
+					return true;
+				}
+				else
+				{
+					Debug.Fail("A null geneome was provided.");
+				}
+				return false;
+			}
+
+			internal bool EnqueueInternal(ReadOnlySpan<TGenome> genomes)
+			{
 				bool added = false;
 				foreach (var g in genomes)
 				{
-					if (g != null)
-					{
-						Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
-						InternalQueue.Enqueue(g);
+					if (EnqueueInternal(g))
 						added = true;
-					}
-					else
-					{
-						Debug.Fail("A null geneome was provided.");
-					}
 				}
 				return added;
 			}
@@ -669,40 +682,45 @@ namespace Solve
 				return false;
 			}
 
-			public void EnqueueVariations(params TGenome[] genomes)
+			public void EnqueueVariations(TGenome genome)
 			{
-				if (genomes == null) return;
+				if (genome != null) while (AttemptEnqueueVariation(genome)) { }
+			}
+
+			public void EnqueueVariations(ReadOnlySpan<TGenome> genomes)
+			{
 				foreach (var g in genomes)
+					EnqueueVariations(g);
+			}
+
+			public void EnqueueForVariation(TGenome genome)
+			{
+				if (genome != null)
 				{
-					if (g == null) continue;
-					while (AttemptEnqueueVariation(g)) { }
+					Factory.MetricsCounter.Increment(AWAITING_VARIATION);
+					AwaitingVariation.Enqueue(genome);
 				}
 			}
 
-			public void EnqueueForVariation(params TGenome[] genomes)
+			public void EnqueueForVariation(ReadOnlySpan<TGenome> genomes)
 			{
-				if (genomes == null) return;
 				foreach (var g in genomes)
+					EnqueueVariations(g);
+			}
+
+			public void EnqueueForMutation(TGenome genome)
+			{
+				if (genome != null)
 				{
-					if (g != null)
-					{
-						Factory.MetricsCounter.Increment(AWAITING_VARIATION);
-						AwaitingVariation.Enqueue(g);
-					}
+					Factory.MetricsCounter.Increment(AWAITING_MUTATION);
+					AwaitingMutation.Enqueue(genome);
 				}
 			}
 
-			public void EnqueueForMutation(params TGenome[] genomes)
+			public void EnqueueForMutation(ReadOnlySpan<TGenome> genomes)
 			{
-				if (genomes == null) return;
 				foreach (var g in genomes)
-				{
-					if (g != null)
-					{
-						Factory.MetricsCounter.Increment(AWAITING_MUTATION);
-						AwaitingMutation.Enqueue(g);
-					}
-				}
+					EnqueueForMutation(g);
 			}
 
 			protected readonly ConcurrentQueue<TGenome> InternalQueue
@@ -774,6 +792,7 @@ namespace Solve
 
 				return false;
 			}
+
 		}
 	}
 }

@@ -29,16 +29,24 @@ namespace Solve.Metrics
 
 		readonly ConcurrentDictionary<string, CounterOptions> Counters = new ConcurrentDictionary<string, CounterOptions>();
 
-		public void Increment(string counterName)
+		public void Increment(string counterName, int count = 1)
 		{
-			if (!Ignored.Contains(counterName))
-				Metrics.Measure.Counter.Increment(Counters.GetOrAdd(counterName, key => new CounterOptions { Name = key }));
+			if (count > 0 && !Ignored.Contains(counterName))
+			{
+				var c = Counters.GetOrAdd(counterName, key => new CounterOptions { Name = key });
+				for (var i = 0; i < count; i++)
+					Metrics.Measure.Counter.Increment(c);
+			}
 		}
 
-		public void Decrement(string counterName)
+		public void Decrement(string counterName, int count = 1)
 		{
-			if (!Ignored.Contains(counterName))
-				Metrics.Measure.Counter.Decrement(Counters.GetOrAdd(counterName, key => new CounterOptions { Name = key }));
+			if (count > 0 && !Ignored.Contains(counterName))
+			{
+				var c = Counters.GetOrAdd(counterName, key => new CounterOptions { Name = key });
+				for (var i = 0; i < count; i++)
+					Metrics.Measure.Counter.Decrement(c);
+			}
 		}
 
 	}

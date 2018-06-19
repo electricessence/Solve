@@ -15,7 +15,7 @@ namespace Solve.ProcessingSchemes
 
 			public Tower(IProblem<TGenome> problem,
 				KumiteProcessingScheme<TGenome> environment,
-				Action<IGenomeFitness<TGenome, Fitness>> rejectionProcessor = null) : base(environment?.Factory, 0)
+				Action<IGenomeFitness<TGenome, Fitness>> rejectionProcessor = null) : base(0)
 			{
 				Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 				Environment = environment ?? throw new ArgumentNullException(nameof(environment));

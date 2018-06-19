@@ -40,8 +40,6 @@ namespace Solve
 
 		TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3);
 
-		IEnumerable<TGenome> Expand(TGenome genome, IEnumerable<TGenome> others = null);
-
 		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
 
 		TGenome Next();
