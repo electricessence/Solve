@@ -32,7 +32,7 @@ namespace Solve.ProcessingSchemes
 			base.AddProblems(problems);
 		}
 
-		void Post(TGenome genome)
+		protected void Post(TGenome genome)
 		{
 			foreach (var host in Towers.Values)
 				host.Post(genome);

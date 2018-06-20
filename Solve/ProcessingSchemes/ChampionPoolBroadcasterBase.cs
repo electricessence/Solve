@@ -20,14 +20,22 @@
 
 			var champions = ChampionPool.Ranked;
 			var len = champions.Length;
-			if (champions.Length > 0)
+			if (len > 0)
 			{
-				factoryQueue.EnqueueForMutation(champions);
-				if (champions.Length > 1)
+				var top = champions[0];
+				factoryQueue.Mutate(top, 3);
+				factoryQueue.Breed(top, 3);
+
+				if (len > 1)
 				{
-					factoryQueue.EnqueueForMutation(champions[1]);
-					factoryQueue.Breed(champions);
+					var second = champions[1];
+					factoryQueue.Mutate(second, 2);
+					factoryQueue.Breed(second, 2);
 				}
+
+				var next = TriangularSelection.Descending.RandomOne(champions);
+				factoryQueue.Mutate(next);
+				factoryQueue.Breed(next);
 
 				return true;
 			}

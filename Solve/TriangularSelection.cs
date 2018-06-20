@@ -22,18 +22,22 @@ namespace Solve.TriangularSelection
 
 		public static T RandomOne<T>(IReadOnlyList<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Count)];
+
+		public static T RandomOne<T>(ReadOnlySpan<T> source)
+			=> source[GetRandomTriangularFavoredIndex(source.Length)];
 	}
 
 
 	public static class Descending
 	{
 		public static int GetRandomTriangularFavoredIndex(int length)
-			=> length = Ascending.GetRandomTriangularFavoredIndex(length);
+			=> length - Ascending.GetRandomTriangularFavoredIndex(length) - 1;
 
 		public static T RandomOne<T>(IReadOnlyList<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Count)];
 
-
+		public static T RandomOne<T>(ReadOnlySpan<T> source)
+			=> source[GetRandomTriangularFavoredIndex(source.Length)];
 	}
 
 
