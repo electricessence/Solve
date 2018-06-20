@@ -53,7 +53,7 @@ namespace Eater
 			var ts = DateTime.Now.Ticks;
 			File.WriteAllText(Path.Combine(ProgressionDirectory, $"{ts}.txt"), genome.Hash);
 			var rendered = Path.Combine(ProgressionDirectory, $"{ts}.jpg");
-			using (var bitmap = genome.Genes.Render2())
+			using (var bitmap = genome.Genes.ToArray().Render2())
 				bitmap.Save(rendered, JpgEncoder, EncParams);
 
 			BitmapQueue.Enqueue(rendered);

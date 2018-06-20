@@ -73,14 +73,15 @@ namespace Eater
 
 		protected override EaterGenome[] CrossoverInternal(EaterGenome a, EaterGenome b)
 		{
-			var aGenes = a.Genes;
-			var bGenes = b.Genes;
-			var aLen = aGenes.Count;
-			var bLen = bGenes.Count;
+			var aLen = a.Genes.Length;
+			var bLen = b.Genes.Length;
 			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
 
 			var aPoint = Randomizer.Next(aLen - 1) + 1;
 			var bPoint = Randomizer.Next(bLen - 1) + 1;
+
+			var aGenes = a.Genes.ToArray();
+			var bGenes = b.Genes.ToArray();
 
 			return new EaterGenome[]
 			{
@@ -96,7 +97,7 @@ namespace Eater
 
 		protected override EaterGenome MutateInternal(EaterGenome target)
 		{
-			var genes = target.GetGenes();
+			var genes = target.Genes.ToArray();
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
@@ -105,7 +106,9 @@ namespace Eater
 			// 1 in 4 chance to remove instead of alter.
 			var i = Randomizer.Next(genes.Length > 3 ? stepCount + 1 : stepCount);
 			if (i == stepCount)
+			{
 				return new EaterGenome(Remove(index, genes));
+			}
 
 			var g = Steps.ALL[i];
 
