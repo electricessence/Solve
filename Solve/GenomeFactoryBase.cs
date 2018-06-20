@@ -523,11 +523,15 @@ namespace Solve
 					Breed(g);
 			}
 
-			public void Breed(TGenome genome = null)
+			public void Breed(TGenome genome = null, int maxCount = 1)
 			{
-				if (genome != null)
-					Factory.MetricsCounter.Increment(BREEDING_STOCK);
-				BreedOne(genome);
+				for (var i = 0; i < maxCount; i++)
+				{
+					if (genome != null)
+						Factory.MetricsCounter.Increment(BREEDING_STOCK);
+					if (!BreedOne(genome))
+						break;
+				}
 			}
 
 			protected bool TryTakeBreeder(out (TGenome genome, int count) mate)
@@ -583,8 +587,11 @@ namespace Solve
 					var mateGenome = mate.genome;
 					if (mateGenome == genome || mateGenome.Hash == genome.Hash)
 					{
+						//if (!EnqueueMutation(genome))
+						//{
 						// A repeat of the current?  Increment breeding count and try again.
 						current.count++;
+						//}
 					}
 					else
 					{
@@ -615,7 +622,6 @@ namespace Solve
 
 							// Generate more (and insert at higher priority) to improve the pool;
 							EnqueueInternal(Factory.GenerateOne());
-							Factory.GetPriorityQueue(Index + 1).EnqueueInternal(Factory.GenerateOne());
 						}
 
 						// Might still need more funtime.
@@ -708,7 +714,25 @@ namespace Solve
 					EnqueueVariations(g);
 			}
 
-			public void EnqueueForMutation(TGenome genome)
+			public bool Mutate(TGenome genome, int maxCount = 1)
+			{
+				if (maxCount < 1) return false;
+				int i = 0;
+				for (; i < maxCount; i++)
+				{
+					if (Factory.AttemptNewMutation(genome, out TGenome mutation))
+					{
+						EnqueueInternal(mutation);
+					}
+					else
+					{
+						break;
+					}
+				}
+				return i != 0;
+			}
+
+			public void EnqueueForMutation(TGenome genome, int count = 1)
 			{
 				if (genome != null)
 				{
@@ -789,6 +813,8 @@ namespace Solve
 				// Trigger any external producers but still return false for this round.
 				// We still want random production to occur every so often.
 				ExternalProducers.Any(p => p?.Invoke() ?? false);
+				if (ExternalProducers.Count != 0)
+					Factory.MetricsCounter.Increment("External Producer Queried");
 
 				return false;
 			}
