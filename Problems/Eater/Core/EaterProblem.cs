@@ -58,7 +58,7 @@ namespace Eater
 			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
 			var ave = energy / len;
-			var geneCount = g.Genes.Count;
+			var geneCount = g.Genes.Length;
 			fitness.AddScores(found / len, -ave, -geneCount);// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
 
@@ -77,7 +77,7 @@ namespace Eater
 			var count = fullTest[0].Count;
 			fitness.Add(fullTest[0]);
 			fitness.Add(fullTest[1]);
-			fitness.Add(new ProcedureResult(g.Genes.Count * count, count));
+			fitness.Add(new ProcedureResult(g.Genes.Length * count, count));
 		}
 
 	}
