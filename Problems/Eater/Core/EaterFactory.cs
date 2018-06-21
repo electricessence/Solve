@@ -10,7 +10,10 @@ namespace Eater
 		public EaterFactory(IEnumerable<EaterGenome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
 			LeftTurnDisabled = leftTurnDisabled;
+			AvailableSteps = leftTurnDisabled ? Steps.ALL : Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly();
 		}
+
+		public readonly IReadOnlyList<Step> AvailableSteps;
 
 		public int GeneratedCount { get; private set; } = 0;
 
@@ -90,41 +93,60 @@ namespace Eater
 			};
 		}
 
-		static IEnumerable<T> Remove<T>(int index, T[] source)
-		{
-			return source.Take(index).Concat(source.Skip(index + 1));
-		}
+
 
 		protected override EaterGenome MutateInternal(EaterGenome target)
 		{
 			var genes = target.Genes.ToArray();
+			var length = genes.Length;
 			var index = Randomizer.Next(genes.Length);
 			var value = genes[index];
 
-			var stepCount = Steps.ALL.Count;
-			if (LeftTurnDisabled) stepCount--;
-			// 1 in 4 chance to remove instead of alter.
-			var i = Randomizer.Next(genes.Length > 3 ? stepCount + 1 : stepCount);
+			var stepCount = AvailableSteps.Count;
+			// Select a replacement where one of the replacements is potentially 'blank' (to remove).
+			var i = Randomizer.Next(length > 3 ? stepCount + 1 : stepCount);
 			if (i == stepCount)
 			{
-				return new EaterGenome(Remove(index, genes));
+				// Remove 1, 2, or 3?
+				var r = Randomizer.Next(Math.Min(3, length / 6)) + 1;
+				var asRemoved = Remove(genes, index, r).ToArray();
+				var rlen = asRemoved.Length;
+				var n = Randomizer.Next(rlen * 3); // 1 in 3 chances to 'swap' instead of remove.
+				if (n == index) n++;
+				if (n < rlen) // Splice into another index?
+					return new EaterGenome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()));
+				return new EaterGenome(asRemoved);
 			}
 
-			var g = Steps.ALL[i];
+			// Replace or insert...
+			var g = AvailableSteps[i];
+			EaterGenome Insert(Step s, int count = 1)
+				=> new EaterGenome(Splice(genes, index, s, count));
 
-			// 50/50 chance to 'splice' instead of modify.
-			if (Randomizer.Next(2) == 0)
+			if (value == Step.Forward)
 			{
-				return new EaterGenome(
-					genes.Take(index)
-						.Concat(Enumerable.Repeat(g, 1))
-						.Concat(genes.Skip(index)));
+				if (g == Step.Forward)
+					return Insert(g, Randomizer.Next(3) + 1);
+
+				if (Randomizer.Next(2) == 0) // Insert or replace
+					return Insert(g, 1);
 			}
 			else
 			{
-				genes[index] = g;
-				return new EaterGenome(genes);
+				if (g == Step.Forward) // Op
+				{
+					if (Randomizer.Next(2) == 0) // Insert or replace
+						return Insert(g, Randomizer.Next(3) + 1);
+				}
+				else if (g == value)
+				{
+					return Insert(g, 1);
+				}
 			}
+
+			genes[index] = g;
+			return new EaterGenome(genes);
+
 		}
 
 	}

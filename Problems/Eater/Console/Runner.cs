@@ -18,7 +18,7 @@ namespace Eater
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*//*leftTurnDisabled: true*/);
+		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
 
 
 		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()

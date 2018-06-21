@@ -83,19 +83,24 @@ namespace Eater
 		static readonly IEnumerable<Step> ForwardOne = Enumerable.Repeat(Step.Forward, 1);
 
 		IEnumerator<EaterGenome> GetVariations()
+			=> Variations().Where(g => g.Hash != Hash).GetEnumerator();
+
+		IEnumerable<EaterGenome> Variations()
 		{
+			yield return new EaterGenome(_genes.Reverse());
+
 			var lenMinusOne = _genes.Length - 1;
 			if (lenMinusOne > 1)
 			{
 				{
 					var removeTail = _genes.Take(lenMinusOne).ToList();
 					yield return new EaterGenome(removeTail);
-					yield return new EaterGenome(Enumerable.Repeat(Genes[lenMinusOne], 1).Concat(removeTail));
+					yield return new EaterGenome(Enumerable.Repeat(_genes[lenMinusOne], 1).Concat(removeTail));
 				}
 				{
 					var removeHead = _genes.Skip(1).ToList();
 					yield return new EaterGenome(removeHead);
-					yield return new EaterGenome(removeHead.Concat(Enumerable.Repeat(Genes[0], 1)));
+					yield return new EaterGenome(removeHead.Concat(Enumerable.Repeat(_genes[0], 1)));
 				}
 
 			}
@@ -116,6 +121,14 @@ namespace Eater
 			// Pass reduced last to allow for any interesting varations to occur above first.
 			var reduced = AsReduced();
 			if (reduced != this) yield return reduced;
+
+			var half = reduced.Length / 2;
+			if (half > 2)
+			{
+				yield return new EaterGenome(reduced.Take(half));
+				yield return new EaterGenome(reduced.Skip(half));
+			}
+
 		}
 
 		IEnumerator<EaterGenome> _remainingVariations;
