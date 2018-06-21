@@ -23,19 +23,15 @@
 			if (len > 0)
 			{
 				var top = champions[0];
-				factoryQueue.Mutate(top, 3);
-				factoryQueue.Breed(top, 3);
-
-				if (len > 1)
-				{
-					var second = champions[1];
-					factoryQueue.Mutate(second, 2);
-					factoryQueue.Breed(second, 2);
-				}
+				factoryQueue.EnqueueForMutation(top);
+				factoryQueue.EnqueueForBreeding(top);
 
 				var next = TriangularSelection.Descending.RandomOne(champions);
-				factoryQueue.Mutate(next);
-				factoryQueue.Breed(next);
+				factoryQueue.EnqueueForMutation(next);
+				factoryQueue.EnqueueForBreeding(next);
+
+				factoryQueue.EnqueueForMutation(champions);
+				factoryQueue.EnqueueForBreeding(champions);
 
 				return true;
 			}
