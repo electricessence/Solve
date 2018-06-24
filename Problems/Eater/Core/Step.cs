@@ -260,20 +260,14 @@ namespace Eater
 			return false;
 		}
 
-		public static bool Try(this IEnumerable<Step> steps,
-			GridLocation boundary, Point start, Point food)
+		public static (bool Success, int Energy) Try(this string steps,
+			ReadOnlyXY<int> boundary, ReadOnlyXY<int> start, ReadOnlyXY<int> food)
 		{
-			return Try(steps, boundary, start, food, out int energy);
+			return Try(FromGenomeHash(steps), boundary, start, food);
 		}
 
-		public static bool Try(this string steps,
-			GridLocation boundary, Point start, Point food, out int energy)
-		{
-			return Try(FromGenomeHash(steps), boundary, start, food, out energy);
-		}
-
-		public static bool Try(this IEnumerable<Step> steps,
-			GridLocation boundary, Point start, Point food, out int energy)
+		public static (bool Success, int Energy) Try(this IEnumerable<Step> steps,
+			ReadOnlyXY<int> boundary, ReadOnlyXY<int> start, ReadOnlyXY<int> food)
 		{
 			if (start.X > boundary.X || start.Y > boundary.Y)
 				throw new ArgumentOutOfRangeException(nameof(start), start, "Start exceeds grid boundary.");
@@ -283,7 +277,7 @@ namespace Eater
 
 			var current = start;
 			var orientation = Orientation.Up;
-			energy = 0;
+			var energy = 0;
 
 			foreach (var step in steps)
 			{
@@ -294,7 +288,7 @@ namespace Eater
 					case Step.Forward:
 						current = boundary.Forward(current, orientation);
 						if (current.Equals(food))
-							return true;
+							return (true, energy);
 						break;
 
 					case Step.TurnLeft:
@@ -307,7 +301,7 @@ namespace Eater
 				}
 			}
 
-			return false;
+			return (false, energy);
 
 		}
 

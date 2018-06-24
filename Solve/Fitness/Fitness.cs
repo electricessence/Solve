@@ -15,8 +15,7 @@ namespace Solve
 	public class SingleFitness : IComparable<SingleFitness>
 	{
 		public readonly double MaxScore;
-		ProcedureResult _result;
-		object _sync = new Object();
+		readonly object _sync = new Object();
 		public SingleFitness(IEnumerable<double> scores = null, double maxScore = 1)
 			: this(new ProcedureResult(0, 0), maxScore)
 		{
@@ -27,7 +26,7 @@ namespace Solve
 		public SingleFitness(ProcedureResult initial, double maxScore = 1)
 			: base()
 		{
-			_result = initial;
+			Result = initial;
 			MaxScore = maxScore;
 		}
 
@@ -36,10 +35,7 @@ namespace Solve
 		}
 
 
-		public ProcedureResult Result
-		{
-			get { return _result; }
-		}
+		public ProcedureResult Result { get; private set; }
 
 
 		public void Add(double value, int count = 1)
@@ -54,7 +50,7 @@ namespace Solve
 				Debug.Assert(!double.IsNaN(value), "Adding a NaN value will completely invalidate the fitness value.");
 				Debug.Assert(value <= MaxScore, "Adding a score that is above the maximum will potentially invalidate the current run.");
 				// Ensures 1 update at a time.
-				lock (_sync) _result = _result.Add(value, count);
+				lock (_sync) Result = Result.Add(value, count);
 			}
 		}
 
@@ -63,7 +59,7 @@ namespace Solve
 			Debug.Assert(!double.IsNaN(other.Average), "Adding a NaN value will completely invalidate the fitness value.");
 			Debug.Assert(other.Average <= MaxScore, "Adding a score that is above the maximum will potentially invalidate the current run.");
 			// Ensures 1 update at a time.
-			lock (_sync) _result += other;
+			lock (_sync) Result += other;
 		}
 
 		public void Add(IEnumerable<double> values)
@@ -88,10 +84,10 @@ namespace Solve
 
 			// Check for weird averages that push the values above maximum and adjust.  (Bounce off the barrier.)   See above for debug assertions.
 
-			var a = _result;
+			var a = Result;
 			if (a.Average > MaxScore)
 				a = new ProcedureResult(MaxScore * a.Count, a.Count);
-			var b = other._result;
+			var b = other.Result;
 			if (b.Average > MaxScore)
 				b = new ProcedureResult(MaxScore * b.Count, b.Count);
 

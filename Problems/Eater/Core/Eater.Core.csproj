@@ -14,11 +14,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SampleMetricsAsync.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="4.5.0" />
     <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Solve.Async\Solve.Async.csproj" />
     <ProjectReference Include="..\..\..\Solve\Solve.csproj" />
   </ItemGroup>
 

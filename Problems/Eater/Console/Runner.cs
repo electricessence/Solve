@@ -2,6 +2,7 @@
 using Solve.ProcessingSchemes;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Eater
@@ -11,14 +12,16 @@ namespace Eater
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed =
 		{
-			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^",
-			"3^>6^>9^>9^>9^>8^>8^>7^>7^>6^>6^>5^>5^>4^>4^>3^>3^>2^>2^>^>5^>5^>9^>5^"
+			//"5^5^5^>4^>3^>2^>^",
+			//"2^>4^>4^>4^>2^>3^>^>3^>3^>4^>^>3^"
+			//"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
+			//"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^",
+			//"3^>6^>9^>9^>9^>8^>8^>7^>7^>6^>6^>5^>5^>4^>4^>3^>3^>2^>2^>^>5^>5^>9^>5^"
 		};
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
+		readonly EaterFactory Factory = new EaterFactory(Seed.Select(s => new EaterGenome(s)), leftTurnDisabled: true);
 
 
 		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()

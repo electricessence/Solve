@@ -1,122 +1,155 @@
 ﻿using Open.Collections;
 using Open.Numeric;
 using System;
-using System.Collections.Concurrent;
+using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Linq;
 
 namespace Eater
 {
-	public sealed class SampleCache
+	public struct ReadOnlyXY<T>
+		where T : struct
 	{
-		public struct Entry
+		public ReadOnlyXY(in T x, in T y)
 		{
-			public readonly Point EaterStart;
-			public readonly Point Food;
+			X = x;
+			Y = y;
+		}
+		public readonly T X;
+		public readonly T Y;
 
-			public Entry(Point eaterStart, Point food)
-			{
-				EaterStart = eaterStart;
-				Food = food;
-			}
+		public void Deconstruct(out T X, out T Y)
+		{
+			X = this.X;
+			Y = this.Y;
+		}
+	}
+
+	public struct Sample<T>
+		where T : struct
+	{
+		public Sample(in ReadOnlyXY<T> start, in ReadOnlyXY<T> food)
+		{
+			Start = start;
+			Food = food;
 		}
 
-		readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
+		public readonly ReadOnlyXY<T> Start;
+		public readonly ReadOnlyXY<T> Food;
 
-		public readonly int GridSize;
-		public readonly int GridSizeMid;
-
-		public readonly GridLocation Boundary;
-		public int SeedOffset;
-
-		public SampleCache(int gridSize = 10)
+		public void Deconstruct(out ReadOnlyXY<T> Start, out ReadOnlyXY<T> Food)
 		{
-			if (gridSize < 2)
-				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");
-			GridSize = gridSize;
-			GridSizeMid = gridSize / 2;
-			Boundary = new GridLocation(gridSize, gridSize);
+			Start = this.Start;
+			Food = this.Food;
+		}
+	}
 
-			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
-			SeedOffset = RandomUtilities.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
+	public sealed class SampleCache : IReadOnlyList<Sample<int>>
+	{
+		readonly LazyList<Sample<int>> _source;
+
+		readonly ReadOnlyXY<int> _boundary;
+		public ref readonly ReadOnlyXY<int> Boundary => ref _boundary;
+
+		public int Count { get; }
+
+		public Sample<int> this[in int index] => _source[index];
+		Sample<int> IReadOnlyList<Sample<int>>.this[int index] => _source[index];
+
+		public SampleCache(in ReadOnlyXY<int> boundary)
+		{
+			if (boundary.X < 2 || boundary.Y < 2)
+				throw new ArgumentOutOfRangeException(nameof(boundary), boundary, "Must be at least 2 in width and height.");
+			_boundary = boundary;
+
+			var points = boundary.X & boundary.Y;
+			var max = Math.Sqrt(int.MaxValue);
+			if (points > max)
+				throw new ArgumentOutOfRangeException(nameof(boundary), boundary, "Possibilties are too large to compute.");
+			Count = points * points - points;
+			_source = new LazyList<Sample<int>>(GenerateOrdered());
 		}
 
-		public IEnumerable<Point> GenerateXY()
+		public SampleCache(in int size) : this(new ReadOnlyXY<int>(size, size))
 		{
-			for (var y = 0; y < GridSize; y++)
+
+		}
+
+		public IEnumerable<ReadOnlyXY<int>> GenerateXY()
+		{
+			for (var y = 0; y < Boundary.Y; y++)
 			{
-				for (var x = 0; x < GridSize; x++)
+				for (var x = 0; x < Boundary.X; x++)
 				{
-					yield return new Point(x, y);
+					yield return new ReadOnlyXY<int>(x, y);
 				}
 			}
 		}
 
-		public IEnumerable<Entry> GenerateOrdered()
+		public IEnumerable<Sample<int>> GenerateOrdered()
 		{
-			foreach (var eater in GenerateXY())
+			foreach (var start in GenerateXY())
 			{
 				foreach (var food in GenerateXY())
 				{
-					if (!eater.Equals(food))
-						yield return new Entry(eater, food);
+					if (!start.Equals(food))
+						yield return new Sample<int>(start, food);
 				}
 			}
 		}
 
-		public IEnumerable<Entry> Generate(int seed)
+		public IReadOnlyList<Sample<int>> Shuffled()
+			=> new RandomizedSampleIndexTranslator(this);
+
+		public static IReadOnlyList<Sample<int>> Shuffled(in ReadOnlyXY<int> boundary)
+			=> new SampleCache(boundary).Shuffled();
+
+		public static IReadOnlyList<Sample<int>> Shuffled(in int size)
+			=> new SampleCache(size).Shuffled();
+
+		IEnumerator<Sample<int>> IEnumerable<Sample<int>>.GetEnumerator()
+			=> _source.GetEnumerator();
+
+		IEnumerator IEnumerable.GetEnumerator()
+			=> _source.GetEnumerator();
+
+		sealed class RandomizedSampleIndexTranslator : IReadOnlyList<Sample<int>>
 		{
-			var random = new Random(SeedOffset + seed);
-			while (true)
+			static void Shuffle<T>(T[] list)
 			{
-				var eater = RandomPosition(random);
-				while (true)
+				int n = list.Length;
+				while (n > 1)
 				{
-					var food = RandomPosition(random);
-					if (!food.Equals(eater))
-					{
-						yield return new Entry(eater, food);
-						break;
-					}
+					n--;
+					int k = RandomUtilities.Random.Next(n + 1);
+					T value = list[k];
+					list[k] = list[n];
+					list[n] = value;
 				}
 			}
-		}
 
-		public ProcedureResult[] TestAll(string genome)
-		{
-			double found = 0;
-			double energy = 0;
-			int count = 0;
-			foreach (var entry in GenerateOrdered())
+			readonly int[] _indexes;
+			readonly SampleCache _source;
+			public RandomizedSampleIndexTranslator(SampleCache source)
 			{
-				if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out int e))
-					found++;
-				energy += e;
-				count++;
+				_source = source ?? throw new ArgumentNullException(nameof(source));
+				_indexes = Enumerable.Range(0, source.Count).ToArray();
+				Shuffle(_indexes);
 			}
 
-			return new ProcedureResult[] {
-				new ProcedureResult(found, count),
-				new ProcedureResult(- energy, count),
-				new ProcedureResult(- genome.Length * count, count)
-			};
+			public int Count => _source.Count;
+			public Sample<int> this[int index] => _source[in _indexes[index]];
+
+			public IEnumerator<Sample<int>> GetEnumerator()
+			{
+				var len = _source.Count;
+				for (var i = 0; i < len; i++)
+					yield return this[i];
+			}
+
+			IEnumerator IEnumerable.GetEnumerator()
+				=> GetEnumerator();
 		}
-
-		public ProcedureResult[] TestAll(EaterGenome genome)
-		{
-			return TestAll(genome.Hash);
-		}
-
-		public LazyList<Entry> Get(int id)
-		{
-			return _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
-		}
-
-		Point RandomPosition(Random random)
-		{
-			return new Point(random.Next(GridSize), random.Next(GridSize));
-		}
-
-
 	}
+
 }

@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="IProblem.cs" />
+    <Compile Remove="ProblemBase.cs" />
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />
