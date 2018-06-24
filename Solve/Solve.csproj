@@ -13,15 +13,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Dataflow\**" />
     <Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
     <Compile Remove="ProcessingSchemes\Kumite\**" />
+    <EmbeddedResource Remove="Dataflow\**" />
     <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
+    <None Remove="Dataflow\**" />
     <None Remove="ProcessingSchemes\KingOfTheHill\**" />
     <None Remove="ProcessingSchemes\Kumite\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Collections\IndexedReferenceList.cs" />
+    <Compile Remove="Collections\IReadOnlyReferenceList.cs" />
+    <Compile Remove="Collections\ReindexedReferenceList.cs" />
+    <Compile Remove="Collections\TranslatedReferenceList.cs" />
+    <Compile Remove="Fitness\RemapedSampleFitnessCollectionBase.cs" />
     <Compile Remove="IProblem.cs" />
     <Compile Remove="ProblemBase.cs" />
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />

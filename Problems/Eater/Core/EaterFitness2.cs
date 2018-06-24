@@ -9,7 +9,7 @@ namespace Eater
 
 		}
 
-		public override double GetValue(int index, int deep)
+		public override double GetValue(in int index, in int deep)
 		{
 			var e = Source[index].Span;
 			switch (deep)
@@ -25,10 +25,19 @@ namespace Eater
 			}
 		}
 
-		public ReadOnlySpan<string> Labels
-			=> SampleMetricsCache.Labels;
+		static string[] EF2Labels()
+		{
+			var labels = SampleMetricsCache.Labels;
+			var a = new string[labels.Length];
+			a[0] = labels[0];
+			a[1] = labels[2];
+			a[2] = labels[1];
+			return a;
+		}
 
-		public ReadOnlySpan<string> Labels
-			=> SampleMetricsCache.Labels;
+		static readonly string[] _labels = EF2Labels();
+
+		public override ReadOnlySpan<string> Labels
+			=> _labels.AsSpan();
 	}
 }

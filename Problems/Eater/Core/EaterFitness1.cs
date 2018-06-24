@@ -1,24 +1,20 @@
 ﻿using Solve;
 using System;
-using System.Collections.Generic;
 
 namespace Eater
 {
-	public class EaterFitness1 : SampleFitnessCollectionBase<int, double>
+	public class EaterFitness1 : SampleFitnessCollectionBase
 	{
-		public EaterFitness1(IReadOnlyList<ReadOnlyMemory<int>> source) : base(source, 3)
+		public EaterFitness1(SampleMetricsCache source) : base(source, 3)
 		{
-			_source = source;
 		}
 
-		readonly IReadOnlyList<ReadOnlyMemory<int>> _source;
-
-		public ReadOnlySpan<string> Labels
+		public virtual ReadOnlySpan<string> Labels
 			=> SampleMetricsCache.Labels;
 
 		public override double GetValue(in int index, in int deep)
 		{
-			var e = _source[index].Span;
+			var e = Source[index].Span;
 			switch (deep)
 			{
 				case 0:

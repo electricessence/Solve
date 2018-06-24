@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Open.Collections;
+using Open.Numeric;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +9,7 @@ namespace Solve
 {
 	public abstract class SampleFitnessCollectionBase<TIn, TOut> : ISampleFitnessCollection<TOut>
 	{
-		public SampleFitnessCollectionBase(IReadOnlyList<ReadOnlyMemory<TIn>> source, ushort depth)
+		protected SampleFitnessCollectionBase(IReadOnlyList<ReadOnlyMemory<TIn>> source, ushort depth)
 		{
 			Source = source;
 			Depth = depth;
@@ -34,5 +36,27 @@ namespace Solve
 
 		public abstract TOut GetValue(in int index, in int deep);
 
+	}
+
+	public abstract class SampleFitnessCollectionBase : SampleFitnessCollectionBase<int, double>
+	{
+		protected SampleFitnessCollectionBase(IReadOnlyList<ReadOnlyMemory<int>> source, ushort depth)
+			: base(source, depth)
+		{
+			Progression = new LazyList<ReadOnlyMemory<ProcedureResult>>(GetProgression());
+		}
+
+		IEnumerable<ReadOnlyMemory<ProcedureResult>> GetProgression()
+		{
+			var current = Enumerable.Repeat(new ProcedureResult(0, 0), Depth).ToArray();
+			var len = Source.Count;
+			for (var i = 0; i < len; i++)
+			{
+				current = current.Select((v, d) => v.Add(GetValue(i, d))).ToArray();
+				yield return current;
+			}
+		}
+
+		public LazyList<ReadOnlyMemory<ProcedureResult>> Progression { get; }
 	}
 }
