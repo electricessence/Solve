@@ -1,7 +1,7 @@
 ﻿namespace Solve.ProcessingSchemes
 {
 	public abstract class ProblemSpecificBroadcasterBase<TGenome>
-		: BroadcasterBase<IGenomeFitness<TGenome>>
+		: BroadcasterBase<(TGenome Genome, SampleFitnessCollectionBase Fitness)>
 		where TGenome : class, IGenome
 	{
 		protected ProblemSpecificBroadcasterBase(

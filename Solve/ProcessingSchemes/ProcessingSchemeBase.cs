@@ -1,6 +1,5 @@
 ﻿using Open.Dataflow;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,32 +8,30 @@ namespace Solve.ProcessingSchemes
 {
 	public abstract class ProcessingSchemeBase<TGenome, TTower> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
-		where TTower : IGenomeProcessor<TGenome>, IObservable<IGenomeFitness<TGenome>>
+		where TTower : IGenomeProcessor<TGenome>, IObservable<(TGenome Genome, SampleFitnessCollectionBase Fitness)>
 	{
 		protected ProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory)
 			: base(genomeFactory)
 		{
 		}
 
-		public override void AddProblems(IEnumerable<IProblem<TGenome>> problems)
+		public void AddProblem(Func<TGenome, SampleFitnessCollectionBase> generator)
 		{
-			foreach (var problem in problems)
-			{
-				var k = NewTower(problem);
-				k.Subscribe(e =>
-				{
-					if (OnTowerBroadcast(k, e))
-						Broadcast((problem, e));
-				});
-				Towers.TryAdd(problem, k);
-			}
+			if (!CanStart)
+				throw new InvalidOperationException("Cannot add new problems after already starting.");
 
-			base.AddProblems(problems);
+			var k = NewTower(generator);
+			k.Subscribe(e =>
+			{
+				if (OnTowerBroadcast(k, e))
+					Broadcast(e);
+			});
+			Towers.Add(k);
 		}
 
 		protected void Post(TGenome genome)
 		{
-			foreach (var host in Towers.Values)
+			foreach (var host in Towers)
 				host.Post(genome);
 		}
 
@@ -48,12 +45,12 @@ namespace Solve.ProcessingSchemes
 			});
 
 		#region Tower Managment
-		protected readonly ConcurrentDictionary<IProblem<TGenome>, TTower> Towers
-			= new ConcurrentDictionary<IProblem<TGenome>, TTower>();
+		protected readonly List<TTower> Towers
+			= new List<TTower>();
 
-		protected abstract TTower NewTower(IProblem<TGenome> problem);
+		protected abstract TTower NewTower(Func<TGenome, SampleFitnessCollectionBase> generator);
 
-		protected virtual bool OnTowerBroadcast(TTower source, IGenomeFitness<TGenome> genomeFitness)
+		protected virtual bool OnTowerBroadcast(TTower source, (TGenome Genome, SampleFitnessCollectionBase Fitness) genomeFitness)
 		{
 			// This includes 'variations' and at least 1 mutation.
 			Factory[0].EnqueueChampion(genomeFitness.Genome);

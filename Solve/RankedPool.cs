@@ -17,15 +17,16 @@ namespace Solve
 		}
 
 		public readonly ushort PoolSize;
-		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _pool = new ConcurrentQueue<IGenomeFitness<TGenome>>();
+		readonly ConcurrentQueue<(TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness)> _pool
+			= new ConcurrentQueue<(TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness)>();
+
 		Lazy<TGenome[]> _ranked;
 
-		public void Add(IGenomeFitness<TGenome> genome)
+		public void Add((TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness) genomeFitness)
 		{
-			Debug.Assert(genome != null);
-			if (_pool == null || genome == null) return;
+			if (_pool == null) return;
 
-			_pool.Enqueue(genome);
+			_pool.Enqueue(genomeFitness);
 
 			// Queue has changed.  Flush the last result.
 			var rc = _ranked;
@@ -50,10 +51,10 @@ namespace Solve
 					// Have enough to work with? (*)
 					.Take(PoolSize * 2)
 					// Setup ordering. Need to use snapshots for comparison.
-					.Select(e => (snapshot: e.Fitness.SnapShot(), genomeFitness: e))
+					.Select(e => (snapshot: e.GetFitness(), genomeFitness: e))
 					// Higher sample counts are more valuable as they only arrive here as champions.
-					.OrderByDescending(e => e.snapshot.SampleCount)
-					.ThenBy(e => e.snapshot)
+					.OrderByDescending(e => e.snapshot.Count)
+					.ThenBy(e => e.snapshot.Fitness, SpanAndMemory<double>.ComparerDescending)
 					// Compile results.
 					.Select(e => e.genomeFitness)
 					.ToArray();

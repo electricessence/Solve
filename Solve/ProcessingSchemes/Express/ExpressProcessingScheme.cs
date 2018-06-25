@@ -64,7 +64,7 @@ namespace Solve.ProcessingSchemes
 		bool ProduceFromChampions()
 		{
 			bool produced = false;
-			foreach (var t in Towers.Values)
+			foreach (var t in Towers)
 			{
 				if (t.ProduceFromChampions(ReserveFactoryQueue))
 					produced = true;

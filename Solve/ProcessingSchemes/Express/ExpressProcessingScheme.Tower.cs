@@ -8,11 +8,11 @@ namespace Solve.ProcessingSchemes
 		public sealed class Tower : ProblemSpecificBroadcasterBase<TGenome>, IGenomeProcessor<TGenome>
 		{
 			internal readonly ExpressProcessingScheme<TGenome> Environment;
-			internal readonly IProblem<TGenome> Problem;
+			internal readonly Func<TGenome, SampleFitnessCollectionBase> Problem;
 			internal readonly Level Root;
 
 			public Tower(
-				IProblem<TGenome> problem,
+				Func<TGenome, SampleFitnessCollectionBase> problem,
 				ExpressProcessingScheme<TGenome> environment,
 				ushort championPoolSize,
 				ITargetBlock<IGenomeFitness<TGenome, Fitness>> loserPool = null) : base(championPoolSize)
@@ -35,7 +35,7 @@ namespace Solve.ProcessingSchemes
 
 		}
 
-		protected override Tower NewTower(IProblem<TGenome> problem)
+		protected override Tower NewTower(Func<TGenome, SampleFitnessCollectionBase> problem)
 			=> new Tower(problem, this, ChampionPoolSize);
 
 

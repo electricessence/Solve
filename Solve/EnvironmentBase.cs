@@ -3,30 +3,16 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using Open.Collections;
-using Open.Collections.Synchronized;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve
 {
-	// Defines the pipeline?
-	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness)>
+	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(TGenome Genome, SampleFitnessCollectionBase Fitness)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
-
-		readonly protected ISynchronizedCollection<IProblem<TGenome>> ProblemsInternal = new ReadWriteSynchronizedList<IProblem<TGenome>>();
-
-		public ICollection<IProblem<TGenome>> Problems
-		{
-			get
-			{
-				return ProblemsInternal.Snapshot();
-			}
-		}
 
 		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
 			: base()
@@ -34,22 +20,13 @@ namespace Solve
 			Factory = genomeFactory;
 		}
 
-		public void AddProblem(params IProblem<TGenome>[] problems)
-		{
-			AddProblems(problems);
-		}
-
-		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
-		{
-			foreach (var problem in problems)
-				ProblemsInternal.Add(problem);
-		}
-
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
 		int _state = 0;
 
-		public Task Start(params IProblem<TGenome>[] problems)
+		protected bool CanStart => _state == 0;
+
+		public Task Start()
 		{
 			switch (Interlocked.CompareExchange(ref _state, 1, 0))
 			{
@@ -59,10 +36,6 @@ namespace Solve
 				case 0:
 					if (Canceller.IsCancellationRequested)
 						goto case -1;
-
-					AddProblems(problems);
-					if (!ProblemsInternal.HasAny())
-						throw new InvalidOperationException("Cannot start without any registered 'Problems'");
 
 					return StartInternal(Canceller.Token);
 

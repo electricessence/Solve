@@ -13,16 +13,16 @@ namespace Solve.ProcessingSchemes
 		{
 			readonly Tower Tower;
 			public readonly ushort PoolSize;
-			public readonly uint Index;
+			public readonly int Index;
 			Level _nextLevel;
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
-			readonly ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord)> Pool
-				= new ConcurrentQueue<(IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord)>();
+			readonly ConcurrentQueue<((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord)> Pool
+				= new ConcurrentQueue<((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord)>();
 
 			public Level(
-				uint level,
+				int level,
 				Tower host)
 			{
 				Index = level;
@@ -38,47 +38,62 @@ namespace Solve.ProcessingSchemes
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 			#region GenomeFitness Loss Record Comparer
-			class GFLRComparer : Comparer<(IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord)>
+			class GFLRComparer : Comparer<((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord)>
 			{
-				public override int Compare((IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord) x, (IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord) y)
+				public override int Compare(
+					((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) x,
+					((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) y)
 					//=> GenomeFitness.Comparison(x.GenomeFitness, y.GenomeFitness);
-					=> Fitness.Comparison(x.Fitness, y.Fitness);
+					=> -x.Fitness.CompareTo(y.Fitness);
 
 			}
 			readonly static GFLRComparer _GFLRComparer = new GFLRComparer();
 			#endregion
 
-			IFitness BestLevelFitness;
-			bool UpdateBestLevelFitnessIfBetter(IFitness fitness)
+			readonly object BestLevelFitnessLock = new object();
+			ReadOnlyMemory<double> BestLevelFitness = ReadOnlyMemory<double>.Empty;
+			bool UpdateBestLevelFitnessIfBetter(ReadOnlyMemory<double> fitness)
 			{
-				IFitness f;
-				while ((f = BestLevelFitness) == null || fitness.IsSuperiorTo(f))
+				ReadOnlyMemory<double> f;
+				while ((f = BestLevelFitness).IsEmpty || fitness.IsGreaterThan(f))
 				{
-					if (Interlocked.CompareExchange(ref BestLevelFitness, fitness, f) == f)
-						return true;
+					lock (BestLevelFitnessLock)
+					{
+						if ((f = BestLevelFitness).IsEmpty || fitness.IsGreaterThan(f))
+						{
+							BestLevelFitness = fitness;
+							return true;
+						}
+					}
 				}
 				return false;
 			}
 
-			IFitness BestProgressiveFitness;
-			bool UpdateBestProgressiveFitnessIfBetter(IFitness fitness)
+			readonly object BestProgressiveFitnessLock = new object();
+			ReadOnlyMemory<double> BestProgressiveFitness = ReadOnlyMemory<double>.Empty;
+			bool UpdateBestProgressiveFitnessIfBetter(ReadOnlyMemory<double> fitness)
 			{
-				IFitness f;
-				while ((f = BestProgressiveFitness) == null || fitness.IsSuperiorTo(f))
+				ReadOnlyMemory<double> f;
+				while ((f = BestProgressiveFitness).IsEmpty || fitness.IsGreaterThan(f))
 				{
-					fitness = fitness.SnapShot(); // Safe to call multiple times.
-					if (Interlocked.CompareExchange(ref BestProgressiveFitness, fitness, f) == f)
-						return true;
+					lock (BestProgressiveFitnessLock)
+					{
+						if ((f = BestProgressiveFitness).IsEmpty || fitness.IsGreaterThan(f))
+						{
+							BestProgressiveFitness = fitness;
+							return true;
+						}
+					}
 				}
 				return false;
 			}
 
-			(IFitness Fitness, (bool Local, bool Progressive, bool Both, bool Either) Superiority) ProcessTestAndUpdate(IGenomeFitness<TGenome, Fitness> c)
+			(ReadOnlyMemory<double> Fitness, (bool Local, bool Progressive, bool Both, bool Either) Superiority) ProcessTestAndUpdate((TGenome Genome, SampleFitnessCollectionBase Fitness) c)
 			{
 				// Track local fitness
-				var fitness = Tower.Problem.ProcessTest(c.Genome, Index);
+				var fitness = c.Fitness[Index];
 				var leveled = UpdateBestLevelFitnessIfBetter(fitness);
-				var progressed = UpdateBestProgressiveFitnessIfBetter(c.Fitness.Merge(fitness));
+				var progressed = UpdateBestProgressiveFitnessIfBetter(c.Fitness.Progression[Index].Span.Averages());
 
 				if (leveled || progressed)
 				{
@@ -90,7 +105,7 @@ namespace Solve.ProcessingSchemes
 			}
 
 			public void Post(
-				IGenomeFitness<TGenome, Fitness> c,
+				(TGenome Genome, SampleFitnessCollectionBase Fitness) c,
 				bool express = false,
 				bool expressToTop = false)
 			{
@@ -106,7 +121,7 @@ namespace Solve.ProcessingSchemes
 					return; // No need to involve a obviously superior genome with this pool.
 				}
 
-				(IGenomeFitness<TGenome, Fitness> GenomeFitness, IFitness Fitness, ushort LevelLossRecord) challenger = (c, result.Fitness, 0);
+				((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) challenger = (c, result.Fitness, 0);
 				Pool.Enqueue(challenger);
 
 				// Next see if we should 'own' processing the pool.
