@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 
@@ -17,16 +18,23 @@ namespace Solve
 		}
 
 		public readonly ushort PoolSize;
-		readonly ConcurrentQueue<(TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness)> _pool
-			= new ConcurrentQueue<(TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness)>();
+		readonly ConcurrentQueue<(TGenome Genome, Func<int, ReadOnlyMemory<double>> GetFitness)> _pool
+			= new ConcurrentQueue<(TGenome Genome, Func<int, ReadOnlyMemory<double>> GetFitness)>();
 
-		Lazy<TGenome[]> _ranked;
+		readonly InterlockedInt _level = 0;
+		public int Level => _level;
 
-		public void Add((TGenome Genome, Func<(ReadOnlyMemory<double> Fitness, int Count)> GetFitness) genomeFitness)
+		Lazy<ReadOnlyMemory<TGenome>> _ranked;
+
+		public void Add(int level, (TGenome Genome, Func<int, ReadOnlyMemory<double>> GetFitness) genomeFitness)
 		{
-			if (_pool == null) return;
+			if (level < 0) throw new ArgumentOutOfRangeException(nameof(level), level, "Must be at least zero.");
+			Contract.EndContractBlock();
 
+			if (_pool == null) return;
 			_pool.Enqueue(genomeFitness);
+
+			_level.RaiseTo(level);
 
 			// Queue has changed.  Flush the last result.
 			var rc = _ranked;
@@ -40,8 +48,8 @@ namespace Solve
 			}
 		}
 
-		TGenome[] GetRanked()
-			=> LazyInitializer.EnsureInitialized(ref _ranked, () => new Lazy<TGenome[]>(() =>
+		ReadOnlyMemory<TGenome> GetRanked()
+			=> LazyInitializer.EnsureInitialized(ref _ranked, () => new Lazy<ReadOnlyMemory<TGenome>>(() =>
 			{
 				var result = _pool
 					// Drain queue (some*)
@@ -51,10 +59,9 @@ namespace Solve
 					// Have enough to work with? (*)
 					.Take(PoolSize * 2)
 					// Setup ordering. Need to use snapshots for comparison.
-					.Select(e => (snapshot: e.GetFitness(), genomeFitness: e))
+					.Select(e => (snapshot: e.GetFitness(_level.Value), genomeFitness: e))
 					// Higher sample counts are more valuable as they only arrive here as champions.
-					.OrderByDescending(e => e.snapshot.Count)
-					.ThenBy(e => e.snapshot.Fitness, SpanAndMemory<double>.ComparerDescending)
+					.OrderBy(e => e.snapshot, SpanAndMemory<double>.ComparerDescending)
 					// Compile results.
 					.Select(e => e.genomeFitness)
 					.ToArray();
@@ -65,6 +72,6 @@ namespace Solve
 			})).Value;
 
 		public ReadOnlySpan<TGenome> Ranked
-			=> GetRanked();
+			=> GetRanked().Span;
 	}
 }

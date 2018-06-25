@@ -36,6 +36,7 @@ namespace Solve
 
 		public abstract TOut GetValue(in int index, in int deep);
 
+		public abstract ReadOnlySpan<string> Labels { get; }
 	}
 
 	public abstract class SampleFitnessCollectionBase : SampleFitnessCollectionBase<int, double>
@@ -58,5 +59,8 @@ namespace Solve
 		}
 
 		public LazyList<ReadOnlyMemory<ProcedureResult>> Progression { get; }
+
+		public ReadOnlyMemory<double> ProgressionAverages(int index)
+			=> Progression[index].Span.Averages();
 	}
 }

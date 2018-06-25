@@ -160,7 +160,7 @@ namespace Eater
 			return orientation;
 		}
 
-		public static Point Forward(this Point boundary, Point current, Orientation orientation)
+		public static Point Forward(this Point current, Orientation orientation)
 		{
 			switch (orientation)
 			{
@@ -178,20 +178,20 @@ namespace Eater
 			return current;
 		}
 
-		public static Point Forward(this GridLocation boundary, Point current, Orientation orientation)
+		public static ReadOnlyXY<int> Forward(this ReadOnlyXY<int> boundary, ReadOnlyXY<int> current, Orientation orientation)
 		{
 			switch (orientation)
 			{
 				case Orientation.Up:
 					var v = current.Y + 1;
-					return v == boundary.Y ? current : new Point(current.X, v);
+					return v == boundary.Y ? current : new ReadOnlyXY<int>(current.X, v);
 				case Orientation.Right:
 					var r = current.X + 1;
-					return r == boundary.X ? current : new Point(r, current.Y);
+					return r == boundary.X ? current : new ReadOnlyXY<int>(r, current.Y);
 				case Orientation.Down:
-					return current.Y == 0 ? current : new Point(current.X, current.Y - 1);
+					return current.Y == 0 ? current : new ReadOnlyXY<int>(current.X, current.Y - 1);
 				case Orientation.Left:
-					return current.X == 0 ? current : new Point(current.X - 1, current.Y);
+					return current.X == 0 ? current : new ReadOnlyXY<int>(current.X - 1, current.Y);
 			}
 			return current;
 		}
@@ -378,7 +378,7 @@ namespace Eater
 						if (!pointToPoint || !moved)
 							yield return current;
 
-						current = current.Forward(current, orientation);
+						current = current.Forward(orientation);
 						moved = true;
 						break;
 

@@ -26,7 +26,7 @@ namespace Solve.ProcessingSchemes
 				bool express,
 				bool expressToTop = false)
 				=> Root.Post(
-					new GenomeFitness<TGenome, Fitness>(next, new Fitness()),
+					(next, Problem(next), 0),
 					express,
 					expressToTop);
 

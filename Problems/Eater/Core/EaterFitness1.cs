@@ -9,7 +9,7 @@ namespace Eater
 		{
 		}
 
-		public virtual ReadOnlySpan<string> Labels
+		public override ReadOnlySpan<string> Labels
 			=> SampleMetricsCache.Labels;
 
 		public override double GetValue(in int index, in int deep)

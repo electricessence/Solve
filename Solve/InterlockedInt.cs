@@ -1,19 +1,15 @@
-﻿using Open.Disposable;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Solve
 {
-	public sealed class InterlockedInt : IRecyclable
+	public struct InterlockedInt
 	{
-		int _value = 0;
-		public int Value
-		{
-			get => _value;
-			set => _value = value;
-		}
+		int _value;
+		public int Value => _value;
 
-		public InterlockedInt()
+		public InterlockedInt(int value = 0)
 		{
+			_value = value;
 		}
 
 		public int Increment()
@@ -22,39 +18,47 @@ namespace Solve
 		public int Decrement()
 			=> Interlocked.Decrement(ref _value);
 
-		public void Add(int other)
+		public int Add(int other)
 		{
-			if (other != 0)
+			int value, sum;
+
+			do
 			{
-				if (other > 0)
-				{
-					for (var i = 0; i < other; i++)
-						Increment();
-				}
-				else
-				{
-					for (var i = 0; i > other; i--)
-						Decrement();
-				}
+				value = _value;
+				sum = value + other;
 			}
+			while (value != _value || value != Interlocked.CompareExchange(ref _value, sum, value));
+
+			return sum;
 		}
 
-		public void Recycle()
+		public int RaiseTo(int min)
 		{
-			_value = 0;
+			int value;
+			do
+			{
+				value = _value;
+			}
+			while (value < min && value != Interlocked.CompareExchange(ref _value, min, value));
+
+			return value;
 		}
 
-		static readonly OptimisticArrayObjectPool<InterlockedInt> Pool
-			= OptimisticArrayObjectPool.CreateAutoRecycle<InterlockedInt>();
-
-		public static InterlockedInt Init(int value = 0)
+		public int LowerTo(int max)
 		{
-			var n = Pool.Take();
-			n.Value = value;
-			return n;
+			int value;
+			do
+			{
+				value = _value;
+			}
+			while (value > max && value != Interlocked.CompareExchange(ref _value, max, value));
+
+			return value;
 		}
 
-		public static void Recycle(InterlockedInt n)
-			=> Pool.Give(n);
+		public static implicit operator InterlockedInt(int value)
+			=> new InterlockedInt(value);
+		public static implicit operator int(InterlockedInt value)
+			=> value.Value;
 	}
 }

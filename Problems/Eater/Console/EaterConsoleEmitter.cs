@@ -1,6 +1,4 @@
-﻿using Open.Numeric;
-using Open.Threading;
-using Solve;
+﻿using Open.Threading;
 using Solve.Experiment.Console;
 using System;
 using System.Collections.Concurrent;
@@ -13,8 +11,6 @@ namespace Eater
 {
 	public class EaterConsoleEmitter : ConsoleEmitterBase<EaterGenome>
 	{
-		public readonly SampleCache Samples;
-
 		static readonly ImageCodecInfo JpgEncoder;
 		static readonly EncoderParameters EncParams;
 
@@ -25,31 +21,30 @@ namespace Eater
 			EncParams.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
 		}
 
-		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
+		public EaterConsoleEmitter(uint sampleMinimum = 50)
 			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
-			Samples = samples;
 			ProgressionDirectory = Path.Combine(Environment.CurrentDirectory, "Progression", DateTime.Now.Ticks.ToString());
 			Directory.CreateDirectory(ProgressionDirectory);
 		}
 
 		readonly string ProgressionDirectory;
 
-		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
-			= new ConcurrentDictionary<string, ProcedureResult[]>();
+		//readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
+		//	= new ConcurrentDictionary<string, ProcedureResult[]>();
 
-		public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
-			=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
+		//public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
+		//	=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
 
-		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
-			=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
+		//public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
+		//	=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
 
 		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
 		readonly object LatestWinnerImageLock = new object();
-		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, IFitness fitness)
+		protected override void OnEmittingGenome(EaterGenome genome, string fitnessName, ReadOnlySpan<double> fitness, int sampleCount)
 		{
-			base.OnEmittingGenome(p, genome, fitness);
+			base.OnEmittingGenome(genome, fitnessName, fitness, sampleCount);
 			var ts = DateTime.Now.Ticks;
 			File.WriteAllText(Path.Combine(ProgressionDirectory, $"{ts}.txt"), genome.Hash);
 			var rendered = Path.Combine(ProgressionDirectory, $"{ts}.jpg");

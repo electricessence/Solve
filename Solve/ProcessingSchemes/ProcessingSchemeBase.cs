@@ -8,14 +8,14 @@ namespace Solve.ProcessingSchemes
 {
 	public abstract class ProcessingSchemeBase<TGenome, TTower> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
-		where TTower : IGenomeProcessor<TGenome>, IObservable<(TGenome Genome, SampleFitnessCollectionBase Fitness)>
+		where TTower : IGenomeProcessor<TGenome>, IObservable<(TGenome Genome, SampleFitnessCollectionBase Fitness, int SampleCount, int RejectionCount)>
 	{
 		protected ProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory)
 			: base(genomeFactory)
 		{
 		}
 
-		public void AddProblem(Func<TGenome, SampleFitnessCollectionBase> generator)
+		public void AddFitness(Func<TGenome, SampleFitnessCollectionBase> generator)
 		{
 			if (!CanStart)
 				throw new InvalidOperationException("Cannot add new problems after already starting.");
@@ -50,10 +50,10 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract TTower NewTower(Func<TGenome, SampleFitnessCollectionBase> generator);
 
-		protected virtual bool OnTowerBroadcast(TTower source, (TGenome Genome, SampleFitnessCollectionBase Fitness) genomeFitness)
+		protected virtual bool OnTowerBroadcast(TTower source, (TGenome Genome, SampleFitnessCollectionBase Fitness, int SampleCount, int RejectionCount) announcement)
 		{
 			// This includes 'variations' and at least 1 mutation.
-			Factory[0].EnqueueChampion(genomeFitness.Genome);
+			Factory[0].EnqueueChampion(announcement.Genome);
 			return true;
 		}
 		#endregion

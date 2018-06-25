@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Solve
 {
-	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(TGenome Genome, SampleFitnessCollectionBase Fitness)>
+	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(TGenome Genome, SampleFitnessCollectionBase Fitness, int SampleCount, int RejectionCount)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;

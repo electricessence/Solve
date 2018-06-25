@@ -53,7 +53,7 @@ namespace Solve.Experiment.Console
 
 		DateTime _lastEmit = DateTime.MinValue;
 
-		protected void OnAnnouncement((IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness) announcement)
+		protected void OnAnnouncement((TGenome Genome, SampleFitnessCollectionBase Fitness, int Level) announcement)
 		{
 			Emitter.EmitTopGenomeStats(announcement);
 			if (DateTime.Now - _lastEmit > StatusDelay)
@@ -104,14 +104,14 @@ namespace Solve.Experiment.Console
 		protected virtual void EmitStats(Cursor cursor)
 		{
 			SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
-			foreach (var p in Environment.Problems)
-			{
-				var tc = p.TestCount;
-				if (tc != 0)
-				{
-					SystemConsole.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, _stopwatch.ElapsedTicks / tc);
-				}
-			}
+			//foreach (var p in Environment.Problems)
+			//{
+			//	var tc = p.TestCount;
+			//	if (tc != 0)
+			//	{
+			//		SystemConsole.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, _stopwatch.ElapsedTicks / tc);
+			//	}
+			//}
 			SystemConsole.WriteLine();
 		}
 
