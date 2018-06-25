@@ -415,6 +415,8 @@ namespace Eater
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
 			var points = steps.Draw().InvertY().ToArray();
 			var length = points.Length;
+			if (length == 0) return null;
+
 			double maxPenBrightness = 160d;
 			double colorStep = maxPenBrightness / length;
 
@@ -486,6 +488,9 @@ namespace Eater
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
 			var points = steps.Draw(true).InvertY().ToArray();
 			var length = points.Length;
+			if (length == 0)
+				return null;
+
 			double maxPenBrightness = 160d;
 			double colorStep = maxPenBrightness / length;
 
@@ -506,45 +511,43 @@ namespace Eater
 			var bitmap = new Bitmap(squareSize, squareSize);
 			bitmap.Fill(Color.White);
 
-			if (points.Length != 0)
+			using (var graphic = Graphics.FromImage(bitmap))
 			{
-				using (var graphic = Graphics.FromImage(bitmap))
+				var pointFs = points.Select((p, i) => new PointF((p.X + offset.X) * bitScale + bitScale + i, (p.Y + offset.Y) * bitScale + bitScale + i)).ToArray();
+				var first = pointFs.First();
+				var last = pointFs.Last();
+				var radius = 5 * scale;
+
+				graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
+				graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
+
+
+				var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
+				outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
+				for (var i = 0; i < length; i++)
 				{
-					var pointFs = points.Select((p, i) => new PointF((p.X + offset.X) * bitScale + bitScale + i, (p.Y + offset.Y) * bitScale + bitScale + i)).ToArray();
-					var first = pointFs.First();
-					var last = pointFs.Last();
-					var radius = 5 * scale;
+					if (i < length - 1)
+						graphic.DrawLine(outlinePen, pointFs[i], pointFs[i + 1]);
 
-					graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
-					graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
-
-
-					var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
-					outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
-					for (var i = 0; i < length; i++)
+					if (i > 0)
 					{
-						if (i < length - 1)
-							graphic.DrawLine(outlinePen, pointFs[i], pointFs[i + 1]);
-
-						if (i > 0)
-						{
-							var brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
-							var color = Color.FromArgb(brightness, brightness, brightness);
-							var pen = new Pen(color, 4 * scale);
-							pen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
-							graphic.DrawLine(pen, pointFs[i - 1], pointFs[i]);
-						}
-
+						var brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
+						var color = Color.FromArgb(brightness, brightness, brightness);
+						var pen = new Pen(color, 4 * scale);
+						pen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
+						graphic.DrawLine(pen, pointFs[i - 1], pointFs[i]);
 					}
 
-
-					graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Green), 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
-					graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Red), 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
-
 				}
+
+
+				graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Green), 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
+				graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Red), 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
+
 			}
 
 			return bitmap;
+
 		}
 
 	}

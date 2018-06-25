@@ -62,7 +62,7 @@ namespace Eater
 				throw new ArgumentOutOfRangeException(nameof(boundary), boundary, "Must be at least 2 in width and height.");
 			_boundary = boundary;
 
-			var points = boundary.X & boundary.Y;
+			var points = boundary.X * boundary.Y;
 			var max = Math.Sqrt(int.MaxValue);
 			if (points > max)
 				throw new ArgumentOutOfRangeException(nameof(boundary), boundary, "Possibilties are too large to compute.");

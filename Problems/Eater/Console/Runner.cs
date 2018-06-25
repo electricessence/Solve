@@ -43,6 +43,7 @@ namespace Eater
 			//var scheme = new SinglePool<EaterGenome>(factory, 200);
 
 			scheme.AddFitness(g => new EaterFitness1(new SampleMetricsCache(g, samples.Boundary, samplesShuffled)));
+			scheme.AddFitness(g => new EaterFitness2(new SampleMetricsCache(g, samples.Boundary, samplesShuffled)));
 
 			Init(scheme, emitter);
 

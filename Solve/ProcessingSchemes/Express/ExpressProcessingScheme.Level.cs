@@ -38,11 +38,11 @@ namespace Solve.ProcessingSchemes
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 			#region GenomeFitness Loss Record Comparer
-			class GFLRComparer : Comparer<((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord)>
+			class GFLRComparer : Comparer<((TGenome Genome, SampleFitnessCollectionBase Fitness, int RejectionCount) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord)>
 			{
 				public override int Compare(
-					((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) x,
-					((TGenome Genome, SampleFitnessCollectionBase Fitness) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) y)
+					((TGenome Genome, SampleFitnessCollectionBase Fitness, int RejectionCount) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) x,
+					((TGenome Genome, SampleFitnessCollectionBase Fitness, int RejectionCount) GenomeFitness, ReadOnlyMemory<double> Fitness, ushort LevelLossRecord) y)
 					//=> GenomeFitness.Comparison(x.GenomeFitness, y.GenomeFitness);
 					=> SpanAndMemory<double>.ComparerDescending.Compare(x.Fitness, y.Fitness);
 
