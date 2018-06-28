@@ -17,13 +17,12 @@ namespace Solve
 		}
 
 		public readonly ushort PoolSize;
-		readonly ConcurrentQueue<IGenomeFitness<TGenome>> _pool = new ConcurrentQueue<IGenomeFitness<TGenome>>();
+		readonly ConcurrentQueue<(TGenome Genome, IFitness Fitness)> _pool = new ConcurrentQueue<(TGenome Genome, IFitness Fitness)>();
 		Lazy<TGenome[]> _ranked;
 
-		public void Add(IGenomeFitness<TGenome> genome)
+		public void Add((TGenome Genome, IFitness Fitness) genome)
 		{
-			Debug.Assert(genome != null);
-			if (_pool == null || genome == null) return;
+			if (_pool == null) return;
 
 			_pool.Enqueue(genome);
 

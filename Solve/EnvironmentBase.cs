@@ -4,7 +4,6 @@
  */
 
 using Open.Collections;
-using Open.Collections.Synchronized;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,25 +12,21 @@ using System.Threading.Tasks;
 namespace Solve
 {
 	// Defines the pipeline?
-	public abstract class EnvironmentBase<TGenome> : BroadcasterBase<(IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness)>
+	public abstract class EnvironmentBase<TGenome>
+		: BroadcasterBase<(TGenome Genome, Fitness[] Fitness)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
 
-		readonly protected ISynchronizedCollection<IProblem<TGenome>> ProblemsInternal = new ReadWriteSynchronizedList<IProblem<TGenome>>();
-
-		public ICollection<IProblem<TGenome>> Problems
-		{
-			get
-			{
-				return ProblemsInternal.Snapshot();
-			}
-		}
+		readonly protected List<IProblem<TGenome>> ProblemsInternal;
+		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
 		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
 			: base()
 		{
-			Factory = genomeFactory;
+			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
+			ProblemsInternal = new List<IProblem<TGenome>>();
+			Problems = ProblemsInternal.AsReadOnly();
 		}
 
 		public void AddProblem(params IProblem<TGenome>[] problems)
@@ -41,6 +36,9 @@ namespace Solve
 
 		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
+			if (_state != 0)
+				throw new InvalidOperationException("Attempting to add a problem when the environment has already started.");
+
 			foreach (var problem in problems)
 				ProblemsInternal.Add(problem);
 		}

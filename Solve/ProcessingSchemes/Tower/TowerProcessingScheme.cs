@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 
 namespace Solve.ProcessingSchemes
 {
-	public sealed partial class ExpressProcessingScheme<TGenome> : ProcessingSchemeBase<TGenome, ExpressProcessingScheme<TGenome>.Tower>
+	public sealed partial class TowerProcessingScheme<TGenome> : SynchronousProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		const ushort DEFAULT_CHAMPION_POOL_SIZE = 100;
@@ -13,7 +13,7 @@ namespace Solve.ProcessingSchemes
 
 		internal readonly CounterCollection Counters;
 
-		public ExpressProcessingScheme(
+		public TowerProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
@@ -34,6 +34,7 @@ namespace Solve.ProcessingSchemes
 				throw new ArgumentException("Minumum must be less than or equal to First.", nameof(poolSize));
 			Contract.EndContractBlock();
 
+			Root = new Level(0, this);
 			PoolSize = poolSize;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
@@ -41,9 +42,13 @@ namespace Solve.ProcessingSchemes
 			Counters = counters;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
+			if (championPoolSize != 0)
+				ChampionPool = new RankedPool<TGenome>(championPoolSize);
+
+			this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome));
 		}
 
-		public ExpressProcessingScheme(
+		public TowerProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
@@ -60,17 +65,37 @@ namespace Solve.ProcessingSchemes
 		public readonly ushort MaxLossesBeforeElimination;
 		public readonly ushort ChampionPoolSize;
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
+		readonly Level Root;
+
+		#region Champion Pool
+		public readonly RankedPool<TGenome> ChampionPool;
 
 		bool ProduceFromChampions()
 		{
-			bool produced = false;
-			foreach (var t in Towers.Values)
+			if (ChampionPool == null) return false;
+
+			var champions = ChampionPool.Ranked;
+			var len = champions.Length;
+			if (len > 0)
 			{
-				if (t.ProduceFromChampions(ReserveFactoryQueue))
-					produced = true;
+				var top = champions[0];
+				ReserveFactoryQueue.EnqueueForMutation(top);
+				ReserveFactoryQueue.EnqueueForBreeding(top);
+
+				var next = TriangularSelection.Descending.RandomOne(champions);
+				ReserveFactoryQueue.EnqueueForMutation(next);
+				ReserveFactoryQueue.EnqueueForBreeding(next);
+
+				ReserveFactoryQueue.EnqueueForMutation(champions);
+				ReserveFactoryQueue.EnqueueForBreeding(champions);
+
+				return true;
 			}
-			return produced;
+
+			return false;
 		}
+		#endregion
+
 	}
 
 
