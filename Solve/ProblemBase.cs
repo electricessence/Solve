@@ -12,6 +12,8 @@ namespace Solve
 	where TGenome : class, IGenome
 	{
 
+		public RankedPool<TGenome> ChampionPool { get; }
+
 		protected readonly ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>
 			Fitnesses = new ConcurrentDictionary<string, Lazy<GenomeFitness<TGenome, Fitness>>>();
 
@@ -26,9 +28,10 @@ namespace Solve
 		public long TestCount => _testCount;
 
 
-		protected ProblemBase()
+		protected ProblemBase(ushort championPoolSize = 0)
 		{
-
+			if (championPoolSize != 0)
+				ChampionPool = new RankedPool<TGenome>(championPoolSize);
 		}
 
 

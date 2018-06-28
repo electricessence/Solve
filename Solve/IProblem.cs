@@ -42,6 +42,8 @@ namespace Solve
 		bool WasRejected(string hash);
 
 		IReadOnlyList<string> FitnessLabels { get; }
+
+		RankedPool<TGenome> ChampionPool { get; }
 	}
 
 	public static class ProblemExtensions
