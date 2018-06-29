@@ -20,6 +20,12 @@ namespace Solve.ProcessingSchemes
 				{
 					CancellationToken = token,
 				}, Post);
+
+				//foreach (var f in Factory)
+				//{
+				//	if (!token.IsCancellationRequested)
+				//		Post(f);
+				//}
 			});
 
 	}

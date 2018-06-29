@@ -58,7 +58,9 @@ namespace Solve
 					if (Canceller.IsCancellationRequested)
 						goto case -1;
 
-					AddProblems(problems);
+					foreach (var problem in problems)
+						ProblemsInternal.Add(problem);
+
 					if (!ProblemsInternal.HasAny())
 						throw new InvalidOperationException("Cannot start without any registered 'Problems'");
 

@@ -1,5 +1,6 @@
 ﻿using Open.Collections;
 using Open.Threading;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -41,42 +42,44 @@ namespace Solve.ProcessingSchemes
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 
 				var probCount = tower.Problems.Count;
-				BestLevelFitness = new SingleValueContainer<IFitness>[probCount];
-				BestProgressiveFitness = new SingleValueContainer<IFitness>[probCount];
+				BestLevelFitness = new IFitness[probCount];
+				BestProgressiveFitness = new IFitness[probCount];
 			}
 
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 
-			readonly SingleValueContainer<IFitness>[] BestLevelFitness;
-			readonly SingleValueContainer<IFitness>[] BestProgressiveFitness;
+			readonly IFitness[] BestLevelFitness;
+			readonly IFitness[] BestProgressiveFitness;
 
 
-			static IEnumerable<bool> UpdateFitnessesIfBetter(SingleValueContainer<IFitness>[] registry, IEnumerable<IFitness> contending, bool useSnapShots)
+			static bool[] UpdateFitnessesIfBetter(IFitness[] registry, IEnumerable<IFitness> contending, bool useSnapShots)
 			{
 				Debug.Assert(registry != null);
 				Debug.Assert(contending != null);
 				var len = registry.Length;
+				var result = new bool[len];
+				var c = contending.GetEnumerator();
 
-				int i = 0;
-				foreach (var c in contending)
+				var r = registry.AsSpan();
+				for (var i = 0; i < len; i++)
 				{
-					Debug.Assert(i < len);
-					var vc = registry[i];
-					var fitness = c;
-					IFitness f;
-					while ((f = vc.Value) == null || fitness.IsSuperiorTo(f))
+					c.MoveNext();
+					var fitness = c.Current;
+					ref IFitness fRef = ref r[i];
+					while (fRef == null || fitness.IsSuperiorTo(fRef))
 					{
 						if (useSnapShots) fitness = fitness.SnapShot();
-						if (Interlocked.CompareExchange(ref vc.Value, fitness, f) == f)
+						var f = fRef;
+						if (Interlocked.CompareExchange(ref fRef, fitness, f) == f)
 						{
-							yield return true;
+							result[i] = true;
+							break;
 						}
 					}
-					i++;
 				}
 
-				Debug.Assert(i == len);
+				return result;
 			}
 
 
@@ -84,8 +87,8 @@ namespace Solve.ProcessingSchemes
 			{
 				// Track local fitness
 				var fitness = Tower.Problems.Select(p => p.ProcessTest(c.Genome, Index)).ToArray();
-				var leveled = UpdateFitnessesIfBetter(BestLevelFitness, fitness, false).ToArray();
-				var progressed = UpdateFitnessesIfBetter(BestProgressiveFitness, c.Fitness.Select((f, i) => f.Merge(fitness[i])), true).ToArray();
+				var leveled = UpdateFitnessesIfBetter(BestLevelFitness, fitness, false);
+				var progressed = UpdateFitnessesIfBetter(BestProgressiveFitness, c.Fitness.Select((f, i) => f.Merge(fitness[i])), true);
 				return fitness.Select((f, i) =>
 				{
 					var lev = leveled[i];
@@ -144,13 +147,18 @@ namespace Solve.ProcessingSchemes
 						// 2) Increment fitness rejection for individual fitnesses.
 						for (var p = 0; p < problemCount; p++)
 							for (var i = midPoint; i < len; i++)
-								selections[p][i].GenomeFitness.Fitness[p].IncrementRejection();
+								selections[p][i]
+									.GenomeFitness
+									.Fitness[p]
+									.IncrementRejection();
 
 						// 3) Weave all fitnesses and distinclty select the iwinners.
 						var remaining = selections
 							.Select(s => s.ToQueue().AsDequeueingEnumerable())
+							.ToArray()
 							.Weave()
 							.Distinct();
+
 						var winners = remaining.Take(midPoint).ToArray();
 
 						// 4) Return losers to pool.
@@ -161,18 +169,22 @@ namespace Solve.ProcessingSchemes
 						{
 							var l = loser;
 							l.LevelLossRecord++;
-							var fitness = loser.GenomeFitness.Fitness;
+							var fitness = l.GenomeFitness.Fitness;
 
-							if (loser.LevelLossRecord > maxLoses)
+							if (l.LevelLossRecord > maxLoses)
 							{
 								if (fitness.Any(f => f.RejectionCount < maxRejection))
-									losersToPromote.Add(loser.GenomeFitness);
-								//else
-								//	Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
+									losersToPromote.Add(l.GenomeFitness);
+								else
+								{
+									//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
+									((GenomeFactoryBase<TGenome>)Tower.Factory).MetricsCounter.Increment("Genome Rejected");
+								}
 							}
 							else
 							{
-								Pool.Enqueue(loser);
+								Debug.Assert(l.LevelLossRecord > 0);
+								Pool.Enqueue(l);
 							}
 						}
 
