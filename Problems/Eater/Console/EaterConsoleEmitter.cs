@@ -38,12 +38,11 @@ namespace Eater
 		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
 			= new ConcurrentDictionary<string, ProcedureResult[]>();
 
-		public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
-			=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
+		//public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
+		//	=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
 
-		public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
-			=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
-
+		//public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
+		//	=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
 		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
 		readonly object LatestWinnerImageLock = new object();

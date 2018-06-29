@@ -1,7 +1,7 @@
-﻿using Open.Dataflow;
-using Open.Threading.Tasks;
+﻿using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
@@ -54,14 +54,14 @@ namespace Solve.Experiment.Console
 
 		DateTime _lastEmit = DateTime.MinValue;
 
-		protected void OnAnnouncement((IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness) announcement)
-		{
-			Emitter.EmitTopGenomeStats(announcement);
-			if (DateTime.Now - _lastEmit > StatusDelay)
-			{
-				EmitStatsAction();
-			}
-		}
+		//protected void OnAnnouncement((IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness) announcement)
+		//{
+		//	Emitter.EmitTopGenomeStats(announcement);
+		//	if (DateTime.Now - _lastEmit > StatusDelay)
+		//	{
+		//		EmitStatsAction();
+		//	}
+		//}
 
 		public async Task Start(string info)
 		{
@@ -78,7 +78,9 @@ namespace Solve.Experiment.Console
 			var cancel = new CancellationTokenSource();
 
 			Environment
-				.Subscribe(Emitter.EmitTopGenomeStats,
+				.Subscribe(o => Emitter.EmitTopGenomeStats(
+						o.Genome,
+						o.Fitness.Select((f, i) => (Problem: Environment.Problems[i], Fitness: (IFitness)f)).ToArray()),
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{

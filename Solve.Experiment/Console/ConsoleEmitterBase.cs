@@ -17,52 +17,41 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public FitnessScore LastScore;
+		public FitnessScore[] LastScore;
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
-		public void EmitTopGenomeStats((IProblem<TGenome> Problem, TGenome Genome) kvp)
-			=> EmitTopGenomeStatsInternal(kvp.Problem, kvp.Genome);
-
-		public void EmitTopGenomeStats((IProblem<TGenome>, IGenomeFitness<TGenome>) kvp)
-			=> EmitTopGenomeStatsInternal(kvp.Item1, kvp.Item2);
-
-		public void EmitTopGenomeStats(IProblem<TGenome> p, IGenomeFitness<TGenome> gf)
-			=> EmitTopGenomeStatsInternal(p, gf);
-
-		public void EmitTopGenomeStats(IProblem<TGenome> p, TGenome genome)
-			=> EmitTopGenomeStatsInternal(p, genome);
-
-		protected bool EmitTopGenomeStatsInternal(IProblem<TGenome> p, IGenomeFitness<TGenome> gf)
-			=> EmitTopGenomeStatsInternal(p, gf.Genome, gf.Fitness);
-
-		protected bool EmitTopGenomeStatsInternal(IProblem<TGenome> p, TGenome genome, IFitness fitness = null)
+		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, IFitness Fitness)[] stats)
 		{
-			var sc = fitness.SampleCount;
+			var sc = stats.Max(s => s.Fitness.SampleCount);
 			if (sc < SampleMinimum) return false;
 
-			var f = (fitness ?? p.GetFitnessFor(genome).Value.Fitness).SnapShot();
-
 			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
+			var scores = stats.Select(s => s.Fitness.SnapShot()).ToArray();
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => sc >= SampleMinimum && (LastScore == null || (LastScore < f && LastScore.SampleCount < f.SampleCount)),
+				() => sc >= SampleMinimum && (LastScore == null || LastScore.Where((ls, i) =>
+				{
+					var f = scores[i];
+					return ls < f && ls.SampleCount < f.SampleCount;
+				}).Any()),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{
 						if (asReduced.Equals(genome))
-							System.Console.WriteLine("{0}:\t{1}", p.ID, genome.Hash);
+							System.Console.WriteLine("{0}", genome.Hash);
 						else
-							System.Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.Hash, asReduced.Hash);
+							System.Console.WriteLine("{0}\n=>{1}", genome.Hash, asReduced.Hash);
 
-						EmitFitnessScoreWithLabels(p, f);
-						System.Console.WriteLine();
-
-						LastScore = f;
+						LastScore = scores;
 						LastHash = genome.Hash;
 
-						OnEmittingGenome(p, genome, f);
-
+						foreach (var (Problem, Fitness) in stats)
+						{
+							EmitFitnessScoreWithLabels(Problem, Fitness);
+							System.Console.WriteLine();
+							OnEmittingGenome(Problem, genome, Fitness);
+						}
 					}));
 		}
 
@@ -76,7 +65,7 @@ namespace Solve.Experiment.Console
 			var labels = problem.FitnessLabels;
 			var scoreStrings = fitness.Scores.Select((s, i) => String.Format(labels[i], s));
 
-			System.Console.WriteLine("  \t{0} ({1:n0} samples)", scoreStrings.JoinToString(", "), fitness.SampleCount);
+			System.Console.WriteLine("{0}:\t{1} ({2:n0} samples)", problem.ID, scoreStrings.JoinToString(", "), fitness.SampleCount);
 		}
 
 	}

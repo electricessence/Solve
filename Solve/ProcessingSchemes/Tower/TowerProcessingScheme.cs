@@ -1,6 +1,8 @@
 ﻿using Solve.Metrics;
 using System;
 using System.Diagnostics.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
@@ -34,7 +36,6 @@ namespace Solve.ProcessingSchemes
 				throw new ArgumentException("Minumum must be less than or equal to First.", nameof(poolSize));
 			Contract.EndContractBlock();
 
-			Root = new Level(0, this);
 			PoolSize = poolSize;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
@@ -65,7 +66,7 @@ namespace Solve.ProcessingSchemes
 		public readonly ushort MaxLossesBeforeElimination;
 		public readonly ushort ChampionPoolSize;
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
-		readonly Level Root;
+		Level Root = null;
 
 		#region Champion Pool
 		public readonly RankedPool<TGenome> ChampionPool;
@@ -95,6 +96,13 @@ namespace Solve.ProcessingSchemes
 			return false;
 		}
 		#endregion
+
+		protected override Task StartInternal(CancellationToken token)
+		{
+			Interlocked.CompareExchange(ref Root, new Level(0, this), null);
+
+			return base.StartInternal(token);
+		}
 
 	}
 
