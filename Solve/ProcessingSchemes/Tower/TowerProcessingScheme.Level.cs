@@ -42,18 +42,18 @@ namespace Solve.ProcessingSchemes
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 
 				var probCount = tower.Problems.Count;
-				BestLevelFitness = new IFitness[probCount];
-				BestProgressiveFitness = new IFitness[probCount];
+				BestLevelFitness = new double[probCount][];
+				BestProgressiveFitness = new double[probCount][];
 			}
 
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 
-			readonly IFitness[] BestLevelFitness;
-			readonly IFitness[] BestProgressiveFitness;
+			readonly double[][] BestLevelFitness;
+			readonly double[][] BestProgressiveFitness;
 
 
-			static bool[] UpdateFitnessesIfBetter(IFitness[] registry, IEnumerable<IFitness> contending, bool useSnapShots)
+			static bool[] UpdateFitnessesIfBetter(double[][] registry, IEnumerable<double[]> contending, bool useSnapShots)
 			{
 				Debug.Assert(registry != null);
 				Debug.Assert(contending != null);
@@ -66,7 +66,7 @@ namespace Solve.ProcessingSchemes
 				{
 					c.MoveNext();
 					var fitness = c.Current;
-					ref IFitness fRef = ref r[i];
+					ref double[] fRef = ref r[i];
 					while (fRef == null || fitness.IsSuperiorTo(fRef))
 					{
 						if (useSnapShots) fitness = fitness.SnapShot();
