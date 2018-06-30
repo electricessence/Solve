@@ -1,4 +1,4 @@
-﻿using Open.Collections;
+﻿using Open.Numeric;
 using Open.Threading;
 using System;
 using System.Linq;
@@ -17,23 +17,23 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public FitnessScore[] LastScore;
+		public ProcedureResults[] LastScore;
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
-		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, IFitness Fitness)[] stats)
+		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, FitnessContainer Fitness)[] stats)
 		{
 			var sc = stats.Max(s => s.Fitness.SampleCount);
 			if (sc < SampleMinimum) return false;
 
 			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-			var scores = stats.Select(s => s.Fitness.SnapShot()).ToArray();
+			var scores = stats.Select(s => s.Fitness.Results).ToArray();
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
 				() => sc >= SampleMinimum && (LastScore == null || LastScore.Where((ls, i) =>
 				{
 					var f = scores[i];
-					return ls < f && ls.SampleCount < f.SampleCount;
+					return ls.Average.IsLessThan(f.Average) && ls.Count < f.Count;
 				}).Any()),
 				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
@@ -48,24 +48,25 @@ namespace Solve.Experiment.Console
 
 						foreach (var (Problem, Fitness) in stats)
 						{
-							EmitFitnessScoreWithLabels(Problem, Fitness);
+							var results = Fitness.Results;
+							EmitFitnessScoreWithLabels(Problem, results);
 							System.Console.WriteLine();
-							OnEmittingGenome(Problem, genome, Fitness);
+							OnEmittingGenome(Problem, genome, results);
 						}
 					}));
 		}
 
-		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, IFitness fitness)
+		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, ProcedureResults fitness)
 		{
-			LogFile?.AddLine($"{DateTime.Now},{p.ID},{p.TestCount},{string.Join(',', fitness.Scores.ToStringArray())},");
+			LogFile?.AddLine($"{DateTime.Now},{p.ID},{p.TestCount},{fitness.Average.Span.ToStringBuilder(',')},");
 		}
 
-		public static void EmitFitnessScoreWithLabels(IProblem<TGenome> problem, IFitness fitness)
+		public static void EmitFitnessScoreWithLabels(IProblem<TGenome> problem, ProcedureResults fitness)
 		{
 			var labels = problem.FitnessLabels;
-			var scoreStrings = fitness.Scores.Select((s, i) => String.Format(labels[i], s));
+			var scoreStrings = fitness.Average.ToArray().Select((s, i) => String.Format(labels[i], s)).ToArray();
 
-			System.Console.WriteLine("{0}:\t{1} ({2:n0} samples)", problem.ID, scoreStrings.JoinToString(", "), fitness.SampleCount);
+			System.Console.WriteLine("{0}:\t{1} ({2:n0} samples)", problem.ID, String.Join(", ", scoreStrings), fitness.Count);
 		}
 
 	}

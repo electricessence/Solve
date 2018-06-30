@@ -1,5 +1,4 @@
-﻿using Open.Numeric;
-using Solve;
+﻿using Solve;
 using System.Collections.Generic;
 
 namespace Eater
@@ -15,10 +14,10 @@ namespace Eater
 			Samples = new SampleCache(gridSize);
 		}
 
-		protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
-		{
-			return genome;//.AsReduced(); // DO NOT measure against reduced because turns are expended energy and effect fitness.
-		}
+		//protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
+		//{
+		//	return genome;//.AsReduced(); // DO NOT measure against reduced because turns are expended energy and effect fitness.
+		//}
 
 		public override IReadOnlyList<string> FitnessLabels { get; }
 			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Gene-Count {0:n0}" }).AsReadOnly();
@@ -27,15 +26,18 @@ namespace Eater
 
 	public sealed class EaterProblemFragmented : EaterProblem
 	{
-		public EaterProblemFragmented(int gridSize = 10) : base(gridSize)
+		public EaterProblemFragmented(int gridSize = 10, int sampleSize = 100) : base(gridSize)
 		{
+			SampleSize = sampleSize;
 		}
 
-		protected override void ProcessTest(EaterGenome g, Fitness fitness, long sampleId)
+		public readonly int SampleSize;
+
+		protected override double[] ProcessTestInternal(EaterGenome g, long sampleId)
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
-			var len = 100;
+			var len = SampleSize;
 			double found = 0;
 			double energy = 0;
 
@@ -59,26 +61,9 @@ namespace Eater
 
 			var ave = energy / len;
 			var geneCount = g.Genes.Length;
-			fitness.AddScores(found / len, -ave, -geneCount);// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
+			return new[] { found / len, -ave, -geneCount };// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
 
 	}
 
-
-	public sealed class ProblemFullTest : EaterProblem
-	{
-		public ProblemFullTest(int gridSize = 10) : base(gridSize)
-		{
-		}
-
-		protected override void ProcessTest(EaterGenome g, Fitness fitness, long sampleId)
-		{
-			var fullTest = Samples.TestAll(g.Hash);
-			var count = fullTest[0].Count;
-			fitness.Add(fullTest[0]);
-			fitness.Add(fullTest[1]);
-			fitness.Add(new ProcedureResult(g.Genes.Length * count, count));
-		}
-
-	}
 }
