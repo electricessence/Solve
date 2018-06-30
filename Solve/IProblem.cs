@@ -16,9 +16,8 @@ namespace Solve
 	{
 		int ID { get; }
 
-		// 0 = acquire sampleId from sample count.  Negative numbers are allowed.
-		double[] ProcessSampleMetrics(TGenome g, long sampleId = 0);
-		Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId = 0);
+		IEnumerable<double[]> ProcessSample(TGenome g, long sampleId);
+		Task<IEnumerable<double[]>> ProcessSampleAsync(TGenome g, long sampleId);
 
 		long TestCount { get; }
 
@@ -26,18 +25,5 @@ namespace Solve
 
 		RankedPool<TGenome> ChampionPool { get; }
 	}
-
-
-	/// <summary>
-	/// Problems define what parameters need to be tested to resolve fitness.
-	/// </summary>
-	public interface IProblem<TGenome, TMetrics> : IProblem<TGenome>
-		 where TGenome : IGenome
-	{
-		// 0 = acquire sampleId from sample count.  Negative numbers are allowed.
-		new TMetrics ProcessSampleMetrics(TGenome g, long sampleId = 0);
-		new Task<TMetrics> ProcessSampleMetricsAsync(TGenome g, long sampleId = 0);
-	}
-
 
 }

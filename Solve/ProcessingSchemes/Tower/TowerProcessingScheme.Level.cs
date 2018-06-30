@@ -98,7 +98,7 @@ namespace Solve.ProcessingSchemes
 			(double[] Fitness, (bool Local, bool Progressive, bool Both, bool Either) Superiority)[] ProcessTestAndUpdate((TGenome Genome, FitnessContainer[] Fitness) c)
 			{
 				// Track local fitness
-				var fitness = Tower.Problems.Select(p => p.ProcessSampleMetrics(c.Genome, Index)).ToArray();
+				var fitness = Tower.Problems.Select(p => p.ProcessSample(c.Genome, Index)).ToArray();
 				var leveled = UpdateFitnessesIfBetter(BestLevelFitness, fitness);
 				var progressed = UpdateFitnessesIfBetter(BestProgressiveFitness, c.Fitness.Select((f, i) => f.Merge(fitness[i]).Average.ToArray()));
 				return fitness.Select((f, i) =>

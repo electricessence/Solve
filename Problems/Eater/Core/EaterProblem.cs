@@ -3,16 +3,23 @@ using System.Collections.Generic;
 
 namespace Eater
 {
-
+	
 
 	public abstract class EaterProblem : ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
-		protected EaterProblem(int gridSize = 10, ushort championPoolSize = 100) : base(null, championPoolSize)
+		protected EaterProblem(int gridSize = 10, ushort championPoolSize = 100)
+			: base(championPoolSize, Fitness01, Fitness02)
 		{
 			Samples = new SampleCache(gridSize);
 		}
+
+		static double[] Fitness01(EaterGenome g, double[] metrics)
+			=> new[] { metrics[0], metrics[1], g.Genes.Length };
+
+		static double[] Fitness02(EaterGenome g, double[] metrics)
+			=> new[] { metrics[1], metrics[0], g.Genes.Length };
 
 		//protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
 		//{
@@ -33,7 +40,7 @@ namespace Eater
 
 		public readonly int SampleSize;
 
-		protected override double[] ProcessSampleMetricsInternal(EaterGenome g, long sampleId)
+		protected override double[] ProcessSampleMetrics(EaterGenome g, long sampleId)
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
