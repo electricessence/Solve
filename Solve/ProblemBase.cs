@@ -25,35 +25,35 @@ namespace Solve
 				ChampionPool = new RankedPool<TGenome>(championPoolSize);
 		}
 
-		protected readonly IReadOnlyList<Func<TGenome, double[], double[]>> FitnessTranslators;
-
-		protected abstract double[] ProcessSampleMetricsInternal(TGenome g, long sampleId);
-
-		public double[] ProcessSampleMetrics(TGenome g, long sampleId = 0)
+		protected ProblemBase(ushort championPoolSize, params Func<TGenome, double[], double[]>[] fitnessTranslators) : this(fitnessTranslators, championPoolSize)
 		{
-			try
-			{
-				return ProcessSampleMetricsInternal(g, sampleId);
-			}
-			finally
-			{
-				Interlocked.Increment(ref _testCount);
-			}
+
 		}
 
-		protected virtual Task<double[]> ProcessSampleMetricsAsyncInternal(TGenome g, long sampleId)
-			=> Task.FromResult(ProcessSampleMetricsInternal(g, sampleId));
-
-		public async Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId = 0)
+		protected ProblemBase(params Func<TGenome, double[], double[]>[] fitnessTranslators) : this(fitnessTranslators, 0)
 		{
-			try
-			{
-				return await ProcessSampleMetricsAsyncInternal(g, sampleId);
-			}
-			finally
-			{
-				Interlocked.Increment(ref _testCount);
-			}
+
+		}
+
+		protected readonly IReadOnlyList<Func<TGenome, double[], double[]>> FitnessTranslators;
+
+		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);
+
+		public IEnumerable<double[]> ProcessSample(TGenome g, long sampleId)
+		{
+			var metrics = ProcessSampleMetrics(g, sampleId);
+			Interlocked.Increment(ref _testCount);
+			return FitnessTranslators.Select(t => t(g, metrics));
+		}
+
+		protected virtual Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
+			=> Task.FromResult(ProcessSampleMetrics(g, sampleId));
+
+		public async Task<IEnumerable<double[]>> ProcessSampleAsync(TGenome g, long sampleId = 0)
+		{
+			var metrics = await ProcessSampleMetricsAsync(g, sampleId);
+			Interlocked.Increment(ref _testCount);
+			return FitnessTranslators.Select(t => t(g, metrics));
 		}
 
 		public abstract IReadOnlyList<string> FitnessLabels { get; }
