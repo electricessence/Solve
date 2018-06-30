@@ -9,7 +9,7 @@ namespace Eater
 	{
 		public readonly SampleCache Samples;
 
-		protected EaterProblem(int gridSize = 10)
+		protected EaterProblem(int gridSize = 10, ushort championPoolSize = 100) : base(null, championPoolSize)
 		{
 			Samples = new SampleCache(gridSize);
 		}
@@ -33,7 +33,7 @@ namespace Eater
 
 		public readonly int SampleSize;
 
-		protected override double[] ProcessTestInternal(EaterGenome g, long sampleId)
+		protected override double[] ProcessSampleMetricsInternal(EaterGenome g, long sampleId)
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
