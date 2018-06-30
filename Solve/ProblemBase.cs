@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve
 {
 	public abstract class ProblemBase<TGenome> : IProblem<TGenome>
-	where TGenome : class, IGenome
+		where TGenome : class, IGenome
 	{
 
 		public RankedPool<TGenome> ChampionPool { get; }
@@ -16,20 +18,22 @@ namespace Solve
 		long _testCount = 0;
 		public long TestCount => _testCount;
 
-
-		protected ProblemBase(ushort championPoolSize = 0)
+		protected ProblemBase(IEnumerable<Func<TGenome, double[], double[]>> fitnessTransators, ushort championPoolSize = 0)
 		{
+			FitnessTranslators = fitnessTransators?.ToList().AsReadOnly() ?? throw new ArgumentNullException(nameof(fitnessTransators));
 			if (championPoolSize != 0)
 				ChampionPool = new RankedPool<TGenome>(championPoolSize);
 		}
 
-		protected abstract double[] ProcessTestInternal(TGenome g, long sampleId);
+		protected readonly IReadOnlyList<Func<TGenome, double[], double[]>> FitnessTranslators;
 
-		public double[] ProcessTest(TGenome g, long sampleId = 0)
+		protected abstract double[] ProcessSampleMetricsInternal(TGenome g, long sampleId);
+
+		public double[] ProcessSampleMetrics(TGenome g, long sampleId = 0)
 		{
 			try
 			{
-				return ProcessTestInternal(g, sampleId);
+				return ProcessSampleMetricsInternal(g, sampleId);
 			}
 			finally
 			{
@@ -37,14 +41,14 @@ namespace Solve
 			}
 		}
 
-		protected virtual Task<double[]> ProcessTestAsyncInternal(TGenome g, long sampleId)
-			=> Task.FromResult(ProcessTestInternal(g, sampleId));
+		protected virtual Task<double[]> ProcessSampleMetricsAsyncInternal(TGenome g, long sampleId)
+			=> Task.FromResult(ProcessSampleMetricsInternal(g, sampleId));
 
-		public async Task<double[]> ProcessTestAsync(TGenome g, long sampleId = 0)
+		public async Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId = 0)
 		{
 			try
 			{
-				return await ProcessTestAsyncInternal(g, sampleId);
+				return await ProcessSampleMetricsAsyncInternal(g, sampleId);
 			}
 			finally
 			{
