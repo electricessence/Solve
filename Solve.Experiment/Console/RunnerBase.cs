@@ -80,7 +80,7 @@ namespace Solve.Experiment.Console
 			Environment
 				.Subscribe(o => Emitter.EmitTopGenomeStats(
 						o.Genome,
-						o.Fitness.Select((f, i) => (Problem: Environment.Problems[i], Fitness: (IFitness)f)).ToArray()),
+						o.Fitness.Select((f, i) => (Problem: Environment.Problems[i], Fitness: f)).ToArray()),
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{
