@@ -31,12 +31,15 @@ namespace Solve.Experiment.Console
 				return s;
 			});
 
-			foreach (var (Problem, Fitness) in stats)
+			var pCount = stats.Length;
+			for (var j = 0; j < pCount; j++)
 			{
+				var (Problem, Fitness) = stats[j];
+
 				var len = Fitness.Length;
 				for (var i = 0; i < len; i++)
 				{
-					var f = Fitness[i];
+					var f = Fitness[i].Clone();
 					if (f.SampleCount >= SampleMinimum && Problem.Pools[i].UpdateBestFitness(genome, f))
 					{
 						sb.Value.AppendLine(FitnessScoreWithLabels(Problem, i, f));

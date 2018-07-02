@@ -78,10 +78,10 @@ namespace Solve.ProcessingSchemes
 				Debug.Assert(contending != null);
 
 				ref double[] fRef = ref registry[index];
-				while (fRef == null || contending.IsGreaterThan(fRef))
+				double[] defending;
+				while ((defending = fRef) == null || contending.IsGreaterThan(defending))
 				{
-					var f = fRef;
-					if (Interlocked.CompareExchange(ref fRef, contending, f) == f)
+					if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
 						return true;
 				}
 				return false;
