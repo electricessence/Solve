@@ -90,16 +90,18 @@ namespace Solve.ProcessingSchemes
 
 			(double[] Fitness, (bool Local, bool Progressive) Superiority)[][] ProcessTestAndUpdate(
 				(TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress) c)
-				=> Tower.Problems.Select(
-					(problem, p) => problem.ProcessSample(c.Genome, Index).Select((f, i) =>
+				=> c.Progress.Select(
+					(progress, p) => progress.Problem.ProcessSample(c.Genome, Index).Select((fitness, i) =>
 				{
-					var values = f.Results.Average.ToArray();
+					var values = fitness.Results.Sum.ToArray();
 					var lev = UpdateFitnessesIfBetter(BestLevelFitness[p], values, i);
-					var pro = UpdateFitnessesIfBetter(BestProgressiveFitness[p], f.Merge(values).Average.ToArray(), i);
+					var progressiveFitness = progress.Fitness[i];
+					var pro = UpdateFitnessesIfBetter(BestProgressiveFitness[p], progressiveFitness.Merge(values).Average.ToArray(), i);
+					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
 					if (lev || pro)
 					{
-						problem.Pools[i].Champions?.Add((c.Genome, f));
+						progress.Problem.Pools[i].Champions?.Add(c.Genome, progressiveFitness);
 						Factory.EnqueueChampion(c.Genome);
 					}
 
@@ -115,6 +117,7 @@ namespace Solve.ProcessingSchemes
 			{
 				// Process a test for this level.
 				var result = ProcessTestAndUpdate(c);
+				Debug.Assert(c.Progress.SelectMany(p => p.Fitness).All(f => f.Results != null));
 				if (_nextLevel == null)
 				{
 					if (result.Any(r => r.Any(f => f.Superiority.Progressive))) Tower.Broadcast(c);
@@ -156,7 +159,7 @@ namespace Solve.ProcessingSchemes
 									if (champions != null)
 									{
 										var t = s[0].GenomeFitness;
-										champions.Add((t.Genome, t.Progress[p].Fitness[i])); // Need to leverage potentially significant genetics...
+										champions.Add(t.Genome, t.Progress[p].Fitness[i]); // Need to leverage potentially significant genetics...
 									}
 
 									var toReject = s.AsSpan().Slice(midPoint);
@@ -187,7 +190,7 @@ namespace Solve.ProcessingSchemes
 						var losersToPromote = new List<Entry>();
 						var maxLoses = Tower.MaxLevelLosses;
 						var maxRejection = Tower.MaxLossesBeforeElimination;
-						foreach (var loser in ordered)
+						foreach (var loser in losers)
 						{
 							loser.LevelLossRecord++;
 

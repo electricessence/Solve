@@ -16,7 +16,7 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public CursorRange LastTopGenomeUpdate;
+		//public CursorRange LastTopGenomeUpdate;
 
 		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] stats)
 		{
@@ -49,8 +49,8 @@ namespace Solve.Experiment.Console
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
 				() => sb.IsValueCreated,
-				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
-					cursor => System.Console.Write(sb.ToString())));
+				() => //SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, cursor =>
+					System.Console.Write(sb.ToString()));//);
 		}
 
 		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, FitnessContainer fitness)

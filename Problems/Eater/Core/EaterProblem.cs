@@ -23,8 +23,8 @@ namespace Eater
 
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
-			new Metric(0, "Food-Found-Rate", "Food-Found-Rate {0:p}"),
-			new Metric(1, "Average-Energy", "Food-Found-Rate {0:p}"),
+			new Metric(0, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
+			new Metric(1, "Average-Energy", "Average-Energy {0:n3}"),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
 		}.AsReadOnly();
 
