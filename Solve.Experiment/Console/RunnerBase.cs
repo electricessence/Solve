@@ -1,7 +1,6 @@
 ﻿using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
@@ -78,9 +77,7 @@ namespace Solve.Experiment.Console
 			var cancel = new CancellationTokenSource();
 
 			Environment
-				.Subscribe(o => Emitter.EmitTopGenomeStats(
-						o.Genome,
-						o.Fitness.Select((f, i) => (Problem: Environment.Problems[i], Fitness: f)).ToArray()),
+				.Subscribe(o => Emitter.EmitTopGenomeStats(o.Genome, o.Progress),
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{

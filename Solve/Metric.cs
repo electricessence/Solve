@@ -1,0 +1,23 @@
+﻿using System;
+
+namespace Solve
+{
+	public struct Metric
+	{
+		public Metric(ushort id, string name, string format)
+		{
+			if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(name));
+			if (string.IsNullOrWhiteSpace(format)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(format));
+			if (!format.Contains("{0")) throw new ArgumentException("Invalid format string.");
+			String.Format(format, 1d); // validate format...
+
+			ID = id;
+			Name = name;
+			Format = format;
+		}
+
+		public ushort ID { get; }
+		public string Name { get; }
+		public string Format { get; }
+	}
+}

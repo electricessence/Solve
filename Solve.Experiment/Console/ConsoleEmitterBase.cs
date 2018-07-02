@@ -1,7 +1,6 @@
-﻿using Open.Numeric;
-using Open.Threading;
+﻿using Open.Threading;
 using System;
-using System.Linq;
+using System.Text;
 
 namespace Solve.Experiment.Console
 {
@@ -17,57 +16,48 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public ProcedureResults[] LastScore;
-		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
-		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, FitnessContainer Fitness)[] stats)
+		public bool EmitTopGenomeStats(TGenome genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] stats)
 		{
-			var sc = stats.Max(s => s.Fitness.SampleCount);
-			if (sc < SampleMinimum) return false;
+			var sb = Lazy.Create(() =>
+			{
+				var s = new StringBuilder();
+				var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
+				if (asReduced.Equals(genome))
+					s.AppendLine(genome.Hash);
+				else
+					s.AppendFormat("{0}\n=>{1}\n", genome.Hash, asReduced.Hash);
+				return s;
+			});
 
-			var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-			var scores = stats.Select(s => s.Fitness.Results).ToArray();
+			foreach (var (Problem, Fitness) in stats)
+			{
+				var len = Fitness.Length;
+				for (var i = 0; i < len; i++)
+				{
+					var f = Fitness[i];
+					if (f.SampleCount >= SampleMinimum && Problem.Pools[i].UpdateBestFitness(genome, f))
+					{
+						sb.Value.AppendLine(FitnessScoreWithLabels(Problem, i, f));
+						sb.Value.AppendLine();
+						OnEmittingGenome(Problem, genome, i, f);
+					}
+				}
+			}
+
 			return ThreadSafety.LockConditional(
 				SynchronizedConsole.Sync,
-				() => sc >= SampleMinimum && (LastScore == null || LastScore.Where((ls, i) =>
-				{
-					var f = scores[i];
-					return ls.Average.IsLessThan(f.Average) && ls.Count < f.Count;
-				}).Any()),
-				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
-					cursor =>
-					{
-						if (asReduced.Equals(genome))
-							System.Console.WriteLine("{0}", genome.Hash);
-						else
-							System.Console.WriteLine("{0}\n=>{1}", genome.Hash, asReduced.Hash);
-
-						LastScore = scores;
-						LastHash = genome.Hash;
-
-						foreach (var (Problem, Fitness) in stats)
-						{
-							var results = Fitness.Results;
-							EmitFitnessScoreWithLabels(Problem, results);
-							System.Console.WriteLine();
-							OnEmittingGenome(Problem, genome, results);
-						}
-					}));
+				() => sb.IsValueCreated,
+				() => SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
+					cursor => System.Console.Write(sb.ToString())));
 		}
 
-		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, ProcedureResults fitness)
-		{
-			LogFile?.AddLine($"{DateTime.Now},{p.ID},{p.TestCount},{fitness.Average.Span.ToStringBuilder(',')},");
-		}
+		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, FitnessContainer fitness)
+			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
 
-		public static void EmitFitnessScoreWithLabels(IProblem<TGenome> problem, ProcedureResults fitness)
-		{
-			var labels = problem.FitnessLabels;
-			var scoreStrings = fitness.Average.ToArray().Select((s, i) => String.Format(labels[i], s)).ToArray();
-
-			System.Console.WriteLine("{0}:\t{1} ({2:n0} samples)", problem.ID, String.Join(", ", scoreStrings), fitness.Count);
-		}
+		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, FitnessContainer fitness)
+			=> $"{problem.ID}.{poolIndex}:\t{fitness}";
 
 	}
 }
