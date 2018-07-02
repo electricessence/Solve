@@ -11,7 +11,8 @@ namespace Solve
 			Sign = sign;
 		}
 		public readonly int Sign;
-		public int Compare(Memory<T> x, Memory<T> y) => Sign * MemoryComparer.Compare(x, y);
+		public int Compare(Memory<T> x, Memory<T> y)
+			=> Sign * MemoryComparer.Compare(x, y);
 
 		public static readonly IComparer<Memory<T>> Ascending = new MemoryComparer<T>(+1);
 		public static readonly IComparer<Memory<T>> Descending = new MemoryComparer<T>(-1);
@@ -32,12 +33,17 @@ namespace Solve
 			Sign = sign;
 		}
 		readonly int Sign;
-		public int Compare(ReadOnlyMemory<T> x, ReadOnlyMemory<T> y) => Sign * Compare(x, y);
+		public int Compare(ReadOnlyMemory<T> x, ReadOnlyMemory<T> y)
+			=> Sign * ReadOnlyMemoryComparer.Compare(x, y);
 
 		public static readonly IComparer<ReadOnlyMemory<T>> Ascending = new ReadOnlyMemoryComparer<T>(+1);
 		public static readonly IComparer<ReadOnlyMemory<T>> Descending = new ReadOnlyMemoryComparer<T>(-1);
+	}
 
-		public static int Compare(in ReadOnlyMemory<T> target, in ReadOnlyMemory<T> other)
+	public static class ReadOnlyMemoryComparer
+	{
+		public static int Compare<T>(in ReadOnlyMemory<T> target, in ReadOnlyMemory<T> other)
+			where T : IComparable<T>
 			=> SpanComparer.Compare(target.Span, other.Span);
 	}
 

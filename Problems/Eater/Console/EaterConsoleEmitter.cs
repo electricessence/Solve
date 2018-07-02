@@ -49,7 +49,8 @@ namespace Eater
 		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, int poolIndex, FitnessContainer fitness)
 		{
 			base.OnEmittingGenome(p, genome, poolIndex, fitness);
-			var fileName = $"{DateTime.Now.Ticks}.{p.ID}.{poolIndex}";
+			var suffix = $"{p.ID}.{poolIndex}";
+			var fileName = $"{DateTime.Now.Ticks}.{suffix}";
 			File.WriteAllText(Path.Combine(ProgressionDirectory, $"{fileName}.txt"), genome.Hash);
 			var rendered = Path.Combine(ProgressionDirectory, $"{fileName}.jpg");
 			using (var bitmap = genome.Genes.ToArray().Render2())
@@ -65,13 +66,14 @@ namespace Eater
 				}
 				if (lastRendered != null)
 				{
+					var latestFileName = $"LatestWinner.{suffix}.jpg";
 					try
 					{
-						File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, "LatestWinner.jpg"), true);
+						File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, latestFileName), true);
 					}
 					catch (IOException)
 					{
-						Debug.WriteLine("Could not update LatestWinner.jpg.");
+						Debug.WriteLine($"Could not update {latestFileName}.");
 					}
 				}
 			});

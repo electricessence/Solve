@@ -1,6 +1,7 @@
 ﻿using Solve.Metrics;
 using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +21,6 @@ namespace Solve.ProcessingSchemes
 			(ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE,
 			CounterCollection counters = null)
 			: base(genomeFactory)
 		{
@@ -39,13 +39,9 @@ namespace Solve.ProcessingSchemes
 			PoolSize = poolSize;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
-			ChampionPoolSize = championPoolSize;
 			Counters = counters;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-			if (championPoolSize != 0)
-				ChampionPool = new RankedPool<TGenome>(championPoolSize);
-
 			this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome));
 		}
 
@@ -56,9 +52,7 @@ namespace Solve.ProcessingSchemes
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
 			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE,
 			CounterCollection counters = null)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, championPoolSize, counters)
-		{
-		}
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, counters) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
@@ -69,32 +63,35 @@ namespace Solve.ProcessingSchemes
 		Level Root = null;
 
 		#region Champion Pool
-		public readonly RankedPool<TGenome> ChampionPool;
 
 		bool ProduceFromChampions()
-		{
-			if (ChampionPool == null) return false;
+			=> Problems
+				.SelectMany(p => p.Pools, (p, r) => r.Champions)
+				.Where(c => c != null && !c.IsEmpty)
+				.Select(c =>
+				{
+					var champions = c.Ranked;
+					var len = champions.Length;
+					if (len > 0)
+					{
+						var top = champions[0];
+						ReserveFactoryQueue.EnqueueForMutation(top);
+						ReserveFactoryQueue.EnqueueForBreeding(top);
 
-			var champions = ChampionPool.Ranked;
-			var len = champions.Length;
-			if (len > 0)
-			{
-				var top = champions[0];
-				ReserveFactoryQueue.EnqueueForMutation(top);
-				ReserveFactoryQueue.EnqueueForBreeding(top);
+						var next = TriangularSelection.Descending.RandomOne(champions);
+						ReserveFactoryQueue.EnqueueForMutation(next);
+						ReserveFactoryQueue.EnqueueForBreeding(next);
 
-				var next = TriangularSelection.Descending.RandomOne(champions);
-				ReserveFactoryQueue.EnqueueForMutation(next);
-				ReserveFactoryQueue.EnqueueForBreeding(next);
+						ReserveFactoryQueue.EnqueueForMutation(champions);
+						ReserveFactoryQueue.EnqueueForBreeding(champions);
 
-				ReserveFactoryQueue.EnqueueForMutation(champions);
-				ReserveFactoryQueue.EnqueueForBreeding(champions);
+						return true;
+					}
 
-				return true;
-			}
-
-			return false;
-		}
+					return false;
+				})
+				.ToArray()
+				.Any();
 		#endregion
 
 		protected override Task StartInternal(CancellationToken token)

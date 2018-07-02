@@ -20,13 +20,15 @@ namespace Solve
 		readonly ConcurrentQueue<(TGenome Genome, FitnessContainer Fitness)> _pool
 			= new ConcurrentQueue<(TGenome Genome, FitnessContainer Fitness)>();
 
+		public bool IsEmpty => _pool.IsEmpty;
+
 		Lazy<TGenome[]> _ranked;
 
-		public void Add((TGenome Genome, FitnessContainer Fitness) genome)
+		public void Add(TGenome genome, FitnessContainer fitness)
 		{
 			if (_pool == null) return;
 
-			_pool.Enqueue(genome);
+			_pool.Enqueue((genome, fitness));
 
 			// Queue has changed.  Flush the last result.
 			var rc = _ranked;
@@ -47,11 +49,15 @@ namespace Solve
 					// Drain queue (some*)
 					.AsDequeueingEnumerable()
 					// Eliminate duplicates
-					.Distinct()
+					.GroupBy(e => e.Genome.Hash)
 					// Have enough to work with? (*)
 					.Take(PoolSize * 2)
-					// Setup ordering. Need to use snapshots for comparison.
-					.Select(e => (snapshot: e.Fitness.Results, genomeFitness: e))
+					.Select(e => // Setup ordering. Need to use snapshots for comparison.
+					{
+						var gf = e.First();
+						Debug.Assert(e.Select(f => f.Fitness).Distinct().Count() == 1);
+						return (snapshot: gf.Fitness.Results, genomeFitness: gf);
+					})
 					// Higher sample counts are more valuable as they only arrive here as champions.
 					.OrderBy(e => e.snapshot.Average, ReadOnlyMemoryComparer<double>.Descending)
 					.ThenByDescending(e => e.snapshot.Count)
@@ -59,7 +65,7 @@ namespace Solve
 					.Select(e => e.genomeFitness)
 					.ToArray();
 
-				// (.Take(ChampionPoolSize)) All champions deserve a chance, but we will only retain the ones that can fit in the pool.				
+				// (.Take(PoolSize)) All champions deserve a chance, but we will only retain the ones that can fit in the pool.				
 				foreach (var e in result.Take(PoolSize)) _pool.Enqueue(e);
 				return result.Select(g => g.Genome).ToArray();
 			})).Value;

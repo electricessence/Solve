@@ -11,7 +11,8 @@ namespace Solve
 			Sign = sign;
 		}
 		public readonly int Sign;
-		public int Compare(T[] x, T[] y) => Sign * ArrayComparer.Compare(x, y);
+		public int Compare(T[] x, T[] y)
+			=> Sign * ArrayComparer.Compare(x, y);
 
 		public static readonly IComparer<T[]> Ascending = new ArrayComparer<T>(+1);
 		public static readonly IComparer<T[]> Descending = new ArrayComparer<T>(-1);

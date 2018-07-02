@@ -1,28 +1,23 @@
 ﻿using Open.Numeric;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Solve
 {
+	[DebuggerDisplay("{this.ToString()}")]
 	public class FitnessContainer
 	{
-		public FitnessContainer(IReadOnlyList<Metric> metrics)
-		{
-			Metrics = metrics;
-		}
 
 		public FitnessContainer(IReadOnlyList<Metric> metrics, ProcedureResults results)
-			: this(metrics)
 		{
-			Results = results;
+			Metrics = metrics;
+			if (results != null) Results = results;
 		}
 
 		public FitnessContainer(IReadOnlyList<Metric> metrics, params double[] values)
-			: this(metrics, new ProcedureResults(values, 1))
-		{
-
-		}
+			: this(metrics, values == null || values.Length == 0 ? null : new ProcedureResults(values, 1)) { }
 
 		public IReadOnlyList<Metric> Metrics { get; }
 
@@ -32,9 +27,7 @@ namespace Solve
 			get => _results;
 			set
 			{
-				if (value.Count != Metrics.Count)
-					throw new ArgumentException("The results size does not match the metrics.", nameof(value));
-
+				Debug.Assert(value.Sum.Length == Metrics.Count);
 				_results = value;
 			}
 		}
@@ -88,15 +81,13 @@ namespace Solve
 
 		public override string ToString()
 		{
+			var c = _results?.Count ?? 0;
+			if (c == 0) return base.ToString();
 			var sb = MetricAverages.Select(mv => String.Format(mv.Metric.Format, mv.Value)).ToStringBuilder(", ");
-			var c = _results.Count;
-			if (c > 0)
-			{
-				if (c == 1)
-					sb.AppendFormat(" (1 sample)", c);
-				else
-					sb.AppendFormat(" ({0:n0} samples)", c);
-			}
+			if (c == 1)
+				sb.AppendFormat(" (1 sample)", c);
+			else
+				sb.AppendFormat(" ({0:n0} samples)", c);
 			return sb.ToString();
 		}
 
