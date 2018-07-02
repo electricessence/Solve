@@ -3,31 +3,37 @@ using System.Collections.Generic;
 
 namespace Eater
 {
-	
+
 
 	public abstract class EaterProblem : ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
 		protected EaterProblem(int gridSize = 10, ushort championPoolSize = 100)
-			: base(championPoolSize, Fitness01, Fitness02)
+			: base(championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02))
 		{
 			Samples = new SampleCache(gridSize);
 		}
 
-		static double[] Fitness01(EaterGenome g, double[] metrics)
-			=> new[] { metrics[0], metrics[1], g.Genes.Length };
+		static FitnessContainer Fitness01(EaterGenome genome, double[] metrics)
+			=> new FitnessContainer(Metrics01, metrics[0], -metrics[1], -genome.Length);
 
-		static double[] Fitness02(EaterGenome g, double[] metrics)
-			=> new[] { metrics[1], metrics[0], g.Genes.Length };
+		static FitnessContainer Fitness02(EaterGenome genome, double[] metrics)
+			=> new FitnessContainer(Metrics02, metrics[0], -genome.Length, -metrics[1]);
 
-		//protected override EaterGenome GetFitnessForKeyTransform(EaterGenome genome)
-		//{
-		//	return genome;//.AsReduced(); // DO NOT measure against reduced because turns are expended energy and effect fitness.
-		//}
+		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
+		{
+			new Metric(0, "Food-Found-Rate", "Food-Found-Rate {0:p}"),
+			new Metric(1, "Average-Energy", "Food-Found-Rate {0:p}"),
+			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
+		}.AsReadOnly();
 
-		public override IReadOnlyList<string> FitnessLabels { get; }
-			= (new List<string> { "Food-Found-Rate {0:p}", "Average-Energy {0:n3}", "Gene-Count {0:n0}" }).AsReadOnly();
+		protected static readonly IReadOnlyList<Metric> Metrics02 = new List<Metric>
+		{
+			Metrics01[0],
+			Metrics01[2],
+			Metrics01[1]
+		}.AsReadOnly();
 
 	}
 
@@ -67,8 +73,10 @@ namespace Eater
 			//Debug.Assert(g.Hash.Length != 0 || found == 0, "An empty has should yield no results.");
 
 			var ave = energy / len;
-			var geneCount = g.Genes.Length;
-			return new[] { found / len, -ave, -geneCount };// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
+			return new[] {
+				found / len,
+				ave
+			};// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
 
 	}

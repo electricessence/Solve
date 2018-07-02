@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Eater
 {
-	[DebuggerDisplay("{_hash}")]
+	[DebuggerDisplay("{_genes.Length}:{_hash}")]
 	public sealed class EaterGenome
 		: ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
 	{

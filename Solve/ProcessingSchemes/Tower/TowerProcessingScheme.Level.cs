@@ -13,22 +13,25 @@ namespace Solve.ProcessingSchemes
 	{
 		protected override void Post(TGenome genome)
 		{
-			Root.Post((genome, Enumerable.Range(0, Problems.Count).Select(i => new FitnessContainer()).ToArray()));
+			Root.Post((
+				genome,
+				Problems.Select((p, i) =>
+					(p, p.Pools.Select(f => new FitnessContainer(f.Metrics)).ToArray())).ToArray()));
 		}
 
-		internal sealed class Level
+		sealed class Level
 		{
 			class Entry
 			{
-				public Entry((TGenome Genome, FitnessContainer[] Fitness) gf, double[][] scores)
+				public Entry((TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress) gf, double[][][] scores)
 				{
 					GenomeFitness = gf;
 					Scores = scores;
 					LevelLossRecord = 0;
 				}
 
-				public readonly (TGenome Genome, FitnessContainer[] Fitness) GenomeFitness;
-				public readonly double[][] Scores;
+				public readonly (TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress) GenomeFitness;
+				public readonly double[][][] Scores;
 
 				public ushort LevelLossRecord;
 			}
@@ -56,67 +59,57 @@ namespace Solve.ProcessingSchemes
 				var decrement = Index * Step;
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 
-				var probCount = tower.Problems.Count;
-				BestLevelFitness = new double[probCount][];
-				BestProgressiveFitness = new double[probCount][];
+				BestLevelFitness
+					= tower.Problems.Select(p => new double[p.Pools.Count][]).ToArray();
+				BestProgressiveFitness
+					= tower.Problems.Select(p => new double[p.Pools.Count][]).ToArray();
 			}
 
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
-			readonly double[][] BestLevelFitness;
-			readonly double[][] BestProgressiveFitness;
+			readonly double[][][] BestLevelFitness;
+			readonly double[][][] BestProgressiveFitness;
 
-
-			static bool[] UpdateFitnessesIfBetter(Span<double[]> registry, IEnumerable<double[]> contending)
+			static bool UpdateFitnessesIfBetter(
+				Span<double[]> registry,
+				double[] contending,
+				int index)
 			{
 				Debug.Assert(contending != null);
 
-				var len = registry.Length;
-				var result = new bool[len];
-				var c = contending.GetEnumerator();
-
-				for (var i = 0; i < len; i++)
+				ref double[] fRef = ref registry[index];
+				while (fRef == null || contending.IsGreaterThan(fRef))
 				{
-					c.MoveNext();
-					var fitness = c.Current;
-					ref double[] fRef = ref registry[i];
-					while (fRef == null || fitness.IsGreaterThan(fRef))
-					{
-						var f = fRef;
-						if (Interlocked.CompareExchange(ref fRef, fitness, f) == f)
-						{
-							result[i] = true;
-							break;
-						}
-					}
+					var f = fRef;
+					if (Interlocked.CompareExchange(ref fRef, contending, f) == f)
+						return true;
 				}
-
-				return result;
+				return false;
 			}
 
 
-			(double[] Fitness, (bool Local, bool Progressive, bool Both, bool Either) Superiority)[] ProcessTestAndUpdate((TGenome Genome, FitnessContainer[] Fitness) c)
-			{
-				// Track local fitness
-				var fitness = Tower.Problems.Select(p => p.ProcessSample(c.Genome, Index)).ToArray();
-				var leveled = UpdateFitnessesIfBetter(BestLevelFitness, fitness);
-				var progressed = UpdateFitnessesIfBetter(BestProgressiveFitness, c.Fitness.Select((f, i) => f.Merge(fitness[i]).Average.ToArray()));
-				return fitness.Select((f, i) =>
+			(double[] Fitness, (bool Local, bool Progressive) Superiority)[][] ProcessTestAndUpdate(
+				(TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress) c)
+				=> Tower.Problems.Select(
+					(problem, p) => problem.ProcessSample(c.Genome, Index).Select((f, i) =>
 				{
-					var lev = leveled[i];
-					var pro = progressed[i];
+					var values = f.Results.Average.ToArray();
+					var lev = UpdateFitnessesIfBetter(BestLevelFitness[p], values, i);
+					var pro = UpdateFitnessesIfBetter(BestProgressiveFitness[p], f.Merge(values).Average.ToArray(), i);
+
 					if (lev || pro)
 					{
-						Tower.Problems[i].ChampionPool?.Add((c.Genome, c.Fitness[i]));
+						problem.Pools[i].Champions?.Add((c.Genome, f));
 						Factory.EnqueueChampion(c.Genome);
 					}
 
-					return (f, (lev, pro, lev && pro, lev || pro));
-				}).ToArray();
-			}
+					return (values, (lev, pro));
+
+				}).ToArray())
+				.ToArray();
 
 			public void Post(
-				(TGenome Genome, FitnessContainer[] Fitness) c,
+				(TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress) c,
 				bool express = false,
 				bool expressToTop = false)
 			{
@@ -124,15 +117,15 @@ namespace Solve.ProcessingSchemes
 				var result = ProcessTestAndUpdate(c);
 				if (_nextLevel == null)
 				{
-					if (result.Any(r => r.Superiority.Progressive)) Tower.Broadcast(c);
+					if (result.Any(r => r.Any(f => f.Superiority.Progressive))) Tower.Broadcast(c);
 				}
-				else if (expressToTop || result.Any(r => r.Superiority.Local || express && r.Superiority.Progressive))
+				else if (expressToTop || result.Any(r => r.Any(f => f.Superiority.Local || express && f.Superiority.Progressive)))
 				{
 					_nextLevel.Post(c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
 					return; // No need to involve a obviously superior genome with this pool.
 				}
 
-				var challenger = new Entry(c, result.Select(r => r.Fitness).ToArray());
+				var challenger = new Entry(c, result.Select(r => r.Select(f => f.Fitness).ToArray()).ToArray());
 				Pool.Enqueue(challenger);
 
 				// Next see if we should 'own' processing the pool.
@@ -149,41 +142,60 @@ namespace Solve.ProcessingSchemes
 						// 1) Setup selection.
 						var len = pool.Length;
 						var midPoint = pool.Length / 2;
-						var problemCount = Tower.Problems.Count;
-						var selections = Enumerable.Range(0, problemCount)
-							.Select(p => pool.OrderBy(e => e.Scores[p], ArrayComparer<double>.Descending).ToArray())
+						var lastLevel = _nextLevel == null;
+
+						var selections = Tower.Problems
+							.Select((problem, p) => problem.Pools
+								.Select((f, i) =>
+								{
+									var s = pool
+										.OrderBy(e => e.Scores[p][i], ArrayComparer<double>.Descending)
+										.ToArray();
+
+									var champions = f.Champions;
+									if (champions != null)
+									{
+										var t = s[0].GenomeFitness;
+										champions.Add((t.Genome, t.Progress[p].Fitness[i])); // Need to leverage potentially significant genetics...
+									}
+
+									var toReject = s.AsSpan().Slice(midPoint);
+									var rem = toReject.Length;
+									// 2) Increment fitness rejection for individual fitnesses.
+									for (var n = 0; n < rem; n++)
+										toReject[n].GenomeFitness.Progress[p].Fitness[i].IncrementRejection();
+
+									return s;
+								})
+								.ToArray())
 							.ToArray();
 
-						// 2) Increment fitness rejection for individual fitnesses.
-						for (var p = 0; p < problemCount; p++)
-							for (var i = midPoint; i < len; i++)
-								selections[p][i]
-									.GenomeFitness
-									.Fitness[p]
-									.IncrementRejection();
-
-						// 3) Weave all fitnesses and distinclty select the iwinners.
-						var remaining = selections
-							.Select(s => s.ToQueue().AsDequeueingEnumerable())
-							.ToArray()
+						// 3) Weave all fitnesses to sort out winners and losers.
+						var ordered = selections
+							.SelectMany(problem => problem)
 							.Weave()
-							.Distinct();
+							.Distinct()
+							.ToArray()
+							.AsSpan();
 
-						var winners = remaining.Take(midPoint).ToArray();
+						Debug.Assert(pool.Length == ordered.Length);
+
+						var winners = ordered.Slice(0, midPoint);
+						var losers = ordered.Slice(midPoint);
 
 						// 4) Return losers to pool.
-						var losersToPromote = new List<(TGenome Genome, FitnessContainer[] Fitness)>();
+						var losersToPromote = new List<Entry>();
 						var maxLoses = Tower.MaxLevelLosses;
 						var maxRejection = Tower.MaxLossesBeforeElimination;
-						foreach (var loser in remaining)
+						foreach (var loser in ordered)
 						{
 							loser.LevelLossRecord++;
-							var fitness = loser.GenomeFitness.Fitness;
 
 							if (loser.LevelLossRecord > maxLoses)
 							{
-								if (fitness.Any(f => f.RejectionCount < maxRejection))
-									losersToPromote.Add(loser.GenomeFitness);
+								var fitness = loser.GenomeFitness.Progress;
+								if (fitness.Any(e => e.Fitness.Any(f => f.RejectionCount < maxRejection)))
+									losersToPromote.Add(loser);
 								else
 								{
 									//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -197,32 +209,21 @@ namespace Solve.ProcessingSchemes
 							}
 						}
 
-						// 4) Save state for reuse.
-						var lastLevel = _nextLevel == null;
 
 						// 5) Promote winners.
 						var top = winners[0].GenomeFitness;
 						//Factory.EnqueueChampion(top.Genome);
 						NextLevel.Post(top, true); // express: give it the opportunity to keep going.
-						foreach (var winner in winners.Skip(1))
-						{
-							NextLevel.Post(winner.GenomeFitness);
-						}
+						for (var i = 1; i < midPoint; i++)
+							NextLevel.Post(winners[i].GenomeFitness);
 
 						// 6) Add top winners for each problem to their respective ranked pools.
-						if (lastLevel)
-						{
-							for (var p = 0; p < problemCount; p++)
-							{
-								var gf = selections[p][0].GenomeFitness;
-								Tower.Problems[p].ChampionPool?.Add((gf.Genome, gf.Fitness[p])); // Need to leverage potentially significant genetics...
-							}
-						}
+
 
 						// 7) Promote second chance losers
 						foreach (var loser in losersToPromote)
 						{
-							NextLevel.Post(loser);
+							NextLevel.Post(loser.GenomeFitness);
 						}
 
 						// Broadcast level winner.
@@ -236,37 +237,6 @@ namespace Solve.ProcessingSchemes
 				}
 			}
 		}
-
-
-		//readonly ConcurrentQueue<IGenomeFitness<TGenome, Fitness>> FastTrackQueue
-		//	= new ConcurrentQueue<IGenomeFitness<TGenome, Fitness>>();		
-		///// <summary>
-		///// Process entry all the way to the last level before queueing.
-		///// </summary>
-		///// <param name="c"></param>
-		//public void FastTrack(IGenomeFitness<TGenome, Fitness> c)
-		//{
-		//	if (_nextLevel == null)
-		//	{
-		//		//((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Fast Tracked");
-		//		Post(c);
-		//	}
-		//	else
-		//	{
-		//		FastTrackQueue.Enqueue(c);
-		//	}
-		//}
-
-
-		//public void ProcessPromotions()
-		//{
-		//	while (FastTrackQueue.TryDequeue(out IGenomeFitness<TGenome, Fitness> c))
-		//	{
-		//		// Process a test for this level.
-		//		ProcessTestAndUpdate(c);
-		//		_nextLevel.FastTrack(c);
-		//	}
-		//}
 
 	}
 }

@@ -13,7 +13,7 @@ namespace Solve
 {
 	// Defines the pipeline?
 	public abstract class EnvironmentBase<TGenome>
-		: BroadcasterBase<(TGenome Genome, FitnessContainer[] Fitness)>
+		: BroadcasterBase<(TGenome Genome, (IProblem<TGenome> Problem, FitnessContainer[] Fitness)[] Progress)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
