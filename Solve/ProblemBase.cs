@@ -48,11 +48,11 @@ namespace Solve
 				fitness = fitness.Clone();
 
 				GF contending = null;
-				while (_bestFitness == null || fitness.Results.Average.IsGreaterThan(_bestFitness.Fitness.Results.Average))
+				GF defending;
+				while ((defending = _bestFitness) == null || fitness.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
 				{
 					contending = contending ?? new GF(genome, fitness);
-					var f = _bestFitness;
-					if (Interlocked.CompareExchange(ref _bestFitness, contending, f) == f)
+					if (Interlocked.CompareExchange(ref _bestFitness, contending, defending) == defending)
 						return true;
 				}
 				return false;

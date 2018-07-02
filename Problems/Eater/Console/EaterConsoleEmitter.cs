@@ -51,7 +51,14 @@ namespace Eater
 			base.OnEmittingGenome(p, genome, poolIndex, fitness);
 			var suffix = $"{p.ID}.{poolIndex}";
 			var fileName = $"{DateTime.Now.Ticks}.{suffix}";
-			File.WriteAllText(Path.Combine(ProgressionDirectory, $"{fileName}.txt"), genome.Hash);
+			try
+			{
+				File.WriteAllText(Path.Combine(ProgressionDirectory, $"{fileName}.txt"), genome.Hash);
+			}
+			catch (IOException)
+			{
+
+			}
 			var rendered = Path.Combine(ProgressionDirectory, $"{fileName}.jpg");
 			using (var bitmap = genome.Genes.ToArray().Render2())
 				bitmap.Save(rendered, JpgEncoder, EncParams);
