@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace Eater
 {
-
-
 	public abstract class EaterProblem : ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
