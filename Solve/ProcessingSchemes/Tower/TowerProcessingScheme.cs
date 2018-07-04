@@ -1,5 +1,6 @@
 ﻿using Solve.Metrics;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -42,7 +43,7 @@ namespace Solve.ProcessingSchemes
 			Counters = counters;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-			this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome));
+			this.Subscribe(e => Factory[0].EnqueueChampion(e.GenomeFitness.Genome));
 		}
 
 		public TowerProcessingScheme(
@@ -50,7 +51,6 @@ namespace Solve.ProcessingSchemes
 			ushort poolSize,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			ushort championPoolSize = DEFAULT_CHAMPION_POOL_SIZE,
 			CounterCollection counters = null)
 			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, counters) { }
 
@@ -58,11 +58,7 @@ namespace Solve.ProcessingSchemes
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
-		public readonly ushort ChampionPoolSize;
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
-		Level Root = null;
-
-		#region Champion Pool
 
 		bool ProduceFromChampions()
 			=> Problems
@@ -82,8 +78,8 @@ namespace Solve.ProcessingSchemes
 						ReserveFactoryQueue.EnqueueForMutation(next);
 						ReserveFactoryQueue.EnqueueForBreeding(next);
 
-						ReserveFactoryQueue.EnqueueForMutation(champions);
-						ReserveFactoryQueue.EnqueueForBreeding(champions);
+						//ReserveFactoryQueue.EnqueueForMutation(champions);
+						//ReserveFactoryQueue.EnqueueForBreeding(champions);
 
 						return true;
 					}
@@ -92,15 +88,20 @@ namespace Solve.ProcessingSchemes
 				})
 				.ToArray()
 				.Any();
-		#endregion
+
+		IReadOnlyList<ProblemTower> Towers;
 
 		protected override Task StartInternal(CancellationToken token)
 		{
-			Interlocked.CompareExchange(ref Root, new Level(0, this), null);
-
+			Towers = Problems.Select(p => new ProblemTower(p, this)).ToList().AsReadOnly();
 			return base.StartInternal(token);
 		}
 
+		protected override void Post(TGenome genome)
+		{
+			foreach (var t in Towers)
+				t.Post(genome);
+		}
 	}
 
 

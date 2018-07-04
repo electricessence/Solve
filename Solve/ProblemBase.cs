@@ -19,6 +19,8 @@ namespace Solve
 				Champions = poolSize == 0 ? null : new RankedPool<TGenome>(poolSize);
 			}
 
+			public IReadOnlyList<Metric> Metrics { get; }
+
 			public Func<TGenome, double[], FitnessContainer> Transform { get; }
 			public RankedPool<TGenome> Champions { get; }
 
@@ -40,7 +42,6 @@ namespace Solve
 			GF _bestFitness;
 			public (TGenome Genome, FitnessContainer Fitness) BestFitness => _bestFitness;
 
-			public IReadOnlyList<Metric> Metrics { get; }
 
 			public bool UpdateBestFitness(TGenome genome, FitnessContainer fitness)
 			{

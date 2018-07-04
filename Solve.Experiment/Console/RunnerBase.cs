@@ -77,7 +77,7 @@ namespace Solve.Experiment.Console
 			var cancel = new CancellationTokenSource();
 
 			Environment
-				.Subscribe(o => Emitter.EmitTopGenomeStats(o.Genome, o.Progress),
+				.Subscribe(o => Emitter.EmitTopGenomeStats(o.Problem, o.GenomeFitness.Genome, o.GenomeFitness.Fitness),
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{

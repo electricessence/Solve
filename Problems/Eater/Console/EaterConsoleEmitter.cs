@@ -49,6 +49,7 @@ namespace Eater
 		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, int poolIndex, FitnessContainer fitness)
 		{
 			base.OnEmittingGenome(p, genome, poolIndex, fitness);
+
 			var suffix = $"{p.ID}.{poolIndex}";
 			var fileName = $"{DateTime.Now.Ticks}.{suffix}";
 			try

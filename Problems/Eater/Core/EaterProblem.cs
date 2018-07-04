@@ -39,7 +39,7 @@ namespace Eater
 
 	public sealed class EaterProblemFragmented : EaterProblem
 	{
-		public EaterProblemFragmented(int gridSize = 10, int sampleSize = 100) : base(gridSize)
+		public EaterProblemFragmented(int gridSize = 10, int sampleSize = 40, ushort championPoolSize = 100) : base(gridSize, championPoolSize)
 		{
 			SampleSize = sampleSize;
 		}
