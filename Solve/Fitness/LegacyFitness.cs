@@ -158,7 +158,7 @@ namespace Solve
 
 		public int CompareTo(IFitness other)
 		{
-			return Fitness.Comparison(this, other);
+			return LegacyFitness.Comparison(this, other);
 		}
 
 		public ProcedureResult GetResult(int index)
@@ -173,34 +173,34 @@ namespace Solve
 
 		public static bool operator >(FitnessScore a, IFitness b)
 		{
-			return a.CompareTo(b) * Fitness.ORDER_DIRECTION == +1;
+			return a.CompareTo(b) * LegacyFitness.ORDER_DIRECTION == +1;
 		}
 
 		public static bool operator <(FitnessScore a, IFitness b)
 		{
-			return a.CompareTo(b) * Fitness.ORDER_DIRECTION == -1;
+			return a.CompareTo(b) * LegacyFitness.ORDER_DIRECTION == -1;
 		}
 
 		public static bool operator >=(FitnessScore a, IFitness b)
 		{
-			return a.CompareTo(b) * Fitness.ORDER_DIRECTION >= 0;
+			return a.CompareTo(b) * LegacyFitness.ORDER_DIRECTION >= 0;
 		}
 
 		public static bool operator <=(FitnessScore a, IFitness b)
 		{
-			return a.CompareTo(b) * Fitness.ORDER_DIRECTION <= 0;
+			return a.CompareTo(b) * LegacyFitness.ORDER_DIRECTION <= 0;
 		}
 	}
 
-	public class Fitness : TrackedList<SingleFitness>, IFitness
+	public class LegacyFitness : TrackedList<SingleFitness>, IFitness
 	{
 
-		public Fitness() //: base(new AsyncReadWriteModificationSynchronizer())
+		public LegacyFitness() //: base(new AsyncReadWriteModificationSynchronizer())
 		{
 			ID = Interlocked.Increment(ref FitnessCount);
 		}
 
-		public Fitness(IEnumerable<ProcedureResult> initial)
+		public LegacyFitness(IEnumerable<ProcedureResult> initial)
 			: this()
 		{
 			// No synchronization needed.
@@ -281,7 +281,7 @@ namespace Solve
 
 		}
 
-		public Fitness Merge(IFitness other)
+		public LegacyFitness Merge(IFitness other)
 		{
 
 			AssertIsAlive();
@@ -428,7 +428,7 @@ namespace Solve
 
 	}
 
-	public static class FitnessExtensions
+	public static partial class FitnessExtensions
 	{
 		public static bool HasConverged(this IFitness fitness, uint minSamples = 100, double convergence = 1, double tolerance = 0)
 		{
@@ -446,12 +446,12 @@ namespace Solve
 		}
 
 		public static bool IsSuperiorTo(this IFitness x, IFitness y)
-			=> Fitness.Comparison(x, y) == Fitness.ORDER_DIRECTION;
+			=> LegacyFitness.Comparison(x, y) == LegacyFitness.ORDER_DIRECTION;
 
 		public static FitnessScore SnapShot(this IFitness fitness)
 			=> fitness is FitnessScore f ? f : new FitnessScore(fitness);
 
-		public static Fitness Merge(this IEnumerable<IFitness> fitnesses)
-			=> fitnesses.Aggregate(new Fitness(), (prev, current) => prev.Merge(current));
+		public static LegacyFitness Merge(this IEnumerable<IFitness> fitnesses)
+			=> fitnesses.Aggregate(new LegacyFitness(), (prev, current) => prev.Merge(current));
 	}
 }

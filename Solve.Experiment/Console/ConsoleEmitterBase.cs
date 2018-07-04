@@ -1,4 +1,5 @@
-﻿using Open.Threading;
+﻿using Open.Memory;
+using Open.Threading;
 using System;
 using System.Linq;
 using System.Text;
@@ -20,7 +21,7 @@ namespace Solve.Experiment.Console
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
-		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, FitnessContainer[] fitness)
+		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, Fitness[] fitness)
 		{
 			bool ok = false;
 			var snapshots = fitness.Select((fx, i) =>
@@ -60,10 +61,10 @@ namespace Solve.Experiment.Console
 			return ok;
 		}
 
-		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, FitnessContainer fitness)
+		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
 
-		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, FitnessContainer fitness)
+		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
 			=> $"{problem.ID}.{poolIndex}:\t{fitness}";
 
 	}

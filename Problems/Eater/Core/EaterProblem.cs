@@ -13,11 +13,11 @@ namespace Eater
 			Samples = new SampleCache(gridSize);
 		}
 
-		static FitnessContainer Fitness01(EaterGenome genome, double[] metrics)
-			=> new FitnessContainer(Metrics01, metrics[0], -metrics[1], -genome.Length);
+		static Fitness Fitness01(EaterGenome genome, double[] metrics)
+			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.Length);
 
-		static FitnessContainer Fitness02(EaterGenome genome, double[] metrics)
-			=> new FitnessContainer(Metrics02, metrics[0], -genome.Length, -metrics[1]);
+		static Fitness Fitness02(EaterGenome genome, double[] metrics)
+			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);
 
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
