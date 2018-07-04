@@ -46,7 +46,7 @@ namespace Eater
 
 		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
 		readonly object LatestWinnerImageLock = new object();
-		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, int poolIndex, FitnessContainer fitness)
+		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, int poolIndex, Fitness fitness)
 		{
 			base.OnEmittingGenome(p, genome, poolIndex, fitness);
 

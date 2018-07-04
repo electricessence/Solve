@@ -5,7 +5,7 @@ namespace Solve.ProcessingSchemes
 {
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, FitnessContainer[])>, IGenomeProcessor<TGenome>
+		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, Fitness[])>, IGenomeProcessor<TGenome>
 		{
 			internal readonly TowerProcessingScheme<TGenome> Environment;
 			internal readonly IProblem<TGenome> Problem;
@@ -25,7 +25,7 @@ namespace Solve.ProcessingSchemes
 				bool express,
 				bool expressToTop = false)
 				=> Root.Post(
-					(next, Problem.Pools.Select(f => new FitnessContainer(f.Metrics)).ToArray()),
+					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
 					express,
 					expressToTop);
 

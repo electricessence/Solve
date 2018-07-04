@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Open.Memory;
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
@@ -17,14 +18,14 @@ namespace Solve
 		}
 
 		public readonly ushort PoolSize;
-		readonly ConcurrentQueue<(TGenome Genome, FitnessContainer Fitness)> _pool
-			= new ConcurrentQueue<(TGenome Genome, FitnessContainer Fitness)>();
+		readonly ConcurrentQueue<(TGenome Genome, Fitness Fitness)> _pool
+			= new ConcurrentQueue<(TGenome Genome, Fitness Fitness)>();
 
 		public bool IsEmpty => _pool.IsEmpty;
 
 		Lazy<TGenome[]> _ranked;
 
-		public void Add(TGenome genome, FitnessContainer fitness)
+		public void Add(TGenome genome, Fitness fitness)
 		{
 			if (_pool == null) return;
 
@@ -59,7 +60,7 @@ namespace Solve
 						return (snapshot: gf.Fitness.Results, genomeFitness: gf);
 					})
 					// Higher sample counts are more valuable as they only arrive here as champions.
-					.OrderBy(e => e.snapshot.Average, ReadOnlyMemoryComparer<double>.Descending)
+					.OrderBy(e => e.snapshot.Average, MemoryComparer.Double.Descending)
 					.ThenByDescending(e => e.snapshot.Count)
 					// Compile results.
 					.Select(e => e.genomeFitness)

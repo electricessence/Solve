@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Memory;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -15,14 +16,14 @@ namespace Solve.ProcessingSchemes
 		{
 			class Entry
 			{
-				public Entry((TGenome Genome, FitnessContainer[] Fitness) gf, double[][] scores)
+				public Entry((TGenome Genome, Fitness[] Fitness) gf, double[][] scores)
 				{
 					GenomeFitness = gf;
 					Scores = scores;
 					LevelLossRecord = 0;
 				}
 
-				public readonly (TGenome Genome, FitnessContainer[] Fitness) GenomeFitness;
+				public readonly (TGenome Genome, Fitness[] Fitness) GenomeFitness;
 				public readonly double[][] Scores;
 
 				public ushort LevelLossRecord;
@@ -82,7 +83,7 @@ namespace Solve.ProcessingSchemes
 
 
 			(double[] Fitness, (bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
-				(TGenome Genome, FitnessContainer[] Fitness) c)
+				(TGenome Genome, Fitness[] Fitness) c)
 				=> Tower.Problem.ProcessSample(c.Genome, Index).Select((fitness, i) =>
 				{
 					var values = fitness.Results.Sum.ToArray();
@@ -97,7 +98,7 @@ namespace Solve.ProcessingSchemes
 				}).ToArray();
 
 			public void Post(
-				(TGenome Genome, FitnessContainer[] Fitness) c,
+				(TGenome Genome, Fitness[] Fitness) c,
 				bool express = false,
 				bool expressToTop = false)
 			{

@@ -5,19 +5,19 @@ using System.Threading;
 
 namespace Solve
 {
-	public class FitnessContainerInterlocked : FitnessContainer
+	public class FitnessInterlocked : Fitness
 	{
-		public FitnessContainerInterlocked(IReadOnlyList<Metric> metrics)
+		public FitnessInterlocked(IReadOnlyList<Metric> metrics)
 			: base(metrics)
 		{
 		}
 
-		public FitnessContainerInterlocked(IReadOnlyList<Metric> metrics, ProcedureResults results)
+		public FitnessInterlocked(IReadOnlyList<Metric> metrics, ProcedureResults results)
 			: base(metrics)
 		{
 		}
 
-		public FitnessContainerInterlocked(IReadOnlyList<Metric> metrics, params double[] values)
+		public FitnessInterlocked(IReadOnlyList<Metric> metrics, params double[] values)
 			: base(metrics, new ProcedureResults(values, 1))
 		{
 
@@ -54,7 +54,7 @@ namespace Solve
 			return sum;
 		}
 
-		public new FitnessContainerInterlocked Clone() => new FitnessContainerInterlocked(Metrics, _results);
+		public new FitnessInterlocked Clone() => new FitnessInterlocked(Metrics, _results);
 
 	}
 }

@@ -13,10 +13,10 @@ namespace Solve
 		 where TGenome : IGenome
 	{
 		IReadOnlyList<Metric> Metrics { get; }
-		Func<TGenome, double[], FitnessContainer> Transform { get; }
+		Func<TGenome, double[], Fitness> Transform { get; }
 
-		(TGenome Genome, FitnessContainer Fitness) BestFitness { get; }
-		bool UpdateBestFitness(TGenome genome, FitnessContainer fitness);
+		(TGenome Genome, Fitness Fitness) BestFitness { get; }
+		bool UpdateBestFitness(TGenome genome, Fitness fitness);
 
 		RankedPool<TGenome> Champions { get; }
 	}
@@ -31,8 +31,8 @@ namespace Solve
 
 		IReadOnlyList<IProblemPool<TGenome>> Pools { get; }
 
-		IEnumerable<FitnessContainer> ProcessSample(TGenome g, long sampleId);
-		Task<IEnumerable<FitnessContainer>> ProcessSampleAsync(TGenome g, long sampleId);
+		IEnumerable<Fitness> ProcessSample(TGenome g, long sampleId);
+		Task<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId);
 
 		long TestCount { get; }
 	}
