@@ -10,7 +10,7 @@ namespace Eater
 		public EaterFactory(IEnumerable<EaterGenome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
 			LeftTurnDisabled = leftTurnDisabled;
-			AvailableSteps = leftTurnDisabled ? Steps.ALL : Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly();
+			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
 		}
 
 		public readonly IReadOnlyList<Step> AvailableSteps;
