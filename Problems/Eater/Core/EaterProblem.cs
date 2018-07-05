@@ -7,14 +7,14 @@ namespace Eater
 	{
 		public readonly SampleCache Samples;
 
-		protected EaterProblem(int gridSize = 10, ushort championPoolSize = 100)
+		protected EaterProblem(in int gridSize = 10, in ushort championPoolSize = 100)
 			: base(championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02))
 		{
 			Samples = new SampleCache(gridSize);
 		}
 
 		static Fitness Fitness01(EaterGenome genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.Length);
+			=> new Fitness(in Metrics01, metrics[0], -metrics[1], -genome.Length);
 
 		static Fitness Fitness02(EaterGenome genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);
