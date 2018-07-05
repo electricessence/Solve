@@ -111,6 +111,10 @@ namespace Solve.ProcessingSchemes
 					if (_nextLevel.IsTop && (either = result.Any(f => f.Superiority.Either)))
 					{
 						Factory.EnqueueChampion(c.Genome);
+						Factory.EnqueueForMutation(c.Genome);
+						Factory.EnqueueForMutation(c.Genome);
+						Factory.EnqueueForBreeding(c.Genome);
+						Factory.EnqueueForBreeding(c.Genome);
 					}
 					else
 					{
