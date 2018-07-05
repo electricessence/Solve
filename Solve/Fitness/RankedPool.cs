@@ -57,8 +57,11 @@ namespace Solve
 					.Select(e => // Setup ordering. Need to use snapshots for comparison.
 					{
 						var gf = e.First();
-						Debug.Assert(e.Select(f => f.Fitness).Distinct().Count() == 1);
-						return (snapshot: gf.Fitness.Results, genomeFitness: (gf.Genome, gf.Fitness.Clone()));
+#if DEBUG
+						var fitnessInstances = e.Select(f => f.Fitness).Distinct().ToArray();
+						Debug.Assert(fitnessInstances.Length == 1);
+#endif
+						return (snapshot: gf.Fitness.Results, genomeFitness: (gf.Genome, gf.Fitness));
 					})
 					// Higher sample counts are more valuable as they only arrive here as champions.
 					.OrderBy(e => e.snapshot.Average, MemoryComparer.Double.Descending)
