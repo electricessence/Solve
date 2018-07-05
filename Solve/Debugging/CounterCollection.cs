@@ -3,7 +3,7 @@ using App.Metrics.Counter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Solve.Metrics
+namespace Solve.Debugging
 {
 	public class CounterCollection
 	{
