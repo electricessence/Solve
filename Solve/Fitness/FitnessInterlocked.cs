@@ -7,17 +7,17 @@ namespace Solve
 {
 	public class FitnessInterlocked : Fitness
 	{
-		public FitnessInterlocked(IReadOnlyList<Metric> metrics)
+		public FitnessInterlocked(in IReadOnlyList<Metric> metrics)
 			: base(metrics)
 		{
 		}
 
-		public FitnessInterlocked(IReadOnlyList<Metric> metrics, ProcedureResults results)
+		public FitnessInterlocked(in IReadOnlyList<Metric> metrics, ProcedureResults results)
 			: base(metrics)
 		{
 		}
 
-		public FitnessInterlocked(IReadOnlyList<Metric> metrics, params double[] values)
+		public FitnessInterlocked(in IReadOnlyList<Metric> metrics, params double[] values)
 			: base(metrics, new ProcedureResults(values, 1))
 		{
 
@@ -26,7 +26,7 @@ namespace Solve
 		public override int IncrementRejection()
 			=> Interlocked.Increment(ref _rejectionCount);
 
-		public override ProcedureResults Merge(ProcedureResults other)
+		public override ProcedureResults Merge(in ProcedureResults other)
 		{
 			ProcedureResults r;
 			ProcedureResults sum;
@@ -39,7 +39,7 @@ namespace Solve
 			return sum;
 		}
 
-		public override ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
+		public override ProcedureResults Merge(in ReadOnlySpan<double> other, in int count = 1)
 		{
 			ProcedureResults r;
 			ProcedureResults sum;

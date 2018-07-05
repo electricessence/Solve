@@ -39,7 +39,7 @@ namespace Solve
 
 		protected abstract TThis Reduction();
 
-		public void ReplaceReduced(TThis reduced)
+		public void ReplaceReduced(in TThis reduced)
 		{
 			if (reduced == null)
 				throw new ArgumentNullException(nameof(reduced));

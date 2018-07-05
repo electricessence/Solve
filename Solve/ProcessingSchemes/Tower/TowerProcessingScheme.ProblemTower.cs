@@ -12,24 +12,24 @@ namespace Solve.ProcessingSchemes
 			readonly Level Root;
 
 			public ProblemTower(
-				IProblem<TGenome> problem,
-				TowerProcessingScheme<TGenome> environment) : base()
+				in IProblem<TGenome> problem,
+				in TowerProcessingScheme<TGenome> environment) : base()
 			{
 				Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 				Environment = environment ?? throw new ArgumentNullException(nameof(environment));
 				Root = new Level(0, this);
-				this.Subscribe(champion => environment.Broadcast((Problem, champion)));
+				this.Subscribe(champion => Environment.Broadcast((Problem, champion)));
 			}
 
-			public void Post(TGenome next,
-				bool express,
-				bool expressToTop = false)
+			public void Post(in TGenome next,
+				in bool express,
+				in bool expressToTop = false)
 				=> Root.Post(
 					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
 					express,
 					expressToTop);
 
-			public void Post(TGenome next)
+			public void Post(in TGenome next)
 				=> Post(next, false);
 
 		}

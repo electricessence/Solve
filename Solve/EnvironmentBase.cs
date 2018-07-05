@@ -21,7 +21,7 @@ namespace Solve
 		readonly protected List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
-		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
+		protected EnvironmentBase(in IGenomeFactory<TGenome> genomeFactory)
 			: base()
 		{
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
@@ -34,7 +34,7 @@ namespace Solve
 			AddProblems(problems);
 		}
 
-		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
+		public virtual void AddProblems(in IEnumerable<IProblem<TGenome>> problems)
 		{
 			if (_state != 0)
 				throw new InvalidOperationException("Attempting to add a problem when the environment has already started.");
@@ -74,7 +74,7 @@ namespace Solve
 			return null;
 		}
 
-		protected abstract Task StartInternal(CancellationToken token);
+		protected abstract Task StartInternal(in CancellationToken token);
 
 		protected virtual void OnCancelled() { }
 

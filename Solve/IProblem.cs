@@ -16,7 +16,7 @@ namespace Solve
 		Func<TGenome, double[], Fitness> Transform { get; }
 
 		(TGenome Genome, Fitness Fitness) BestFitness { get; }
-		bool UpdateBestFitness(TGenome genome, Fitness fitness);
+		bool UpdateBestFitness(in TGenome genome, in Fitness fitness);
 
 		RankedPool<TGenome> Champions { get; }
 	}

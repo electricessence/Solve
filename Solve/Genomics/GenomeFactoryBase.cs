@@ -5,6 +5,7 @@
 
 using App.Metrics;
 using Open.Collections;
+using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Threading.Tasks;
 using Solve.Metrics;
@@ -25,7 +26,7 @@ namespace Solve
 		public readonly IMetricsRoot Metrics;
 		internal readonly CounterCollection MetricsCounter;
 
-		protected GenomeFactoryBase(IEnumerable<TGenome> seeds = null)
+		protected GenomeFactoryBase(in IEnumerable<TGenome> seeds = null)
 		{
 			Metrics = new MetricsBuilder().Build();
 			MetricsCounter = new CounterCollection(Metrics);
@@ -39,38 +40,38 @@ namespace Solve
 		const string AWAITING_VARIATION = "AwaitingVariation";
 		const string AWAITING_MUTATION = "AwaitingMutation";
 
-		protected static IEnumerable<T> Remove<T>(T[] source, int index, int count = 1)
+		protected static IEnumerable<T> Remove<T>(in T[] source, in int index, in int count = 1)
 			=> source
 				.Take(index)
 				.Concat(source.Skip(index + count));
 
-		protected static IEnumerable<T> Splice<T>(T[] source, int index, IEnumerable<T> e)
+		protected static IEnumerable<T> Splice<T>(in T[] source, in int index, in IEnumerable<T> e)
 			=> source
 				.Take(index)
 				.Concat(e)
 				.Concat(source.Skip(index));
 
-		protected static IEnumerable<T> Splice<T>(T[] source, int index, T e, int count = 1)
-			=> Splice(source, index, Enumerable.Repeat(e, count));
+		protected static IEnumerable<T> Splice<T>(in T[] source, in int index, in T e, in int count = 1)
+			=> Splice(in source, in index, Enumerable.Repeat(e, count));
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry
 			= new ConcurrentDictionary<string, Lazy<TGenome>>();
 
-		protected readonly ConcurrentHashSet<string> PreviouslyProduced
-			 = new ConcurrentHashSet<string>();
+		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced
+			 = new LockSynchronizedHashSet<string>();
 
 		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
-		protected static TGenome AssertFrozen(TGenome genome)
+		protected static TGenome AssertFrozen(in TGenome genome)
 		{
 			if (genome != null && !genome.IsReadOnly)
 				throw new InvalidOperationException("Genome is not frozen: " + genome);
 			return genome;
 		}
 
-		protected bool Register(string genomeHash, Func<TGenome> factory, out TGenome actual, Action<TGenome> onBeforeAdd = null)
+		protected bool Register(in string genomeHash, Func<TGenome> factory, out TGenome actual, Action<TGenome> onBeforeAdd = null)
 		{
 			var added = false;
 			actual = Registry.GetOrAdd(genomeHash, hash => Lazy.Create(() =>
@@ -87,23 +88,24 @@ namespace Solve
 			return added;
 		}
 
-		protected bool Register(TGenome genome, out TGenome actual, Action<TGenome> onBeforeAdd = null)
+		protected bool Register(in TGenome genome, out TGenome actual, Action<TGenome> onBeforeAdd = null)
 		{
 			var added = false;
-			actual = Registry.GetOrAdd(genome.Hash, hash => Lazy.Create(() =>
+			var g = genome;
+			actual = Registry.GetOrAdd(g.Hash, hash => Lazy.Create(() =>
 			{
 				added = true;
-				Debug.Assert(genome.Hash == hash);
-				onBeforeAdd(genome);
-				AssertFrozen(genome); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
-									  //RegistryOrder.Enqueue(hash);
-				return genome;
+				Debug.Assert(g.Hash == hash);
+				onBeforeAdd(g);
+				AssertFrozen(g); // Cannot allow registration of an unfrozen genome because it then can be used by another thread.
+								 //RegistryOrder.Enqueue(hash);
+				return g;
 			})).Value;
 
 			return added;
 		}
 
-		protected virtual TGenome Registration(TGenome genome)
+		protected virtual TGenome Registration(in TGenome genome)
 		{
 			if (genome == null) return null;
 			Debug.Assert(genome.Hash.Length != 0, "Genome cannot have empty hash.");
@@ -111,7 +113,7 @@ namespace Solve
 			return actual;
 		}
 
-		protected bool RegisterProduction(TGenome genome)
+		protected bool RegisterProduction(in TGenome genome)
 		{
 			if (genome == null)
 				throw new ArgumentNullException(nameof(genome));
@@ -131,14 +133,14 @@ namespace Solve
 			}
 		}
 
-		protected bool AlreadyProduced(string hash)
+		protected bool AlreadyProduced(in string hash)
 		{
 			if (hash == null)
 				throw new ArgumentNullException(nameof(hash));
 			return PreviouslyProduced.Contains(hash);
 		}
 
-		protected bool AlreadyProduced(TGenome genome)
+		protected bool AlreadyProduced(in TGenome genome)
 		{
 			if (genome == null)
 				throw new ArgumentNullException(nameof(genome));
@@ -242,36 +244,39 @@ namespace Solve
 
 
 		// Be sure to call Registration within the GenerateOne call.
-		protected abstract TGenome MutateInternal(TGenome target);
+		protected abstract TGenome MutateInternal(in TGenome target);
 
-		public bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3)
+		public bool AttemptNewMutation(in TGenome source, out TGenome mutation, in byte triesPerMutationLevel = 5, in byte maxMutations = 3)
 		{
 			if (source == null) throw new ArgumentNullException(nameof(source));
 			return AttemptNewMutation(new TGenome[] { source }, out mutation, triesPerMutationLevel, maxMutations);
 		}
 
-		public bool AttemptNewMutation(TGenome[] source, out TGenome genome, byte triesPerMutationLevel = 5, byte maxMutations = 3)
+		public bool AttemptNewMutation(in ReadOnlySpan<TGenome> source, out TGenome genome, in byte triesPerMutationLevel = 5, in byte maxMutations = 3)
 		{
-			if (source == null) throw new ArgumentNullException(nameof(source));
-			Debug.Assert(source.Length != 0, "Should never pass an empty source for mutation.");
-			source = source.Where(g => g.Hash.Length != 0).ToArray();
-			if (source.Length != 0)
+			var len = source.Length;
+			Debug.Assert(len != 0, "Should never pass an empty source for mutation.");
+			foreach (ref readonly var g in source)
 			{
-				// Find one that will mutate well and use it.
-				for (byte m = 1; m <= maxMutations; m++)
+				if (g.Hash.Length != 0)
 				{
-					for (byte t = 0; t < triesPerMutationLevel; t++)
+					// Find one that will mutate well and use it.
+					for (byte m = 1; m <= maxMutations; m++)
 					{
-						genome = Mutate(source.RandomSelectOne(), m);
-						if (genome != null && RegisterProduction(genome))
+						for (byte t = 0; t < triesPerMutationLevel; t++)
 						{
-							MetricsCounter.Increment("Mutation SUCCEDED");
-							return true;
+							genome = Mutate(source[RandomUtilities.Random.Next(len)], m);
+							if (genome != null && RegisterProduction(genome))
+							{
+								MetricsCounter.Increment("Mutation SUCCEDED");
+								return true;
+							}
 						}
 					}
+					MetricsCounter.Increment("Mutation FAILED");
 				}
-				MetricsCounter.Increment("Mutation FAILED");
 			}
+
 			genome = null;
 			return false;
 		}
@@ -284,40 +289,42 @@ namespace Solve
 			}
 		}
 
-		protected TGenome Mutate(TGenome source, byte mutations = 1)
+		protected TGenome Mutate(in TGenome source, in byte mutations = 1)
 		{
+			TGenome s = source;
 			TGenome original = source;
 			TGenome genome = null;
-			while (mutations != 0)
+			var m = mutations;
+			while (m != 0)
 			{
 				byte tries = 3;
 				while (tries != 0 && genome == null)
 				{
 					using (TimeoutHandler.New(3000, ms =>
 					{
-						Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, source, ms);
+						Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms);
 					}))
 					{
-						genome = MutateInternal(source);
+						genome = MutateInternal(s);
 						var hash = genome?.Hash;
-						if (hash != null && (hash == source.Hash || hash == original.Hash))
+						if (hash != null && (hash == s.Hash || hash == original.Hash))
 							genome = null; // Not a mutation. Could happen on repeat mutations.
 					}
 					--tries;
 				}
 				// Reuse the clone as the source 
 				if (genome == null) break; // No single mutation possible? :/
-				source = genome;
-				--mutations;
+				s = genome;
+				--m;
 			}
 			return Registration(genome);
 		}
 
-		protected abstract TGenome[] CrossoverInternal(TGenome a, TGenome b);
+		protected abstract TGenome[] CrossoverInternal(in TGenome a, in TGenome b);
 
-		protected TGenome[] Crossover(TGenome a, TGenome b)
+		protected TGenome[] Crossover(in TGenome a, in TGenome b)
 		{
-			var result = CrossoverInternal(a, b);
+			var result = CrossoverInternal(in a, in b);
 			if (result != null)
 			{
 				foreach (var r in result)
@@ -330,22 +337,23 @@ namespace Solve
 			return result;
 		}
 
-		public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
+		public virtual TGenome[] AttemptNewCrossover(in TGenome a, in TGenome b, in byte maxAttempts = 3)
 		{
 			if (a == null || b == null) return null;
 
 			// Avoid inbreeding. :P
 			if (a == b) return null;
 
-			while (maxAttempts != 0)
+			var m = maxAttempts;
+			while (m != 0)
 			{
-				var offspring = Crossover(a, b)?.Where(g => RegisterProduction(g)).ToArray();
+				var offspring = Crossover(in a, in b)?.Where(g => RegisterProduction(g)).ToArray();
 				if (offspring != null && offspring.Length != 0)
 				{
 					MetricsCounter.Increment("Crossover SUCCEDED");
 					return offspring;
 				}
-				--maxAttempts;
+				--m;
 			}
 
 			MetricsCounter.Increment("Crossover Failed");
@@ -353,21 +361,22 @@ namespace Solve
 		}
 
 		// Random matchmaking...  It's possible to include repeats in the source to improve their chances. Possile O(n!) operaion.
-		public TGenome[] AttemptNewCrossover(TGenome[] source, byte maxAttemptsPerCombination = 3)
+		public TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, in byte maxAttemptsPerCombination = 3)
 		{
-			if (source == null)
-				throw new ArgumentNullException(nameof(source));
-			if (source.Length == 2 && source[0] != source[1]) return AttemptNewCrossover(source[0], source[1], maxAttemptsPerCombination);
-			if (source.Length <= 2)
+			var len = source.Length;
+			if (len == 2 && source[0] != source[1])
+				return AttemptNewCrossover(source[0], source[1], maxAttemptsPerCombination);
+			if (len <= 2)
 				return null; //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 
+			var s0 = source.ToArray();
 			bool isFirst = true;
 			do
 			{
 				// Take one.
-				var a = RandomUtilities.RandomSelectOne(source);
+				var a = s0.RandomSelectOne();
 				// Get all others (in orignal order/duplicates).
-				var s1 = source.Where(g => g != a).ToArray();
+				var s1 = s0.Where(g => g != a).ToArray();
 
 				// Any left?
 				while (s1.Length != 0)
@@ -384,32 +393,32 @@ namespace Solve
 					return null; //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 
 				// Okay so we've been through all of them with 'a' Now move on to another.
-				source = source.Where(g => g != a).ToArray();
+				s0 = s0.Where(g => g != a).ToArray();
 			}
 			while (source.Length > 1); // Less than 2 left? Then we have no other options.
 
 			return null;
 		}
 
-		public TGenome[] AttemptNewCrossover(TGenome primary, TGenome[] others, byte maxAttemptsPerCombination = 3)
+		public TGenome[] AttemptNewCrossover(in TGenome primary, in ReadOnlySpan<TGenome> others, in byte maxAttemptsPerCombination = 3)
 		{
 			if (primary == null)
 				throw new ArgumentNullException(nameof(primary));
-			if (others == null)
-				throw new ArgumentNullException(nameof(others));
 			if (others.Length == 0)
 				return null;// throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
-			if (others.Length == 1 && primary != others[0]) return AttemptNewCrossover(primary, others[0], maxAttemptsPerCombination);
-			var source = others.Where(g => g != primary).ToArray();
+			if (others.Length == 1 && primary != others[0]) return AttemptNewCrossover(in primary, in others[0], maxAttemptsPerCombination);
+			var source = new List<TGenome>();
+			foreach (ref readonly var o in others)
+				if (o != primary) source.Add(o);
 
 			// Any left?
-			while (source.Length != 0)
+			while (source.Count != 0)
 			{
 				var b = source.RandomSelectOne();
 				var offspring = AttemptNewCrossover(primary, b, maxAttemptsPerCombination);
 				if (offspring != null && offspring.Length != 0) return offspring;
 				// Reduce the possibilites.
-				source = source.Where(g => g != b).ToArray();
+				source = source.Where(g => g != b).ToList();
 				/* ^^^ Why are we filtering like this you might ask? 
 					   Because the source can have duplicates in order to bias randomness. */
 			}
@@ -442,7 +451,7 @@ namespace Solve
 		protected List<PriorityQueue> PriorityQueues
 			= new List<PriorityQueue>();
 
-		protected PriorityQueue GetPriorityQueue(int index)
+		protected PriorityQueue GetPriorityQueue(in int index)
 		{
 			if (index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
@@ -454,7 +463,7 @@ namespace Solve
 					int i;
 					while ((i = PriorityQueues.Count) <= index)
 					{
-						var instance = new PriorityQueue(i, this);
+						var instance = new PriorityQueue(in i, this);
 						PriorityQueues.Add(instance);
 						Debug.Assert(PriorityQueues[i] == instance);
 						if (i == index) return instance;
@@ -465,7 +474,7 @@ namespace Solve
 			return PriorityQueues[index];
 		}
 
-		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
+		public IGenomeFactoryPriorityQueue<TGenome> this[in int index]
 			=> GetPriorityQueue(index);
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
@@ -473,7 +482,7 @@ namespace Solve
 			readonly int Index;
 			readonly GenomeFactoryBase<TGenome> Factory;
 
-			public PriorityQueue(int index, GenomeFactoryBase<TGenome> factory)
+			public PriorityQueue(in int index, in GenomeFactoryBase<TGenome> factory)
 			{
 				Index = index;
 				Factory = factory ?? throw new ArgumentNullException(nameof(factory));
@@ -494,48 +503,57 @@ namespace Solve
 			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
 				= new ConcurrentQueue<(TGenome Genome, int Count)>();
 
-			public void EnqueueChampion(ReadOnlySpan<TGenome> genomes)
+			public void EnqueueChampion(in ReadOnlySpan<TGenome> genomes)
 			{
-				foreach (var genome in genomes)
+				foreach (ref readonly var genome in genomes)
 					EnqueueChampion(genome);
 			}
-			public void EnqueueChampion(TGenome genome)
+			public void EnqueueChampion(in TGenome genome)
 			{
-				EnqueueForVariation(genome);
-				EnqueueForBreeding(genome);
-				EnqueueForMutation(genome);
+				EnqueueForVariation(in genome);
+				EnqueueForBreeding(in genome);
+				EnqueueForMutation(in genome);
 			}
 
-			public void EnqueueForBreeding(ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForBreeding(in ReadOnlySpan<TGenome> genomes)
 			{
 				if (genomes != null)
-					foreach (var g in genomes)
-						EnqueueForBreeding(g);
+					foreach (ref readonly var g in genomes)
+						EnqueueForBreeding(in g);
 			}
 
-			protected void EnqueueForBreeding((TGenome genome, int count) breeder, bool incrementMetrics)
+			protected void EnqueueForBreeding(in TGenome genome, in int count, in bool incrementMetrics)
 			{
-				var count = breeder.count;
 				if (count > 0)
 				{
 					if (incrementMetrics) Factory.MetricsCounter.Increment(BREEDING_STOCK, count);
-					BreedingStock.Enqueue(breeder);
+					BreedingStock.Enqueue((genome, count));
 				}
 			}
 
-			public void EnqueueForBreeding(TGenome genome, int count = 1)
+			protected void EnqueueForBreeding(in (TGenome Genome, int Count) entry, in bool incrementMetrics)
+			{
+				var count = entry.Count;
+				if (count > 0)
+				{
+					if (incrementMetrics) Factory.MetricsCounter.Increment(BREEDING_STOCK, count);
+					BreedingStock.Enqueue(entry);
+				}
+			}
+
+			public void EnqueueForBreeding(in TGenome genome, in int count = 1)
 			{
 				if (count > 0)
-					EnqueueForBreeding((genome, count), true);
+					EnqueueForBreeding(in genome, in count, true);
 			}
 
-			public void Breed(ReadOnlySpan<TGenome> genomes)
+			public void Breed(in ReadOnlySpan<TGenome> genomes)
 			{
-				foreach (var g in genomes)
-					Breed(g);
+				foreach (ref readonly var g in genomes)
+					Breed(in g);
 			}
 
-			public void Breed(TGenome genome = null, int maxCount = 1)
+			public void Breed(in TGenome genome = null, in int maxCount = 1)
 			{
 				for (var i = 0; i < maxCount; i++)
 				{
@@ -652,7 +670,7 @@ namespace Solve
 				return bred;
 			}
 
-			internal bool EnqueueInternal(TGenome genome)
+			internal bool EnqueueInternal(in TGenome genome)
 			{
 				if (genome != null)
 				{
@@ -667,28 +685,28 @@ namespace Solve
 				return false;
 			}
 
-			internal bool EnqueueInternal(ReadOnlySpan<TGenome> genomes)
+			internal bool EnqueueInternal(in ReadOnlySpan<TGenome> genomes)
 			{
 				bool added = false;
-				foreach (var g in genomes)
+				foreach (ref readonly var g in genomes)
 				{
-					if (EnqueueInternal(g))
+					if (EnqueueInternal(in g))
 						added = true;
 				}
 				return added;
 			}
 
-			public bool AttemptEnqueueVariation(TGenome genome)
+			public bool AttemptEnqueueVariation(in TGenome genome)
 			{
 				if (genome == null) return false;
 				while (genome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
 				{
 					if (v is TGenome t)
 					{
-						t = Factory.Registration(t);
-						if (Factory.RegisterProduction(t))
+						t = Factory.Registration(in t);
+						if (Factory.RegisterProduction(in t))
 						{
-							EnqueueInternal(t);
+							EnqueueInternal(in t);
 							return true;
 						}
 					}
@@ -700,18 +718,18 @@ namespace Solve
 				return false;
 			}
 
-			public void EnqueueVariations(TGenome genome)
+			public void EnqueueVariations(in TGenome genome)
 			{
-				if (genome != null) while (AttemptEnqueueVariation(genome)) { }
+				if (genome != null) while (AttemptEnqueueVariation(in genome)) { }
 			}
 
-			public void EnqueueVariations(ReadOnlySpan<TGenome> genomes)
+			public void EnqueueVariations(in ReadOnlySpan<TGenome> genomes)
 			{
-				foreach (var g in genomes)
-					EnqueueVariations(g);
+				foreach (ref readonly var g in genomes)
+					EnqueueVariations(in g);
 			}
 
-			public void EnqueueForVariation(TGenome genome)
+			public void EnqueueForVariation(in TGenome genome)
 			{
 				if (genome != null)
 				{
@@ -720,13 +738,13 @@ namespace Solve
 				}
 			}
 
-			public void EnqueueForVariation(ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForVariation(in ReadOnlySpan<TGenome> genomes)
 			{
-				foreach (var g in genomes)
-					EnqueueVariations(g);
+				foreach (ref readonly var g in genomes)
+					EnqueueVariations(in g);
 			}
 
-			public bool Mutate(TGenome genome, int maxCount = 1)
+			public bool Mutate(in TGenome genome, in int maxCount = 1)
 			{
 				if (maxCount < 1) return false;
 				int i = 0;
@@ -734,7 +752,7 @@ namespace Solve
 				{
 					if (Factory.AttemptNewMutation(genome, out TGenome mutation))
 					{
-						EnqueueInternal(mutation);
+						EnqueueInternal(in mutation);
 					}
 					else
 					{
@@ -744,7 +762,7 @@ namespace Solve
 				return i != 0;
 			}
 
-			public void EnqueueForMutation(TGenome genome, int count = 1)
+			public void EnqueueForMutation(in TGenome genome, in int count = 1)
 			{
 				if (genome != null)
 				{
@@ -753,10 +771,10 @@ namespace Solve
 				}
 			}
 
-			public void EnqueueForMutation(ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForMutation(in ReadOnlySpan<TGenome> genomes)
 			{
-				foreach (var g in genomes)
-					EnqueueForMutation(g);
+				foreach (ref readonly var g in genomes)
+					EnqueueForMutation(in g);
 			}
 
 			protected readonly ConcurrentQueue<TGenome> InternalQueue

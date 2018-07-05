@@ -22,7 +22,7 @@ namespace Solve
 		public int Decrement()
 			=> Interlocked.Decrement(ref _value);
 
-		public void Add(int other)
+		public void Add(in int other)
 		{
 			if (other != 0)
 			{

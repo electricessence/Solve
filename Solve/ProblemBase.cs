@@ -12,7 +12,7 @@ namespace Solve
 	{
 		protected class Pool : IProblemPool<TGenome>
 		{
-			public Pool(ushort poolSize, IReadOnlyList<Metric> metrics, Func<TGenome, double[], Fitness> transform)
+			public Pool(in ushort poolSize, in IReadOnlyList<Metric> metrics, Func<TGenome, double[], Fitness> transform)
 			{
 				Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
 				Transform = transform ?? throw new ArgumentNullException(nameof(transform));
@@ -27,7 +27,7 @@ namespace Solve
 
 			class GF
 			{
-				public GF(TGenome genome, Fitness fitness)
+				public GF(in TGenome genome, in Fitness fitness)
 				{
 					Genome = genome;
 					Fitness = fitness;
@@ -44,16 +44,15 @@ namespace Solve
 			public (TGenome Genome, Fitness Fitness) BestFitness => _bestFitness;
 
 
-			public bool UpdateBestFitness(TGenome genome, Fitness fitness)
+			public bool UpdateBestFitness(in TGenome genome, in Fitness fitness)
 			{
-				if (fitness == null) throw new ArgumentNullException(nameof(fitness));
-				fitness = fitness.Clone();
+				var f = fitness?.Clone() ?? throw new ArgumentNullException(nameof(fitness));
 
 				GF contending = null;
 				GF defending;
-				while ((defending = _bestFitness) == null || fitness.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
+				while ((defending = _bestFitness) == null || f.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
 				{
-					contending = contending ?? new GF(genome, fitness);
+					contending = contending ?? new GF(genome, f);
 					if (Interlocked.CompareExchange(ref _bestFitness, contending, defending) == defending)
 						return true;
 				}
@@ -69,18 +68,18 @@ namespace Solve
 		long _testCount = 0;
 		public long TestCount => _testCount;
 
-		protected ProblemBase(IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators, ushort championPoolSize = 0)
+		protected ProblemBase(in IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators, in ushort championPoolSize = 0)
 		{
-			Pools = fitnessTransators?.Select(t => new Pool(championPoolSize, t.Metrics, t.Transform)).ToList().AsReadOnly()
+			var c = championPoolSize;
+			Pools = fitnessTransators?.Select(t => new Pool(in c, t.Metrics, t.Transform)).ToList().AsReadOnly()
 				?? throw new ArgumentNullException(nameof(fitnessTransators));
 		}
 
-		protected ProblemBase(ushort championPoolSize, params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
-			: this(fitnessTranslators, championPoolSize) { }
+		protected ProblemBase(in ushort championPoolSize, params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			: this(fitnessTranslators, in championPoolSize) { }
 
 		protected ProblemBase(params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: this(fitnessTranslators, 0) { }
-
 
 		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);
 
