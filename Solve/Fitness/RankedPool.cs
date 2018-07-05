@@ -1,4 +1,5 @@
-﻿using Open.Memory;
+﻿using Open.Collections;
+using Open.Memory;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ namespace Solve
 	public class RankedPool<TGenome>
 		where TGenome : IGenome
 	{
-		public RankedPool(ushort poolSize)
+		public RankedPool(in ushort poolSize)
 		{
 			if (poolSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must be at least 2.");
@@ -23,9 +24,9 @@ namespace Solve
 
 		public bool IsEmpty => _pool.IsEmpty;
 
-		Lazy<TGenome[]> _ranked;
+		Lazy<(TGenome Genome, Fitness Fitness)[]> _ranked;
 
-		public void Add(TGenome genome, Fitness fitness)
+		public void Add(in TGenome genome, in Fitness fitness)
 		{
 			if (_pool == null) return;
 
@@ -43,8 +44,8 @@ namespace Solve
 			}
 		}
 
-		TGenome[] GetRanked()
-			=> LazyInitializer.EnsureInitialized(ref _ranked, () => new Lazy<TGenome[]>(() =>
+		(TGenome Genome, Fitness Fitness)[] GetRanked()
+			=> LazyInitializer.EnsureInitialized(ref _ranked, () => new Lazy<(TGenome Genome, Fitness Fitness)[]>(() =>
 			{
 				var result = _pool
 					// Drain queue (some*)
@@ -57,7 +58,7 @@ namespace Solve
 					{
 						var gf = e.First();
 						Debug.Assert(e.Select(f => f.Fitness).Distinct().Count() == 1);
-						return (snapshot: gf.Fitness.Results, genomeFitness: gf);
+						return (snapshot: gf.Fitness.Results, genomeFitness: (gf.Genome, gf.Fitness.Clone()));
 					})
 					// Higher sample counts are more valuable as they only arrive here as champions.
 					.OrderBy(e => e.snapshot.Average, MemoryComparer.Double.Descending)
@@ -68,10 +69,10 @@ namespace Solve
 
 				// (.Take(PoolSize)) All champions deserve a chance, but we will only retain the ones that can fit in the pool.				
 				foreach (var e in result.Take(PoolSize)) _pool.Enqueue(e);
-				return result.Select(g => g.Genome).ToArray();
+				return result;
 			})).Value;
 
-		public ReadOnlySpan<TGenome> Ranked
+		public ReadOnlySpan<(TGenome Genome, Fitness Fitness)> Ranked
 			=> GetRanked();
 	}
 }

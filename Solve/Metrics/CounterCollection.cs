@@ -10,13 +10,13 @@ namespace Solve.Metrics
 		readonly IMetricsRoot Metrics;
 		readonly ISet<string> Ignored;
 
-		public CounterCollection(IMetricsRoot metrics)
+		public CounterCollection(in IMetricsRoot metrics)
 			: this(metrics, new HashSet<string>())
 		{
 
 		}
 
-		public CounterCollection(IMetricsRoot metrics, ISet<string> ignored)
+		public CounterCollection(in IMetricsRoot metrics, in ISet<string> ignored)
 		{
 			Metrics = metrics;
 			Ignored = ignored;
@@ -29,7 +29,7 @@ namespace Solve.Metrics
 
 		readonly ConcurrentDictionary<string, CounterOptions> Counters = new ConcurrentDictionary<string, CounterOptions>();
 
-		public void Increment(string counterName, int count = 1)
+		public void Increment(in string counterName, in int count = 1)
 		{
 			if (count > 0 && !Ignored.Contains(counterName))
 			{
@@ -39,7 +39,7 @@ namespace Solve.Metrics
 			}
 		}
 
-		public void Decrement(string counterName, int count = 1)
+		public void Decrement(in string counterName, in int count = 1)
 		{
 			if (count > 0 && !Ignored.Contains(counterName))
 			{

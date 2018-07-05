@@ -25,7 +25,7 @@ namespace Solve
 		}
 
 		T _previous;
-		internal void Broadcast(T message, bool uniqueOnly = false)
+		internal void Broadcast(in T message, in bool uniqueOnly = false)
 		{
 			if (!uniqueOnly || !message.Equals(_previous))
 			{
@@ -55,7 +55,7 @@ namespace Solve
 			}
 		}
 
-		protected void Fault(Exception exception)
+		protected void Fault(in Exception exception)
 		{
 			var observers = Interlocked.Exchange(ref _observers, null);
 			if (observers != null)

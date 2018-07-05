@@ -14,13 +14,12 @@ namespace Solve
 		public readonly T[] Selected;
 		public readonly T[] Rejected;
 
-		public Selection(IEnumerable<T> contenders, double selectionPoint = 0.5) : this(contenders as T[] ?? contenders?.ToArray())
+		public Selection(IEnumerable<T> contenders, double selectionPoint = 0.5) : this((contenders as T[] ?? contenders?.ToArray()).AsSpan())
 		{
 		}
 
-		public Selection(T[] contenders, double selectionPoint = 0.5)
+		public Selection(ReadOnlySpan<T> contenders, double selectionPoint = 0.5)
 		{
-			if (contenders == null) throw new ArgumentNullException(nameof(contenders));
 			if (selectionPoint <= 0 || selectionPoint >= 1)
 				throw new ArgumentOutOfRangeException(nameof(selectionPoint), selectionPoint, "Must be greater than zero and less than one.");
 			int len = contenders.Length;

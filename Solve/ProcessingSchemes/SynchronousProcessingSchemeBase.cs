@@ -6,20 +6,23 @@ namespace Solve.ProcessingSchemes
 	public abstract class SynchronousProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		protected SynchronousProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory)
+		protected SynchronousProcessingSchemeBase(in IGenomeFactory<TGenome> genomeFactory)
 			: base(genomeFactory)
 		{
 		}
 
-		protected abstract void Post(TGenome genome);
+		protected abstract void Post(in TGenome genome);
 
-		protected override Task StartInternal(CancellationToken token)
-			=> Task.Run(cancellationToken: token, action: () =>
+		protected override Task StartInternal(in CancellationToken token)
+		{
+			var pOptions = new ParallelOptions
 			{
-				Parallel.ForEach(Factory, new ParallelOptions
-				{
-					CancellationToken = token,
-				}, Post);
+				CancellationToken = token,
+			};
+
+			return Task.Run(cancellationToken: token, action: () =>
+			{
+				Parallel.ForEach(Factory, pOptions, g => Post(in g));
 
 				//foreach (var f in Factory)
 				//{
@@ -27,6 +30,7 @@ namespace Solve.ProcessingSchemes
 				//		Post(f);
 				//}
 			});
+		}
 
 	}
 }

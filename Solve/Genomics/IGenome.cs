@@ -24,7 +24,7 @@ namespace Solve
 		string Hash { get; }
 
 		// Simply added for potential convienience.  Equals may create problems.
-		bool Equivalent(IGenome other);
+		bool Equivalent(in IGenome other);
 
 		IEnumerator<IGenome> RemainingVariations { get; }
 	}

@@ -4,7 +4,7 @@ namespace Solve
 {
 	public struct Metric
 	{
-		public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity)
+		public Metric(in ushort id, in string name, in string format, in double maxValue = double.PositiveInfinity)
 		{
 			if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(name));
 			if (string.IsNullOrWhiteSpace(format)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(format));

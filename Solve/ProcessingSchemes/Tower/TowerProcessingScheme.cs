@@ -60,6 +60,14 @@ namespace Solve.ProcessingSchemes
 		public readonly ushort MaxLossesBeforeElimination;
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
 
+		static readonly EqualityComparer<(TGenome Genome, Fitness Fitness)> EComparer
+			= EqualityComparerUtility.Create<(TGenome Genome, Fitness Fitness)>(
+				(a, b) => a.Genome.Hash == b.Genome.Hash,
+				a => a.Genome.Hash.GetHashCode());
+
+		static ReadOnlyMemory<double> ScoreSelector((TGenome Genome, Fitness Fitness) gf)
+			=> gf.Fitness.Results.Average;
+
 		bool ProduceFromChampions()
 			=> Problems
 				.SelectMany(p => p.Pools, (p, r) => r.Champions)
@@ -70,13 +78,19 @@ namespace Solve.ProcessingSchemes
 					var len = champions.Length;
 					if (len > 0)
 					{
-						var top = champions[0];
-						ReserveFactoryQueue.EnqueueForMutation(top);
-						ReserveFactoryQueue.EnqueueForBreeding(top);
+						var top = champions[0].Genome;
+						ReserveFactoryQueue.EnqueueForMutation(in top);
+						ReserveFactoryQueue.EnqueueForBreeding(in top);
 
-						var next = TriangularSelection.Descending.RandomOne(champions);
-						ReserveFactoryQueue.EnqueueForMutation(next);
-						ReserveFactoryQueue.EnqueueForBreeding(next);
+						var next = TriangularSelection.Descending.RandomOne(in champions).Genome;
+						ReserveFactoryQueue.EnqueueForMutation(in next);
+						ReserveFactoryQueue.EnqueueForBreeding(in next);
+
+						foreach (var g in Pareto.Filter(champions, EComparer, ScoreSelector)
+							.Select(gf => gf.Value.Genome))
+						{
+							ReserveFactoryQueue.EnqueueForBreeding(in g);
+						}
 
 						//ReserveFactoryQueue.EnqueueForMutation(champions);
 						//ReserveFactoryQueue.EnqueueForBreeding(champions);
@@ -91,13 +105,13 @@ namespace Solve.ProcessingSchemes
 
 		IReadOnlyList<ProblemTower> Towers;
 
-		protected override Task StartInternal(CancellationToken token)
+		protected override Task StartInternal(in CancellationToken token)
 		{
 			Towers = Problems.Select(p => new ProblemTower(p, this)).ToList().AsReadOnly();
 			return base.StartInternal(token);
 		}
 
-		protected override void Post(TGenome genome)
+		protected override void Post(in TGenome genome)
 		{
 			foreach (var t in Towers)
 				t.Post(genome);
