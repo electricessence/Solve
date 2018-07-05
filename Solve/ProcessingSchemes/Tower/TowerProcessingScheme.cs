@@ -20,6 +20,7 @@ namespace Solve.ProcessingSchemes
 		public TowerProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			(ushort First, ushort Minimum, ushort Step) poolSize,
+			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
 			CounterCollection counters = null)
@@ -38,6 +39,7 @@ namespace Solve.ProcessingSchemes
 			Contract.EndContractBlock();
 
 			PoolSize = poolSize;
+			MaxLevels = maxLevels;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
 			Counters = counters;
@@ -49,13 +51,15 @@ namespace Solve.ProcessingSchemes
 		public TowerProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
+			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
 			CounterCollection counters = null)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevelLosses, maxLossesBeforeElimination, counters) { }
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination, counters) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
+		public readonly ushort MaxLevels;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
