@@ -8,7 +8,7 @@ using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Numeric;
 using Open.Threading.Tasks;
-using Solve.Metrics;
+using Solve.Debugging;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
