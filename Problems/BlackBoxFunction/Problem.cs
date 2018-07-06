@@ -26,16 +26,6 @@ namespace BlackBoxFunction
 			Samples = new SampleCache(actualFormula);
 		}
 
-		protected override Genome GetFitnessForKeyTransform(Genome genome)
-		{
-			return genome.AsReduced();
-		}
-
-		protected override Task ProcessTest(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
-		{
-			return Task.Run(() => ProcessTestInternal(g, fitness, sampleId));
-		}
-
 		void ProcessTestInternal(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
 		{
 			var samples = Samples.Get(sampleId);
@@ -100,22 +90,6 @@ namespace BlackBoxFunction
 					(double.IsNaN(d) || double.IsInfinity(d)) ? double.NegativeInfinity : d
 				);
 			}
-		}
-
-		public static void EmitTopGenomeStats(KeyValuePair<IProblem<Genome>, Genome> kvp)
-		{
-			var p = kvp.Key;
-			var genome = kvp.Value;
-			var fitness = p.GetFitnessFor(genome).Value.Fitness;
-
-			var asReduced = genome.AsReduced();
-			if (asReduced == genome)
-				Console.WriteLine("{0}:\t{1}", p.ID, genome.ToAlphaParameters());
-			else
-				Console.WriteLine("{0}:\t{1}\n=>\t{2}", p.ID, genome.ToAlphaParameters(), asReduced.ToAlphaParameters());
-
-			Console.WriteLine("  \t[{0}] ({1} samples)", fitness.Scores.JoinToString(","), fitness.SampleCount);
-			Console.WriteLine();
 		}
 
 	}

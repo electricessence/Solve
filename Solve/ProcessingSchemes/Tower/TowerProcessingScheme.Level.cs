@@ -90,17 +90,22 @@ namespace Solve.ProcessingSchemes
 				=> Tower.Problem.ProcessSample(c.Genome, Index).Select((fitness, i) =>
 				{
 					var values = fitness.Results.Sum.ToArray();
-					var lev = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
+					var lev = UpdateFitnessesIfBetter( BestLevelFitness, values, i);
 
 					var progressiveFitness = c.Fitness[i];
-					var pro = UpdateFitnessesIfBetter(BestProgressiveFitness, progressiveFitness.Merge(values).Average.ToArray(), i);
+					var pro = UpdateFitnessesIfBetter(
+						BestProgressiveFitness,
+						progressiveFitness
+							.Merge(values)
+							.Average
+							.ToArray(), i);
 
 					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
 					return (values, (lev, pro, lev || pro));
 				}).ToArray();
 
-			void PromoteChampion(TGenome genome)
+			void PromoteChampion(in TGenome genome)
 			{
 				Factory.EnqueueChampion(genome);
 				Factory.EnqueueForMutation(genome);
@@ -124,8 +129,8 @@ namespace Solve.ProcessingSchemes
 				{
 					if (result.Any(f => f.Superiority.Progressive))
 					{
-						PromoteChampion(c.Genome);
-						Tower.Broadcast(c);
+						PromoteChampion(in c.Genome);
+						Tower.Broadcast(in c);
 					}
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
@@ -137,7 +142,7 @@ namespace Solve.ProcessingSchemes
 					bool either;
 					if (NextLevel.IsCurrentTop && (either = result.Any(f => f.Superiority.Either)))
 					{
-						PromoteChampion(c.Genome);
+						PromoteChampion(in c.Genome);
 					}
 					else
 					{
@@ -146,7 +151,7 @@ namespace Solve.ProcessingSchemes
 
 					if (expressToTop || either && result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
 					{
-						NextLevel.Post(c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
+						NextLevel.Post(in c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
 						return; // No need to involve a obviously superior genome with this pool.
 					}
 				}
@@ -236,20 +241,20 @@ namespace Solve.ProcessingSchemes
 
 						// 5) Promote winners.
 						var top = winners[0].GenomeFitness;
-						NextLevel.Post(top, true); // express: give it the opportunity to keep going.
+						NextLevel.Post(in top, true); // express: give it the opportunity to keep going.
 						for (var i = 1; i < midPoint; i++)
-							NextLevel.Post(winners[i].GenomeFitness);
+							NextLevel.Post(in winners[i].GenomeFitness);
 
 						// 6) Promote second chance losers
 						foreach (var loser in losersToPromote)
 						{
-							NextLevel.Post(loser.GenomeFitness);
+							NextLevel.Post(in loser.GenomeFitness);
 						}
 
 						// 7) Broadcast level winner.
 						if (lastLevel)
 						{
-							Tower.Broadcast(top);
+							Tower.Broadcast(in top);
 							//((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Top Level Pool Selected");
 						}
 

@@ -1,7 +1,6 @@
 ﻿using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Eater
@@ -18,7 +17,8 @@ namespace Eater
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory = new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
+		readonly EaterFactory Factory
+			= new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
 
 
 		protected Runner(in ushort minSamples, in ushort minConvSamples = 20) : base()
@@ -63,30 +63,6 @@ namespace Eater
 			//	}
 			//}
 		}
-
-#if DEBUG
-		protected override void EmitStats(Cursor cursor)
-		{
-			base.EmitStats(cursor);
-
-			var metrics = Factory.Metrics;
-			var snapshot = metrics.Snapshot.Get();
-			Debug.WriteLine("\n==============================================================");
-			Debug.WriteLine($"Timestamp:");
-			Debug.WriteLine(snapshot.Timestamp);
-			Debug.WriteLine("--------------------------------------------------------------");
-
-			foreach (var context in snapshot.Contexts)
-			{
-				foreach (var counter in context.Counters)
-				{
-					Debug.WriteLine($"{counter.Name}:");
-					Debug.WriteLine(counter.Value.Count);
-					Debug.WriteLine("--------------------------------------------------------------");
-				}
-			}
-		}
-#endif
 
 		static Task Main(string[] args)
 		{
