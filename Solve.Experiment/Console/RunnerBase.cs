@@ -1,4 +1,5 @@
-﻿using Open.Threading.Tasks;
+﻿using App.Metrics;
+using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -11,6 +12,7 @@ namespace Solve.Experiment.Console
 		where TGenome : class, IGenome
 
 	{
+		protected IMetricsRoot Metrics;
 		readonly static TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
 
 		readonly ushort _minConvergenceSamples;
@@ -113,6 +115,25 @@ namespace Solve.Experiment.Console
 				}
 			}
 			SystemConsole.WriteLine();
+
+#if DEBUG
+			if (Metrics == null) return;
+			var snapshot = Metrics.Snapshot.Get();
+			Debug.WriteLine("\n==============================================================");
+			Debug.WriteLine($"Timestamp:");
+			Debug.WriteLine(snapshot.Timestamp);
+			Debug.WriteLine("--------------------------------------------------------------");
+
+			foreach (var context in snapshot.Contexts)
+			{
+				foreach (var counter in context.Counters)
+				{
+					Debug.WriteLine($"{counter.Name}:");
+					Debug.WriteLine(counter.Value.Count);
+					Debug.WriteLine("--------------------------------------------------------------");
+				}
+			}
+#endif
 		}
 
 
