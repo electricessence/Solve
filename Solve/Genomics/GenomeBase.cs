@@ -36,10 +36,6 @@ namespace Solve
 
 		public abstract int Length { get; }
 
-#if DEBUG
-		public readonly StringBuilder Log = new StringBuilder();
-#endif
-
 	}
 
 }
