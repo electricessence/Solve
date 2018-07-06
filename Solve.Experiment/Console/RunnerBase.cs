@@ -21,7 +21,7 @@ namespace Solve.Experiment.Console
 		ConsoleEmitterBase<TGenome> Emitter;
 		CursorRange _lastConsoleStats = null;
 
-		protected RunnerBase(in ushort minConvergenceSamples = 20)
+		protected RunnerBase(ushort minConvergenceSamples = 20)
 		{
 			_minConvergenceSamples = minConvergenceSamples;
 			_stopwatch = new Stopwatch();

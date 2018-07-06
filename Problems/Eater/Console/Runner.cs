@@ -21,7 +21,7 @@ namespace Eater
 			= new GenomeFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
 
 
-		protected Runner(in ushort minSamples, in ushort minConvSamples = 20) : base()
+		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
 		{
 			_minSamples = minSamples;
 			_minConvSamples = minConvSamples;

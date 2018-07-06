@@ -27,21 +27,21 @@ namespace Solve
 
 		IEnumerable<TGenome> GenerateNew(params TGenome[] source);
 
-		bool AttemptNewMutation(in TGenome source, out TGenome mutation, in byte triesPerMutationLevel = 5, in byte maxMutations = 3);
+		bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
-		bool AttemptNewMutation(in ReadOnlySpan<TGenome> source, out TGenome mutation, in byte triesPerMutationLevel = 5, in byte maxMutations = 3);
+		bool AttemptNewMutation(in ReadOnlySpan<TGenome> source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
 
 		IEnumerable<TGenome> Mutate(TGenome source);
 
 		// These will return null if the attempt fails.
 
-		TGenome[] AttemptNewCrossover(in TGenome a, in TGenome b, in byte maxAttempts = 3);
+		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
 
-		TGenome[] AttemptNewCrossover(in TGenome primary, in ReadOnlySpan<TGenome> others, in byte maxAttemptsPerCombination = 3);
+		TGenome[] AttemptNewCrossover(TGenome primary, in ReadOnlySpan<TGenome> others, byte maxAttemptsPerCombination = 3);
 
-		TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, in byte maxAttemptsPerCombination = 3);
+		TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3);
 
-		IGenomeFactoryPriorityQueue<TGenome> this[in int index] { get; }
+		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
 
 		TGenome Next();
 	}

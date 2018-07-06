@@ -6,8 +6,8 @@
 namespace Solve
 {
 	public interface IReducibleGenome<TGenome> : IReducible<TGenome>, IGenome
-		where TGenome : IGenome
+		where TGenome : class, IGenome
 	{
-		void ReplaceReduced(in TGenome reduced);
+		void ReplaceReduced(TGenome reduced);
 	}
 }

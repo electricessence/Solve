@@ -6,11 +6,11 @@ namespace Solve
 	where TGenome : class, IReducibleGenome<TGenome>
 	{
 
-		protected ReducibleGenomeFactoryBase(in IEnumerable<TGenome> seeds = null) : base(seeds)
+		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome> seeds = null) : base(seeds)
 		{
 		}
 
-		protected override TGenome Registration(in TGenome target)
+		protected override TGenome Registration(TGenome target)
 		{
 			if (target == null) return null;
 			Register(target, out TGenome result, t =>
@@ -33,7 +33,7 @@ namespace Solve
 			return result;
 		}
 
-		public override TGenome[] AttemptNewCrossover(in TGenome a, in TGenome b, in byte maxAttempts = 3)
+		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
 			if (a == null || b == null) return null;
 

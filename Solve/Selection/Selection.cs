@@ -18,7 +18,7 @@ namespace Solve
 		{
 		}
 
-		public Selection(ReadOnlySpan<T> contenders, double selectionPoint = 0.5)
+		public Selection(in ReadOnlySpan<T> contenders, double selectionPoint = 0.5)
 		{
 			if (selectionPoint <= 0 || selectionPoint >= 1)
 				throw new ArgumentOutOfRangeException(nameof(selectionPoint), selectionPoint, "Must be greater than zero and less than one.");
