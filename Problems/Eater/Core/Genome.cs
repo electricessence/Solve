@@ -9,27 +9,27 @@ using System.Linq;
 namespace Eater
 {
 	[DebuggerDisplay("{_genes.Length}:{_hash}")]
-	public sealed class EaterGenome
-		: ReducibleGenomeBase<EaterGenome>, ICloneable<EaterGenome>, IEnumerable<Step>
+	public sealed class Genome
+		: ReducibleGenomeBase<Genome>, ICloneable<Genome>, IEnumerable<Step>
 	{
 
 		static readonly Step[] EMPTY = System.Array.Empty<Step>();
 
-		public EaterGenome() : base()
+		public Genome() : base()
 		{
 			_genes = EMPTY;
 		}
 
-		public EaterGenome(in IEnumerable<Step> steps) : base()
+		public Genome(in IEnumerable<Step> steps) : base()
 		{
 			Freeze(steps);
 		}
 
-		public EaterGenome(in IEnumerable<StepCount> steps) : this(steps.Steps())
+		public Genome(in IEnumerable<StepCount> steps) : this(steps.Steps())
 		{
 		}
 
-		public EaterGenome(in string steps) : base()
+		public Genome(in string steps) : base()
 		{
 			Freeze(Steps.FromGenomeHash(steps));
 		}
@@ -41,8 +41,8 @@ namespace Eater
 		string GetHash()
 			=> _genes.ToStepCounts().ToGenomeHash();
 
-		public new EaterGenome Clone()
-			=> new EaterGenome(_genes);
+		public new Genome Clone()
+			=> new Genome(_genes);
 
 		protected override object CloneInternal()
 			=> Clone();
@@ -66,12 +66,12 @@ namespace Eater
 			Freeze();
 		}
 
-		protected override EaterGenome Reduction()
+		protected override Genome Reduction()
 		{
 			var reducedSteps = _genes.Reduce();
 			return reducedSteps == null
 				? null
-				: new EaterGenome(reducedSteps);
+				: new Genome(reducedSteps);
 		}
 
 		public IEnumerator<Step> GetEnumerator()
@@ -82,41 +82,41 @@ namespace Eater
 
 		static readonly IEnumerable<Step> ForwardOne = Enumerable.Repeat(Step.Forward, 1);
 
-		IEnumerator<EaterGenome> GetVariations()
+		IEnumerator<Genome> GetVariations()
 			=> Variations().Where(g => g.Hash != Hash).GetEnumerator();
 
-		IEnumerable<EaterGenome> Variations()
+		IEnumerable<Genome> Variations()
 		{
-			yield return new EaterGenome(_genes.Reverse());
+			yield return new Genome(_genes.Reverse());
 
 			var lenMinusOne = _genes.Length - 1;
 			if (lenMinusOne > 1)
 			{
 				{
 					IEnumerable<Step> removeTail = _genes.Take(lenMinusOne).ToList();
-					yield return new EaterGenome(in removeTail);
-					yield return new EaterGenome(Enumerable.Repeat(_genes[lenMinusOne], 1).Concat(removeTail));
+					yield return new Genome(in removeTail);
+					yield return new Genome(Enumerable.Repeat(_genes[lenMinusOne], 1).Concat(removeTail));
 				}
 				{
 					IEnumerable<Step> removeHead = _genes.Skip(1).ToList();
-					yield return new EaterGenome(in removeHead);
-					yield return new EaterGenome(removeHead.Concat(Enumerable.Repeat(_genes[0], 1)));
+					yield return new Genome(in removeHead);
+					yield return new Genome(removeHead.Concat(Enumerable.Repeat(_genes[0], 1)));
 				}
 
 			}
 
 			// All forward movement lengths reduced by 1.
-			yield return new EaterGenome(_genes.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? sc-- : sc));
+			yield return new Genome(_genes.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? sc-- : sc));
 
 
-			yield return new EaterGenome(ForwardOne.Concat(_genes));
-			yield return new EaterGenome(_genes.Concat(ForwardOne));
+			yield return new Genome(ForwardOne.Concat(_genes));
+			yield return new Genome(_genes.Concat(ForwardOne));
 
 			// All forward movement lengths doubled...
-			yield return new EaterGenome(_genes.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1)));
+			yield return new Genome(_genes.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1)));
 
 			// Pattern is doubled.
-			yield return new EaterGenome(Enumerable.Repeat(_genes, 2).SelectMany(s => s));
+			yield return new Genome(Enumerable.Repeat(_genes, 2).SelectMany(s => s));
 
 			// Pass reduced last to allow for any interesting varations to occur above first.
 			var reduced = AsReduced();
@@ -125,13 +125,13 @@ namespace Eater
 			var half = reduced.Length / 2;
 			if (half > 2)
 			{
-				yield return new EaterGenome(reduced.Take(half));
-				yield return new EaterGenome(reduced.Skip(half));
+				yield return new Genome(reduced.Take(half));
+				yield return new Genome(reduced.Skip(half));
 			}
 
 		}
 
-		IEnumerator<EaterGenome> _remainingVariations;
+		IEnumerator<Genome> _remainingVariations;
 
 		public override IEnumerator<IGenome> RemainingVariations
 			=> _remainingVariations ?? GetVariations();

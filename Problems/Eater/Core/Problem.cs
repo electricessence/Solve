@@ -4,25 +4,24 @@ using System.Collections.Generic;
 
 namespace Eater
 {
-	public class EaterProblem : ProblemBase<EaterGenome>
+	public class Problem : ProblemBase<Genome>
 	{
 		public readonly SampleCache Samples;
 
-		protected EaterProblem(
-			in int gridSize = 10,
-			in int sampleSize = 40,
+		protected Problem(
+			in ushort gridSize = 10,
+			in ushort sampleSize = 40,
 			in ushort championPoolSize = 100,
-			params (IReadOnlyList<Metric> Metrics, Func<EaterGenome, double[], Fitness> Transform)[] fitnessTranslators)
-			: base(championPoolSize, fitnessTranslators)
+			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
+			: base(fitnessTranslators, in sampleSize, in championPoolSize)
 		{
-			SampleSize = sampleSize;
-			Samples = new SampleCache(gridSize);
+			Samples = new SampleCache(in gridSize);
 		}
 
-		protected static Fitness Fitness01(EaterGenome genome, double[] metrics)
+		protected static Fitness Fitness01(Genome genome, double[] metrics)
 			=> new Fitness(in Metrics01, metrics[0], -metrics[1], -genome.Length);
 
-		protected static Fitness Fitness02(EaterGenome genome, double[] metrics)
+		protected static Fitness Fitness02(Genome genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);
 
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
@@ -40,9 +39,9 @@ namespace Eater
 		}.AsReadOnly();
 
 
-		public readonly int SampleSize;
 
-		protected override double[] ProcessSampleMetrics(EaterGenome g, long sampleId)
+
+		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
@@ -75,23 +74,23 @@ namespace Eater
 			};// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
 
-		public static EaterProblem CreateF01(
-			in int gridSize = 10,
-			in int sampleSize = 40,
+		public static Problem CreateF01(
+			in ushort gridSize = 10,
+			in ushort sampleSize = 40,
 			in ushort championPoolSize = 100)
-			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01));
+			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics01, Fitness01));
 
-		public static EaterProblem CreateF02(
-			in int gridSize = 10,
-			in int sampleSize = 40,
+		public static Problem CreateF02(
+			in ushort gridSize = 10,
+			in ushort sampleSize = 40,
 			in ushort championPoolSize = 100)
-			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics02, Fitness02));
+			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics02, Fitness02));
 
-		public static EaterProblem CreateF0102(
-			in int gridSize = 10,
-			in int sampleSize = 40,
+		public static Problem CreateF0102(
+			in ushort gridSize = 10,
+			in ushort sampleSize = 40,
 			in ushort championPoolSize = 100)
-			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 	}
 

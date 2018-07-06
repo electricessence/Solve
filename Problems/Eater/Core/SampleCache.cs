@@ -23,18 +23,16 @@ namespace Eater
 
 		readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
 
-		public readonly int GridSize;
-		public readonly int GridSizeMid;
+		public readonly ushort GridSize;
 
 		public readonly GridLocation Boundary;
 		public int SeedOffset;
 
-		public SampleCache(int gridSize = 10)
+		public SampleCache(in ushort gridSize = 10)
 		{
 			if (gridSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");
 			GridSize = gridSize;
-			GridSizeMid = gridSize / 2;
 			Boundary = new GridLocation(gridSize, gridSize);
 
 			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
@@ -102,7 +100,7 @@ namespace Eater
 			};
 		}
 
-		public ProcedureResult[] TestAll(EaterGenome genome)
+		public ProcedureResult[] TestAll(Genome genome)
 		{
 			return TestAll(genome.Hash);
 		}

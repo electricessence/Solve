@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Eater
 {
-	class Runner : RunnerBase<EaterGenome>
+	class Runner : RunnerBase<Genome>
 	{
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed =
@@ -17,8 +17,8 @@ namespace Eater
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly EaterFactory Factory
-			= new EaterFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
+		readonly GenomeFactory Factory
+			= new GenomeFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
 
 
 		protected Runner(in ushort minSamples, in ushort minConvSamples = 20) : base()
@@ -29,8 +29,8 @@ namespace Eater
 
 		public void Init()
 		{
-			var scheme = new TowerProcessingScheme<EaterGenome>(Factory, (400, 40, 2));
-			scheme.AddProblem(EaterProblem.CreateF0102(20, 40));
+			var scheme = new TowerProcessingScheme<Genome>(Factory, (400, 40, 2));
+			scheme.AddProblem(Problem.CreateF0102(20, 40));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
 			Init(scheme,

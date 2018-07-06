@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Eater
 {
-	public class EaterConsoleEmitter : ConsoleEmitterBase<EaterGenome>
+	public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 	{
 		static readonly ImageCodecInfo JpgEncoder;
 		static readonly EncoderParameters EncParams;
@@ -43,7 +43,7 @@ namespace Eater
 
 		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
 		readonly object LatestWinnerImageLock = new object();
-		protected override void OnEmittingGenome(IProblem<EaterGenome> p, EaterGenome genome, int poolIndex, Fitness fitness)
+		protected override void OnEmittingGenome(IProblem<Genome> p, Genome genome, int poolIndex, Fitness fitness)
 		{
 			base.OnEmittingGenome(p, genome, poolIndex, fitness);
 

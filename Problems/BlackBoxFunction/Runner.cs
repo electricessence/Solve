@@ -1,6 +1,5 @@
 ﻿using Open.Dataflow;
 using Open.Threading.Tasks;
-using Solve.Schemes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,21 +11,21 @@ namespace BlackBoxFunction
 	class Runner
 	{
 
-		static double AB(IReadOnlyList<double> p)
+		static double AB(in IReadOnlyList<double> p)
 		{
 			var a = p[0];
 			var b = p[1];
 			return a * b;
 		}
 
-		static double SqrtA2B2(IReadOnlyList<double> p)
+		static double SqrtA2B2(in IReadOnlyList<double> p)
 		{
 			var a = p[0];
 			var b = p[1];
 			return Math.Sqrt(a * a + b * b);
 		}
 
-		static double SqrtA2B2C2(IReadOnlyList<double> p)
+		static double SqrtA2B2C2(in IReadOnlyList<double> p)
 		{
 			var a = p[0];
 			var b = p[1];
@@ -34,7 +33,7 @@ namespace BlackBoxFunction
 			return Math.Sqrt(a * a + b * b + c * c);
 		}
 
-		static double SqrtA2B2A2B1(IReadOnlyList<double> p)
+		static double SqrtA2B2A2B1(in IReadOnlyList<double> p)
 		{
 			var a = p[0];
 			var b = p[1];
@@ -52,7 +51,7 @@ namespace BlackBoxFunction
 
 			var cancel = new CancellationTokenSource();
 			var sw = new Stopwatch();
-			Action emitStats = () =>
+			void emitStats()
 			{
 				var tc = problem.TestCount;
 				if (tc != 0)
@@ -60,7 +59,7 @@ namespace BlackBoxFunction
 					Console.WriteLine("{0} tests, {1} total time, {2} ticks average", tc, sw.Elapsed.ToStringVerbose(), sw.ElapsedTicks / tc);
 					Console.WriteLine();
 				}
-			};
+			}
 
 			scheme
 				.AsObservable()
