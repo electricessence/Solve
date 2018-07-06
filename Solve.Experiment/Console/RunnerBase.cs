@@ -19,7 +19,7 @@ namespace Solve.Experiment.Console
 		ConsoleEmitterBase<TGenome> Emitter;
 		CursorRange _lastConsoleStats = null;
 
-		protected RunnerBase(ushort minConvergenceSamples = 20)
+		protected RunnerBase(in ushort minConvergenceSamples = 20)
 		{
 			_minConvergenceSamples = minConvergenceSamples;
 			_stopwatch = new Stopwatch();
@@ -27,8 +27,8 @@ namespace Solve.Experiment.Console
 		}
 
 		public virtual void Init(
-			EnvironmentBase<TGenome> environment,
-			ConsoleEmitterBase<TGenome> emitter)
+			in EnvironmentBase<TGenome> environment,
+			in ConsoleEmitterBase<TGenome> emitter)
 		{
 			if (Environment == null)
 			{
@@ -39,7 +39,7 @@ namespace Solve.Experiment.Console
 		}
 
 		void EmitStatsAction() => EmitStatsAction(true);
-		void EmitStatsAction(bool restartEmitter)
+		void EmitStatsAction(in bool restartEmitter)
 		{
 			_lastEmit = DateTime.Now;
 			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);

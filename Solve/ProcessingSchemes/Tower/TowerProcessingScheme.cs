@@ -18,12 +18,12 @@ namespace Solve.ProcessingSchemes
 		internal readonly CounterCollection Counters;
 
 		public TowerProcessingScheme(
-			IGenomeFactory<TGenome> genomeFactory,
-			(ushort First, ushort Minimum, ushort Step) poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			CounterCollection counters = null)
+			in IGenomeFactory<TGenome> genomeFactory,
+			in (ushort First, ushort Minimum, ushort Step) poolSize,
+			in ushort maxLevels = ushort.MaxValue,
+			in ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
+			in ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			in CounterCollection counters = null)
 			: base(genomeFactory)
 		{
 			if (poolSize.Minimum < 2)
@@ -49,13 +49,13 @@ namespace Solve.ProcessingSchemes
 		}
 
 		public TowerProcessingScheme(
-			IGenomeFactory<TGenome> genomeFactory,
-			ushort poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			CounterCollection counters = null)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination, counters) { }
+			in IGenomeFactory<TGenome> genomeFactory,
+			in ushort poolSize,
+			in ushort maxLevels = ushort.MaxValue,
+			in ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
+			in ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			in CounterCollection counters = null)
+			: this(in genomeFactory, (poolSize, poolSize, 2), in maxLevels, in maxLevelLosses, in maxLossesBeforeElimination, in counters) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;

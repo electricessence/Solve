@@ -20,16 +20,16 @@ namespace Eater
 			_genes = EMPTY;
 		}
 
-		public EaterGenome(IEnumerable<Step> steps) : base()
+		public EaterGenome(in IEnumerable<Step> steps) : base()
 		{
 			Freeze(steps);
 		}
 
-		public EaterGenome(IEnumerable<StepCount> steps) : this(steps.Steps())
+		public EaterGenome(in IEnumerable<StepCount> steps) : this(steps.Steps())
 		{
 		}
 
-		public EaterGenome(string steps) : base()
+		public EaterGenome(in string steps) : base()
 		{
 			Freeze(Steps.FromGenomeHash(steps));
 		}
@@ -59,7 +59,7 @@ namespace Eater
 			base.OnBeforeFreeze();
 		}
 
-		public void Freeze(IEnumerable<Step> steps)
+		public void Freeze(in IEnumerable<Step> steps)
 		{
 			_genes = steps.ToArray();
 			_remainingVariations = GetVariations();
@@ -93,13 +93,13 @@ namespace Eater
 			if (lenMinusOne > 1)
 			{
 				{
-					var removeTail = _genes.Take(lenMinusOne).ToList();
-					yield return new EaterGenome(removeTail);
+					IEnumerable<Step> removeTail = _genes.Take(lenMinusOne).ToList();
+					yield return new EaterGenome(in removeTail);
 					yield return new EaterGenome(Enumerable.Repeat(_genes[lenMinusOne], 1).Concat(removeTail));
 				}
 				{
-					var removeHead = _genes.Skip(1).ToList();
-					yield return new EaterGenome(removeHead);
+					IEnumerable<Step> removeHead = _genes.Skip(1).ToList();
+					yield return new EaterGenome(in removeHead);
 					yield return new EaterGenome(removeHead.Concat(Enumerable.Repeat(_genes[0], 1)));
 				}
 
