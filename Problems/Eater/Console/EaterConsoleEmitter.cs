@@ -13,8 +13,6 @@ namespace Eater
 {
 	public class EaterConsoleEmitter : ConsoleEmitterBase<EaterGenome>
 	{
-		public readonly SampleCache Samples;
-
 		static readonly ImageCodecInfo JpgEncoder;
 		static readonly EncoderParameters EncParams;
 
@@ -25,10 +23,9 @@ namespace Eater
 			EncParams.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
 		}
 
-		public EaterConsoleEmitter(SampleCache samples, uint sampleMinimum = 50)
+		public EaterConsoleEmitter(uint sampleMinimum = 50)
 			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
-			Samples = samples;
 			ProgressionDirectory = Path.Combine(Environment.CurrentDirectory, "Progression", DateTime.Now.Ticks.ToString());
 			Directory.CreateDirectory(ProgressionDirectory);
 		}

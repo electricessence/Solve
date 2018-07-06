@@ -1,22 +1,28 @@
 ﻿using Solve;
+using System;
 using System.Collections.Generic;
 
 namespace Eater
 {
-	public abstract class EaterProblem : ProblemBase<EaterGenome>
+	public class EaterProblem : ProblemBase<EaterGenome>
 	{
 		public readonly SampleCache Samples;
 
-		protected EaterProblem(in int gridSize = 10, in ushort championPoolSize = 100)
-			: base(championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02))
+		protected EaterProblem(
+			in int gridSize = 10,
+			in int sampleSize = 40,
+			in ushort championPoolSize = 100,
+			params (IReadOnlyList<Metric> Metrics, Func<EaterGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			: base(championPoolSize, fitnessTranslators)
 		{
+			SampleSize = sampleSize;
 			Samples = new SampleCache(gridSize);
 		}
 
-		static Fitness Fitness01(EaterGenome genome, double[] metrics)
+		protected static Fitness Fitness01(EaterGenome genome, double[] metrics)
 			=> new Fitness(in Metrics01, metrics[0], -metrics[1], -genome.Length);
 
-		static Fitness Fitness02(EaterGenome genome, double[] metrics)
+		protected static Fitness Fitness02(EaterGenome genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);
 
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
@@ -33,17 +39,6 @@ namespace Eater
 			Metrics01[1]
 		}.AsReadOnly();
 
-	}
-
-	public sealed class EaterProblemFragmented : EaterProblem
-	{
-		public EaterProblemFragmented(
-			in int gridSize = 10,
-			in int sampleSize = 40,
-			in ushort championPoolSize = 100) : base(gridSize, championPoolSize)
-		{
-			SampleSize = sampleSize;
-		}
 
 		public readonly int SampleSize;
 
@@ -79,6 +74,24 @@ namespace Eater
 				ave
 			};// - Math.Pow(ave, 2) - geneCount, ave, -geneCount); // Adding the geneCount seems superfluous but ends up being considered in the Pareto front.
 		}
+
+		public static EaterProblem CreateF01(
+			in int gridSize = 10,
+			in int sampleSize = 40,
+			in ushort championPoolSize = 100)
+			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01));
+
+		public static EaterProblem CreateF02(
+			in int gridSize = 10,
+			in int sampleSize = 40,
+			in ushort championPoolSize = 100)
+			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics02, Fitness02));
+
+		public static EaterProblem CreateF0102(
+			in int gridSize = 10,
+			in int sampleSize = 40,
+			in ushort championPoolSize = 100)
+			=> new EaterProblem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 	}
 
