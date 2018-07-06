@@ -9,7 +9,7 @@ namespace Solve
 	public static class Pareto
 	{
 		static List<(T Value, ReadOnlyMemory<double> Score)> FilterInternal<T>(
-			in IEnumerable<T> source,
+			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ReadOnlyMemory<double>> scoreSelector)
 		{
@@ -48,7 +48,7 @@ namespace Solve
 		}
 
 		public static List<(T Value, ReadOnlyMemory<double> Score)> Filter<T>(
-			in IEnumerable<T> source,
+			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ReadOnlyMemory<double>> scoreSelector)
 			=> FilterInternal(source, equalityComparer, scoreSelector);
@@ -59,7 +59,7 @@ namespace Solve
 			Func<T, ReadOnlyMemory<double>> scoreSelector)
 			=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
-		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, in IEnumerable<(T Value, ReadOnlyMemory<double> Score)> values)
+		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ReadOnlyMemory<double> Score)> values)
 		{
 			var len = score.Length;
 			foreach (var (Value, Score) in values)

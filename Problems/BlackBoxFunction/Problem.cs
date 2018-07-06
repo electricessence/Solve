@@ -16,8 +16,8 @@ namespace BlackBoxFunction
 		public readonly SampleCache Samples;
 
 		public Problem(in Formula actualFormula,
-			in ushort sampleSize = 40,
-			in ushort championPoolSize = 100,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100,
 			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, in sampleSize, in championPoolSize)
 		{

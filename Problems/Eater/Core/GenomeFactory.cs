@@ -74,7 +74,7 @@ namespace Eater
 			}
 		}
 
-		protected override Genome[] CrossoverInternal(in Genome a, in Genome b)
+		protected override Genome[] CrossoverInternal(Genome a, Genome b)
 		{
 			var aLen = a.Genes.Length;
 			var bLen = b.Genes.Length;
@@ -95,7 +95,7 @@ namespace Eater
 
 
 
-		protected override Genome MutateInternal(in Genome target)
+		protected override Genome MutateInternal(Genome target)
 		{
 			var genes = target.Genes.ToArray();
 			var length = genes.Length;

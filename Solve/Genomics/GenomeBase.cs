@@ -16,7 +16,7 @@ namespace Solve
 
 		public abstract string Hash { get; }
 
-		public bool Equivalent(in IGenome other)
+		public bool Equivalent(IGenome other)
 			=> this == other;
 
 		protected abstract object CloneInternal();

@@ -7,12 +7,12 @@ using System.Text;
 namespace Solve.Experiment.Console
 {
 	public class ConsoleEmitterBase<TGenome>
-		where TGenome : IGenome
+		where TGenome : class, IGenome
 	{
 		public readonly AsyncFileWriter LogFile;
 		public readonly uint SampleMinimum;
 
-		public ConsoleEmitterBase(in uint sampleMinimum = 50, in string logFilePath = null)
+		public ConsoleEmitterBase(in uint sampleMinimum = 50, string logFilePath = null)
 		{
 			LogFile = logFilePath == null ? null : new AsyncFileWriter(logFilePath, 1000);
 			SampleMinimum = sampleMinimum;

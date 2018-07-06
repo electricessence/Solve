@@ -3,6 +3,6 @@
 	public interface IGenomeProcessor<TGenome>
 		where TGenome : class, IGenome
 	{
-		void Post(in TGenome genome);
+		void Post(TGenome genome);
 	}
 }

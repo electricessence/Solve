@@ -29,7 +29,7 @@ namespace Solve.Debugging
 
 		readonly ConcurrentDictionary<string, CounterOptions> Counters = new ConcurrentDictionary<string, CounterOptions>();
 
-		public void Increment(in string counterName, in int count = 1)
+		public void Increment(string counterName, in int count = 1)
 		{
 			if (count > 0 && !Ignored.Contains(counterName))
 			{
@@ -39,7 +39,7 @@ namespace Solve.Debugging
 			}
 		}
 
-		public void Decrement(in string counterName, in int count = 1)
+		public void Decrement(string counterName, in int count = 1)
 		{
 			if (count > 0 && !Ignored.Contains(counterName))
 			{

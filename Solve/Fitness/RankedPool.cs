@@ -11,7 +11,7 @@ namespace Solve
 	public class RankedPool<TGenome>
 		where TGenome : IGenome
 	{
-		public RankedPool(in ushort poolSize)
+		public RankedPool(ushort poolSize)
 		{
 			if (poolSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must be at least 2.");

@@ -34,7 +34,7 @@ namespace Solve
 			AddProblems(problems);
 		}
 
-		public virtual void AddProblems(in IEnumerable<IProblem<TGenome>> problems)
+		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
 			if (_state != 0)
 				throw new InvalidOperationException("Attempting to add a problem when the environment has already started.");

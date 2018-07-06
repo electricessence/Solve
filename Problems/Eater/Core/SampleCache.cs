@@ -28,7 +28,7 @@ namespace Eater
 		public readonly GridLocation Boundary;
 		public int SeedOffset;
 
-		public SampleCache(in ushort gridSize = 10)
+		public SampleCache(ushort gridSize = 10)
 		{
 			if (gridSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");

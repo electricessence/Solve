@@ -12,7 +12,7 @@ namespace Solve
 	{
 		protected class Pool : IProblemPool<TGenome>
 		{
-			public Pool(in ushort poolSize, in IReadOnlyList<Metric> metrics, Func<TGenome, double[], Fitness> transform)
+			public Pool(ushort poolSize, in IReadOnlyList<Metric> metrics, Func<TGenome, double[], Fitness> transform)
 			{
 				Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
 				Transform = transform ?? throw new ArgumentNullException(nameof(transform));
@@ -71,21 +71,21 @@ namespace Solve
 		public readonly ushort SampleSize;
 
 		protected ProblemBase(
-			in IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
-			in ushort sampleSize,
-			in ushort championPoolSize)
+			IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
+			ushort sampleSize,
+			ushort championPoolSize)
 		{
 			SampleSize = sampleSize;
 			var c = championPoolSize;
-			Pools = fitnessTransators?.Select(t => new Pool(in c, t.Metrics, t.Transform)).ToList().AsReadOnly()
+			Pools = fitnessTransators?.Select(t => new Pool(c, t.Metrics, t.Transform)).ToList().AsReadOnly()
 				?? throw new ArgumentNullException(nameof(fitnessTransators));
 		}
 
 		protected ProblemBase(
-			in ushort sampleSize,
-			in ushort championPoolSize,
+			ushort sampleSize,
+			ushort championPoolSize,
 			params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
-			: this(fitnessTranslators, in sampleSize, in championPoolSize) { }
+			: this(fitnessTranslators, sampleSize, championPoolSize) { }
 
 		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);
 

@@ -18,12 +18,12 @@ namespace Solve.ProcessingSchemes
 		internal readonly CounterCollection Counters;
 
 		public TowerProcessingScheme(
-			in IGenomeFactory<TGenome> genomeFactory,
+			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
-			in ushort maxLevels = ushort.MaxValue,
-			in ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			in ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			in CounterCollection counters = null)
+			ushort maxLevels = ushort.MaxValue,
+			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			CounterCollection counters = null)
 			: base(genomeFactory)
 		{
 			if (poolSize.Minimum < 2)
@@ -49,13 +49,13 @@ namespace Solve.ProcessingSchemes
 		}
 
 		public TowerProcessingScheme(
-			in IGenomeFactory<TGenome> genomeFactory,
-			in ushort poolSize,
-			in ushort maxLevels = ushort.MaxValue,
-			in ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			in ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			IGenomeFactory<TGenome> genomeFactory,
+			ushort poolSize,
+			ushort maxLevels = ushort.MaxValue,
+			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
 			in CounterCollection counters = null)
-			: this(in genomeFactory, (poolSize, poolSize, 2), in maxLevels, in maxLevelLosses, in maxLossesBeforeElimination, in counters) { }
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination, counters) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
@@ -83,17 +83,17 @@ namespace Solve.ProcessingSchemes
 					if (len > 0)
 					{
 						var top = champions[0].Genome;
-						ReserveFactoryQueue.EnqueueForMutation(in top);
-						ReserveFactoryQueue.EnqueueForBreeding(in top);
+						ReserveFactoryQueue.EnqueueForMutation(top);
+						ReserveFactoryQueue.EnqueueForBreeding(top);
 
-						var next = TriangularSelection.Descending.RandomOne(in champions).Genome;
-						ReserveFactoryQueue.EnqueueForMutation(in next);
-						ReserveFactoryQueue.EnqueueForBreeding(in next);
+						var next = TriangularSelection.Descending.RandomOne(champions).Genome;
+						ReserveFactoryQueue.EnqueueForMutation(next);
+						ReserveFactoryQueue.EnqueueForBreeding(next);
 
 						foreach (var g in Pareto.Filter(champions, EComparer, ScoreSelector)
 							.Select(gf => gf.Value.Genome))
 						{
-							ReserveFactoryQueue.EnqueueForBreeding(in g);
+							ReserveFactoryQueue.EnqueueForBreeding(g);
 						}
 
 						//ReserveFactoryQueue.EnqueueForMutation(champions);
@@ -115,7 +115,7 @@ namespace Solve.ProcessingSchemes
 			return base.StartInternal(token);
 		}
 
-		protected override void Post(in TGenome genome)
+		protected override void Post(TGenome genome)
 		{
 			foreach (var t in Towers)
 				t.Post(genome);

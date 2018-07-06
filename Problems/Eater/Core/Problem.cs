@@ -9,13 +9,13 @@ namespace Eater
 		public readonly SampleCache Samples;
 
 		protected Problem(
-			in ushort gridSize = 10,
-			in ushort sampleSize = 40,
-			in ushort championPoolSize = 100,
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100,
 			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
-			: base(fitnessTranslators, in sampleSize, in championPoolSize)
+			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
-			Samples = new SampleCache(in gridSize);
+			Samples = new SampleCache(gridSize);
 		}
 
 		protected static Fitness Fitness01(Genome genome, double[] metrics)
@@ -75,22 +75,22 @@ namespace Eater
 		}
 
 		public static Problem CreateF01(
-			in ushort gridSize = 10,
-			in ushort sampleSize = 40,
-			in ushort championPoolSize = 100)
-			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics01, Fitness01));
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01));
 
 		public static Problem CreateF02(
-			in ushort gridSize = 10,
-			in ushort sampleSize = 40,
-			in ushort championPoolSize = 100)
-			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics02, Fitness02));
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics02, Fitness02));
 
 		public static Problem CreateF0102(
-			in ushort gridSize = 10,
-			in ushort sampleSize = 40,
-			in ushort championPoolSize = 100)
-			=> new Problem(in gridSize, in sampleSize, in championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 	}
 
