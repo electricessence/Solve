@@ -103,6 +103,8 @@ namespace BlackBoxFunction
 			}
 		}
 
+		public override int Length => throw new NotImplementedException();
+
 		internal void RegisterVariations(IEnumerable<Genome> variations)
 		{
 			_variations = variations.Memoize();
