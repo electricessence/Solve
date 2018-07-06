@@ -5,9 +5,9 @@ using System.Linq;
 namespace Eater
 {
 
-	public class EaterFactory : Solve.ReducibleGenomeFactoryBase<EaterGenome>
+	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
-		public EaterFactory(IEnumerable<EaterGenome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
+		public GenomeFactory(IEnumerable<Genome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
 			LeftTurnDisabled = leftTurnDisabled;
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
@@ -23,7 +23,7 @@ namespace Eater
 		/*
          * The goal here is to produce unique eaters.
          */
-		protected override EaterGenome GenerateOneInternal()
+		protected override Genome GenerateOneInternal()
 		{
 			lock (_lastGenerated)
 			{
@@ -70,11 +70,11 @@ namespace Eater
 
 
 				GeneratedCount++;
-				return new EaterGenome(_lastGenerated);
+				return new Genome(_lastGenerated);
 			}
 		}
 
-		protected override EaterGenome[] CrossoverInternal(in EaterGenome a, in EaterGenome b)
+		protected override Genome[] CrossoverInternal(in Genome a, in Genome b)
 		{
 			var aLen = a.Genes.Length;
 			var bLen = b.Genes.Length;
@@ -86,16 +86,16 @@ namespace Eater
 			var aGenes = a.Genes.ToArray();
 			var bGenes = b.Genes.ToArray();
 
-			return new EaterGenome[]
+			return new Genome[]
 			{
-				new EaterGenome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
-				new EaterGenome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
+				new Genome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
+				new Genome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
 			};
 		}
 
 
 
-		protected override EaterGenome MutateInternal(in EaterGenome target)
+		protected override Genome MutateInternal(in Genome target)
 		{
 			var genes = target.Genes.ToArray();
 			var length = genes.Length;
@@ -114,14 +114,14 @@ namespace Eater
 				var n = Randomizer.Next(rlen * 3); // 1 in 3 chances to 'swap' instead of remove.
 				if (n == index) n++;
 				if (n < rlen) // Splice into another index?
-					return new EaterGenome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()));
-				return new EaterGenome(asRemoved);
+					return new Genome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()));
+				return new Genome(asRemoved);
 			}
 
 			// Replace or insert...
 			var g = AvailableSteps[i];
-			EaterGenome Insert(Step s, int count = 1)
-				=> new EaterGenome(Splice(genes, index, s, count));
+			Genome Insert(Step s, int count = 1)
+				=> new Genome(Splice(genes, index, s, count));
 
 			if (value == Step.Forward)
 			{
@@ -145,7 +145,7 @@ namespace Eater
 			}
 
 			genes[index] = g;
-			return new EaterGenome(genes);
+			return new Genome(genes);
 
 		}
 

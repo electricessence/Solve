@@ -1,32 +1,30 @@
-using Open.Arithmetic;
-using Open.Collections;
+﻿using Open.Arithmetic;
 using Open.Numeric.Precision;
 using Solve;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace BlackBoxFunction
 {
 
-    public delegate double Formula(IReadOnlyList<double> p);
+	public delegate double Formula(IReadOnlyList<double> p);
 
-	///<summary>
-	/// The 'Problem' class is important for tracking fitness results and deciding how well a genome is peforming.
-	/// It's possible to have multiple 'problems' being measured at once.
-	///</summary>
-	public class Problem : Solve.ProblemBase<Genome>
+
+	public class Problem : ProblemBase<Genome>
 	{
 		public readonly SampleCache Samples;
 
-
-		public Problem(Formula actualFormula)
+		public Problem(in Formula actualFormula,
+			in ushort sampleSize = 40,
+			in ushort championPoolSize = 100,
+			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
+			: base(fitnessTranslators, in sampleSize, in championPoolSize)
 		{
-			Samples = new SampleCache(actualFormula);
+			Samples = new SampleCache(in actualFormula);
 		}
 
-		void ProcessTestInternal(Genome g, Fitness fitness, long sampleId, bool useAsync = true)
+		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
 			var len = 10;
@@ -45,7 +43,7 @@ namespace BlackBoxFunction
 				var s = sample.ParamValues;
 				var correctValue = sample.Correct.Value;
 				correct[i] = correctValue;
-				var result = g.Evaluate(s);
+				var result = g.Evaluate(in s);
 				// #if DEBUG
 				// 				if (gRed != g)
 				// 				{
@@ -71,11 +69,12 @@ namespace BlackBoxFunction
 			if (NaNcount != 0)
 			{
 				// We do not yet handle NaN values gracefully yet so avoid correlation.
-				fitness.AddScores(
+				return new[] {
 					NaNcount == len // All NaN basically = fail.  Don't waste time trying to correlate.
 						? double.NegativeInfinity
 						: -2,
-					double.NegativeInfinity);
+					double.NegativeInfinity
+				};
 			}
 			else
 			{
@@ -85,10 +84,10 @@ namespace BlackBoxFunction
 													 //if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
 				var d = divergence.Where(v => !double.IsNaN(v)).Average() + 1;
 
-				fitness.AddScores(
+				return new[] {
 					(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
 					(double.IsNaN(d) || double.IsInfinity(d)) ? double.NegativeInfinity : d
-				);
+				};
 			}
 		}
 

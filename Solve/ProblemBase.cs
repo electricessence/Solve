@@ -68,18 +68,24 @@ namespace Solve
 		long _testCount = 0;
 		public long TestCount => _testCount;
 
-		protected ProblemBase(in IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators, in ushort championPoolSize = 0)
+		public readonly ushort SampleSize;
+
+		protected ProblemBase(
+			in IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
+			in ushort sampleSize,
+			in ushort championPoolSize)
 		{
+			SampleSize = sampleSize;
 			var c = championPoolSize;
 			Pools = fitnessTransators?.Select(t => new Pool(in c, t.Metrics, t.Transform)).ToList().AsReadOnly()
 				?? throw new ArgumentNullException(nameof(fitnessTransators));
 		}
 
-		protected ProblemBase(in ushort championPoolSize, params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
-			: this(fitnessTranslators, in championPoolSize) { }
-
-		protected ProblemBase(params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
-			: this(fitnessTranslators, 0) { }
+		protected ProblemBase(
+			in ushort sampleSize,
+			in ushort championPoolSize,
+			params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			: this(fitnessTranslators, in sampleSize, in championPoolSize) { }
 
 		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);
 
