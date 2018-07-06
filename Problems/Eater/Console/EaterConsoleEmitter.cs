@@ -23,8 +23,8 @@ namespace Eater
 			EncParams.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
 		}
 
-		public EaterConsoleEmitter(uint sampleMinimum = 50)
-			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
+		public EaterConsoleEmitter(in uint sampleMinimum = 50)
+			: base(in sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
 			ProgressionDirectory = Path.Combine(Environment.CurrentDirectory, "Progression", DateTime.Now.Ticks.ToString());
 			Directory.CreateDirectory(ProgressionDirectory);
