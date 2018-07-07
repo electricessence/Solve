@@ -12,13 +12,13 @@ namespace Solve
 	public class Fitness : IComparable<Fitness>
 	{
 
-		public Fitness(in IReadOnlyList<Metric> metrics, in ProcedureResults results)
+		public Fitness(IReadOnlyList<Metric> metrics, ProcedureResults results)
 		{
 			Metrics = metrics;
 			if (results != null) Results = results;
 		}
 
-		public Fitness(in IReadOnlyList<Metric> metrics, params double[] values)
+		public Fitness(IReadOnlyList<Metric> metrics, params double[] values)
 			: this(metrics, values == null || values.Length == 0 ? null : new ProcedureResults(values, 1)) { }
 
 		public IReadOnlyList<Metric> Metrics { get; }
@@ -40,7 +40,7 @@ namespace Solve
 		public int RejectionCount => _rejectionCount;
 		public virtual int IncrementRejection() => ++_rejectionCount;
 
-		public virtual ProcedureResults Merge(in ProcedureResults other)
+		public virtual ProcedureResults Merge(ProcedureResults other)
 		{
 			var r = _results;
 			var sum = r == null ? other : (r + other);
@@ -48,7 +48,7 @@ namespace Solve
 			return sum;
 		}
 
-		public virtual ProcedureResults Merge(in ReadOnlySpan<double> other, in int count = 1)
+		public virtual ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
 		{
 			var r = _results;
 			var sum = r == null
@@ -109,7 +109,7 @@ namespace Solve
 			return v == 0 ? this.SampleCount.CompareTo(other.SampleCount) : v;
 		}
 
-		public bool HasConverged(in uint minSamples = 100, in double convergence = 1, in double tolerance = 0)
+		public bool HasConverged(uint minSamples = 100, double convergence = 1, double tolerance = 0)
 		{
 			var results = Results;
 			if (results == null || minSamples > SampleCount) return false;
@@ -128,7 +128,7 @@ namespace Solve
 			return true;
 		}
 
-		public bool IsSuperiorTo(in Fitness other)
+		public bool IsSuperiorTo(Fitness other)
 			=> CompareTo(other) > 0;
 	}
 }

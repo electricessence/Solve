@@ -26,7 +26,7 @@ namespace Solve
 		public override int IncrementRejection()
 			=> Interlocked.Increment(ref _rejectionCount);
 
-		public override ProcedureResults Merge(in ProcedureResults other)
+		public override ProcedureResults Merge(ProcedureResults other)
 		{
 			ProcedureResults r;
 			ProcedureResults sum;
@@ -39,7 +39,7 @@ namespace Solve
 			return sum;
 		}
 
-		public override ProcedureResults Merge(in ReadOnlySpan<double> other, in int count = 1)
+		public override ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
 		{
 			ProcedureResults r;
 			ProcedureResults sum;
