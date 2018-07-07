@@ -19,7 +19,7 @@ namespace Eater
 		}
 
 		protected static Fitness Fitness01(Genome genome, double[] metrics)
-			=> new Fitness(in Metrics01, metrics[0], -metrics[1], -genome.Length);
+			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.Length);
 
 		protected static Fitness Fitness02(Genome genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);

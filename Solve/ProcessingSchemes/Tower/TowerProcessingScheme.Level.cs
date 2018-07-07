@@ -16,7 +16,7 @@ namespace Solve.ProcessingSchemes
 		{
 			class Entry
 			{
-				public Entry(in (TGenome Genome, Fitness[] Fitness) gf, in double[][] scores)
+				public Entry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores)
 				{
 					GenomeFitness = gf;
 					Scores = scores;
@@ -42,7 +42,7 @@ namespace Solve.ProcessingSchemes
 				= new ConcurrentQueue<Entry>();
 
 			public Level(
-				in uint level,
+				uint level,
 				in ProblemTower tower)
 			{
 				Index = level;
@@ -68,9 +68,9 @@ namespace Solve.ProcessingSchemes
 			readonly double[][] BestProgressiveFitness;
 
 			static bool UpdateFitnessesIfBetter(
-				in Span<double[]> registry,
-				in double[] contending,
-				in int index)
+				Span<double[]> registry,
+				double[] contending,
+				int index)
 			{
 				Debug.Assert(contending != null);
 
@@ -90,7 +90,7 @@ namespace Solve.ProcessingSchemes
 				=> Tower.Problem.ProcessSample(c.Genome, Index).Select((fitness, i) =>
 				{
 					var values = fitness.Results.Sum.ToArray();
-					var lev = UpdateFitnessesIfBetter( BestLevelFitness, values, i);
+					var lev = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
 
 					var progressiveFitness = c.Fitness[i];
 					var pro = UpdateFitnessesIfBetter(

@@ -12,7 +12,7 @@ namespace Solve.Experiment.Console
 		public readonly AsyncFileWriter LogFile;
 		public readonly uint SampleMinimum;
 
-		public ConsoleEmitterBase(in uint sampleMinimum = 50, string logFilePath = null)
+		public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
 		{
 			LogFile = logFilePath == null ? null : new AsyncFileWriter(logFilePath, 1000);
 			SampleMinimum = sampleMinimum;
