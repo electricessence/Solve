@@ -23,7 +23,7 @@ namespace Solve
 
 		IEnumerable<TGenome> Generate(params TGenome[] source);
 
-		bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source);
+		bool TryGenerateNew(out TGenome potentiallyNew, params TGenome[] source);
 
 		IEnumerable<TGenome> GenerateNew(params TGenome[] source);
 

@@ -4,8 +4,10 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Solve
 {
@@ -17,7 +19,7 @@ namespace Solve
 		public abstract string Hash { get; }
 
 		public bool Equivalent(IGenome other)
-			=> this == other;
+			=> this == other || Hash == other.Hash;
 
 		protected abstract object CloneInternal();
 
@@ -34,6 +36,33 @@ namespace Solve
 			=> EmptyVariations;
 
 		public abstract int Length { get; }
+
+#if DEBUG
+		public string StackTrace { get; } = System.Environment.StackTrace;
+
+		class LogEntry : IGenomeLogEntry
+		{
+			public LogEntry(string category, string message, string data)
+			{
+				Category = category;
+				Message = message;
+				Data = data;
+			}
+			public DateTime TimeStamp { get; } = DateTime.Now;
+			public string Category { get; }
+			public string Message { get; }
+			public string Data { get; }
+		}
+
+		List<IGenomeLogEntry> _log;
+		List<IGenomeLogEntry> LogInternal => LazyInitializer.EnsureInitialized(ref _log);
+
+		IReadOnlyList<IGenomeLogEntry> _logWrapper;
+		public IReadOnlyList<IGenomeLogEntry> Log => LazyInitializer.EnsureInitialized(ref _logWrapper, () => LogInternal.AsReadOnly());
+
+		public void AddLogEntry(string category, string message, string data = null)
+			=> LogInternal.Add(new LogEntry(category, message, data));
+#endif
 
 	}
 

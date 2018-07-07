@@ -4,7 +4,7 @@
  */
 
 
-using Open.Cloneable;
+using System;
 using System.Collections.Generic;
 
 namespace Solve
@@ -27,6 +27,22 @@ namespace Solve
 		bool Equivalent(IGenome other);
 
 		IEnumerator<IGenome> RemainingVariations { get; }
+
+#if DEBUG
+		string StackTrace { get; }
+		IReadOnlyList<IGenomeLogEntry> Log { get; }
+		void AddLogEntry(string category, string message, string data = null);
+#endif
 	}
+
+#if DEBUG
+	public interface IGenomeLogEntry
+	{
+		DateTime TimeStamp { get; }
+		string Category { get; }
+		string Message { get; }
+		string Data { get; }
+	}
+#endif
 
 }
