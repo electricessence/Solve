@@ -510,7 +510,21 @@ namespace Eater
 
 			var squareSize = square * bitScale + 2 * bitScale + points.Length;
 			var bitmap = new Bitmap(squareSize, squareSize);
-			bitmap.Fill(Color.White);
+			for (var i = 0; i < 10; i++)
+			{
+				try
+				{
+					bitmap.Fill(Color.White);
+					i = 10;
+				}
+				catch (Exception ex)
+				{
+					if (i == 9)
+						throw ex;
+					else
+						Debug.Fail(ex.Message);
+				}
+			}
 
 			if (points.Length != 0)
 			{
