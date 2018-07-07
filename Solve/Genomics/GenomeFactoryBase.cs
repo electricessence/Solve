@@ -32,7 +32,7 @@ namespace Solve
 			MetricsCounter = new CounterCollection(Metrics);
 
 			var s = seeds as TGenome[] ?? seeds?.ToArray();
-			if (s != null && s.Length != 0) GetPriorityQueue(0).EnqueueInternal(s);
+			if (s != null && s.Length != 0) GetPriorityQueue(0).EnqueueInternal(s, true);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
@@ -159,7 +159,7 @@ namespace Solve
 		const string GENERATE_NEW_SUCCESS = "Generate New SUCCEDED";
 		const string GENERATE_NEW_FAIL = "Generate New FAILED";
 
-		public bool GenerateNew(out TGenome potentiallyNew, params TGenome[] source)
+		public bool TryGenerateNew(out TGenome potentiallyNew, params TGenome[] source)
 		{
 			using (TimeoutHandler.New(5000, ms =>
 			{
@@ -189,13 +189,14 @@ namespace Solve
 			}
 			else
 			{
+				potentiallyNew = null;
 				MetricsCounter.Increment(GENERATE_NEW_FAIL);
 			}
 			return generated;
 		}
 
 		public TGenome GenerateOne(params TGenome[] source)
-			=> GenerateNew(out TGenome one, source) ? one : one;
+			=> GenerateNew(source).FirstOrDefault();
 
 		public IEnumerable<TGenome> GenerateNew(params TGenome[] source)
 		{
@@ -207,8 +208,8 @@ namespace Solve
 					Console.WriteLine("Warning: {0}.GenerateNew() is taking longer than {1} milliseconds.\n", this, ms);
 				}))
 				{
-					int attempts = 0;
-					while (attempts < 100 && !GenerateNew(out one, source))
+					byte attempts = 0;
+					while (attempts < 100 && !TryGenerateNew(out one, source))
 						attempts++;
 				}
 				if (one == null)
@@ -433,23 +434,60 @@ namespace Solve
 				yield return next;
 		}
 
+#if DEBUG
+		readonly ConcurrentDictionary<string, TGenome> Released
+			= new ConcurrentDictionary<string, TGenome>();
+#endif
+
 		public TGenome Next()
 		{
-			int q = 0;
-			while (q < PriorityQueues.Count)
+#if DEBUG
+			bool generated = false;
+			TGenome next()
 			{
-				if (PriorityQueues[q].TryGetNext(out TGenome genome))
-					return genome;
-				else
-					q++;
+#endif
+				int q = 0;
+				while (q < PriorityQueues.Count)
+				{
+					if (PriorityQueues[q].TryGetNext(out TGenome genome))
+						return genome;
+					else
+						q++;
+				}
+#if DEBUG
+				generated = true;
+#endif
+				return GenerateOne();
+#if DEBUG
 			}
-			return GenerateOne();
+			var n = next();
+			if (n != null)
+			{
+				var h = n.Hash;
+				var added = Released.TryAdd(h, n);
+				if (!added)
+				{
+					var actual = Released[h];
+					if (actual == n)
+					{
+						Debug.Assert(added, "This factory is releasing the same genome twice. Generated: " + generated, n.StackTrace);
+					}
+					else
+					{
+						Debug.Assert(added, $"This factory is producing a duplicate genome. {h}", $"This Instance:\n{actual.StackTrace}\nOriginal Instance:\n{n.StackTrace}");
+					}
+
+				}
+			}
+
+			return n;
+#endif
 		}
 
 		protected List<PriorityQueue> PriorityQueues
 			= new List<PriorityQueue>();
 
-		protected PriorityQueue GetPriorityQueue(in int index)
+		protected PriorityQueue GetPriorityQueue(int index)
 		{
 			if (index < 0)
 				throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero.");
@@ -668,27 +706,42 @@ namespace Solve
 				return bred;
 			}
 
-			internal bool EnqueueInternal(in TGenome genome)
+
+
+			internal bool EnqueueInternal(TGenome genome, bool onlyIfNotRegistered = false)
 			{
 				if (genome != null)
 				{
+					if (onlyIfNotRegistered)
+					{
+						genome = Factory.Registration(genome);
+						if (!Factory.RegisterProduction(genome))
+							return false;
+					}
+#if DEBUG
+					else
+					{
+						Debug.Assert(Factory.AlreadyProduced(genome));
+					}
+#endif
+
 					Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
 					InternalQueue.Enqueue(genome);
 					return true;
 				}
 				else
 				{
-					Debug.Fail("A null geneome was provided.");
+					Debug.Fail("A null genome was provided.");
 				}
 				return false;
 			}
 
-			internal bool EnqueueInternal(in ReadOnlySpan<TGenome> genomes)
+			internal bool EnqueueInternal(in ReadOnlySpan<TGenome> genomes, bool onlyIfNotRegistered = false)
 			{
 				bool added = false;
 				foreach (ref readonly var g in genomes)
 				{
-					if (EnqueueInternal(in g))
+					if (EnqueueInternal(g, onlyIfNotRegistered))
 						added = true;
 				}
 				return added;
@@ -701,12 +754,8 @@ namespace Solve
 				{
 					if (v is TGenome t)
 					{
-						t = Factory.Registration(t);
-						if (Factory.RegisterProduction(t))
-						{
-							EnqueueInternal(in t);
+						if (EnqueueInternal(t, true))
 							return true;
-						}
 					}
 					else
 					{
@@ -739,7 +788,7 @@ namespace Solve
 			public void EnqueueForVariation(in ReadOnlySpan<TGenome> genomes)
 			{
 				foreach (ref readonly var g in genomes)
-					EnqueueVariations(g);
+					EnqueueForVariation(g);
 			}
 
 			public bool Mutate(TGenome genome, int maxCount = 1)
@@ -750,7 +799,7 @@ namespace Solve
 				{
 					if (Factory.AttemptNewMutation(genome, out TGenome mutation))
 					{
-						EnqueueInternal(in mutation);
+						EnqueueInternal(mutation);
 					}
 					else
 					{
