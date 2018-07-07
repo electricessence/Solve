@@ -20,14 +20,15 @@ namespace BlackBoxFunction
 
 	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
-		Catalog<IGene> Catalog = new Catalog<IGene>();
+		readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
 
-		LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
+		#region ParamOnly
+		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
 		protected Genome GenerateParamOnly(ushort id)
-		{
-			return Registration(Catalog.GetParameter(id));
-		}
+			=> Registration(Catalog.GetParameter(id));
+		#endregion
 
+		#region Operated
 		static IEnumerable<ushort> UShortRange(ushort start, ushort max)
 		{
 			ushort s = start;
@@ -38,7 +39,7 @@ namespace BlackBoxFunction
 			}
 		}
 
-		ConcurrentDictionary<ushort, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
+		readonly ConcurrentDictionary<ushort, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
 		protected IEnumerable<Genome> GenerateOperated(ushort paramCount = 2)
 		{
 			if (paramCount < 2)
@@ -53,7 +54,9 @@ namespace BlackBoxFunction
 				}
 			}
 		}
+		#endregion
 
+		#region Functions
 		ConcurrentDictionary<ushort, IEnumerator<Genome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
 		protected IEnumerable<Genome> GenerateFunctioned(ushort id)
 		{
@@ -69,7 +72,7 @@ namespace BlackBoxFunction
 				}
 			}
 		}
-
+		#endregion
 
 		protected override Genome GenerateOneInternal()
 		{
@@ -241,7 +244,10 @@ namespace BlackBoxFunction
 		protected Genome Registration(IGene root)
 		{
 			if (root == null) return null;
-			Register(root.ToStringRepresentation(), () => new Genome(root), out Genome target, RegisterInternal);
+			Register(root.ToStringRepresentation(),
+				() => new Genome(root),
+				out Genome target,
+				RegisterInternal);
 			return target;
 		}
 

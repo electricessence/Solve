@@ -15,11 +15,11 @@ namespace BlackBoxFunction
 	{
 		public readonly SampleCache Samples;
 
-		public Problem(in Formula actualFormula,
+		public Problem(Formula actualFormula,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100,
 			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
-			: base(fitnessTranslators, in sampleSize, in championPoolSize)
+			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
 			Samples = new SampleCache(in actualFormula);
 		}

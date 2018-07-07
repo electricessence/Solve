@@ -45,7 +45,7 @@ namespace BlackBoxFunction
 
 			var problem = new Problem(SqrtA2B2);
 			var scheme = new PyramidPipeline<BlackBoxFunction.Genome>(
-				new BlackBoxFunction.GenomeFactory(),
+				new BlackBoxFunction.GenomeFactoryOld(),
 				50, 5, 3);
 			scheme.AddProblem(problem);
 
