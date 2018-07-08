@@ -32,6 +32,14 @@ namespace Eater
 
 		readonly string ProgressionDirectory;
 
+		public string SaveGenomeImage(Genome genome, string fileName)
+		{
+			var rendered = Path.Combine(ProgressionDirectory, $"{fileName}.jpg");
+			using (var bitmap = genome.Genes.ToArray().Render2())
+				bitmap.Save(rendered, JpgEncoder, EncParams);
+			return rendered;
+		}
+
 		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
 			= new ConcurrentDictionary<string, ProcedureResult[]>();
 
@@ -57,9 +65,7 @@ namespace Eater
 			{
 
 			}
-			var rendered = Path.Combine(ProgressionDirectory, $"{fileName}.jpg");
-			using (var bitmap = genome.Genes.ToArray().Render2())
-				bitmap.Save(rendered, JpgEncoder, EncParams);
+			var rendered = SaveGenomeImage(genome, fileName);
 
 			BitmapQueue.Enqueue(rendered);
 			ThreadSafety.TryLock(LatestWinnerImageLock, () =>

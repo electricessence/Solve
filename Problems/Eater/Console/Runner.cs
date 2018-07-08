@@ -1,6 +1,7 @@
 ﻿using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Eater
@@ -17,9 +18,6 @@ namespace Eater
 
 		readonly ushort _minSamples;
 		readonly ushort _minConvSamples;
-		readonly GenomeFactory Factory
-			= new GenomeFactory(/*Seed.Select(s => new EaterGenome(s)),*/leftTurnDisabled: true);
-
 
 		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
 		{
@@ -29,12 +27,25 @@ namespace Eater
 
 		public void Init()
 		{
-			var scheme = new TowerProcessingScheme<Genome>(Factory, (400, 40, 2));
-			scheme.AddProblem(Problem.CreateF0102(20, 40));
+			ushort size = 10;
+			var mathmaticallyCertain = new StringBuilder();
+			mathmaticallyCertain.Append(size).Append('^');
+			mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
+			mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
+			//mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
+			for (var i = size - 2; i > 0; i--)
+				mathmaticallyCertain.Append('>').Append(i).Append('^').Append('>').Append(i).Append('^');
+			var seed = new Genome(mathmaticallyCertain.ToString());
+
+			var emitter = new EaterConsoleEmitter(_minSamples);
+			emitter.SaveGenomeImage(seed, "LatestSeed");
+
+			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
+			var scheme = new TowerProcessingScheme<Genome>(factory, (400, 40, 2));
+			scheme.AddProblem(Problem.CreateF0102(size, 40));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
-			Init(scheme,
-				new EaterConsoleEmitter(_minSamples));
+			Init(scheme, emitter);
 
 			//{
 			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
