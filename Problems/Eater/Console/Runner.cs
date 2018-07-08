@@ -43,13 +43,13 @@ namespace Eater
 			return new Genome(sb.ToString());
 		}
 
-		public void Init()
+		public void Init(bool startWithIdealSeed = false)
 		{
 			ushort size = 10;
 
 			var emitter = new EaterConsoleEmitter(_minSamples);
-			Genome seed = GenerateIdealSeed(size);
-			emitter.SaveGenomeImage(seed, "LatestSeed");
+			Genome seed = startWithIdealSeed ? GenerateIdealSeed(size) : null;
+			if (seed != null) emitter.SaveGenomeImage(seed, "LatestSeed");
 
 			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
 			var scheme = new TowerProcessingScheme<Genome>(factory, (400, 40, 2));
