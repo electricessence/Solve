@@ -25,18 +25,29 @@ namespace Eater
 			_minConvSamples = minConvSamples;
 		}
 
+		static Genome GenerateIdealSeed(ushort size)
+		{
+			var s = size - 1;
+			var sb = new StringBuilder();
+			sb.Append(s).Append('^');
+
+			for (var i = 0; i < 2; i++)
+				sb
+					.Append('>').Append(s).Append('^');
+
+			for (; s > 0; s--)
+				sb
+					.Append('>').Append(s).Append('^')
+					.Append('>').Append(s).Append('^');
+
+			return new Genome(sb.ToString());
+		}
+
 		public void Init()
 		{
-			ushort size = 10;
-			var mathmaticallyCertain = new StringBuilder();
-			mathmaticallyCertain.Append(size).Append('^');
-			mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
-			mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
-			//mathmaticallyCertain.Append('>').Append(size - 1).Append('^');
-			for (var i = size - 2; i > 0; i--)
-				mathmaticallyCertain.Append('>').Append(i).Append('^').Append('>').Append(i).Append('^');
-			var seed = new Genome(mathmaticallyCertain.ToString());
+			ushort size = 20;
 
+			var seed = GenerateIdealSeed(size);
 			var emitter = new EaterConsoleEmitter(_minSamples);
 			emitter.SaveGenomeImage(seed, "LatestSeed");
 
