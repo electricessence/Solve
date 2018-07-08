@@ -174,7 +174,7 @@ namespace Solve.ProcessingSchemes
 					ProcessPool();
 			}
 
-			public void ProcessPool()
+			public void ProcessPool(bool thisLevelOnly = false)
 			{
 				retry:
 
@@ -248,7 +248,7 @@ namespace Solve.ProcessingSchemes
 							}
 						}
 
-						NextLevel.ProcessPool();
+						NextLevel.ProcessPool(true); // Prioritize winners and express.
 
 						// 5) Process remaining (losers)
 						var maxLoses = Tower.Environment.MaxLevelLosses;
@@ -282,11 +282,11 @@ namespace Solve.ProcessingSchemes
 
 					}
 
-					_nextLevel?.ProcessPool();
+					if (!thisLevelOnly) _nextLevel?.ProcessPool();
 					goto retry;
 				}
 				else
-					_nextLevel?.ProcessPool();
+					if (!thisLevelOnly) _nextLevel?.ProcessPool();
 			}
 
 		}
