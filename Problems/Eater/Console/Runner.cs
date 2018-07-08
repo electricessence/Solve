@@ -45,10 +45,10 @@ namespace Eater
 
 		public void Init()
 		{
-			ushort size = 20;
+			ushort size = 10;
 
-			var seed = GenerateIdealSeed(size);
 			var emitter = new EaterConsoleEmitter(_minSamples);
+			Genome seed = GenerateIdealSeed(size);
 			emitter.SaveGenomeImage(seed, "LatestSeed");
 
 			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
@@ -56,7 +56,7 @@ namespace Eater
 			scheme.AddProblem(Problem.CreateF0102(size, 40));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
-			Init(scheme, emitter);
+			Init(scheme, emitter, factory.Metrics);
 
 			//{
 			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
@@ -91,7 +91,7 @@ namespace Eater
 			var runner = new Runner(10);
 			runner.Init();
 			var message = String.Format(
-				"Solving Eater Problem... (miniumum {0:n0} samples before displaying)",
+				"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
 				runner._minSamples);
 			return runner.Start(message);
 		}

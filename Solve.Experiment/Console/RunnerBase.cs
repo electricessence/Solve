@@ -12,7 +12,7 @@ namespace Solve.Experiment.Console
 		where TGenome : class, IGenome
 
 	{
-		protected IMetricsRoot Metrics;
+		IMetricsRoot Metrics;
 		readonly static TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
 
 		readonly ushort _minConvergenceSamples;
@@ -29,15 +29,17 @@ namespace Solve.Experiment.Console
 		}
 
 		public virtual void Init(
-			in EnvironmentBase<TGenome> environment,
-			in ConsoleEmitterBase<TGenome> emitter)
+			EnvironmentBase<TGenome> environment,
+			ConsoleEmitterBase<TGenome> emitter,
+			IMetricsRoot metrics)
 		{
-			if (Environment == null)
-			{
-				Environment = environment;
-				Emitter = emitter;
-				OnInit();
-			}
+			if (Environment != null)
+				throw new InvalidOperationException("Already initialized.");
+
+			Environment = environment;
+			Emitter = emitter;
+			Metrics = metrics;
+			OnInit();
 		}
 
 		void EmitStatsAction() => EmitStatsAction(true);

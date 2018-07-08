@@ -21,7 +21,7 @@ namespace Solve
 		readonly protected List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
-		protected EnvironmentBase(in IGenomeFactory<TGenome> genomeFactory)
+		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
 			: base()
 		{
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));

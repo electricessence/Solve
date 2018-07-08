@@ -27,7 +27,8 @@ namespace Solve.ProcessingSchemes
 				=> Root.Post(
 					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
 					express,
-					expressToTop);
+					expressToTop,
+					true);
 
 			public void Post(TGenome next)
 				=> Post(next, false);
