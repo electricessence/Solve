@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace Eater
 {
-	public enum Step
+	public enum Step : byte
 	{
 		Forward,
 		TurnRight,
@@ -509,20 +509,19 @@ namespace Eater
 			var offset = new Point(-min.X + dX, -min.Y + dY);
 
 			var squareSize = square * bitScale + 2 * bitScale + points.Length;
-			var bitmap = new Bitmap(squareSize, squareSize);
-			for (var i = 0; i < 10; i++)
+			Bitmap bitmap;
+			for (var i = 0; true; i++)
 			{
 				try
 				{
+					bitmap = new Bitmap(squareSize, squareSize);
 					bitmap.Fill(Color.White);
-					i = 10;
+					break;
 				}
 				catch (Exception ex)
 				{
-					if (i == 9)
+					if (i > 9)
 						throw ex;
-					else
-						Debug.Fail(ex.Message);
 				}
 			}
 

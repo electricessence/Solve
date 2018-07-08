@@ -13,6 +13,11 @@ namespace Eater
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
 		}
 
+		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(new[] { seed })
+		{
+
+		}
+
 		public readonly IReadOnlyList<Step> AvailableSteps;
 
 		public int GeneratedCount { get; private set; } = 0;

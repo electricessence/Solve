@@ -127,7 +127,19 @@ namespace Eater
 			{
 				yield return new Genome(reduced.Take(half));
 				yield return new Genome(reduced.Skip(half));
+
+				var third = reduced.Length / 3;
+				if (third > 2)
+				{
+					yield return new Genome(reduced.Take(third));
+					yield return new Genome(reduced.Skip(third).Take(third));
+					yield return new Genome(reduced.Skip(third));
+					yield return new Genome(reduced.Take(2 * third));
+					yield return new Genome(reduced.Skip(2 * third));
+				}
 			}
+
+
 
 		}
 
