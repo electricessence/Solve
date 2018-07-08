@@ -22,7 +22,7 @@ namespace Solve.ProcessingSchemes
 
 			return Task.Run(cancellationToken: token, action: () =>
 			{
-				Parallel.ForEach(Factory, pOptions, g => Post(g));
+				Parallel.ForEach(Factory, pOptions, Post);
 
 				//foreach (var f in Factory)
 				//{

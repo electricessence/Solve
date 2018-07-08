@@ -105,7 +105,7 @@ namespace Solve.ProcessingSchemes
 					return (values, (lev, pro, lev || pro));
 				}).ToArray();
 
-			void PromoteChampion(in TGenome genome)
+			void PromoteChampion(TGenome genome)
 			{
 				Factory.EnqueueChampion(genome);
 				Factory.EnqueueForMutation(genome);
@@ -114,12 +114,23 @@ namespace Solve.ProcessingSchemes
 				//Factory.EnqueueForBreeding(genome);
 			}
 
-			public void Post(
-				in (TGenome Genome, Fitness[] Fitness) c,
-				bool express = false,
-				bool expressToTop = false)
-			{
+			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)> ExpressPool
+				= new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>();
 
+			public void PostExpress((TGenome Genome, Fitness[] Fitness) c)
+				=> ExpressPool.Enqueue(c);
+
+			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)> StandbyPool
+				= new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>();
+
+			public void PostStandby((TGenome Genome, Fitness[] Fitness) c)
+				=> StandbyPool.Enqueue(c);
+
+			public void Post((TGenome Genome, Fitness[] Fitness) c,
+				bool express = false,
+				bool expressToTop = false,
+				bool processPool = false)
+			{
 				// Process a test for this level.
 				var result = ProcessTestAndUpdate(c);
 				Debug.Assert(c.Fitness.All(f => f.Results != null));
@@ -129,8 +140,8 @@ namespace Solve.ProcessingSchemes
 				{
 					if (result.Any(f => f.Superiority.Progressive))
 					{
-						PromoteChampion(in c.Genome);
-						Tower.Broadcast(in c);
+						PromoteChampion(c.Genome);
+						Tower.Broadcast(c);
 					}
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
@@ -142,7 +153,7 @@ namespace Solve.ProcessingSchemes
 					bool either;
 					if (NextLevel.IsCurrentTop && (either = result.Any(f => f.Superiority.Either)))
 					{
-						PromoteChampion(in c.Genome);
+						PromoteChampion(c.Genome);
 					}
 					else
 					{
@@ -151,7 +162,7 @@ namespace Solve.ProcessingSchemes
 
 					if (expressToTop || either && result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
 					{
-						NextLevel.Post(in c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
+						NextLevel.Post(c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
 						return; // No need to involve a obviously superior genome with this pool.
 					}
 				}
@@ -159,9 +170,30 @@ namespace Solve.ProcessingSchemes
 				var challenger = new Entry(c, result.Select(f => f.Fitness).ToArray());
 				Pool.Enqueue(challenger);
 
-				// Next see if we should 'own' processing the pool.
+				if (processPool)
+					ProcessPool();
+			}
+
+			public void ProcessPool()
+			{
+				retry:
+
+				// First see if there's any express entries.
+				if (ExpressPool.TryDequeue(out (TGenome Genome, Fitness[] Fitness) expressed))
+				{
+					Post(expressed, true);
+					goto retry;
+				}
+
+				if (StandbyPool.TryDequeue(out (TGenome Genome, Fitness[] Fitness) ready))
+				{
+					Post(ready);
+					goto retry;
+				}
+
 				if (Pool.Count >= PoolSize)
 				{
+
 					Entry[] pool = null;
 					// If a lock is already aquired somewhere else, then skip/ignore...
 					if (ThreadSafety.TryLock(Pool, () =>
@@ -175,92 +207,88 @@ namespace Solve.ProcessingSchemes
 						var midPoint = pool.Length / 2;
 						var lastLevel = _nextLevel == null;
 
-						var selections = Tower.Problem
-							.Pools
-							.Select((f, i) =>
-							{
-								var s = pool
+						var promoted = new HashSet<string>();
+
+						var problemPools = Tower.Problem.Pools;
+						var problemPoolCount = problemPools.Count;
+						var selection = new Entry[problemPoolCount][];
+						for (var i = 0; i < problemPoolCount; i++)
+						{
+							var p = problemPools[i];
+							var s = pool
 									.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending)
 									.ToArray();
+							selection[i] = s;
 
-								var champions = f.Champions;
-								if (champions != null)
-								{
-									var t = s[0].GenomeFitness;
-									champions.Add(t.Genome, t.Fitness[i]); // Need to leverage potentially significant genetics...
-								}
+							// 2) Signal & promote champions.
+							var champ = s[0].GenomeFitness;
+							if (promoted.Add(champ.Genome.Hash))
+							{
+								p.Champions?.Add(champ.Genome, champ.Fitness[i]); // Need to leverage potentially significant genetics...
+								if (lastLevel) Tower.Broadcast(champ);
+								NextLevel.PostExpress(champ);
+							}
 
-								var toReject = s.AsSpan().Slice(midPoint);
-								var rem = toReject.Length;
-								// 2) Increment fitness rejection for individual fitnesses.
-								for (var n = 0; n < rem; n++)
-									toReject[n].GenomeFitness.Fitness[i].IncrementRejection();
+							// 3) Increment fitness rejection for individual fitnesses.
+							for (var n = midPoint; n < len; n++)
+							{
+								s[n].GenomeFitness.Fitness[i].IncrementRejection();
+							}
+						}
 
-								return s;
-							})
-							.ToArray();
+						// 4) Promote remaining winners (weaving to ensure that other threads honor the priority)
+						for (var n = 1; n < midPoint; n++)
+						{
+							for (var i = 0; i < problemPoolCount; i++)
+							{
+								var s = selection[i];
+								var winner = s[n].GenomeFitness;
+								if (promoted.Add(winner.Genome.Hash))
+									NextLevel.PostExpress(winner);
+							}
+						}
 
-						// 3) Weave all fitnesses to sort out winners and losers.
-						var ordered = selections
-							.Weave()
-							.Distinct()
-							.ToArray()
-							.AsSpan();
+						NextLevel.ProcessPool();
 
-						Debug.Assert(pool.Length == ordered.Length);
-
-						var winners = ordered.Slice(0, midPoint);
-						var losers = ordered.Slice(midPoint);
-
-						// 4) Return losers to pool.
-						var losersToPromote = new List<Entry>();
+						// 5) Process remaining (losers)
 						var maxLoses = Tower.Environment.MaxLevelLosses;
 						var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-						foreach (var loser in losers)
+						foreach (var loser in selection.Select(s => s.Skip(midPoint)).Weave().Distinct())
 						{
-							loser.LevelLossRecord++;
-
-							if (loser.LevelLossRecord > maxLoses)
+							if (!promoted.Contains(loser.GenomeFitness.Genome.Hash))
 							{
-								var fitness = loser.GenomeFitness.Fitness;
-								if (fitness.Any(f => f.RejectionCount < maxRejection))
-									losersToPromote.Add(loser);
+								loser.LevelLossRecord++;
+
+								if (loser.LevelLossRecord > maxLoses)
+								{
+									var gf = loser.GenomeFitness;
+									var fitnesses = gf.Fitness;
+									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
+										NextLevel.PostStandby(gf);
+									else
+									{
+										//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
+										if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
+											f.MetricsCounter.Increment("Genome Rejected");
+									}
+								}
 								else
 								{
-									//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
-									((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Genome Rejected");
+									Debug.Assert(loser.LevelLossRecord > 0);
+									Pool.Enqueue(loser); // Didn't win, but still in the game.
 								}
 							}
-							else
-							{
-								Debug.Assert(loser.LevelLossRecord > 0);
-								Pool.Enqueue(loser);
-							}
-						}
-
-
-						// 5) Promote winners.
-						var top = winners[0].GenomeFitness;
-						NextLevel.Post(in top, true); // express: give it the opportunity to keep going.
-						for (var i = 1; i < midPoint; i++)
-							NextLevel.Post(in winners[i].GenomeFitness);
-
-						// 6) Promote second chance losers
-						foreach (var loser in losersToPromote)
-						{
-							NextLevel.Post(in loser.GenomeFitness);
-						}
-
-						// 7) Broadcast level winner.
-						if (lastLevel)
-						{
-							Tower.Broadcast(in top);
-							//((GenomeFactoryBase<TGenome>)Tower.Environment.Factory).MetricsCounter.Increment("Top Level Pool Selected");
 						}
 
 					}
+
+					_nextLevel?.ProcessPool();
+					goto retry;
 				}
+				else
+					_nextLevel?.ProcessPool();
 			}
+
 		}
 
 	}
