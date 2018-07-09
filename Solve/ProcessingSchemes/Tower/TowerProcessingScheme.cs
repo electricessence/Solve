@@ -115,11 +115,8 @@ namespace Solve.ProcessingSchemes
 			return base.StartInternal(token);
 		}
 
-		protected override async Task PostAsync(TGenome genome)
-		{
-			foreach (var t in Towers)
-				await t.PostAsync(genome);
-		}
+		protected override Task PostAsync(TGenome genome)
+			=> Task.WhenAll(Towers.Select(t => t.PostAsync(genome)));
 
 		protected override void Post(TGenome genome)
 		{
