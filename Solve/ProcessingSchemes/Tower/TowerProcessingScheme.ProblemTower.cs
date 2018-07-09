@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
@@ -30,8 +31,20 @@ namespace Solve.ProcessingSchemes
 					expressToTop,
 					true);
 
+			public Task PostAsync(TGenome next,
+				bool express,
+				bool expressToTop = false)
+				=> Root.PostAsync(
+					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
+					express,
+					expressToTop,
+					true);
+
 			public void Post(TGenome next)
 				=> Post(next, false);
+
+			public Task PostAsync(TGenome next)
+				=> PostAsync(next, false);
 
 		}
 	}

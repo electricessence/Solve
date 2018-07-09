@@ -97,7 +97,7 @@ namespace Solve
 		}
 
 		protected virtual Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
-			=> Task.FromResult(ProcessSampleMetrics(g, sampleId));
+			=> Task.Run(() => ProcessSampleMetrics(g, sampleId));
 
 		public async Task<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 		{

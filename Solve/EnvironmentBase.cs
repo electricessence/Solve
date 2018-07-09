@@ -74,7 +74,7 @@ namespace Solve
 			return null;
 		}
 
-		protected abstract Task StartInternal(in CancellationToken token);
+		protected abstract Task StartInternal(CancellationToken token);
 
 		protected virtual void OnCancelled() { }
 

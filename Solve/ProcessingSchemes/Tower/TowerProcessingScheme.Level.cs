@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
@@ -86,13 +87,13 @@ namespace Solve.ProcessingSchemes
 
 
 			(double[] Fitness, (bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
-				(TGenome Genome, Fitness[] Fitness) c)
-				=> Tower.Problem.ProcessSample(c.Genome, Index).Select((fitness, i) =>
+				(TGenome Genome, Fitness[] Fitness) progress, IEnumerable<Fitness> fitnesses)
+				=> fitnesses.Select((fitness, i) =>
 				{
 					var values = fitness.Results.Sum.ToArray();
 					var lev = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
 
-					var progressiveFitness = c.Fitness[i];
+					var progressiveFitness = progress.Fitness[i];
 					var pro = UpdateFitnessesIfBetter(
 						BestProgressiveFitness,
 						progressiveFitness
@@ -114,25 +115,40 @@ namespace Solve.ProcessingSchemes
 				//Factory.EnqueueForBreeding(genome);
 			}
 
-			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)> ExpressPool
-				= new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>();
+			readonly ConcurrentQueue<Task> ExpressPool
+				= new ConcurrentQueue<Task>();
 
 			public void PostExpress((TGenome Genome, Fitness[] Fitness) c)
-				=> ExpressPool.Enqueue(c);
+				=> ExpressPool.Enqueue(
+					Tower.Problem
+						.ProcessSampleAsync(c.Genome, Index)
+						.ContinueWith(e => PostInternalFromQueue(c, e.Result, true)));
 
-			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)> StandbyPool
-				= new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>();
+			readonly ConcurrentQueue<Task> StandbyPool
+				= new ConcurrentQueue<Task>();
 
 			public void PostStandby((TGenome Genome, Fitness[] Fitness) c)
-				=> StandbyPool.Enqueue(c);
+				=> StandbyPool.Enqueue(
+					Tower.Problem
+						.ProcessSampleAsync(c.Genome, Index)
+						.ContinueWith(e => PostInternalFromQueue(c, e.Result, false)));
 
-			public void Post((TGenome Genome, Fitness[] Fitness) c,
-				bool express = false,
-				bool expressToTop = false,
-				bool processPool = false)
+			void PostInternalFromQueue((TGenome Genome, Fitness[] Fitness) c,
+				IEnumerable<Fitness> fitnesses,
+				bool express)
+			{
+				// For debugging...
+				PostInternal(c, fitnesses, express);
+			}
+
+			void PostInternal(
+				(TGenome Genome, Fitness[] Fitness) c,
+				IEnumerable<Fitness> fitnesses,
+				bool express,
+				bool expressToTop = false)
 			{
 				// Process a test for this level.
-				var result = ProcessTestAndUpdate(c);
+				var result = ProcessTestAndUpdate(c, fitnesses);
 				Debug.Assert(c.Fitness.All(f => f.Results != null));
 
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
@@ -169,31 +185,32 @@ namespace Solve.ProcessingSchemes
 
 				var challenger = new Entry(c, result.Select(f => f.Fitness).ToArray());
 				Pool.Enqueue(challenger);
-
-				if (processPool)
-					ProcessPool();
 			}
 
-			public void ProcessPool(bool thisLevelOnly = false)
+			public void Post((TGenome Genome, Fitness[] Fitness) c,
+				bool express = false,
+				bool expressToTop = false,
+				bool processPool = false)
 			{
-				retry:
+				PostInternal(c, Tower.Problem.ProcessSample(c.Genome, Index), express, expressToTop);
 
-				// First see if there's any express entries.
-				if (ExpressPool.TryDequeue(out (TGenome Genome, Fitness[] Fitness) expressed))
-				{
-					Post(expressed, true);
-					goto retry;
-				}
+				if (processPool) ProcessPool();
+			}
 
-				if (StandbyPool.TryDequeue(out (TGenome Genome, Fitness[] Fitness) ready))
-				{
-					Post(ready);
-					goto retry;
-				}
+			public async Task PostAsync((TGenome Genome, Fitness[] Fitness) c,
+				bool express = false,
+				bool expressToTop = false,
+				bool processPool = false)
+			{
+				PostInternal(c, await Tower.Problem.ProcessSampleAsync(c.Genome, Index), express, expressToTop);
 
+				if (processPool) await ProcessPoolAsync();
+			}
+
+			bool ProcessPoolInternal()
+			{
 				if (Pool.Count >= PoolSize)
 				{
-
 					Entry[] pool = null;
 					// If a lock is already aquired somewhere else, then skip/ignore...
 					if (ThreadSafety.TryLock(Pool, () =>
@@ -248,7 +265,7 @@ namespace Solve.ProcessingSchemes
 							}
 						}
 
-						NextLevel.ProcessPool(true); // Prioritize winners and express.
+						//NextLevel.ProcessPool(true); // Prioritize winners and express.
 
 						// 5) Process remaining (losers)
 						var maxLoses = Tower.Environment.MaxLevelLosses;
@@ -281,12 +298,51 @@ namespace Solve.ProcessingSchemes
 						}
 
 					}
-
-					if (!thisLevelOnly) _nextLevel?.ProcessPool();
-					goto retry;
+					return true;
 				}
-				else
-					if (!thisLevelOnly) _nextLevel?.ProcessPool();
+				return false;
+			}
+
+			public void ProcessPool(bool thisLevelOnly = false)
+			{
+				retry:
+				var processed = false;
+				if (!ExpressPool.IsEmpty)
+				{
+					Task.WaitAll(ExpressPool.AsDequeueingEnumerable().ToArray());
+					processed = ProcessPoolInternal();
+				}
+
+				if (!StandbyPool.IsEmpty)
+				{
+					Task.WaitAll(StandbyPool.AsDequeueingEnumerable().ToArray());
+				}
+
+				processed = ProcessPoolInternal() || processed;
+
+				if (!thisLevelOnly) _nextLevel?.ProcessPool();
+				if (processed) goto retry;
+			}
+
+			public async Task ProcessPoolAsync(bool thisLevelOnly = false)
+			{
+				retry:
+				var processed = false;
+				if (!ExpressPool.IsEmpty)
+				{
+					await Task.WhenAll(ExpressPool.AsDequeueingEnumerable());
+					processed = ProcessPoolInternal();
+				}
+
+				if (!StandbyPool.IsEmpty)
+				{
+					await Task.WhenAll(StandbyPool.AsDequeueingEnumerable());
+				}
+
+				processed = ProcessPoolInternal() || processed;
+
+				if (!thisLevelOnly && _nextLevel != null) await _nextLevel.ProcessPoolAsync();
+				if (processed) goto retry;
 			}
 
 		}

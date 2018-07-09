@@ -13,23 +13,34 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract void Post(TGenome genome);
 
-		protected override Task StartInternal(in CancellationToken token)
+		protected abstract Task PostAsync(TGenome genome);
+
+		//protected override Task StartInternal(CancellationToken token)
+		//{
+		//	var pOptions = new ParallelOptions
+		//	{
+		//		CancellationToken = token,
+		//	};
+
+		//	return Task.Run(cancellationToken: token, action: () =>
+		//	{
+		//		//Parallel.ForEach(Factory, pOptions, Post);
+
+		//		foreach (var f in Factory)
+		//		{
+		//			if (!token.IsCancellationRequested)
+		//				Post(f);
+		//		}
+		//	});
+		//}
+
+		protected async override Task StartInternal(CancellationToken token)
 		{
-			var pOptions = new ParallelOptions
+			foreach (var f in Factory)
 			{
-				CancellationToken = token,
-			};
-
-			return Task.Run(cancellationToken: token, action: () =>
-			{
-				Parallel.ForEach(Factory, pOptions, Post);
-
-				//foreach (var f in Factory)
-				//{
-				//	if (!token.IsCancellationRequested)
-				//		Post(f);
-				//}
-			});
+				if (!token.IsCancellationRequested)
+					await PostAsync(f).ConfigureAwait(false);
+			}
 		}
 
 	}
