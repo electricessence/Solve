@@ -109,10 +109,16 @@ namespace Solve.ProcessingSchemes
 
 		IReadOnlyList<ProblemTower> Towers;
 
-		protected override Task StartInternal(in CancellationToken token)
+		protected override Task StartInternal(CancellationToken token)
 		{
 			Towers = Problems.Select(p => new ProblemTower(p, this)).ToList().AsReadOnly();
 			return base.StartInternal(token);
+		}
+
+		protected override async Task PostAsync(TGenome genome)
+		{
+			foreach (var t in Towers)
+				await t.PostAsync(genome);
 		}
 
 		protected override void Post(TGenome genome)
