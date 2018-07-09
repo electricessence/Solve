@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
@@ -34,14 +36,49 @@ namespace Solve.ProcessingSchemes
 		//	});
 		//}
 
-		protected async override Task StartInternal(CancellationToken token)
+		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(2);
+
+		async Task BufferGenomes(CancellationToken token)
 		{
-			foreach (var f in Factory)
+			// Buffer a couple of the available genomes...
+
+			foreach (var genome in Factory)
 			{
-				if (!token.IsCancellationRequested)
-					await PostAsync(f).ConfigureAwait(false);
+				if (token.IsCancellationRequested)
+					break;
+
+				while (!FactoryBuffer.Writer.TryWrite(genome))
+					await FactoryBuffer.Writer.WaitToWriteAsync().ConfigureAwait(false);
 			}
+
+			FactoryBuffer.Writer.Complete();
 		}
 
+		async Task PostFromBufferSingle()
+		{
+			TGenome genome;
+
+			retry:
+			if (!FactoryBuffer.Reader.TryRead(out genome))
+				genome = Factory.Next();
+
+			if (genome == null) return;
+			await PostAsync(genome).ConfigureAwait(false);
+
+			goto retry;
+		}
+
+		Task PostFromBuffer()
+			=> Task.WhenAll(
+				Enumerable
+					.Range(0, 3)
+					.Select(s => PostFromBufferSingle()));
+
+		protected override Task StartInternal(CancellationToken token)
+			=> Task.WhenAll(
+				BufferGenomes(token),
+				PostFromBuffer());
+
 	}
+
 }

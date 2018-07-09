@@ -21,6 +21,8 @@ namespace Solve.Experiment.Console
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
+		const string BLANK = "           ";
+
 		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, Fitness[] fitness)
 		{
 			bool ok = false;
@@ -38,11 +40,11 @@ namespace Solve.Experiment.Console
 			if (ok)
 			{
 				var sb = new StringBuilder();
-				sb.AppendLine("Genome:").AppendLine(genome.Hash);
+				sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
 
 				var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
 				if (!asReduced.Equals(genome))
-					sb.AppendLine("Reduced:").AppendLine(asReduced.Hash);
+					sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
 
 				for (var i = 0; i < snapshots.Length; i++)
 					sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
