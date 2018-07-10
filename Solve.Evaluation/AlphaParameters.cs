@@ -1,6 +1,6 @@
 ﻿using Open.Text;
 
-namespace BlackBoxFunction
+namespace Solve.Evaluation
 {
 	static class AlphaParameters
 	{

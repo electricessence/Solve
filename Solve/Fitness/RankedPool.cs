@@ -26,7 +26,7 @@ namespace Solve
 
 		Lazy<(TGenome Genome, Fitness Fitness)[]> _ranked;
 
-		public void Add(in TGenome genome, in Fitness fitness)
+		public void Add(TGenome genome, Fitness fitness)
 		{
 			if (_pool == null) return;
 

@@ -19,10 +19,10 @@ namespace Eater
 		}
 
 		protected static Fitness Fitness01(Genome genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.Length);
+			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.GeneCount);
 
 		protected static Fitness Fitness02(Genome genome, double[] metrics)
-			=> new Fitness(Metrics02, metrics[0], -genome.Length, -metrics[1]);
+			=> new Fitness(Metrics02, metrics[0], -genome.GeneCount, -metrics[1]);
 
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{

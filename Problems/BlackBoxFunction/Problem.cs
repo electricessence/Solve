@@ -1,6 +1,7 @@
 ﻿using Open.Arithmetic;
 using Open.Numeric.Precision;
 using Solve;
+using Solve.Evaluation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +12,20 @@ namespace BlackBoxFunction
 	public delegate double Formula(IReadOnlyList<double> p);
 
 
-	public class Problem : ProblemBase<Genome>
+	public class Problem : ProblemBase<EvalGenome>
 	{
 		public readonly SampleCache Samples;
 
 		public Problem(Formula actualFormula,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100,
-			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
+			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
 			Samples = new SampleCache(in actualFormula);
 		}
 
-		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
+		protected override double[] ProcessSampleMetrics(EvalGenome g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
 			var len = 10;
@@ -43,7 +44,7 @@ namespace BlackBoxFunction
 				var s = sample.ParamValues;
 				var correctValue = sample.Correct.Value;
 				correct[i] = correctValue;
-				var result = g.Evaluate(in s);
+				var result = g.Evaluate(s);
 				// #if DEBUG
 				// 				if (gRed != g)
 				// 				{

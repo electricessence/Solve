@@ -34,11 +34,7 @@ namespace Eater
 			Freeze(Steps.FromGenomeHash(steps));
 		}
 
-		string _hash;
-		public override string Hash
-			=> _hash ?? GetHash();
-
-		string GetHash()
+		protected override string GetHash()
 			=> _genes.ToStepCounts().ToGenomeHash();
 
 		public new Genome Clone()
@@ -50,14 +46,7 @@ namespace Eater
 		Step[] _genes;
 		public ReadOnlySpan<Step> Genes => _genes.AsSpan();
 
-		public override int Length => _genes.Length;
-
-
-		protected override void OnBeforeFreeze()
-		{
-			_hash = GetHash();
-			base.OnBeforeFreeze();
-		}
+		protected override int GetGeneCount() => _genes.Length;
 
 		public void Freeze(IEnumerable<Step> steps)
 		{
@@ -122,13 +111,13 @@ namespace Eater
 			var reduced = AsReduced();
 			if (reduced != this) yield return reduced;
 
-			var half = reduced.Length / 2;
+			var half = reduced.GeneCount / 2;
 			if (half > 2)
 			{
 				yield return new Genome(reduced.Take(half));
 				yield return new Genome(reduced.Skip(half));
 
-				var third = reduced.Length / 3;
+				var third = reduced.GeneCount / 3;
 				if (third > 2)
 				{
 					yield return new Genome(reduced.Take(third));

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Open.Evaluation\source\Open.Evaluation.csproj" />
+    <ProjectReference Include="..\Solve\Solve.csproj" />
+  </ItemGroup>
+
+</Project>

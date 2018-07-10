@@ -3,7 +3,6 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,12 +10,20 @@ using System.Threading;
 
 namespace Solve
 {
-
 	public abstract class GenomeBase : FreezableBase, IGenome
 	{
-		protected GenomeBase() : base() { }
+		protected GenomeBase() : base()
+		{
+			// It's not really necessary for these to be thread safe since the answer should always be the same.
+			// Better to avoid contention all-together.
+			_hash = new Lazy<string>(GetHash, false);
+			_geneCount = new Lazy<int>(GetGeneCount, false);
+		}
 
-		public abstract string Hash { get; }
+		protected abstract string GetHash();
+
+		readonly Lazy<string> _hash;
+		public string Hash => IsFrozen ? _hash.Value : GetHash();
 
 		public bool Equivalent(IGenome other)
 			=> this == other || Hash == other.Hash;
@@ -35,7 +42,10 @@ namespace Solve
 		public virtual IEnumerator<IGenome> RemainingVariations
 			=> EmptyVariations;
 
-		public abstract int Length { get; }
+		protected abstract int GetGeneCount();
+
+		readonly Lazy<int> _geneCount;
+		public int GeneCount => IsFrozen ? _geneCount.Value : GetGeneCount();
 
 #if DEBUG
 		public string StackTrace { get; } = System.Environment.StackTrace;

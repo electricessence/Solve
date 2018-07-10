@@ -20,7 +20,7 @@ namespace Solve
 		public TThis AsReduced(bool ensureClone = false)
 		{
 			TThis reduced;
-			if (!IsReadOnly)
+			if (!IsFrozen)
 			{
 				reduced = Reduction();
 				if (reduced == null) reduced = ensureClone ? this.Clone() : (TThis)this;
@@ -45,7 +45,7 @@ namespace Solve
 				throw new ArgumentNullException(nameof(reduced));
 			if (Reduced != reduced)
 			{
-				if (IsReadOnly && Reduced != null && Reduced.Hash != reduced.Hash)
+				if (IsFrozen && Reduced != null && Reduced.Hash != reduced.Hash)
 					throw new InvalidOperationException("Attempting to replace a reduced genome with one that doesn't match.");
 				Reduced = reduced;
 			}
