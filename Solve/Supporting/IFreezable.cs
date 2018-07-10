@@ -8,7 +8,7 @@
 	public interface IFreezable
 	{
 		// True if frozen.
-		bool IsReadOnly { get; }
+		bool IsFrozen { get; }
 
 		/*
          * Should prevent further modifications to the genome.

@@ -8,7 +8,7 @@ namespace Solve
 	{
 
 		int _frozenState = 0;
-		public bool IsReadOnly => _frozenState == 1;
+		public bool IsFrozen => _frozenState == 1;
 
 		// It's concevable that mutliple threads could 're-attempt' to freeze a object 'in the wild'.
 		public void Freeze()
@@ -21,7 +21,7 @@ namespace Solve
 
 		protected void AssertIsNotFrozen()
 		{
-			if (IsReadOnly)
+			if (IsFrozen)
 				throw new InvalidOperationException("Object is frozen.");
 		}
 

@@ -66,7 +66,7 @@ namespace Solve
 
 		protected static TGenome AssertFrozen(TGenome genome)
 		{
-			if (genome != null && !genome.IsReadOnly)
+			if (genome != null && !genome.IsFrozen)
 				throw new InvalidOperationException("Genome is not frozen: " + genome);
 			return genome;
 		}
@@ -683,8 +683,8 @@ namespace Solve
 						else
 						{
 							// Breeding failures almost always happen early on when genomes are short in length and have already been introduced.
-							if (genome.Length < 4) decrementCurrent();
-							if (mate.genome.Length < 4) decrementMate();
+							if (genome.GeneCount < 4) decrementCurrent();
+							if (mate.genome.GeneCount < 4) decrementMate();
 
 							// Generate more (and insert at higher priority) to improve the pool;
 							EnqueueInternal(Factory.GenerateOne());

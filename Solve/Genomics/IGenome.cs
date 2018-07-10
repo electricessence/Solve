@@ -15,7 +15,7 @@ namespace Solve
 		/// <summary>
 		/// A relative measuere of the complexity of a genome.
 		/// </summary>
-		int Length { get; }
+		int GeneCount { get; }
 
 		/// <summary>
 		/// A unique string by which the genome can be identified.

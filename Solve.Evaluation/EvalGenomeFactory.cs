@@ -2,29 +2,29 @@
 using Open.Collections.Synchronized;
 using Open.Evaluation;
 using Open.Evaluation.Arithmetic;
+using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using EvaluationRegistry = Open.Evaluation.Registry;
 using IFunction = Open.Evaluation.Core.IFunction<double>;
 using IGene = Open.Evaluation.Core.IEvaluate<double>;
 using IOperator = Open.Evaluation.Core.IOperator<Open.Evaluation.Core.IEvaluate<double>, double>;
 
-namespace BlackBoxFunction
+namespace Solve.Evaluation
 {
 
-	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
+	public class EvalGenomeFactory : Solve.ReducibleGenomeFactoryBase<EvalGenome>
 	{
 		readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
 
 		#region ParamOnly
 		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
-		protected Genome GenerateParamOnly(ushort id)
+		protected EvalGenome GenerateParamOnly(ushort id)
 			=> Registration(Catalog.GetParameter(id));
 		#endregion
 
@@ -39,8 +39,8 @@ namespace BlackBoxFunction
 			}
 		}
 
-		readonly ConcurrentDictionary<ushort, IEnumerator<Genome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
-		protected IEnumerable<Genome> GenerateOperated(ushort paramCount = 2)
+		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
+		protected IEnumerable<EvalGenome> GenerateOperated(ushort paramCount = 2)
 		{
 			if (paramCount < 2)
 				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount, "Must have at least 2 parameter count.");
@@ -57,8 +57,8 @@ namespace BlackBoxFunction
 		#endregion
 
 		#region Functions
-		ConcurrentDictionary<ushort, IEnumerator<Genome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<Genome>>();
-		protected IEnumerable<Genome> GenerateFunctioned(ushort id)
+		ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
+		protected IEnumerable<EvalGenome> GenerateFunctioned(ushort id)
 		{
 			var p = Catalog.GetParameter(id);
 			foreach (var op in EvaluationRegistry.Arithmetic.Functions)
@@ -74,10 +74,10 @@ namespace BlackBoxFunction
 		}
 		#endregion
 
-		protected override Genome GenerateOneInternal()
+		protected override EvalGenome GenerateOneInternal()
 		{
 			var attempts = 0; // For debugging.
-			Genome genome = null;
+			EvalGenome genome = null;
 			string hash = null;
 
 			for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
@@ -154,7 +154,7 @@ namespace BlackBoxFunction
 			// Remove genes one at a time.
 			for (var i = 0; i < count; i++)
 			{
-				yield return Catalog.RemoveNode<IGene,double>(
+				yield return Catalog.RemoveNode(
 					Catalog.Factory
 						.Clone(sourceTree)
 						.GetDescendants()
@@ -167,10 +167,10 @@ namespace BlackBoxFunction
 			var paramRemoved = sourceTree;
 			while (true)
 			{
-				paramRemoved = Catalog.Factory.Clone( paramRemoved );
+				paramRemoved = Catalog.Factory.Clone(paramRemoved);
 				var root = paramRemoved.Root;
 				var paramGroups = paramRemoved.GetDescendants()
-					.Where(n=>n.Value is IParameter<double>)
+					.Where(n => n.Value is IParameter<double>)
 					.GroupBy(n => ((IParameter<double>)n.Value).ID)
 					.OrderByDescending(g => g.Key)
 					.FirstOrDefault()?.ToArray();
@@ -183,7 +183,7 @@ namespace BlackBoxFunction
 					p.Parent.Remove(p);
 				}
 
-				yield return Catalog.FixHierarchy<IGene,double>( paramRemoved ).Value;
+				yield return Catalog.FixHierarchy(paramRemoved).Value;
 			}
 
 
@@ -214,7 +214,7 @@ namespace BlackBoxFunction
 			}
 
 		}
-		protected IEnumerable<Genome> GenerateVariations(Genome source)
+		protected IEnumerable<EvalGenome> GenerateVariations(EvalGenome source)
 		{
 			return GenerateVariationsUnfiltered(source)
 				.Where(genome => genome != null)
@@ -223,7 +223,7 @@ namespace BlackBoxFunction
 				.Select(g => g.First());
 		}
 
-		void RegisterInternal(Genome target)
+		void RegisterInternal(EvalGenome target)
 		{
 			target.RegisterVariations(GenerateVariations(target));
 			target.RegisterMutations(Mutate(target));
@@ -241,17 +241,17 @@ namespace BlackBoxFunction
 			target.Freeze();
 		}
 
-		protected Genome Registration(IGene root)
+		protected EvalGenome Registration(IGene root)
 		{
 			if (root == null) return null;
 			Register(root.ToStringRepresentation(),
-				() => new Genome(root),
-				out Genome target,
+				() => new EvalGenome(root),
+				out EvalGenome target,
 				RegisterInternal);
 			return target;
 		}
 
-		protected override Genome Registration(Genome target)
+		protected override EvalGenome Registration(EvalGenome target)
 		{
 			if (target == null) return null;
 			Register(target, out target, RegisterInternal);
@@ -259,7 +259,7 @@ namespace BlackBoxFunction
 		}
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private Genome MutateUnfrozen(Genome target)
+		private EvalGenome MutateUnfrozen(EvalGenome target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -339,12 +339,12 @@ namespace BlackBoxFunction
 
 
 				}
-				else if (gene is IOperator)
+				else if (gene.Value is IOperator opGene)
 				{
 					var options = Enumerable.Range(0, 8).ToList();
 					while (options.Any())
 					{
-						Genome ng = null;
+						EvalGenome ng = null;
 						switch (options.RandomPluck())
 						{
 							case 0:
@@ -359,7 +359,7 @@ namespace BlackBoxFunction
 
 							case 2:
 								ng = MutationCatalog
-									.ChangeOperation(target, (IOperator)gene);
+									.ChangeOperation(target, opGene);
 								break;
 
 							// Apply a function
@@ -382,12 +382,12 @@ namespace BlackBoxFunction
 
 							case 5:
 								ng = MutationCatalog
-									.AddParameter(target, (IOperator)gene);
+									.AddParameter(target, opGene);
 								break;
 
 							case 6:
 								ng = MutationCatalog
-									.BranchOperation(target, (IOperator)gene);
+									.BranchOperation(target, opGene);
 								break;
 
 							case 7:
@@ -414,12 +414,10 @@ namespace BlackBoxFunction
 
 		}
 
-		protected override Genome MutateInternal(Genome target)
-		{
-			return Registration(MutateUnfrozen(target));
-		}
+		protected override EvalGenome MutateInternal(EvalGenome target)
+			=> Registration(MutateUnfrozen(target));
 
-		protected override Genome[] CrossoverInternal(Genome a, Genome b)
+		protected override EvalGenome[] CrossoverInternal(EvalGenome a, EvalGenome b)
 		{
 			if (a == null || b == null) return null;
 
@@ -450,10 +448,10 @@ namespace BlackBoxFunction
 					ag.Parent.Replace(ag, bg);
 					Catalog.Factory.Recycle(placeholder);
 
-					return new Genome[]
+					return new EvalGenome[]
 					{
-						Registration(Catalog.FixHierarchy<IGene,double>(aRoot).Value),
-						Registration(Catalog.FixHierarchy<IGene,double>(bRoot).Value)
+						Registration(Catalog.FixHierarchy(aRoot).Value),
+						Registration(Catalog.FixHierarchy(bRoot).Value)
 					};
 				}
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
@@ -462,22 +460,6 @@ namespace BlackBoxFunction
 			return null;
 		}
 
-		protected IEnumerable<Genome> ExpandInternal(Genome genome)
-		{
-			var r = genome.AsReduced();
-			Debug.Assert(r != null);
-			if (r != null && r != genome)
-			{
-				var v = (Genome)r.NextVariation();
-				if (v != null) yield return AssertFrozen(v.AsReduced());
-				var m = (Genome)r.NextMutation();
-				if (m != null) yield return AssertFrozen(m.AsReduced());
-			}
-		}
 
-		public override IEnumerable<Genome> Expand(Genome genome, IEnumerable<Genome> others = null)
-		{
-			return base.Expand(genome, ExpandInternal(genome));
-		}
 	}
 }
