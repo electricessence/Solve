@@ -36,7 +36,7 @@ namespace Solve.ProcessingSchemes
 		//	});
 		//}
 
-		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(2);
+		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(System.Environment.ProcessorCount * 2);
 
 		async Task BufferGenomes(CancellationToken token)
 		{
@@ -71,7 +71,7 @@ namespace Solve.ProcessingSchemes
 		Task PostFromBuffer()
 			=> Task.WhenAll(
 				Enumerable
-					.Range(0, 3)
+					.Range(0, System.Environment.ProcessorCount)
 					.Select(s => PostFromBufferSingle()));
 
 		protected override Task StartInternal(CancellationToken token)

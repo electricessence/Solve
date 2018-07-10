@@ -52,7 +52,7 @@ namespace Eater
 			if (seed != null) emitter.SaveGenomeImage(seed, "LatestSeed");
 
 			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
-			var scheme = new TowerProcessingScheme<Genome>(factory, (400, 40, 2));
+			var scheme = new TowerProcessingScheme<Genome>(factory, (800, 40, 2));
 			scheme.AddProblem(Problem.CreateF0102(size, 40));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
