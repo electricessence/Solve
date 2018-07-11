@@ -320,12 +320,12 @@ namespace Solve.ProcessingSchemes
 
 				processed = ProcessPoolInternal() || processed;
 
-				if (!thisLevelOnly && _nextLevel != null)
+				if (!thisLevelOnly)
 				{
-					// walk up instead of recurse to avoid potential stack overflow.
+					// walk up instead of recurse.
 					var next = this;
 					while ((next = next._nextLevel) != null)
-						await next.ProcessPoolAsync();
+						await next.ProcessPoolAsync(true);
 				}
 				if (processed) goto retry;
 			}
