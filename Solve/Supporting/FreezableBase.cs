@@ -25,7 +25,7 @@ namespace Solve
 				throw new InvalidOperationException("Object is frozen.");
 		}
 
-		protected abstract void OnBeforeFreeze();
+		protected virtual void OnBeforeFreeze() { }
 
 	}
 

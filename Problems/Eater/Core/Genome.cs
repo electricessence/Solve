@@ -59,7 +59,7 @@ namespace Eater
 		{
 			var reducedSteps = _genes.Reduce();
 			return reducedSteps == null
-				? null
+				? this
 				: new Genome(reducedSteps);
 		}
 

@@ -1,11 +1,12 @@
-﻿using Open.Hierarchy;
+﻿using Open.Evaluation.Core;
+using Open.Hierarchy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Solve.Evaluation
 {
-	using IGene = Open.Evaluation.Core.IEvaluate<double>;
+	using IGene = IEvaluate<double>;
 
 	public class EvalGenome : ReducibleGenomeBase<EvalGenome>, IHaveRoot<IGene>
 	{
@@ -40,21 +41,20 @@ namespace Solve.Evaluation
 		{
 			if (Root == null)
 				throw new InvalidOperationException("Cannot freeze genome without a root.");
-
-			base.OnBeforeFreeze();
 		}
 
 
 		public double Evaluate(IReadOnlyList<double> values)
 			=> Root.Evaluate(values);
 
-
 		public string ToAlphaParameters(bool reduced = false)
 			=> AlphaParameters.ConvertTo(reduced ? AsReduced().Hash : Hash);
 
 		protected override EvalGenome Reduction()
-		{
-			throw new NotImplementedException();
-		}
+			=> Root is IReducibleEvaluation<IGene> root
+				&& root.TryGetReduced(null, out IGene reduced) // Todo: need to involve the catalog.
+				&& reduced != root
+				? new EvalGenome(reduced)
+				: this;
 	}
 }
