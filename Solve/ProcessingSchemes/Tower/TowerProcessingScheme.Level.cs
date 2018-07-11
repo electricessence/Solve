@@ -194,7 +194,7 @@ namespace Solve.ProcessingSchemes
 			{
 				PostInternal(c, Tower.Problem.ProcessSample(c.Genome, Index), express, expressToTop);
 
-				if (processPool) ProcessPool();
+				if (processPool) ProcessPoolAsync().Wait();
 			}
 
 			public async Task PostAsync((TGenome Genome, Fitness[] Fitness) c,
@@ -303,27 +303,6 @@ namespace Solve.ProcessingSchemes
 				return false;
 			}
 
-			public void ProcessPool(bool thisLevelOnly = false)
-			{
-				retry:
-				var processed = false;
-				if (!ExpressPool.IsEmpty)
-				{
-					Task.WaitAll(ExpressPool.AsDequeueingEnumerable().ToArray());
-					processed = ProcessPoolInternal();
-				}
-
-				if (!StandbyPool.IsEmpty)
-				{
-					Task.WaitAll(StandbyPool.AsDequeueingEnumerable().ToArray());
-				}
-
-				processed = ProcessPoolInternal() || processed;
-
-				if (!thisLevelOnly) _nextLevel?.ProcessPool();
-				if (processed) goto retry;
-			}
-
 			public async Task ProcessPoolAsync(bool thisLevelOnly = false)
 			{
 				retry:
@@ -341,7 +320,13 @@ namespace Solve.ProcessingSchemes
 
 				processed = ProcessPoolInternal() || processed;
 
-				if (!thisLevelOnly && _nextLevel != null) await _nextLevel.ProcessPoolAsync();
+				if (!thisLevelOnly && _nextLevel != null)
+				{
+					// walk up instead of recurse to avoid potential stack overflow.
+					var next = this;
+					while ((next = next._nextLevel) != null)
+						await next.ProcessPoolAsync();
+				}
 				if (processed) goto retry;
 			}
 
