@@ -5,10 +5,15 @@
 
 namespace Solve
 {
-	public interface IReducible<T>
+	public interface IReducible
 	{
-		T AsReduced(bool ensureClone = false);
+		object AsReduced(bool ensureClone = false);
 
 		bool IsReducible { get; }
+	}
+
+	public interface IReducible<T> : IReducible
+	{
+		new T AsReduced(bool ensureClone = false);
 	}
 }

@@ -149,17 +149,13 @@ namespace Solve.Evaluation
 		protected IEnumerable<IGene> GenerateVariationsUnfiltered(IGene source)
 		{
 			var sourceTree = Catalog.Factory.Map(source);
-			var count = sourceTree.GetDescendants().Count();
+			var descendantNodes = sourceTree.GetDescendantsOfType().ToArray();
+			var count = descendantNodes.Length;
 
 			// Remove genes one at a time.
 			for (var i = 0; i < count; i++)
 			{
-				yield return Catalog.RemoveNode(
-					Catalog.Factory
-						.Clone(sourceTree)
-						.GetDescendants()
-						.ElementAt(i)
-				).Value;
+				yield return Catalog.RemoveDescendantAt(sourceTree, i);
 			}
 
 
@@ -169,7 +165,7 @@ namespace Solve.Evaluation
 			{
 				paramRemoved = Catalog.Factory.Clone(paramRemoved);
 				var root = paramRemoved.Root;
-				var paramGroups = paramRemoved.GetDescendants()
+				var paramGroups = paramRemoved.GetDescendantsOfType()
 					.Where(n => n.Value is IParameter<double>)
 					.GroupBy(n => ((IParameter<double>)n.Value).ID)
 					.OrderByDescending(g => g.Key)
@@ -189,7 +185,7 @@ namespace Solve.Evaluation
 
 			for (var i = 0; i < count; i++)
 			{
-				yield return VariationCatalog.ReduceMultipleMagnitude(source, i);
+				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], -1);
 			}
 
 			for (var i = 0; i < count; i++)
@@ -205,18 +201,18 @@ namespace Solve.Evaluation
 
 			for (var i = 0; i < count; i++)
 			{
-				yield return VariationCatalog.IncreaseMultipleMagnitude(source, i);
+				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], +1);
 			}
 
 			for (var i = 0; i < count; i++)
 			{
-				yield return VariationCatalog.AddConstant(source, i);
+				yield return Catalog.AddConstant(descendantNodes[i], 2); // 2 ensures the constant isn't negated when adding to a product.
 			}
 
 		}
 		protected IEnumerable<EvalGenome> GenerateVariations(EvalGenome source)
 		{
-			return GenerateVariationsUnfiltered(source)
+			return GenerateVariationsUnfiltered(source.Root)
 				.Where(genome => genome != null)
 				.Select(genome => Registration(genome.AsReduced()))
 				.GroupBy(g => g.Hash)
@@ -274,7 +270,7 @@ namespace Solve.Evaluation
 
 			while (genes.Any())
 			{
-				var gene = genes.GetNodes().ToArray().RandomSelectOne();
+				var gene = genes.GetNodes().ToArray().RandomSelectOne() as Node<IGene>;
 				var gv = gene.Value;
 				if (gv is Constant)
 				{
@@ -426,8 +422,8 @@ namespace Solve.Evaluation
 
 			var aRoot = Catalog.Factory.Map(a.Root);
 			var bRoot = Catalog.Factory.Map(b.Root);
-			var aGeneNodes = aRoot.GetNodes().ToArray();
-			var bGeneNodes = bRoot.GetNodes().ToArray();
+			var aGeneNodes = aRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
+			var bGeneNodes = bRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
 			var aLen = aGeneNodes.Length;
 			var bLen = bGeneNodes.Length;
 			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
