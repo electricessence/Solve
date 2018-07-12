@@ -1,5 +1,4 @@
-﻿using Open.Numeric;
-using Open.Threading;
+﻿using Open.Threading;
 using Solve;
 using Solve.Experiment.Console;
 using System;
@@ -13,18 +12,15 @@ namespace Eater
 {
 	public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 	{
-		static readonly ImageCodecInfo JpgEncoder;
-		static readonly EncoderParameters EncParams;
-
-		static EaterConsoleEmitter()
+		static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
+		static readonly EncoderParameters EncParams = new EncoderParameters(1)
 		{
-			JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
-			EncParams = new EncoderParameters(1);
-			EncParams.Param[0] = new EncoderParameter(Encoder.Quality, 20L);
-		}
+			Param = { [0] = new EncoderParameter(Encoder.Quality, 20L) }
+		};
+
 
 		public EaterConsoleEmitter(uint sampleMinimum = 50)
-			: base(sampleMinimum, null/* Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
+			: base(sampleMinimum /*, Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
 			ProgressionDirectory = Path.Combine(Environment.CurrentDirectory, "Progression", DateTime.Now.Ticks.ToString());
 			Directory.CreateDirectory(ProgressionDirectory);
@@ -40,8 +36,8 @@ namespace Eater
 			return rendered;
 		}
 
-		readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
-			= new ConcurrentDictionary<string, ProcedureResult[]>();
+		//readonly ConcurrentDictionary<string, ProcedureResult[]> FullTests
+		//	= new ConcurrentDictionary<string, ProcedureResult[]>();
 
 		//public void EmitTopGenomeFullStats((IProblem<EaterGenome> Problem, EaterGenome Genome) kvp)
 		//	=> EmitTopGenomeFullStats(kvp.Problem, kvp.Genome);
@@ -71,7 +67,7 @@ namespace Eater
 			ThreadSafety.TryLock(LatestWinnerImageLock, () =>
 			{
 				string lastRendered = null;
-				while (BitmapQueue.TryDequeue(out string g))
+				while (BitmapQueue.TryDequeue(out var g))
 				{
 					lastRendered = g;
 				}

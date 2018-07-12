@@ -71,29 +71,28 @@ namespace Eater
 				while (true)
 				{
 					var food = RandomPosition(random);
-					if (!food.Equals(eater))
-					{
-						yield return new Entry(eater, food);
-						break;
-					}
+					if (food.Equals(eater)) continue;
+					yield return new Entry(eater, food);
+					break;
 				}
 			}
+			// ReSharper disable once IteratorNeverReturns
 		}
 
 		public ProcedureResult[] TestAll(string genome)
 		{
 			double found = 0;
 			double energy = 0;
-			int count = 0;
+			var count = 0;
 			foreach (var entry in GenerateOrdered())
 			{
-				if (Steps.Try(genome, Boundary, entry.EaterStart, entry.Food, out int e))
+				if (genome.Try(Boundary, entry.EaterStart, entry.Food, out var e))
 					found++;
 				energy += e;
 				count++;
 			}
 
-			return new ProcedureResult[] {
+			return new[] {
 				new ProcedureResult(found, count),
 				new ProcedureResult(- energy, count),
 				new ProcedureResult(- genome.Length * count, count)

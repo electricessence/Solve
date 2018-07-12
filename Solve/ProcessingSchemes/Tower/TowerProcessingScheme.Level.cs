@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
+	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
 		sealed class Level
@@ -75,7 +76,7 @@ namespace Solve.ProcessingSchemes
 			{
 				Debug.Assert(contending != null);
 
-				ref double[] fRef = ref registry[index];
+				ref var fRef = ref registry[index];
 				double[] defending;
 				while ((defending = fRef) == null || contending.IsGreaterThan(defending))
 				{
@@ -167,9 +168,10 @@ namespace Solve.ProcessingSchemes
 				if (_nextLevel != null || Pool.Count >= PoolSize)
 				{
 					bool either;
-					if (NextLevel.IsCurrentTop && (either = result.Any(f => f.Superiority.Either)))
+					if (NextLevel.IsCurrentTop)
 					{
-						PromoteChampion(c.Genome);
+						either = result.Any(f => f.Superiority.Either);
+						if (either) PromoteChampion(c.Genome);
 					}
 					else
 					{

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
+	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
 		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, Fitness[])>, IGenomeProcessor<TGenome>
@@ -14,10 +16,12 @@ namespace Solve.ProcessingSchemes
 
 			public ProblemTower(
 				IProblem<TGenome> problem,
-				TowerProcessingScheme<TGenome> environment) : base()
+				TowerProcessingScheme<TGenome> environment)
 			{
 				Problem = problem ?? throw new ArgumentNullException(nameof(problem));
 				Environment = environment ?? throw new ArgumentNullException(nameof(environment));
+				Contract.EndContractBlock();
+
 				Root = new Level(0, this);
 				this.Subscribe(champion => Environment.Broadcast((Problem, champion)));
 			}
@@ -25,20 +29,30 @@ namespace Solve.ProcessingSchemes
 			public void Post(TGenome next,
 				bool express,
 				bool expressToTop = false)
-				=> Root.Post(
+			{
+				if (next == null) throw new ArgumentNullException(nameof(next));
+				Contract.EndContractBlock();
+
+				Root.Post(
 					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
 					express,
 					expressToTop,
 					true);
+			}
 
 			public Task PostAsync(TGenome next,
 				bool express,
 				bool expressToTop = false)
-				=> Root.PostAsync(
+			{
+				if (next == null) throw new ArgumentNullException(nameof(next));
+				Contract.EndContractBlock();
+
+				return Root.PostAsync(
 					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
 					express,
 					expressToTop,
 					true);
+			}
 
 			public void Post(TGenome next)
 				=> Post(next, false);

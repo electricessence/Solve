@@ -38,9 +38,6 @@ namespace Eater
 			Metrics01[1]
 		}.AsReadOnly();
 
-
-
-
 		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 		{
 			var boundary = Samples.Boundary;
@@ -52,7 +49,7 @@ namespace Eater
 			for (var i = 0; i < len; i++)
 			{
 				var s = samples[i];
-				if (g.Try(boundary, s.EaterStart, s.Food, out int e))
+				if (g.Try(boundary, s.EaterStart, s.Food, out var e))
 				{
 					found++;
 					//Debug.Assert(g.AsReduced().Try(boundary, s.EaterStart, s.Food), "Reduced version should match.");

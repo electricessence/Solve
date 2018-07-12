@@ -1,6 +1,8 @@
 ﻿using Open.Memory;
 using Open.Threading;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -12,6 +14,7 @@ namespace Solve.Experiment.Console
 		public readonly AsyncFileWriter LogFile;
 		public readonly uint SampleMinimum;
 
+		// ReSharper disable once MemberCanBeProtected.Global
 		public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
 		{
 			LogFile = logFilePath == null ? null : new AsyncFileWriter(logFilePath, 1000);
@@ -23,44 +26,43 @@ namespace Solve.Experiment.Console
 
 		const string BLANK = "           ";
 
-		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, Fitness[] fitness)
+		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
+		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, IEnumerable<Fitness> fitness)
 		{
-			bool ok = false;
+			var ok = false;
 			var snapshots = fitness.Select((fx, i) =>
 			{
 				var f = fx.Clone();
-				if (f.SampleCount >= SampleMinimum && problem.Pools[i].UpdateBestFitness(genome, f))
-				{
-					ok = true;
-					OnEmittingGenome(problem, genome, i, f);
-				}
+				if (f.SampleCount < SampleMinimum || !problem.Pools[i].UpdateBestFitness(genome, f)) return f;
+
+				ok = true;
+				OnEmittingGenome(problem, genome, i, f);
 				return f;
 			}).ToArray();
 
-			if (ok)
+			if (!ok) return false;
+
+			var sb = new StringBuilder();
+			sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
+
+			//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
+			//if (!asReduced.Equals(genome))
+			//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
+
+			for (var i = 0; i < snapshots.Length; i++)
+				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
+
+			lock (SynchronizedConsole.Sync)
 			{
-				var sb = new StringBuilder();
-				sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
-
-				//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-				//if (!asReduced.Equals(genome))
-				//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
-
-				for (var i = 0; i < snapshots.Length; i++)
-					sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
-
-				lock (SynchronizedConsole.Sync)
-				{
-					SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
+				SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
 					cursor =>
 					{
 						LastHash = genome.Hash;
 						System.Console.Write(sb.AppendLine().ToString());
 					});
-				}
 			}
 
-			return ok;
+			return true;
 		}
 
 		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)

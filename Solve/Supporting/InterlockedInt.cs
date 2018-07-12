@@ -5,15 +5,11 @@ namespace Solve
 {
 	public sealed class InterlockedInt : IRecyclable
 	{
-		int _value = 0;
+		int _value;
 		public int Value
 		{
 			get => _value;
 			set => _value = value;
-		}
-
-		public InterlockedInt()
-		{
 		}
 
 		public int Increment()
@@ -22,20 +18,18 @@ namespace Solve
 		public int Decrement()
 			=> Interlocked.Decrement(ref _value);
 
-		public void Add(in int other)
+		public void Add(int other)
 		{
-			if (other != 0)
+			if (other == 0) return;
+			if (other > 0)
 			{
-				if (other > 0)
-				{
-					for (var i = 0; i < other; i++)
-						Increment();
-				}
-				else
-				{
-					for (var i = 0; i > other; i--)
-						Decrement();
-				}
+				for (var i = 0; i < other; i++)
+					Increment();
+			}
+			else
+			{
+				for (var i = 0; i > other; i--)
+					Decrement();
 			}
 		}
 

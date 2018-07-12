@@ -6,25 +6,28 @@
 using Open.Collections;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve
 {
 	// Defines the pipeline?
+	// ReSharper disable once PossibleInfiniteInheritance
 	public abstract class EnvironmentBase<TGenome>
 		: BroadcasterBase<(IProblem<TGenome> Problem, (TGenome Genome, Fitness[] Fitness) GenomeFitness)>
 		where TGenome : class, IGenome
 	{
 		protected readonly IGenomeFactory<TGenome> Factory;
 
-		readonly protected List<IProblem<TGenome>> ProblemsInternal;
+		protected readonly List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
 		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
-			: base()
 		{
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
+			Contract.EndContractBlock();
+
 			ProblemsInternal = new List<IProblem<TGenome>>();
 			Problems = ProblemsInternal.AsReadOnly();
 		}
@@ -34,8 +37,12 @@ namespace Solve
 			AddProblems(problems);
 		}
 
-		public virtual void AddProblems(IEnumerable<IProblem<TGenome>> problems)
+		public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
+			if (problems == null)
+				throw new ArgumentNullException(nameof(problems));
+			Contract.EndContractBlock();
+
 			if (_state != 0)
 				throw new InvalidOperationException("Attempting to add a problem when the environment has already started.");
 
@@ -45,10 +52,11 @@ namespace Solve
 
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
-		int _state = 0;
+		int _state;
 
 		public Task Start(params IProblem<TGenome>[] problems)
 		{
+			// ReSharper disable once SwitchStatementMissingSomeCases
 			switch (Interlocked.CompareExchange(ref _state, 1, 0))
 			{
 				case -1:
@@ -58,8 +66,9 @@ namespace Solve
 					if (Canceller.IsCancellationRequested)
 						goto case -1;
 
-					foreach (var problem in problems)
-						ProblemsInternal.Add(problem);
+					// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+					if (problems != null) foreach (var problem in problems)
+							ProblemsInternal.Add(problem);
 
 					if (!ProblemsInternal.HasAny())
 						throw new InvalidOperationException("Cannot start without any registered 'Problems'");
@@ -80,11 +89,9 @@ namespace Solve
 
 		public void Cancel()
 		{
-			if (-1 != Interlocked.Exchange(ref _state, -1))
-			{
-				Canceller.Cancel();
-				OnCancelled();
-			};
+			if (-1 == Interlocked.Exchange(ref _state, -1)) return;
+			Canceller.Cancel();
+			OnCancelled();
 		}
 	}
 
