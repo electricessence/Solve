@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace Solve
 
 			class GF
 			{
-				public GF(in TGenome genome, in Fitness fitness)
+				public GF(TGenome genome, Fitness fitness)
 				{
 					Genome = genome;
 					Fitness = fitness;
@@ -43,10 +44,13 @@ namespace Solve
 			GF _bestFitness;
 			public (TGenome Genome, Fitness Fitness) BestFitness => _bestFitness;
 
-
-			public bool UpdateBestFitness(in TGenome genome, in Fitness fitness)
+			public bool UpdateBestFitness(TGenome genome, Fitness fitness)
 			{
-				var f = fitness?.Clone() ?? throw new ArgumentNullException(nameof(fitness));
+				if (genome == null) throw new ArgumentNullException(nameof(genome));
+				if (fitness == null) throw new ArgumentNullException(nameof(fitness));
+				Contract.EndContractBlock();
+
+				var f = fitness.Clone() ?? throw new ArgumentNullException(nameof(fitness));
 
 				GF contending = null;
 				GF defending;
@@ -60,14 +64,16 @@ namespace Solve
 			}
 		}
 
-		static int ProblemCount = 0;
+		// ReSharper disable once StaticMemberInGenericType
+		static int ProblemCount;
 		public int ID { get; } = Interlocked.Increment(ref ProblemCount);
 
 		public IReadOnlyList<IProblemPool<TGenome>> Pools { get; }
 
-		long _testCount = 0;
+		long _testCount;
 		public long TestCount => _testCount;
 
+		// ReSharper disable once MemberCanBeProtected.Global
 		public readonly ushort SampleSize;
 
 		protected ProblemBase(

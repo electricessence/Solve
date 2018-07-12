@@ -4,21 +4,18 @@ using Open.Evaluation;
 using Open.Evaluation.Arithmetic;
 using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
-using Open.Hierarchy;
-using Open.Numeric;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using EvaluationRegistry = Open.Evaluation.Registry;
-using IFunction = Open.Evaluation.Core.IFunction<double>;
-using IGene = Open.Evaluation.Core.IEvaluate<double>;
-using IOperator = Open.Evaluation.Core.IOperator<Open.Evaluation.Core.IEvaluate<double>, double>;
 
 namespace Solve.Evaluation
 {
+	using EvaluationRegistry = Registry;
+	using IGene = IEvaluate<double>;
 
-	public class EvalGenomeFactory : Solve.ReducibleGenomeFactoryBase<EvalGenome>
+	public partial class EvalGenomeFactory : ReducibleGenomeFactoryBase<EvalGenome>
 	{
 		readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
 
@@ -57,7 +54,7 @@ namespace Solve.Evaluation
 		#endregion
 
 		#region Functions
-		ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
+		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
 		protected IEnumerable<EvalGenome> GenerateFunctioned(ushort id)
 		{
 			var p = Catalog.GetParameter(id);
@@ -67,7 +64,7 @@ namespace Solve.Evaluation
 				{
 					case Exponent.SYMBOL:
 						yield return Registration(Catalog.GetExponent(p, -1));
-						yield return Registration(Catalog.GetExponent(p, 1 / 2));
+						yield return Registration(Catalog.GetExponent(p, 0.5));
 						break;
 				}
 			}
@@ -76,9 +73,9 @@ namespace Solve.Evaluation
 
 		protected override EvalGenome GenerateOneInternal()
 		{
+			// ReSharper disable once NotAccessedVariable
 			var attempts = 0; // For debugging.
 			EvalGenome genome = null;
-			string hash = null;
 
 			for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 			{
@@ -93,7 +90,6 @@ namespace Solve.Evaluation
 					{
 						// Try a param only version first.
 						genome = GenerateParamOnly(paramCount);
-						hash = genome.Hash;
 						attempts++;
 						if (RegisterProduction(genome)) // May be supurfulous.
 							return genome;
@@ -102,13 +98,12 @@ namespace Solve.Evaluation
 					paramCount += 1; // Operators need at least 2 params to start.
 
 					// Then try an operator based version.
-					ushort pcOne;
-					pcOne = paramCount;
+					var pcOne = paramCount;
 					var operated = OperatedCatalog.GetOrAdd(++pcOne, pc => GenerateOperated(pc).GetEnumerator());
 					if (operated.MoveNext())
 					{
 						genome = operated.Current;
-						hash = genome.Hash;
+						Debug.Assert(genome != null);
 						attempts++;
 						if (RegisterProduction(genome)) // May be supurfulous.
 							return genome;
@@ -119,7 +114,7 @@ namespace Solve.Evaluation
 					if (functioned.MoveNext())
 					{
 						genome = functioned.Current;
-						hash = genome.Hash;
+						Debug.Assert(genome != null);
 						attempts++;
 						if (RegisterProduction(genome)) // May be supurfulous.
 							return genome;
@@ -130,7 +125,7 @@ namespace Solve.Evaluation
 					{
 						// NOTE: Let's use expansions here...
 						genome = Mutate(Registry[RegistryOrder.Snapshot().RandomSelectOne()].Value, m);
-						hash = genome?.Hash;
+						var hash = genome?.Hash;
 						attempts++;
 						if (hash != null && RegisterProduction(genome))
 							return genome;
@@ -146,316 +141,22 @@ namespace Solve.Evaluation
 
 		}
 
-		protected IEnumerable<IGene> GenerateVariationsUnfiltered(IGene source)
-		{
-			var sourceTree = Catalog.Factory.Map(source);
-			var descendantNodes = sourceTree.GetDescendantsOfType().ToArray();
-			var count = descendantNodes.Length;
-
-			// Remove genes one at a time.
-			for (var i = 0; i < count; i++)
-			{
-				yield return Catalog.RemoveDescendantAt(sourceTree, i);
-			}
-
-
-			// Strip down parameter levels to search for significance.
-			var paramRemoved = sourceTree;
-			while (true)
-			{
-				paramRemoved = Catalog.Factory.Clone(paramRemoved);
-				var root = paramRemoved.Root;
-				var paramGroups = paramRemoved.GetDescendantsOfType()
-					.Where(n => n.Value is IParameter<double>)
-					.GroupBy(n => ((IParameter<double>)n.Value).ID)
-					.OrderByDescending(g => g.Key)
-					.FirstOrDefault()?.ToArray();
-
-				if (paramGroups == null || paramGroups.Length < 2)
-					break;
-
-				foreach (var p in paramGroups)
-				{
-					p.Parent.Remove(p);
-				}
-
-				yield return Catalog.FixHierarchy(paramRemoved).Value;
-			}
-
-
-			for (var i = 0; i < count; i++)
-			{
-				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], -1);
-			}
-
-			for (var i = 0; i < count; i++)
-			{
-				yield return VariationCatalog.PromoteChildren(source, i);
-
-				// Let mutation take care of this...
-				// foreach (var fn in Operators.Available.Functions)
-				// {
-				// 	yield return VariationCatalog.ApplyFunction(source, i, fn);
-				// }
-			}
-
-			for (var i = 0; i < count; i++)
-			{
-				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], +1);
-			}
-
-			for (var i = 0; i < count; i++)
-			{
-				yield return Catalog.AddConstant(descendantNodes[i], 2); // 2 ensures the constant isn't negated when adding to a product.
-			}
-
-		}
-		protected IEnumerable<EvalGenome> GenerateVariations(EvalGenome source)
-		{
-			return GenerateVariationsUnfiltered(source.Root)
-				.Where(genome => genome != null)
-				.Select(genome => Registration(genome.AsReduced()))
-				.GroupBy(g => g.Hash)
-				.Select(g => g.First());
-		}
-
-		void RegisterInternal(EvalGenome target)
-		{
-			target.RegisterVariations(GenerateVariations(target));
-			target.RegisterMutations(Mutate(target));
-
-			var reduced = target.AsReduced();
-			if (reduced != target)
-			{
-				// A little caution here. Some possible evil recursion?
-				var reducedRegistration = Registration(reduced);
-				if (reduced != reducedRegistration)
-					target.ReplaceReduced(reducedRegistration);
-
-				reduced.RegisterExpansion(target.Hash);
-			}
-			target.Freeze();
-		}
 
 		protected EvalGenome Registration(IGene root)
 		{
 			if (root == null) return null;
 			Register(root.ToStringRepresentation(),
 				() => new EvalGenome(root),
-				out EvalGenome target,
-				RegisterInternal);
+				out var target);
 			return target;
 		}
 
-		protected override EvalGenome Registration(EvalGenome target)
-		{
-			if (target == null) return null;
-			Register(target, out target, RegisterInternal);
-			return target;
-		}
-
-		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private EvalGenome MutateUnfrozen(EvalGenome target)
-		{
-			/* Possible mutations:
-			 * 1) Adding a parameter node to an operation.
-			 * 2) Apply a function to node.
-			 * 3) Adding an operator and a parameter node.
-			 * 4) Removing a node from an operation.
-			 * 5) Removing an operation.
-			 * 6) Removing a function.
-			 */
-
-			var genes = Catalog.Factory.Map(target.Root);
-
-			while (genes.Any())
-			{
-				var gene = genes.GetNodes().ToArray().RandomSelectOne() as Node<IGene>;
-				var gv = gene.Value;
-				if (gv is Constant)
-				{
-					switch (RandomUtilities.Random.Next(4))
-					{
-						case 0:
-							return VariationCatalog
-								.ApplyFunction(target, gene, Operators.GetRandomFunction());
-						case 1:
-							return MutationCatalog
-								.MutateSign(target, gene, 1);
-						default:
-							return VariationCatalog
-								.RemoveGene(target, gene);
-					}
-
-				}
-				else if (gv is Parameter)
-				{
-					var options = Enumerable.Range(0, 5).ToList();
-					while (options.Any())
-					{
-						switch (options.RandomPluck())
-						{
-							case 0:
-								return MutationCatalog
-									.MutateSign(target, gene, 1);
-
-							// Simply change parameters
-							case 1:
-								return MutationCatalog
-									.MutateParameter(target, (Parameter)gene);
-
-							// Apply a function
-							case 2:
-								// Reduce the pollution of functions...
-								if (RandomUtilities.Random.Next(0, 2) == 0)
-								{
-									return VariationCatalog
-										.ApplyFunction(target, gene, Operators.GetRandomFunction());
-								}
-								break;
-
-							// Split it...
-							case 3:
-								if (RandomUtilities.Random.Next(0, 3) == 0)
-								{
-									return MutationCatalog
-											.Square(target, gene);
-								}
-								break;
-
-							// Remove it!
-							default:
-								var attempt = VariationCatalog.RemoveGene(target, gene);
-								if (attempt != null)
-									return attempt;
-								break;
-
-						}
-					}
-
-
-				}
-				else if (gene.Value is IOperator opGene)
-				{
-					var options = Enumerable.Range(0, 8).ToList();
-					while (options.Any())
-					{
-						EvalGenome ng = null;
-						switch (options.RandomPluck())
-						{
-							case 0:
-								ng = MutationCatalog
-									.MutateSign(target, gene, 1);
-								break;
-
-							case 1:
-								ng = VariationCatalog
-									.PromoteChildren(target, gene);
-								break;
-
-							case 2:
-								ng = MutationCatalog
-									.ChangeOperation(target, opGene);
-								break;
-
-							// Apply a function
-							case 3:
-								// Reduce the pollution of functions...
-								if (RandomUtilities.Random.Next(0, gene is IFunction ? 4 : 2) == 0)
-								{
-									var f = Operators.GetRandomFunction();
-									// Function of function? Reduce probability even further. Coin toss.
-									if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-										return VariationCatalog
-										.ApplyFunction(target, gene, f);
-
-								}
-								break;
-
-							case 4:
-								ng = VariationCatalog.RemoveGene(target, gene);
-								break;
-
-							case 5:
-								ng = MutationCatalog
-									.AddParameter(target, opGene);
-								break;
-
-							case 6:
-								ng = MutationCatalog
-									.BranchOperation(target, opGene);
-								break;
-
-							case 7:
-								// This has a potential to really bloat the function so allow, but very sparingly.
-								if (RandomUtilities.Random.Next(0, 3) == 0)
-								{
-									return MutationCatalog
-										.Square(target, gene);
-								}
-								break;
-						}
-
-						if (ng != null)
-							return ng;
-					}
-
-
-
-				}
-
-			}
-
-			return null;
-
-		}
-
-		protected override EvalGenome MutateInternal(EvalGenome target)
-			=> Registration(MutateUnfrozen(target));
-
-		protected override EvalGenome[] CrossoverInternal(EvalGenome a, EvalGenome b)
-		{
-			if (a == null || b == null) return null;
-
-			// Avoid inbreeding. :P
-			if (a.AsReduced().Hash == b.AsReduced().Hash) return null;
-
-			var aRoot = Catalog.Factory.Map(a.Root);
-			var bRoot = Catalog.Factory.Map(b.Root);
-			var aGeneNodes = aRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
-			var bGeneNodes = bRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
-			var aLen = aGeneNodes.Length;
-			var bLen = bGeneNodes.Length;
-			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
-
-			// Crossover scheme 1:  Swap a node.
-			while (aGeneNodes.Length != 0)
-			{
-				var ag = aGeneNodes.RandomSelectOne();
-				var agS = ag.Value.ToStringRepresentation();
-				var others = bGeneNodes.Where(g => g.Value.ToStringRepresentation() != agS).ToArray();
-				if (others.Length != 0)
-				{
-					// Do the swap...
-					var bg = others.RandomSelectOne();
-
-					var placeholder = Catalog.Factory.GetBlankNode();
-					bg.Parent.Replace(bg, placeholder);
-					ag.Parent.Replace(ag, bg);
-					Catalog.Factory.Recycle(placeholder);
-
-					return new EvalGenome[]
-					{
-						Registration(Catalog.FixHierarchy(aRoot).Value),
-						Registration(Catalog.FixHierarchy(bRoot).Value)
-					};
-				}
-				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
-			}
-
-			return null;
-		}
-
+		protected override EvalGenome GetReducedInternal(EvalGenome source)
+			=> source.Root is IReducibleEvaluation<IGene> root
+			   && root.TryGetReduced(Catalog, out var reduced)
+			   && reduced != root
+				? new EvalGenome(reduced)
+				: null;
 
 	}
 }

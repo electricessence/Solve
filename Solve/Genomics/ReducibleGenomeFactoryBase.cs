@@ -3,19 +3,12 @@ using System.Runtime.CompilerServices;
 
 namespace Solve
 {
-	public abstract partial class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
+	public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
 		where TGenome : class, IGenome
 	{
 
 		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome> seeds = null) : base(seeds)
 		{
-		}
-
-		protected override TGenome Registration(TGenome target)
-		{
-			if (target == null) return null;
-			Register(target, out TGenome result, t => t.Freeze());
-			return result;
 		}
 
 		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
@@ -38,23 +31,19 @@ namespace Solve
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 		{
-			if (source != null)
-			{
-				var reduced = GetReduced(source);
-				if (reduced != null && reduced != source && reduced.Hash != source.Hash)
-					yield return reduced;
-			}
+			if (source == null) yield break;
+			var reduced = GetReduced(source);
+			if (reduced != null && reduced != source && reduced.Hash != source.Hash)
+				yield return reduced;
 		}
 
 		protected TGenome GetReduced(TGenome source)
 		{
-			if (Reductions.TryGetValue(source, out TGenome r))
+			if (Reductions.TryGetValue(source, out var r))
 				return r;
 
 			var result = GetReducedInternal(source);
-			if (result == null) return source;
-
-			return Reductions.GetValue(source, key => Registration(result));
+			return result == null ? source : Reductions.GetValue(source, key => Registration(result));
 		}
 	}
 }

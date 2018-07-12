@@ -35,6 +35,7 @@
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />
+    <Compile Remove="Supporting\QueuedTaskScheduler.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,7 +54,7 @@
     <PackageReference Include="Open.Threading" Version="1.4.0" />
     <PackageReference Include="Open.Threading.Dataflow" Version="1.1.0" />
     <PackageReference Include="Open.Threading.Tasks" Version="1.1.2" />
-    <PackageReference Include="System.Interactive.Async" Version="3.1.1" />
+    <PackageReference Include="System.Interactive.Async" Version="3.2.0" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
     <PackageReference Include="System.Reactive" Version="4.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="4.5.0" />

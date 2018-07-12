@@ -27,17 +27,13 @@ namespace Solve
 		T _previous;
 		internal void Broadcast(T message, bool uniqueOnly = false)
 		{
-			if (!uniqueOnly || !message.Equals(_previous))
+			if (uniqueOnly && message.Equals(_previous)) return;
+			_previous = message;
+			var observers = _observers;
+			if (observers == null) return;
+			foreach (var o in observers)
 			{
-				_previous = message;
-				var observers = _observers;
-				if (observers != null)
-				{
-					foreach (var o in observers)
-					{
-						o.OnNext(message);
-					}
-				}
+				o.OnNext(message);
 			}
 
 		}
@@ -45,32 +41,26 @@ namespace Solve
 		protected void Complete()
 		{
 			var observers = Interlocked.Exchange(ref _observers, null);
-			if (observers != null)
+			if (observers == null) return;
+			using (observers)
 			{
-				using (observers)
-				{
-					foreach (var observer in observers)
-						observer.OnCompleted();
-				}
+				foreach (var observer in observers)
+					observer.OnCompleted();
 			}
 		}
 
 		protected void Fault(in Exception exception)
 		{
 			var observers = Interlocked.Exchange(ref _observers, null);
-			if (observers != null)
+			if (observers == null) return;
+			using (observers)
 			{
-				using (observers)
-				{
-					foreach (var observer in observers)
-						observer.OnError(exception);
-				}
+				foreach (var observer in observers)
+					observer.OnError(exception);
 			}
 		}
 
 		public IDisposable Subscribe(IObserver<T> observer)
-		{
-			return _subscribable.Subscribe(observer);
-		}
+			=> _subscribable.Subscribe(observer);
 	}
 }

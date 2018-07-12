@@ -8,7 +8,7 @@ namespace Solve.Evaluation
 {
 	using IGene = IEvaluate<double>;
 
-	public class EvalGenome : ReducibleGenomeBase<EvalGenome>, IHaveRoot<IGene>
+	public class EvalGenome : GenomeBase, IHaveRoot<IGene>
 	{
 		public EvalGenome(IGene root) : base()
 		{
@@ -18,17 +18,13 @@ namespace Solve.Evaluation
 		public IGene Root { get; private set; }
 		object IHaveRoot.Root => Root;
 
-		bool SetRoot(IGene root)
+		public bool SetRoot(IGene root)
 		{
 			AssertIsNotFrozen();
-			if (Root != root)
-			{
-				Root = root;
-				return true;
-			}
-			return false;
+			if (Root == root) return false;
+			Root = root;
+			return true;
 		}
-
 
 		protected override int GetGeneCount() => Root is IParent r ? r.GetNodes().Count() : (Root == null ? 0 : 1);
 		protected override string GetHash() => Root.ToStringRepresentation();
@@ -47,14 +43,7 @@ namespace Solve.Evaluation
 		public double Evaluate(IReadOnlyList<double> values)
 			=> Root.Evaluate(values);
 
-		public string ToAlphaParameters(bool reduced = false)
-			=> AlphaParameters.ConvertTo(reduced ? AsReduced().Hash : Hash);
-
-		protected override EvalGenome Reduction()
-			=> Root is IReducibleEvaluation<IGene> root
-				&& root.TryGetReduced(null, out IGene reduced) // Todo: need to involve the catalog.
-				&& reduced != root
-				? new EvalGenome(reduced)
-				: this;
+		public string ToAlphaParameters()
+			=> AlphaParameters.ConvertTo(Hash);
 	}
 }

@@ -1,6 +1,5 @@
 ﻿using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
-using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,12 +16,12 @@ namespace Eater
 		};
 
 		readonly ushort _minSamples;
-		readonly ushort _minConvSamples;
+		//readonly ushort _minConvSamples;
 
-		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base()
+		protected Runner(ushort minSamples/*, ushort minConvSamples = 20*/)
 		{
 			_minSamples = minSamples;
-			_minConvSamples = minConvSamples;
+			//_minConvSamples = minConvSamples;
 		}
 
 		static Genome GenerateIdealSeed(ushort size)
@@ -45,15 +44,16 @@ namespace Eater
 
 		public void Init(bool startWithIdealSeed = false)
 		{
-			ushort size = 10;
+			const ushort size = 10;
 
 			var emitter = new EaterConsoleEmitter(_minSamples);
-			Genome seed = startWithIdealSeed ? GenerateIdealSeed(size) : null;
+			var seed = startWithIdealSeed ? GenerateIdealSeed(size) : null;
 			if (seed != null) emitter.SaveGenomeImage(seed, "LatestSeed");
 
 			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
 			var scheme = new TowerProcessingScheme<Genome>(factory, (800, 40, 2));
-			scheme.AddProblem(Problem.CreateF0102(size, 40));
+			// ReSharper disable once RedundantArgumentDefaultValue
+			scheme.AddProblem(Problem.CreateF0102(size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
 			Init(scheme, emitter, factory.Metrics);
@@ -86,14 +86,15 @@ namespace Eater
 			//}
 		}
 
-		static Task Main(string[] args)
+		static Task Main()
 		{
 			var runner = new Runner(10);
 			runner.Init();
-			var message = String.Format(
+			var message = string.Format(
 				"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
 				runner._minSamples);
 			return runner.Start(message);
 		}
+
 	}
 }

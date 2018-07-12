@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
+	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome> : SynchronousProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		const ushort DEFAULT_CHAMPION_POOL_SIZE = 100;
 		const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;
 		const ushort DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION = DEFAULT_MAX_LEVEL_LOSSES * 30;
 
@@ -116,10 +116,18 @@ namespace Solve.ProcessingSchemes
 		}
 
 		protected override Task PostAsync(TGenome genome)
-			=> Task.WhenAll(Towers.Select(t => t.PostAsync(genome)));
+		{
+			if (genome == null) throw new ArgumentNullException(nameof(genome));
+			Contract.EndContractBlock();
+
+			return Task.WhenAll(Towers.Select(t => t.PostAsync(genome)));
+		}
 
 		protected override void Post(TGenome genome)
 		{
+			if (genome == null) throw new ArgumentNullException(nameof(genome));
+			Contract.EndContractBlock();
+
 			foreach (var t in Towers)
 				t.Post(genome);
 		}

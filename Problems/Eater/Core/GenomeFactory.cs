@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Eater
 {
@@ -13,6 +14,7 @@ namespace Eater
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
 		}
 
+		// ReSharper disable once UnusedParameter.Local
 		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(seed == null ? default(IEnumerable<Genome>) : new[] { seed })
 		{
 
@@ -20,7 +22,8 @@ namespace Eater
 
 		public readonly IReadOnlyList<Step> AvailableSteps;
 
-		public int GeneratedCount { get; private set; } = 0;
+		private int _generatedCount;
+		public int GeneratedCount => _generatedCount;
 
 		readonly LinkedList<Step> _lastGenerated = new LinkedList<Step>();
 		readonly Random Randomizer = new Random();
@@ -32,7 +35,7 @@ namespace Eater
 		{
 			lock (_lastGenerated)
 			{
-				int lastIndex = _lastGenerated.Count;
+				var lastIndex = _lastGenerated.Count;
 				if (lastIndex == 0)
 				{
 					_lastGenerated.AddLast(Step.Forward);
@@ -45,6 +48,7 @@ namespace Eater
 					{
 						carried = false;
 
+						// ReSharper disable once SwitchStatementMissingSomeCases
 						switch (_node.Value)
 						{
 							case Step.Forward:
@@ -74,7 +78,7 @@ namespace Eater
 				}
 
 
-				GeneratedCount++;
+				Interlocked.Increment(ref _generatedCount);
 				return new Genome(_lastGenerated);
 			}
 		}
@@ -91,7 +95,7 @@ namespace Eater
 			var aGenes = a.Genes.ToArray();
 			var bGenes = b.Genes.ToArray();
 
-			return new Genome[]
+			return new[]
 			{
 				new Genome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
 				new Genome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
@@ -118,35 +122,36 @@ namespace Eater
 				var rlen = asRemoved.Length;
 				var n = Randomizer.Next(rlen * 3); // 1 in 3 chances to 'swap' instead of remove.
 				if (n == index) n++;
-				if (n < rlen) // Splice into another index?
-					return new Genome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()));
-				return new Genome(asRemoved);
+				return n < rlen
+					? new Genome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()))
+					: new Genome(asRemoved);
 			}
 
 			// Replace or insert...
 			var g = AvailableSteps[i];
-			Genome Insert(Step s, int count = 1)
+			Genome Insert(Step s, int count)
 				=> new Genome(Splice(genes, index, s, count));
 
-			if (value == Step.Forward)
+			// ReSharper disable once SwitchStatementMissingSomeCases
+			switch (value)
 			{
-				if (g == Step.Forward)
+				case Step.Forward when g == Step.Forward:
 					return Insert(g, Randomizer.Next(3) + 1);
+				// Insert or replace
+				case Step.Forward when Randomizer.Next(2) == 0:
+					return Insert(g, 1);
+				default:
+					if (g == Step.Forward) // Op
+					{
+						if (Randomizer.Next(2) == 0) // Insert or replace
+							return Insert(g, Randomizer.Next(3) + 1);
+					}
+					else if (g == value)
+					{
+						return Insert(g, 1);
+					}
 
-				if (Randomizer.Next(2) == 0) // Insert or replace
-					return Insert(g, 1);
-			}
-			else
-			{
-				if (g == Step.Forward) // Op
-				{
-					if (Randomizer.Next(2) == 0) // Insert or replace
-						return Insert(g, Randomizer.Next(3) + 1);
-				}
-				else if (g == value)
-				{
-					return Insert(g, 1);
-				}
+					break;
 			}
 
 			genes[index] = g;
