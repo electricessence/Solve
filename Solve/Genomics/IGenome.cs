@@ -3,7 +3,6 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-
 using System;
 using System.Collections.Generic;
 
@@ -25,8 +24,6 @@ namespace Solve
 
 		// Simply added for potential convienience.  Equals may create problems.
 		bool Equivalent(IGenome other);
-
-		IEnumerator<IGenome> RemainingVariations { get; }
 
 #if DEBUG
 		string StackTrace { get; }

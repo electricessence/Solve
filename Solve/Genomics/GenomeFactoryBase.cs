@@ -15,6 +15,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Solve
 {
@@ -513,6 +514,20 @@ namespace Solve
 		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
 			=> GetPriorityQueue(index);
 
+		readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations
+			= new ConditionalWeakTable<TGenome, IEnumerator<TGenome>>();
+
+		protected virtual IEnumerator<TGenome> GetVariationsInternal(TGenome source) => null;
+
+		public IEnumerator<TGenome> GetVariations(TGenome source)
+		{
+			if (Variations.TryGetValue(source, out IEnumerator<TGenome> r))
+				return r;
+
+			var result = GetVariationsInternal(source);
+			return result == null ? null : Variations.GetValue(source, key => result);
+		}
+
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
 		{
 			readonly int Index;
@@ -750,11 +765,15 @@ namespace Solve
 			public bool AttemptEnqueueVariation(TGenome genome)
 			{
 				if (genome == null) return false;
-				while (genome.RemainingVariations.ConcurrentTryMoveNext(out IGenome v))
+
+				var variations = Factory.GetVariations(genome);
+				if (variations == null) return false;
+
+				while (variations.ConcurrentTryMoveNext(out IGenome v))
 				{
 					if (v is TGenome t)
 					{
-						if (EnqueueInternal(t, true))
+						if (v != genome && v.Hash != genome.Hash && EnqueueInternal(t, true))
 							return true;
 					}
 					else

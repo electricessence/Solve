@@ -5,7 +5,7 @@ using System.Linq;
 namespace Eater
 {
 
-	public class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
+	public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
 		public GenomeFactory(IEnumerable<Genome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
