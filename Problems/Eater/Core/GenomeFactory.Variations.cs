@@ -58,9 +58,9 @@ namespace Eater
 			}
 		}
 
-		protected override IEnumerator<Genome> GetVariationsInternal(Genome source)
+		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)
 			=> GetVariations(source.Genes.ToArray())
-				.Select(steps => new Genome(steps))
-				.GetEnumerator();
+				.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<Genome>())
+				.Select(steps => new Genome(steps));
 	}
 }

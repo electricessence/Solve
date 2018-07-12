@@ -517,7 +517,7 @@ namespace Solve
 		readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations
 			= new ConditionalWeakTable<TGenome, IEnumerator<TGenome>>();
 
-		protected virtual IEnumerator<TGenome> GetVariationsInternal(TGenome source) => null;
+		protected virtual IEnumerable<TGenome> GetVariationsInternal(TGenome source) => null;
 
 		public IEnumerator<TGenome> GetVariations(TGenome source)
 		{
@@ -525,7 +525,7 @@ namespace Solve
 				return r;
 
 			var result = GetVariationsInternal(source);
-			return result == null ? null : Variations.GetValue(source, key => result);
+			return result == null ? null : Variations.GetValue(source, key => result.GetEnumerator());
 		}
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
@@ -559,6 +559,7 @@ namespace Solve
 				foreach (ref readonly var genome in genomes)
 					EnqueueChampion(genome);
 			}
+
 			public void EnqueueChampion(TGenome genome)
 			{
 				EnqueueForVariation(genome);
