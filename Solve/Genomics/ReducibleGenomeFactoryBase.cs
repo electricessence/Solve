@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Solve
 {
-	public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
-	where TGenome : class, IReducibleGenome<TGenome>
+	public abstract partial class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
+		where TGenome : class, IGenome
 	{
 
 		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome> seeds = null) : base(seeds)
@@ -13,23 +14,7 @@ namespace Solve
 		protected override TGenome Registration(TGenome target)
 		{
 			if (target == null) return null;
-			Register(target, out TGenome result, t =>
-			 {
-				 //target.RegisterVariations(GenerateVariations(target));
-				 //target.RegisterMutations(Mutate(target));
-
-				 var reduced = t.AsReduced();
-				 if (reduced != t)
-				 {
-					 // A little caution here. Some possible evil recursion?
-					 var reducedRegistration = Registration(reduced);
-					 if (reduced != reducedRegistration)
-						 t.ReplaceReduced(reducedRegistration);
-
-					 //reduced.RegisterExpansion(hash);
-				 }
-				 t.Freeze();
-			 });
+			Register(target, out TGenome result, t => t.Freeze());
 			return result;
 		}
 
@@ -38,9 +23,30 @@ namespace Solve
 			if (a == null || b == null) return null;
 
 			// Avoid inbreeding. :P
-			if (a == b || a.AsReduced().Hash == b.AsReduced().Hash) return null;
+			if (a == b || GetReduced(a).Hash == GetReduced(b).Hash) return null;
 
 			return base.AttemptNewCrossover(a, b, maxAttempts);
+		}
+
+		/*
+		 * NOTE:
+		 * Reductions are done inside the factory since more complex problems may require special references to catalogs or other important classes that should not be retained by the genome itself.
+		 * It also ensures that a genome is kept clean and not responsible for the operation.
+		 */
+
+		readonly ConditionalWeakTable<TGenome, TGenome> Reductions = new ConditionalWeakTable<TGenome, TGenome>();
+
+		protected virtual TGenome GetReducedInternal(TGenome source) => null;
+
+		public TGenome GetReduced(TGenome source)
+		{
+			if (Reductions.TryGetValue(source, out TGenome r))
+				return r;
+
+			var result = GetReducedInternal(source);
+			if (result == null) return source;
+
+			return Reductions.GetValue(source, key => Registration(result));
 		}
 	}
 }

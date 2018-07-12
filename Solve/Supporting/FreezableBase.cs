@@ -25,6 +25,12 @@ namespace Solve
 				throw new InvalidOperationException("Object is frozen.");
 		}
 
+		protected void AssertIsFrozen()
+		{
+			if (!IsFrozen)
+				throw new InvalidOperationException("Object is not frozen.");
+		}
+
 		protected virtual void OnBeforeFreeze() { }
 
 	}

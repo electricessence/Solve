@@ -42,9 +42,9 @@ namespace Solve.Experiment.Console
 				var sb = new StringBuilder();
 				sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
 
-				var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-				if (!asReduced.Equals(genome))
-					sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
+				//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
+				//if (!asReduced.Equals(genome))
+				//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
 
 				for (var i = 0; i < snapshots.Length; i++)
 					sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
