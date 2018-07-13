@@ -80,29 +80,28 @@ namespace Solve.ProcessingSchemes
 				{
 					var champions = c.Ranked;
 					var len = champions.Length;
-					if (len > 0)
+					if (len <= 0) return false;
+
+					var top = champions[0].Genome;
+					ReserveFactoryQueue.EnqueueForMutation(top);
+					ReserveFactoryQueue.EnqueueForBreeding(top);
+
+					var next = TriangularSelection.Descending.RandomOne(champions).Genome;
+					ReserveFactoryQueue.EnqueueForMutation(next);
+					ReserveFactoryQueue.EnqueueForBreeding(next);
+
+					foreach (var g in Pareto
+						.Filter(champions, EComparer, ScoreSelector)
+						.Select(gf => gf.Value.Genome))
 					{
-						var top = champions[0].Genome;
-						ReserveFactoryQueue.EnqueueForMutation(top);
-						ReserveFactoryQueue.EnqueueForBreeding(top);
-
-						var next = TriangularSelection.Descending.RandomOne(champions).Genome;
-						ReserveFactoryQueue.EnqueueForMutation(next);
-						ReserveFactoryQueue.EnqueueForBreeding(next);
-
-						foreach (var g in Pareto.Filter(champions, EComparer, ScoreSelector)
-							.Select(gf => gf.Value.Genome))
-						{
-							ReserveFactoryQueue.EnqueueForBreeding(g);
-						}
-
-						//ReserveFactoryQueue.EnqueueForMutation(champions);
-						//ReserveFactoryQueue.EnqueueForBreeding(champions);
-
-						return true;
+						ReserveFactoryQueue.EnqueueForBreeding(g);
 					}
 
-					return false;
+					//ReserveFactoryQueue.EnqueueForMutation(champions);
+					//ReserveFactoryQueue.EnqueueForBreeding(champions);
+
+					return true;
+
 				})
 				.ToArray()
 				.Any();

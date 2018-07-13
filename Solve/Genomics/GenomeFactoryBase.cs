@@ -547,7 +547,10 @@ namespace Solve
 				return r;
 
 			var result = GetVariationsInternal(source);
-			return result == null ? null : Variations.GetValue(source, key => result.GetEnumerator());
+			return result == null
+				? null
+				: Variations.GetValue(source,
+					key => result.Distinct(GenomeEqualityComparer<TGenome>.Instance).GetEnumerator());
 		}
 
 		protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>

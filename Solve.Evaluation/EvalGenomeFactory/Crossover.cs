@@ -7,9 +7,10 @@ using IGene = Open.Evaluation.Core.IEvaluate<double>;
 namespace Solve.Evaluation
 {
 
-	public partial class EvalGenomeFactory
+	public partial class EvalGenomeFactory<TGenome>
+		where TGenome : EvalGenome
 	{
-		protected override EvalGenome[] CrossoverInternal(EvalGenome a, EvalGenome b)
+		protected override TGenome[] CrossoverInternal(TGenome a, TGenome b)
 		{
 #if DEBUG
 			// Shouldn't happen.

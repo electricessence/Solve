@@ -1,6 +1,8 @@
-﻿using Open.Evaluation.Core;
+﻿using BlackBoxFunction;
+using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Solve.Evaluation
@@ -10,11 +12,12 @@ namespace Solve.Evaluation
 	using IGene = IEvaluate<double>;
 	using IOperator = IOperator<IEvaluate<double>, double>;
 
-	public partial class EvalGenomeFactory
+	public partial class EvalGenomeFactory<TGenome>
+		where TGenome : EvalGenome
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private EvalGenome MutateUnfrozen(EvalGenome target)
+		private TGenome MutateUnfrozen(TGenome target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -30,137 +33,140 @@ namespace Solve.Evaluation
 			while (genes.Any())
 			{
 				var gene = genes.GetNodes().ToArray().RandomSelectOne() as Node<IGene>;
+				Debug.Assert(gene != null);
 				var gv = gene.Value;
-				if (gv is Constant)
+				switch (gv)
 				{
-					switch (RandomUtilities.Random.Next(4))
-					{
-						case 0:
-							return VariationCatalog
-								.ApplyFunction(target, gene, Operators.GetRandomFunction());
-						case 1:
-							return MutationCatalog
-								.MutateSign(target, gene, 1);
-						default:
-							return VariationCatalog
-								.RemoveGene(target, gene);
-					}
-
-				}
-				else if (gv is Parameter)
-				{
-					var options = Enumerable.Range(0, 5).ToList();
-					while (options.Any())
-					{
-						switch (options.RandomPluck())
+					case Constant _:
+						switch (RandomUtilities.Random.Next(4))
 						{
 							case 0:
-								return MutationCatalog
-									.MutateSign(target, gene, 1);
-
-							// Simply change parameters
+								return VariationCatalog
+									.ApplyFunction(target, gene, Operators.GetRandomFunction());
 							case 1:
 								return MutationCatalog
-									.MutateParameter(target, (Parameter)gene);
-
-							// Apply a function
-							case 2:
-								// Reduce the pollution of functions...
-								if (RandomUtilities.Random.Next(0, 2) == 0)
-								{
-									return VariationCatalog
-										.ApplyFunction(target, gene, Operators.GetRandomFunction());
-								}
-								break;
-
-							// Split it...
-							case 3:
-								if (RandomUtilities.Random.Next(0, 3) == 0)
-								{
-									return MutationCatalog
-											.Square(target, gene);
-								}
-								break;
-
-							// Remove it!
+									.MutateSign(target, gene, 1);
 							default:
-								var attempt = VariationCatalog.RemoveGene(target, gene);
-								if (attempt != null)
-									return attempt;
-								break;
-
+								return VariationCatalog
+									.RemoveGene(target, gene);
 						}
-					}
 
-
-				}
-				else if (gene.Value is IOperator opGene)
-				{
-					var options = Enumerable.Range(0, 8).ToList();
-					while (options.Any())
-					{
-						EvalGenome ng = null;
-						switch (options.RandomPluck())
+					case Parameter _:
+						var options = Enumerable.Range(0, 5).ToList();
+						while (options.Any())
 						{
-							case 0:
-								ng = MutationCatalog
-									.MutateSign(target, gene, 1);
-								break;
-
-							case 1:
-								ng = VariationCatalog
-									.PromoteChildren(target, gene);
-								break;
-
-							case 2:
-								ng = MutationCatalog
-									.ChangeOperation(target, opGene);
-								break;
-
-							// Apply a function
-							case 3:
-								// Reduce the pollution of functions...
-								if (RandomUtilities.Random.Next(0, gene is IFunction ? 4 : 2) == 0)
-								{
-									var f = Operators.GetRandomFunction();
-									// Function of function? Reduce probability even further. Coin toss.
-									if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-										return VariationCatalog
-										.ApplyFunction(target, gene, f);
-
-								}
-								break;
-
-							case 4:
-								ng = VariationCatalog.RemoveGene(target, gene);
-								break;
-
-							case 5:
-								ng = MutationCatalog
-									.AddParameter(target, opGene);
-								break;
-
-							case 6:
-								ng = MutationCatalog
-									.BranchOperation(target, opGene);
-								break;
-
-							case 7:
-								// This has a potential to really bloat the function so allow, but very sparingly.
-								if (RandomUtilities.Random.Next(0, 3) == 0)
-								{
+							switch (options.RandomPluck())
+							{
+								case 0:
 									return MutationCatalog
-										.Square(target, gene);
-								}
-								break;
+										.MutateSign(target, gene, 1);
+
+								// Simply change parameters
+								case 1:
+									return MutationCatalog
+										.MutateParameter(target, (Parameter)gene);
+
+								// Apply a function
+								case 2:
+									// Reduce the pollution of functions...
+									if (RandomUtilities.Random.Next(0, 2) == 0)
+									{
+										return VariationCatalog
+											.ApplyFunction(target, gene, Operators.GetRandomFunction());
+									}
+									break;
+
+								// Split it...
+								case 3:
+									if (RandomUtilities.Random.Next(0, 3) == 0)
+									{
+										return MutationCatalog
+											.Square(target, gene);
+									}
+									break;
+
+								// Remove it!
+								default:
+									var attempt = VariationCatalog.RemoveGene(target, gene);
+									if (attempt != null)
+										return attempt;
+									break;
+
+							}
 						}
 
-						if (ng != null)
-							return ng;
-					}
+						break;
+					default:
+						if (gene.Value is IOperator opGene)
+						{
+							var options = Enumerable.Range(0, 8).ToList();
+							while (options.Any())
+							{
+								EvalGenome ng = null;
+								switch (options.RandomPluck())
+								{
+									case 0:
+										ng = MutationCatalog
+											.MutateSign(target, gene, 1);
+										break;
+
+									case 1:
+										ng = VariationCatalog
+											.PromoteChildren(target, gene);
+										break;
+
+									case 2:
+										ng = MutationCatalog
+											.ChangeOperation(target, opGene);
+										break;
+
+									// Apply a function
+									case 3:
+										// Reduce the pollution of functions...
+										if (RandomUtilities.Random.Next(0, gene is IFunction ? 4 : 2) == 0)
+										{
+											var f = Operators.GetRandomFunction();
+											// Function of function? Reduce probability even further. Coin toss.
+											if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
+												return VariationCatalog
+													.ApplyFunction(target, gene, f);
+
+										}
+										break;
+
+									case 4:
+										ng = VariationCatalog.RemoveGene(target, gene);
+										break;
+
+									case 5:
+										ng = MutationCatalog
+											.AddParameter(target, opGene);
+										break;
+
+									case 6:
+										ng = MutationCatalog
+											.BranchOperation(target, opGene);
+										break;
+
+									case 7:
+										// This has a potential to really bloat the function so allow, but very sparingly.
+										if (RandomUtilities.Random.Next(0, 3) == 0)
+										{
+											return MutationCatalog
+												.Square(target, gene);
+										}
+										break;
+								}
+
+								if (ng != null)
+									return ng;
+							}
 
 
 
+						}
+
+						break;
 				}
 
 			}
@@ -169,7 +175,7 @@ namespace Solve.Evaluation
 
 		}
 
-		protected override EvalGenome MutateInternal(EvalGenome target)
+		protected override TGenome MutateInternal(TGenome target)
 			=> Registration(MutateUnfrozen(target));
 	}
 }

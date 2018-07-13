@@ -15,32 +15,38 @@ namespace Solve.Evaluation
 	using EvaluationRegistry = Registry;
 	using IGene = IEvaluate<double>;
 
-	public partial class EvalGenomeFactory : ReducibleGenomeFactoryBase<EvalGenome>
+	public partial class EvalGenomeFactory<TGenome> : ReducibleGenomeFactoryBase<TGenome>
+		where TGenome : EvalGenome
+
 	{
 		readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
 
 		#region ParamOnly
+
 		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
-		protected EvalGenome GenerateParamOnly(ushort id)
+
+		protected TGenome GenerateParamOnly(ushort id)
 			=> Registration(Catalog.GetParameter(id));
+
 		#endregion
 
 		#region Operated
+
 		static IEnumerable<ushort> UShortRange(ushort start, ushort max)
 		{
-			ushort s = start;
+			var s = start;
 			while (s < max)
-			{
-				yield return s;
-				s++;
-			}
+				yield return s++;
 		}
 
-		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> OperatedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
-		protected IEnumerable<EvalGenome> GenerateOperated(ushort paramCount = 2)
+		readonly ConcurrentDictionary<ushort, IEnumerator<TGenome>> OperatedCatalog =
+			new ConcurrentDictionary<ushort, IEnumerator<TGenome>>();
+
+		protected IEnumerable<TGenome> GenerateOperated(ushort paramCount = 2)
 		{
 			if (paramCount < 2)
-				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount, "Must have at least 2 parameter count.");
+				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
+					"Must have at least 2 parameter count.");
 
 			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
 			{
@@ -51,15 +57,20 @@ namespace Solve.Evaluation
 				}
 			}
 		}
+
 		#endregion
 
 		#region Functions
-		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome>> FunctionedCatalog = new ConcurrentDictionary<ushort, IEnumerator<EvalGenome>>();
-		protected IEnumerable<EvalGenome> GenerateFunctioned(ushort id)
+
+		readonly ConcurrentDictionary<ushort, IEnumerator<TGenome>> FunctionedCatalog =
+			new ConcurrentDictionary<ushort, IEnumerator<TGenome>>();
+
+		protected IEnumerable<TGenome> GenerateFunctioned(ushort id)
 		{
 			var p = Catalog.GetParameter(id);
 			foreach (var op in EvaluationRegistry.Arithmetic.Functions)
 			{
+				// ReSharper disable once SwitchStatementMissingSomeCases
 				switch (op)
 				{
 					case Exponent.SYMBOL:
@@ -69,13 +80,14 @@ namespace Solve.Evaluation
 				}
 			}
 		}
+
 		#endregion
 
-		protected override EvalGenome GenerateOneInternal()
+		protected override TGenome GenerateOneInternal()
 		{
 			// ReSharper disable once NotAccessedVariable
 			var attempts = 0; // For debugging.
-			EvalGenome genome = null;
+			TGenome genome = null;
 
 			for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 			{
@@ -111,6 +123,7 @@ namespace Solve.Evaluation
 
 					pcOne = paramCount;
 					var functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
+					// ReSharper disable once InvertIf
 					if (functioned.MoveNext())
 					{
 						genome = functioned.Current;
@@ -120,20 +133,7 @@ namespace Solve.Evaluation
 							return genome;
 					}
 
-					var t = Math.Min(Registry.Count * 2, 100); // A local maximum.
-					do
-					{
-						// NOTE: Let's use expansions here...
-						genome = Mutate(Registry[RegistryOrder.Snapshot().RandomSelectOne()].Value, m);
-						var hash = genome?.Hash;
-						attempts++;
-						if (hash != null && RegisterProduction(genome))
-							return genome;
-					}
-					while (--t != 0);
-
-				}
-				while (--tries != 0);
+				} while (--tries != 0);
 
 			}
 
@@ -141,21 +141,26 @@ namespace Solve.Evaluation
 
 		}
 
+		protected virtual TGenome Create(IGene root) => (TGenome)new EvalGenome(root);
 
-		protected EvalGenome Registration(IGene root)
+		protected TGenome Registration(IGene root, Action<TGenome> onBeforeAdd = null)
 		{
 			if (root == null) return null;
 			Register(root.ToStringRepresentation(),
-				() => new EvalGenome(root),
-				out var target);
+				() => Create(root), out var target,
+				t =>
+				{
+					onBeforeAdd?.Invoke(t);
+					t.Freeze();
+				});
 			return target;
 		}
 
-		protected override EvalGenome GetReducedInternal(EvalGenome source)
+		protected override TGenome GetReducedInternal(TGenome source)
 			=> source.Root is IReducibleEvaluation<IGene> root
 			   && root.TryGetReduced(Catalog, out var reduced)
 			   && reduced != root
-				? new EvalGenome(reduced)
+				? Create(reduced)
 				: null;
 
 	}

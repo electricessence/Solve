@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
+	[SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
 		sealed class Level
@@ -155,11 +157,9 @@ namespace Solve.ProcessingSchemes
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
 				if (IsMaxLevel)
 				{
-					if (result.Any(f => f.Superiority.Progressive))
-					{
-						PromoteChampion(c.Genome);
-						Tower.Broadcast(c);
-					}
+					if (!result.Any(f => f.Superiority.Progressive)) return;
+					PromoteChampion(c.Genome);
+					Tower.Broadcast(c);
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
 
@@ -211,98 +211,92 @@ namespace Solve.ProcessingSchemes
 
 			bool ProcessPoolInternal()
 			{
-				if (Pool.Count >= PoolSize)
+				if (Pool.Count < PoolSize) return false;
+
+				Entry[] pool = null;
+				// If a lock is already aquired somewhere else, then skip/ignore...
+				if (!ThreadSafety.TryLock(Pool, () =>
 				{
-					Entry[] pool = null;
-					// If a lock is already aquired somewhere else, then skip/ignore...
-					if (ThreadSafety.TryLock(Pool, () =>
+					if (Pool.Count >= PoolSize)
+						pool = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();
+				}) || pool == null) return true;
+
+				// 1) Setup selection.
+				var len = pool.Length;
+				var midPoint = pool.Length / 2;
+				var lastLevel = _nextLevel == null;
+
+				var promoted = new HashSet<string>();
+
+				var problemPools = Tower.Problem.Pools;
+				var problemPoolCount = problemPools.Count;
+				var selection = new Entry[problemPoolCount][];
+				for (var i = 0; i < problemPoolCount; i++)
+				{
+					var p = problemPools[i];
+					var s = pool
+						.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending)
+						.ToArray();
+					selection[i] = s;
+
+					// 2) Signal & promote champions.
+					var champ = s[0].GenomeFitness;
+					if (promoted.Add(champ.Genome.Hash))
 					{
-						if (Pool.Count >= PoolSize)
-							pool = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();
-					}) && pool != null)
-					{
-						// 1) Setup selection.
-						var len = pool.Length;
-						var midPoint = pool.Length / 2;
-						var lastLevel = _nextLevel == null;
-
-						var promoted = new HashSet<string>();
-
-						var problemPools = Tower.Problem.Pools;
-						var problemPoolCount = problemPools.Count;
-						var selection = new Entry[problemPoolCount][];
-						for (var i = 0; i < problemPoolCount; i++)
-						{
-							var p = problemPools[i];
-							var s = pool
-									.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending)
-									.ToArray();
-							selection[i] = s;
-
-							// 2) Signal & promote champions.
-							var champ = s[0].GenomeFitness;
-							if (promoted.Add(champ.Genome.Hash))
-							{
-								p.Champions?.Add(champ.Genome, champ.Fitness[i]); // Need to leverage potentially significant genetics...
-								if (lastLevel) Tower.Broadcast(champ);
-								NextLevel.PostExpress(champ);
-							}
-
-							// 3) Increment fitness rejection for individual fitnesses.
-							for (var n = midPoint; n < len; n++)
-							{
-								s[n].GenomeFitness.Fitness[i].IncrementRejection();
-							}
-						}
-
-						// 4) Promote remaining winners (weaving to ensure that other threads honor the priority)
-						for (var n = 1; n < midPoint; n++)
-						{
-							for (var i = 0; i < problemPoolCount; i++)
-							{
-								var s = selection[i];
-								var winner = s[n].GenomeFitness;
-								if (promoted.Add(winner.Genome.Hash))
-									NextLevel.PostExpress(winner);
-							}
-						}
-
-						//NextLevel.ProcessPool(true); // Prioritize winners and express.
-
-						// 5) Process remaining (losers)
-						var maxLoses = Tower.Environment.MaxLevelLosses;
-						var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-						foreach (var loser in selection.Select(s => s.Skip(midPoint)).Weave().Distinct())
-						{
-							if (!promoted.Contains(loser.GenomeFitness.Genome.Hash))
-							{
-								loser.LevelLossRecord++;
-
-								if (loser.LevelLossRecord > maxLoses)
-								{
-									var gf = loser.GenomeFitness;
-									var fitnesses = gf.Fitness;
-									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-										NextLevel.PostStandby(gf);
-									else
-									{
-										//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
-										if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-											f.MetricsCounter.Increment("Genome Rejected");
-									}
-								}
-								else
-								{
-									Debug.Assert(loser.LevelLossRecord > 0);
-									Pool.Enqueue(loser); // Didn't win, but still in the game.
-								}
-							}
-						}
-
+						p.Champions?.Add(champ.Genome, champ.Fitness[i]); // Need to leverage potentially significant genetics...
+						if (lastLevel) Tower.Broadcast(champ);
+						NextLevel.PostExpress(champ);
 					}
-					return true;
+
+					// 3) Increment fitness rejection for individual fitnesses.
+					for (var n = midPoint; n < len; n++)
+					{
+						s[n].GenomeFitness.Fitness[i].IncrementRejection();
+					}
 				}
-				return false;
+
+				// 4) Promote remaining winners (weaving to ensure that other threads honor the priority)
+				for (var n = 1; n < midPoint; n++)
+				{
+					for (var i = 0; i < problemPoolCount; i++)
+					{
+						var s = selection[i];
+						var winner = s[n].GenomeFitness;
+						if (promoted.Add(winner.Genome.Hash))
+							NextLevel.PostExpress(winner);
+					}
+				}
+
+				//NextLevel.ProcessPool(true); // Prioritize winners and express.
+
+				// 5) Process remaining (losers)
+				var maxLoses = Tower.Environment.MaxLevelLosses;
+				var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
+				foreach (var loser in selection.Select(s => s.Skip(midPoint)).Weave().Distinct())
+				{
+					if (promoted.Contains(loser.GenomeFitness.Genome.Hash)) continue;
+					loser.LevelLossRecord++;
+
+					if (loser.LevelLossRecord > maxLoses)
+					{
+						var gf = loser.GenomeFitness;
+						var fitnesses = gf.Fitness;
+						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
+							NextLevel.PostStandby(gf);
+						else
+						{
+							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
+							if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
+								f.MetricsCounter.Increment("Genome Rejected");
+						}
+					}
+					else
+					{
+						Debug.Assert(loser.LevelLossRecord > 0);
+						Pool.Enqueue(loser); // Didn't win, but still in the game.
+					}
+				}
+				return true;
 			}
 
 			public async Task ProcessPoolAsync(bool thisLevelOnly = false)

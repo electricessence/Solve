@@ -14,12 +14,12 @@ namespace Eater
 	{
 		static readonly Step[] EMPTY = Array.Empty<Step>();
 
-		public Genome() : base()
+		public Genome()
 		{
 			_genes = EMPTY;
 		}
 
-		public Genome(IEnumerable<Step> steps) : base()
+		public Genome(IEnumerable<Step> steps)
 		{
 			Freeze(steps);
 		}
@@ -28,7 +28,7 @@ namespace Eater
 		{
 		}
 
-		public Genome(string steps) : base()
+		public Genome(string steps)
 		{
 			Freeze(Steps.FromGenomeHash(steps));
 		}

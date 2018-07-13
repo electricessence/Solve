@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace Eater
 {
@@ -25,15 +26,15 @@ namespace Eater
 
 		public readonly ushort GridSize;
 
-		public readonly GridLocation Boundary;
-		public int SeedOffset;
+		public readonly Size Boundary;
+		public readonly int SeedOffset;
 
 		public SampleCache(ushort gridSize = 10)
 		{
 			if (gridSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");
 			GridSize = gridSize;
-			Boundary = new GridLocation(gridSize, gridSize);
+			Boundary = new Size(gridSize, gridSize);
 
 			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
 			SeedOffset = RandomUtilities.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
@@ -42,25 +43,15 @@ namespace Eater
 		public IEnumerable<Point> GenerateXY()
 		{
 			for (var y = 0; y < GridSize; y++)
-			{
 				for (var x = 0; x < GridSize; x++)
-				{
 					yield return new Point(x, y);
-				}
-			}
 		}
 
 		public IEnumerable<Entry> GenerateOrdered()
-		{
-			foreach (var eater in GenerateXY())
-			{
-				foreach (var food in GenerateXY())
-				{
-					if (!eater.Equals(food))
-						yield return new Entry(eater, food);
-				}
-			}
-		}
+			=> from eater in GenerateXY()
+			   from food in GenerateXY()
+			   where !eater.Equals(food)
+			   select new Entry(eater, food);
 
 		public IEnumerable<Entry> Generate(int seed)
 		{
@@ -100,19 +91,13 @@ namespace Eater
 		}
 
 		public ProcedureResult[] TestAll(Genome genome)
-		{
-			return TestAll(genome.Hash);
-		}
+			=> TestAll(genome.Hash);
 
 		public LazyList<Entry> Get(int id)
-		{
-			return _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
-		}
+			=> _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
 
 		Point RandomPosition(Random random)
-		{
-			return new Point(random.Next(GridSize), random.Next(GridSize));
-		}
+			=> new Point(random.Next(GridSize), random.Next(GridSize));
 
 
 	}
