@@ -102,8 +102,6 @@ namespace Eater
 			};
 		}
 
-
-
 		protected override Genome MutateInternal(Genome target)
 		{
 			var genes = target.Genes.ToArray();

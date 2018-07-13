@@ -2,18 +2,12 @@
 
 namespace Solve
 {
-	public class GenomeEqualityComparer : EqualityComparer<IGenome>
+	public class GenomeEqualityComparer<TGenome> : EqualityComparer<TGenome>
+		where TGenome : IGenome
 	{
-		public override bool Equals(IGenome x, IGenome y)
-		{
-			if (x == y) return true;
-			if (x == null || y == null) return false;
-			return x.Hash == y.Hash;
-		}
+		public override bool Equals(TGenome x, TGenome y) => x?.Hash == y?.Hash;
+		public override int GetHashCode(TGenome genome) => genome?.Hash.GetHashCode() ?? 0;
 
-		public override int GetHashCode(IGenome genome)
-			=> genome.Hash.GetHashCode();
-
-		public static readonly GenomeEqualityComparer Instance = new GenomeEqualityComparer();
+		public static readonly GenomeEqualityComparer<TGenome> Instance = new GenomeEqualityComparer<TGenome>();
 	}
 }

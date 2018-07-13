@@ -8,7 +8,8 @@ using IGene = Open.Evaluation.Core.IEvaluate<double>;
 namespace Solve.Evaluation
 {
 
-	public partial class EvalGenomeFactory
+	public partial class EvalGenomeFactory<TGenome>
+		where TGenome : EvalGenome
 	{
 		public IEnumerable<IGene> GetVariations(IGene source)
 		{
@@ -16,19 +17,17 @@ namespace Solve.Evaluation
 			var descendantNodes = sourceTree.GetDescendantsOfType().ToArray();
 			var count = descendantNodes.Length;
 
+			int i;
 			// Remove genes one at a time.
-			for (var i = 0; i < count; i++)
-			{
+			for (i = 0; i < count; i++)
 				yield return Catalog.RemoveDescendantAt(sourceTree, i);
-			}
-
 
 			// Strip down parameter levels to search for significance.
 			var paramRemoved = sourceTree;
 			while (true)
 			{
 				paramRemoved = Catalog.Factory.Clone(paramRemoved);
-				var root = paramRemoved.Root;
+				//var root = paramRemoved.Root;
 				var paramGroups = paramRemoved.GetDescendantsOfType()
 					.Where(n => n.Value is IParameter<double>)
 					.GroupBy(n => ((IParameter<double>)n.Value).ID)
@@ -39,20 +38,16 @@ namespace Solve.Evaluation
 					break;
 
 				foreach (var p in paramGroups)
-				{
 					p.Parent.Remove(p);
-				}
 
 				yield return Catalog.FixHierarchy(paramRemoved).Value;
 			}
 
 
-			for (var i = 0; i < count; i++)
-			{
+			for (i = 0; i < count; i++)
 				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], -1);
-			}
 
-			for (var i = 0; i < count; i++)
+			for (i = 0; i < count; i++)
 			{
 				yield return VariationCatalog.PromoteChildren(source, i);
 
@@ -63,24 +58,19 @@ namespace Solve.Evaluation
 				// }
 			}
 
-			for (var i = 0; i < count; i++)
-			{
+			for (i = 0; i < count; i++)
 				yield return Catalog.AdjustNodeMultiple(descendantNodes[i], +1);
-			}
 
-			for (var i = 0; i < count; i++)
-			{
+			for (i = 0; i < count; i++)
 				yield return Catalog.AddConstant(descendantNodes[i], 2); // 2 ensures the constant isn't negated when adding to a product.
-			}
 
 		}
-		protected override IEnumerable<EvalGenome> GetVariationsInternal(EvalGenome source)
-		{
-			return GenerateVariationsUnfiltered(source.Root)
-				.Where(genome => genome != null)
-				.Select(genome => Registration(genome.AsReduced()))
-				.GroupBy(g => g.Hash)
-				.Select(g => g.First());
-		}
+
+		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
+			=> GetVariations(source.Root)
+				.Distinct()
+				.Select(Create)
+				.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<TGenome>());
+
 	}
 }

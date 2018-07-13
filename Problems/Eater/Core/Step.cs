@@ -164,7 +164,7 @@ namespace Eater
 			return orientation;
 		}
 
-		public static Point Forward(this Point boundary, Point current, Orientation orientation)
+		public static Point Forward(this Point current, Orientation orientation)
 		{
 			switch (orientation)
 			{
@@ -182,16 +182,16 @@ namespace Eater
 			return current;
 		}
 
-		public static Point Forward(this GridLocation boundary, Point current, Orientation orientation)
+		public static Point Forward(this Size boundary, Point current, Orientation orientation)
 		{
 			switch (orientation)
 			{
 				case Orientation.Up:
 					var v = current.Y + 1;
-					return v == boundary.Y ? current : new Point(current.X, v);
+					return v == boundary.Height ? current : new Point(current.X, v);
 				case Orientation.Right:
 					var r = current.X + 1;
-					return r == boundary.X ? current : new Point(r, current.Y);
+					return r == boundary.Width ? current : new Point(r, current.Y);
 				case Orientation.Down:
 					return current.Y == 0 ? current : new Point(current.X, current.Y - 1);
 				case Orientation.Left:
@@ -222,6 +222,7 @@ namespace Eater
 
 		public static Step FromChar(char step)
 		{
+
 			switch (step)
 			{
 				case FORWARD:
@@ -265,24 +266,20 @@ namespace Eater
 		}
 
 		public static bool Try(this IEnumerable<Step> steps,
-			GridLocation boundary, Point start, Point food)
-		{
-			return Try(steps, boundary, start, food, out _);
-		}
+			Size boundary, Point start, Point food)
+			=> Try(steps, boundary, start, food, out _);
 
 		public static bool Try(this string steps,
-			GridLocation boundary, Point start, Point food, out int energy)
-		{
-			return Try(FromGenomeHash(steps), boundary, start, food, out energy);
-		}
+			Size boundary, Point start, Point food, out int energy)
+			=> Try(FromGenomeHash(steps), boundary, start, food, out energy);
 
 		public static bool Try(this IEnumerable<Step> steps,
-			GridLocation boundary, Point start, Point food, out int energy)
+			Size boundary, Point start, Point food, out int energy)
 		{
-			if (start.X > boundary.X || start.Y > boundary.Y)
+			if (start.X > boundary.Width || start.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(start), start, "Start exceeds grid boundary.");
 
-			if (food.X > boundary.X || food.Y > boundary.Y)
+			if (food.X > boundary.Width || food.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(food), food, "Food exceeds grid boundary.");
 
 			var current = start;
@@ -321,14 +318,14 @@ namespace Eater
 			return red == null ? null : FromGenomeHash(red);
 		}
 
-		static readonly string TURN_LEFT_4 = new String(TURN_LEFT, 4);
-		static readonly string TURN_RIGHT_4 = new String(TURN_RIGHT, 4);
+		static readonly string TURN_LEFT_4 = new string(TURN_LEFT, 4);
+		static readonly string TURN_RIGHT_4 = new string(TURN_RIGHT, 4);
 
-		static readonly string TURN_LEFT_3 = new String(TURN_LEFT, 3);
-		static readonly string TURN_RIGHT_3 = new String(TURN_RIGHT, 3);
+		static readonly string TURN_LEFT_3 = new string(TURN_LEFT, 3);
+		static readonly string TURN_RIGHT_3 = new string(TURN_RIGHT, 3);
 
-		static readonly string TURN_LEFT_RIGHT = String.Empty + TURN_LEFT + TURN_RIGHT;
-		static readonly string TURN_RIGHT_LEFT = String.Empty + TURN_RIGHT + TURN_LEFT;
+		static readonly string TURN_LEFT_RIGHT = string.Empty + TURN_LEFT + TURN_RIGHT;
+		static readonly string TURN_RIGHT_LEFT = string.Empty + TURN_RIGHT + TURN_LEFT;
 
 		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + TURN_LEFT + TURN_RIGHT + "]+$");
 
@@ -340,17 +337,17 @@ namespace Eater
 			do
 			{
 				outerReduced = reduced;
-				reduced = ENDING_TURNS_REGEX.Replace(reduced, String.Empty); // Turns at the end are superfluous.
+				reduced = ENDING_TURNS_REGEX.Replace(reduced, string.Empty); // Turns at the end are superfluous.
 				var reducedLoop = reduced;
 
 				do
 				{
 					reduced = reducedLoop;
-					reducedLoop = reducedLoop.Replace(TURN_LEFT_4, String.Empty);
-					reducedLoop = reducedLoop.Replace(TURN_RIGHT_4, String.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_LEFT_4, string.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_RIGHT_4, string.Empty);
 
-					reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, String.Empty);
-					reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, String.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, string.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, string.Empty);
 
 				}
 				while (reduced != reducedLoop);
@@ -358,11 +355,11 @@ namespace Eater
 				do
 				{
 					reduced = reducedLoop;
-					reducedLoop = reducedLoop.Replace(TURN_LEFT_3, String.Empty + TURN_RIGHT);
-					reducedLoop = reducedLoop.Replace(TURN_RIGHT_3, String.Empty + TURN_LEFT);
+					reducedLoop = reducedLoop.Replace(TURN_LEFT_3, string.Empty + TURN_RIGHT);
+					reducedLoop = reducedLoop.Replace(TURN_RIGHT_3, string.Empty + TURN_LEFT);
 
-					reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, String.Empty);
-					reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, String.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, string.Empty);
+					reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, string.Empty);
 
 				}
 				while (reduced != reducedLoop);
@@ -388,7 +385,7 @@ namespace Eater
 						if (!pointToPoint || !moved)
 							yield return current;
 
-						current = current.Forward(current, orientation);
+						current = current.Forward(orientation);
 						moved = true;
 						break;
 
@@ -409,10 +406,7 @@ namespace Eater
 		}
 
 		public static IEnumerable<Point> InvertY(this IEnumerable<Point> points)
-		{
-			foreach (var p in points)
-				yield return new Point(p.X, -p.Y);
-		}
+			=> points.Select(p => new Point(p.X, -p.Y));
 
 		public static void Fill(this Bitmap target, Color color)
 		{
@@ -425,7 +419,7 @@ namespace Eater
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
 			var points = steps.Draw().InvertY().ToArray();
 			var length = points.Length;
-			var maxPenBrightness = 160d;
+			const double maxPenBrightness = 160d;
 			var colorStep = maxPenBrightness / length;
 
 			var pointsX = points.Select(p => p.X).ToArray();
@@ -496,7 +490,7 @@ namespace Eater
 			if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
 			var points = steps.Draw(true).InvertY().ToArray();
 			var length = points.Length;
-			var maxPenBrightness = 160d;
+			const double maxPenBrightness = 160d;
 			var colorStep = maxPenBrightness / length;
 
 			var pointsX = points.Select(p => p.X).ToArray();

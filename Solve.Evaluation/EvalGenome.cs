@@ -10,7 +10,7 @@ namespace Solve.Evaluation
 
 	public class EvalGenome : GenomeBase, IHaveRoot<IGene>
 	{
-		public EvalGenome(IGene root) : base()
+		public EvalGenome(IGene root)
 		{
 			SetRoot(root);
 		}

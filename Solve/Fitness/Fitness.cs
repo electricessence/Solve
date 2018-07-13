@@ -4,11 +4,14 @@ using Open.Numeric.Precision;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 
 namespace Solve
 {
 	[DebuggerDisplay("{this.ToString()}")]
+	[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 	public class Fitness : IComparable<Fitness>
 	{
 
@@ -85,9 +88,9 @@ namespace Solve
 		{
 			var c = _results?.Count ?? 0;
 			if (c == 0) return base.ToString();
-			var sb = MetricAverages.Select(mv => String.Format(mv.Metric.Format, mv.Value)).ToStringBuilder(", ");
+			var sb = MetricAverages.Select(mv => string.Format(mv.Metric.Format, mv.Value)).ToStringBuilder(", ");
 			if (c == 1)
-				sb.AppendFormat(" (1 sample)", c);
+				sb.Append(" (1 sample)");
 			else
 				sb.AppendFormat(" ({0:n0} samples)", c);
 			return sb.ToString();
@@ -106,7 +109,7 @@ namespace Solve
 			if (other.Results == null)
 				return +1;
 			var v = MemoryComparer.Double.Compare(Results.Average, other.Results.Average);
-			return v == 0 ? this.SampleCount.CompareTo(other.SampleCount) : v;
+			return v == 0 ? SampleCount.CompareTo(other.SampleCount) : v;
 		}
 
 		public bool HasConverged(uint minSamples = 100, double convergence = 1, double tolerance = 0)
@@ -120,7 +123,8 @@ namespace Solve
 				var s = ave[i];
 				if (s > convergence + double.Epsilon)
 					throw new Exception("Score has exceeded convergence value: " + s);
-				if (s.IsNearEqual(convergence, 0.0000001) && s.ToString() == convergence.ToString())
+				if (s.IsNearEqual(convergence, 0.0000001)
+					&& s.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
 					continue;
 				if (s < convergence - tolerance)
 					return false;
