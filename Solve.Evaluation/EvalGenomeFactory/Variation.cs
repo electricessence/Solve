@@ -49,7 +49,7 @@ namespace Solve.Evaluation
 
 			for (i = 0; i < count; i++)
 			{
-				yield return VariationCatalog.PromoteChildren(source, i);
+				yield return Catalog.Variation.PromoteChildren(descendantNodes[i]);
 
 				// Let mutation take care of this...
 				// foreach (var fn in Operators.Available.Functions)
@@ -68,6 +68,7 @@ namespace Solve.Evaluation
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 			=> GetVariations(source.Root)
+				.Where(v => v != null)
 				.Distinct()
 				.Select(Create)
 				.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<TGenome>());

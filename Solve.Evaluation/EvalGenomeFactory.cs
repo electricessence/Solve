@@ -53,7 +53,7 @@ namespace Solve.Evaluation
 				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
 				foreach (var op in EvaluationRegistry.Arithmetic.Operators)
 				{
-					yield return Registration(Catalog.GetOperator<double>(op, children));
+					yield return Registration(Catalog.GetOperator(op, children));
 				}
 			}
 		}
