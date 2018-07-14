@@ -1,4 +1,4 @@
-﻿using BlackBoxFunction;
+﻿using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
@@ -17,7 +17,7 @@ namespace Solve.Evaluation
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private TGenome MutateUnfrozen(TGenome target)
+		private IGene MutateUnfrozen(TGenome target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -41,60 +41,61 @@ namespace Solve.Evaluation
 						switch (RandomUtilities.Random.Next(4))
 						{
 							case 0:
-								return VariationCatalog
-									.ApplyFunction(target, gene, Operators.GetRandomFunction());
+								return Catalog.Variation
+									.ApplyFunction(gene, Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne());
 							case 1:
-								return MutationCatalog
-									.MutateSign(target, gene, 1);
+								return Catalog.Mutation
+									.MutateSign(gene, 1);
 							default:
-								return VariationCatalog
-									.RemoveGene(target, gene);
+								return Catalog.RemoveNode(gene).Value;
 						}
 
 					case Parameter _:
-						var options = Enumerable.Range(0, 5).ToList();
-						while (options.Any())
 						{
-							switch (options.RandomPluck())
+							var options = Enumerable.Range(0, 5).ToList();
+							while (options.Any())
 							{
-								case 0:
-									return MutationCatalog
-										.MutateSign(target, gene, 1);
+								switch (options.RandomPluck())
+								{
+									case 0:
+										return Catalog.Mutation
+											.MutateSign(gene, 1);
 
-								// Simply change parameters
-								case 1:
-									return MutationCatalog
-										.MutateParameter(target, (Parameter)gene);
+									// Simply change parameters
+									case 1:
+										return Catalog.Mutation
+											.MutateParameter(target, (Parameter)gene);
 
-								// Apply a function
-								case 2:
-									// Reduce the pollution of functions...
-									if (RandomUtilities.Random.Next(0, 2) == 0)
-									{
-										return VariationCatalog
-											.ApplyFunction(target, gene, Operators.GetRandomFunction());
-									}
-									break;
+									// Apply a function
+									case 2:
+										// Reduce the pollution of functions...
+										if (RandomUtilities.Random.Next(0, 2) == 0)
+										{
+											return Catalog.Variation
+												.ApplyFunction(gene, Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne());
+										}
 
-								// Split it...
-								case 3:
-									if (RandomUtilities.Random.Next(0, 3) == 0)
-									{
-										return MutationCatalog
-											.Square(target, gene);
-									}
-									break;
+										break;
 
-								// Remove it!
-								default:
-									var attempt = VariationCatalog.RemoveGene(target, gene);
-									if (attempt != null)
-										return attempt;
-									break;
+									// Split it...
+									case 3:
+										if (RandomUtilities.Random.Next(0, 3) == 0)
+										{
+											return Catalog.Mutation
+												.Square(target, gene);
+										}
 
+										break;
+
+									// Remove it!
+									default:
+										if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
+											return attempt;
+										break;
+
+								}
 							}
 						}
-
 						break;
 					default:
 						if (gene.Value is IOperator opGene)
@@ -102,49 +103,46 @@ namespace Solve.Evaluation
 							var options = Enumerable.Range(0, 8).ToList();
 							while (options.Any())
 							{
-								EvalGenome ng = null;
+								IGene ng = null;
 								switch (options.RandomPluck())
 								{
 									case 0:
-										ng = MutationCatalog
-											.MutateSign(target, gene, 1);
+										ng = Catalog.Mutation.MutateSign(gene, 1);
 										break;
 
 									case 1:
-										ng = VariationCatalog
-											.PromoteChildren(target, gene);
+										ng = Catalog.Variation.PromoteChildren(gene);
 										break;
 
 									case 2:
-										ng = MutationCatalog
-											.ChangeOperation(target, opGene);
+										ng = Catalog.Mutation.ChangeOperation(target, opGene);
 										break;
 
 									// Apply a function
 									case 3:
 										// Reduce the pollution of functions...
-										if (RandomUtilities.Random.Next(0, gene is IFunction ? 4 : 2) == 0)
+										if (RandomUtilities.Random.Next(0, gv is IFunction ? 4 : 2) == 0)
 										{
-											var f = Operators.GetRandomFunction();
+											var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
 											// Function of function? Reduce probability even further. Coin toss.
 											if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-												return VariationCatalog
-													.ApplyFunction(target, gene, f);
+												return Catalog.Variation
+													.ApplyFunction(gene, f);
 
 										}
 										break;
 
 									case 4:
-										ng = VariationCatalog.RemoveGene(target, gene);
+										Catalog.Variation.TryRemoveValid(gene, out ng);
 										break;
 
 									case 5:
-										ng = MutationCatalog
+										ng = Catalog.Mutation
 											.AddParameter(target, opGene);
 										break;
 
 									case 6:
-										ng = MutationCatalog
+										ng = Catalog.Mutation
 											.BranchOperation(target, opGene);
 										break;
 
@@ -152,7 +150,7 @@ namespace Solve.Evaluation
 										// This has a potential to really bloat the function so allow, but very sparingly.
 										if (RandomUtilities.Random.Next(0, 3) == 0)
 										{
-											return MutationCatalog
+											return Catalog.Mutation
 												.Square(target, gene);
 										}
 										break;
@@ -161,9 +159,6 @@ namespace Solve.Evaluation
 								if (ng != null)
 									return ng;
 							}
-
-
-
 						}
 
 						break;
