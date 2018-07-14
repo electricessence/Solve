@@ -39,16 +39,18 @@ namespace Solve.Evaluation
 				{
 					// Do the swap...
 					var bg = others.RandomSelectOne();
+					var bgParent = bg.Parent;
 
 					var placeholder = Catalog.Factory.GetBlankNode();
-					bg.Parent.Replace(bg, placeholder);
+					bgParent.Replace(bg, placeholder);
 					ag.Parent.Replace(ag, bg);
-					Catalog.Factory.Recycle(placeholder);
+					bgParent.Replace(placeholder, ag);
+					placeholder.Recycle();
 
 					return new[]
 					{
-						Registration(Catalog.FixHierarchy(aRoot).Value),
-						Registration(Catalog.FixHierarchy(bRoot).Value)
+						Registration(Catalog.FixHierarchy(aRoot).Recycle()),
+						Registration(Catalog.FixHierarchy(bRoot).Recycle())
 					};
 				}
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();

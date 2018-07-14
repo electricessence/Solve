@@ -64,7 +64,7 @@ namespace Solve.Evaluation
 									// Simply change parameters
 									case 1:
 										return Catalog.Mutation
-											.MutateParameter(target, (Parameter)gene);
+											.MutateParameter(gene);
 
 									// Apply a function
 									case 2:
@@ -82,7 +82,7 @@ namespace Solve.Evaluation
 										if (RandomUtilities.Random.Next(0, 3) == 0)
 										{
 											return Catalog.Mutation
-												.Square(target, gene);
+												.Square(gene);
 										}
 
 										break;
@@ -151,7 +151,7 @@ namespace Solve.Evaluation
 										if (RandomUtilities.Random.Next(0, 3) == 0)
 										{
 											return Catalog.Mutation
-												.Square(target, gene);
+												.Square(gene);
 										}
 										break;
 								}
