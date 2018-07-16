@@ -19,6 +19,9 @@ namespace Solve.Evaluation
 		where TGenome : EvalGenome
 
 	{
+		public EvalGenomeFactory(IEnumerable<TGenome> seeds = null) : base(seeds)
+		{ }
+
 		readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
 
 		#region ParamOnly
