@@ -12,7 +12,7 @@ namespace Solve
 		bool IsReducible { get; }
 	}
 
-	public interface IReducible<T> : IReducible
+	public interface IReducible<out T> : IReducible
 	{
 		new T AsReduced(bool ensureClone = false);
 	}

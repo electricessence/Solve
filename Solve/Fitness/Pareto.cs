@@ -62,7 +62,7 @@ namespace Solve
 		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ReadOnlyMemory<double> Score)> values)
 		{
 			var len = score.Length;
-			foreach (var (Value, Score) in values)
+			foreach (var (_, Score) in values)
 			{
 				Debug.Assert(Score.Length == len);
 				var os = Score.Span;

@@ -25,7 +25,7 @@ namespace Solve.Experiment.Console
 					System.Console.ForegroundColor = ConsoleColor.Red;
 					System.Console.WriteLine(ex.ToString());
 					System.Console.ResetColor();
-					throw ex;
+					throw;
 				}
 				message = new CursorRange(start, Cursor.Current);
 			}
@@ -72,7 +72,7 @@ namespace Solve.Experiment.Console
 					System.Console.ForegroundColor = ConsoleColor.Red;
 					System.Console.WriteLine(ex.ToString());
 					System.Console.ResetColor();
-					throw ex;
+					throw;
 				}
 				message = new CursorRange(in start, Cursor.Current);
 

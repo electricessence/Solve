@@ -7,7 +7,7 @@ namespace Solve
 	public abstract class FreezableBase : IFreezable
 	{
 
-		int _frozenState = 0;
+		int _frozenState;
 		public bool IsFrozen => _frozenState == 1;
 
 		// It's concevable that mutliple threads could 're-attempt' to freeze a object 'in the wild'.
