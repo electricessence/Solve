@@ -3,7 +3,6 @@ using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BlackBoxFunction
