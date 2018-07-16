@@ -42,7 +42,7 @@ namespace Solve.Evaluation
 						{
 							case 0:
 								return Catalog.Variation
-									.ApplyFunction(gene, Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne());
+									.ApplyRandomFunction(gene);
 							case 1:
 								return Catalog.Mutation
 									.MutateSign(gene, 1);
@@ -72,7 +72,7 @@ namespace Solve.Evaluation
 										if (RandomUtilities.Random.Next(0, 2) == 0)
 										{
 											return Catalog.Variation
-												.ApplyFunction(gene, Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne());
+												.ApplyRandomFunction(gene);
 										}
 
 										break;
@@ -98,7 +98,7 @@ namespace Solve.Evaluation
 						}
 						break;
 					default:
-						if (gene.Value is IOperator opGene)
+						if (gv is IFunction)
 						{
 							var options = Enumerable.Range(0, 8).ToList();
 							while (options.Any())
@@ -106,28 +106,39 @@ namespace Solve.Evaluation
 								IGene ng = null;
 								switch (options.RandomPluck())
 								{
-									case 0:
+									case 0 when gv is IOperator:
 										ng = Catalog.Mutation.MutateSign(gene, 1);
 										break;
 
-									case 1:
+									case 1 when gv is IOperator:
 										ng = Catalog.Variation.PromoteChildren(gene);
 										break;
 
-									case 2:
-										ng = Catalog.Mutation.ChangeOperation(target, opGene);
+									case 2 when gv is IOperator:
+										ng = Catalog.Mutation.ChangeOperation(gene);
 										break;
 
-									// Apply a function
+									//// Apply a function
+									//case 3 when gv is IOperator:
+									//	if (RandomUtilities.Random.Next(0, 2) == 0)
+									//	{
+									//		var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
+									//		// Function of function? Reduce probability even further. Coin toss.
+									//		if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
+									//			return Catalog.Variation
+									//				.ApplyFunction(gene, f);
+
+									//	}
+									//	break;
+
 									case 3:
 										// Reduce the pollution of functions...
-										if (RandomUtilities.Random.Next(0, gv is IFunction ? 4 : 2) == 0)
+										if (RandomUtilities.Random.Next(0, gv is IOperator ? 2 : 4) == 0)
 										{
-											var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
-											// Function of function? Reduce probability even further. Coin toss.
-											if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-												return Catalog.Variation
-													.ApplyFunction(gene, f);
+											//var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
+											//// Function of function? Reduce probability even further. Coin toss.
+											//if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
+											return Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
 
 										}
 										break;
@@ -138,12 +149,12 @@ namespace Solve.Evaluation
 
 									case 5:
 										ng = Catalog.Mutation
-											.AddParameter(target, opGene);
+											.AddParameter(gene);
 										break;
 
 									case 6:
 										ng = Catalog.Mutation
-											.BranchOperation(target, opGene);
+											.BranchOperation(gene);
 										break;
 
 									case 7:
