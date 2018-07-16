@@ -26,7 +26,7 @@ namespace Solve.Evaluation
 			var paramRemoved = sourceTree;
 			while (true)
 			{
-				paramRemoved = Catalog.Factory.Clone(paramRemoved);
+				paramRemoved = paramRemoved.Clone();
 				//var root = paramRemoved.Root;
 				var paramGroups = paramRemoved.GetDescendantsOfType()
 					.Where(n => n.Value is IParameter<double>)
