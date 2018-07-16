@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Solve
 {
+	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 	public struct Metric
 	{
 		public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity)

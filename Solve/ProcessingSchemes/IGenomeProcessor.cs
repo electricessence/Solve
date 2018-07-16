@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
-	public interface IGenomeProcessor<TGenome>
+	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
+	public interface IGenomeProcessor<in TGenome>
 		where TGenome : class, IGenome
 	{
 		void Post(TGenome genome);

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
+	// ReSharper disable once PossibleInfiniteInheritance
 	public abstract class SynchronousProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
@@ -48,7 +49,7 @@ namespace Solve.ProcessingSchemes
 					break;
 
 				while (!FactoryBuffer.Writer.TryWrite(genome))
-					await FactoryBuffer.Writer.WaitToWriteAsync().ConfigureAwait(false);
+					await FactoryBuffer.Writer.WaitToWriteAsync(token).ConfigureAwait(false);
 			}
 
 			FactoryBuffer.Writer.Complete();
@@ -56,10 +57,8 @@ namespace Solve.ProcessingSchemes
 
 		async Task PostFromBufferSingle()
 		{
-			TGenome genome;
-
 			retry:
-			if (!FactoryBuffer.Reader.TryRead(out genome))
+			if (!FactoryBuffer.Reader.TryRead(out var genome))
 				genome = Factory.Next();
 
 			if (genome == null) return;

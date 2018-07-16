@@ -14,8 +14,8 @@ namespace Solve.Experiment.Console
 			Top = top;
 		}
 
-		public int Left;
-		public int Top;
+		public readonly int Left;
+		public readonly int Top;
 
 		public static Cursor Current
 		{

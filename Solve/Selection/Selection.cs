@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -8,6 +9,7 @@ namespace Solve
 	/// <summary>
 	/// Provides a means for selecting and rejecting entries by chosing a mid point in thier population assuming that the selected ones are first and the rejected ones are last.
 	/// </summary>
+	[SuppressMessage("ReSharper", "NotAccessedField.Global")]
 	public struct Selection<T>
 	{
 		public readonly T[] All;

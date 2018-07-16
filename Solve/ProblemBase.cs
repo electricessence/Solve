@@ -102,6 +102,7 @@ namespace Solve
 			return Pools.Select(p => p.Transform(g, metrics));
 		}
 
+		// ReSharper disable once VirtualMemberNeverOverridden.Global
 		protected virtual Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
 			=> Task.Run(() => ProcessSampleMetrics(g, sampleId));
 

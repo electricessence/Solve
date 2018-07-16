@@ -6,9 +6,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Solve
 {
+	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
 	public interface IGenomeFactory<TGenome> : IEnumerable<TGenome>
 	 where TGenome : class, IGenome
 	{

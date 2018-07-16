@@ -2,24 +2,28 @@
 using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console
 {
+	[SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 	public abstract class RunnerBase<TGenome>
 		where TGenome : class, IGenome
 
 	{
 		IMetricsRoot Metrics;
-		readonly static TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
+		// ReSharper disable once StaticMemberInGenericType
+		static readonly TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
 
+		// ReSharper disable once NotAccessedField.Local
 		readonly ushort _minConvergenceSamples;
 		readonly Stopwatch _stopwatch;
 		EnvironmentBase<TGenome> Environment;
 		ConsoleEmitterBase<TGenome> Emitter;
-		CursorRange _lastConsoleStats = null;
+		CursorRange _lastConsoleStats;
 
 		protected RunnerBase(ushort minConvergenceSamples = 20)
 		{
@@ -28,6 +32,7 @@ namespace Solve.Experiment.Console
 			_statusEmitter = new ActionRunner(EmitStatsAction);
 		}
 
+		// ReSharper disable once VirtualMemberNeverOverridden.Global
 		public virtual void Init(
 			EnvironmentBase<TGenome> environment,
 			ConsoleEmitterBase<TGenome> emitter,
@@ -45,7 +50,7 @@ namespace Solve.Experiment.Console
 		void EmitStatsAction() => EmitStatsAction(true);
 		void EmitStatsAction(in bool restartEmitter)
 		{
-			_lastEmit = DateTime.Now;
+			//_lastEmit = DateTime.Now;
 			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
 			if (restartEmitter)
 				_statusEmitter.Defer(StatusDelay);
@@ -55,7 +60,7 @@ namespace Solve.Experiment.Console
 
 		readonly ActionRunner _statusEmitter;
 
-		DateTime _lastEmit = DateTime.MinValue;
+		//DateTime _lastEmit = DateTime.MinValue;
 
 		//protected void OnAnnouncement((IProblem<TGenome> Problem, IGenomeFitness<TGenome> GenomeFitness) announcement)
 		//{
@@ -66,6 +71,7 @@ namespace Solve.Experiment.Console
 		//	}
 		//}
 
+		// ReSharper disable once MemberCanBeProtected.Global
 		public async Task Start(string info)
 		{
 			SystemConsole.ResetColor();
@@ -90,7 +96,9 @@ namespace Solve.Experiment.Console
 					});
 
 			_stopwatch.Start();
-			var c = _statusEmitter.Defer(StatusDelay);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+			_statusEmitter.Defer(StatusDelay).ConfigureAwait(false);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 			await Environment.Start();
 			cancel.Cancel();
@@ -122,7 +130,7 @@ namespace Solve.Experiment.Console
 			if (Metrics == null) return;
 			var snapshot = Metrics.Snapshot.Get();
 			Debug.WriteLine("\n==============================================================");
-			Debug.WriteLine($"Timestamp:");
+			Debug.WriteLine("Timestamp:");
 			Debug.WriteLine(snapshot.Timestamp);
 			Debug.WriteLine("--------------------------------------------------------------");
 

@@ -1,5 +1,4 @@
-﻿using Solve.Debugging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -15,15 +14,12 @@ namespace Solve.ProcessingSchemes
 		const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;
 		const ushort DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION = DEFAULT_MAX_LEVEL_LOSSES * 30;
 
-		internal readonly CounterCollection Counters;
-
 		public TowerProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			CounterCollection counters = null)
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
 			: base(genomeFactory)
 		{
 			if (poolSize.Minimum < 2)
@@ -42,7 +38,6 @@ namespace Solve.ProcessingSchemes
 			MaxLevels = maxLevels;
 			MaxLevelLosses = maxLevelLosses;
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
-			Counters = counters;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
 			this.Subscribe(e => Factory[0].EnqueueChampion(e.GenomeFitness.Genome));
@@ -53,9 +48,8 @@ namespace Solve.ProcessingSchemes
 			ushort poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
-			in CounterCollection counters = null)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination, counters) { }
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
+			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;

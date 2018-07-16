@@ -85,6 +85,7 @@ namespace Solve
 
 		protected abstract Task StartInternal(CancellationToken token);
 
+		// ReSharper disable once VirtualMemberNeverOverridden.Global
 		protected virtual void OnCancelled() { }
 
 		public void Cancel()

@@ -13,7 +13,7 @@ namespace Solve
 		}
 
 		public FitnessInterlocked(in IReadOnlyList<Metric> metrics, ProcedureResults results)
-			: base(metrics)
+			: base(metrics, results)
 		{
 		}
 
