@@ -14,6 +14,16 @@ namespace BlackBoxFunction
 
 	public class Problem : ProblemBase<EvalGenome>
 	{
+		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
+		{
+			new Metric(0, "Correlation", "Correlation {0:p}", 1),
+			new Metric(0, "Divergence", "Divergence {0:p}", 1),
+			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
+		}.AsReadOnly();
+
+		protected static Fitness Fitness01(EvalGenome genome, double[] metrics)
+			=> new Fitness(Metrics01, metrics[0], -metrics[1]+1, -genome.GeneCount);
+
 		public readonly SampleCache Samples;
 
 		public Problem(Formula actualFormula,
@@ -64,7 +74,7 @@ namespace BlackBoxFunction
 				// #endif
 				if (!double.IsNaN(correctValue) && double.IsNaN(result)) NaNcount++;
 				calc[i] = result;
-				divergence[i] = -Math.Abs(result - correctValue) * 10; // Averages can get too small.
+				divergence[i] = Math.Abs(result - correctValue) * 10; // Averages can get too small.
 			}
 
 			if (NaNcount != 0)
@@ -83,7 +93,7 @@ namespace BlackBoxFunction
 				if (c > 1) c = 1; // Must clamp double precision insanity.
 				else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 													 //if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
-				var d = divergence.Where(v => !double.IsNaN(v)).Average() + 1;
+				var d = divergence.Where(v => !double.IsNaN(v)).Average();
 
 				return new[] {
 					(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
@@ -91,6 +101,12 @@ namespace BlackBoxFunction
 				};
 			}
 		}
+
+		public static Problem Create(
+			Formula actualFormula,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01));
 
 	}
 
