@@ -3,10 +3,12 @@ using Open.Numeric;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace BlackBoxFunction
 {
+	[SuppressMessage("ReSharper", "IteratorNeverReturns")]
 	public sealed class SampleCache
 	{
 		public sealed class Entry
@@ -14,7 +16,7 @@ namespace BlackBoxFunction
 			public readonly IReadOnlyList<double> ParamValues;
 			public readonly Lazy<double> Correct;
 
-			public Entry(in LazyList<double> paramValues, Formula f)
+			public Entry(IReadOnlyList<double> paramValues, Formula f)
 			{
 				ParamValues = paramValues;
 				Correct = Lazy.Create(() => f(ParamValues));
@@ -26,7 +28,7 @@ namespace BlackBoxFunction
 
 		public readonly double Range;
 
-		public SampleCache(in Formula actualFormula, in double range = 100)
+		public SampleCache(Formula actualFormula, double range = 100)
 		{
 			Range = range;
 			_actualFormula = actualFormula;
@@ -35,13 +37,12 @@ namespace BlackBoxFunction
 
 		public IEnumerable<Entry> Generate()
 		{
-			while (true) yield return new Entry(Samples().Distinct().Memoize(true), _actualFormula);
+			while (true)
+				yield return new Entry(Samples().Distinct().Memoize(true), _actualFormula);
 		}
 
-		public LazyList<Entry> Get(in long id)
-		{
-			return _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
-		}
+		public LazyList<Entry> Get(long id)
+			=> _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
 
 		IEnumerable<double> Samples()
 		{

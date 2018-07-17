@@ -15,6 +15,7 @@ namespace Solve.Evaluation
 	using EvaluationRegistry = Registry;
 	using IGene = IEvaluate<double>;
 
+	// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 	public partial class EvalGenomeFactory<TGenome> : ReducibleGenomeFactoryBase<TGenome>
 		where TGenome : EvalGenome
 
