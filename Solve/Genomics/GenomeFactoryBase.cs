@@ -97,6 +97,7 @@ namespace Solve
 			return added;
 		}
 
+		// ReSharper disable once UnusedMethodReturnValue.Global
 		protected bool Register(TGenome genome, out TGenome actual, Action<TGenome> onBeforeAdd = null)
 		{
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
@@ -185,6 +186,7 @@ namespace Solve
 				}
 
 				potentiallyNew = Registration(GenerateOneInternal());
+				//Debug.WriteLine("Potentially New: " + potentiallyNew?.Hash);
 			}
 
 			Debug.Assert(potentiallyNew != null, "Converged? No solutions? Saturated?");
@@ -483,24 +485,22 @@ namespace Solve
 				return GenerateOne();
 #if DEBUG
 			}
-			var n = next();
-			if (n != null)
-			{
-				var h = n.Hash;
-				var added = Released.TryAdd(h, n);
-				if (!added)
-				{
-					var actual = Released[h];
-					if (actual == n)
-					{
-						Debug.Assert(added, "This factory is releasing the same genome twice. Generated: " + generated, n.StackTrace);
-					}
-					else
-					{
-						Debug.Assert(added, $"This factory is producing a duplicate genome. {h}", $"This Instance:\n{actual.StackTrace}\nOriginal Instance:\n{n.StackTrace}");
-					}
 
-				}
+			var n = next();
+			if (n == null) return null;
+
+			var h = n.Hash;
+			var added = Released.TryAdd(h, n);
+			if (added) return n;
+
+			var actual = Released[h];
+			if (actual == n)
+			{
+				Debug.Assert(added, "This factory is releasing the same genome twice. Generated: " + generated, n.StackTrace);
+			}
+			else
+			{
+				Debug.Assert(added, $"This factory is producing a duplicate genome. {h}", $"This Instance:\n{actual.StackTrace}\nOriginal Instance:\n{n.StackTrace}");
 			}
 
 			return n;
@@ -886,12 +886,10 @@ namespace Solve
 				while (AwaitingVariation.TryDequeue(out var vGenome))
 				{
 					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
-					if (AttemptEnqueueVariation(vGenome))
-					{
-						// Taken one off, now put it back.
-						EnqueueForVariation(vGenome);
-						return true;
-					}
+					if (!AttemptEnqueueVariation(vGenome)) continue;
+					// Taken one off, now put it back.
+					EnqueueForVariation(vGenome);
+					return true;
 				}
 				return false;
 			}
@@ -923,11 +921,9 @@ namespace Solve
 
 				do
 				{
-					if (InternalQueue.TryDequeue(out genome))
-					{
-						Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
-						return true;
-					}
+					if (!InternalQueue.TryDequeue(out genome)) continue;
+					Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
+					return true;
 				}
 				// Next check for high priority items..
 				while (ProducerTriggers.Any(t => t()));

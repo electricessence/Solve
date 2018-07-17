@@ -55,7 +55,7 @@ namespace BlackBoxFunction
 
 			var emitter = new EvalConsoleEmitter(_minSamples);
 			var factory = new EvalGenomeFactory<EvalGenome>();
-			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (800, 40, 2));
+			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (100, 40, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2));
 
 			Init(scheme, emitter, factory.Metrics);
@@ -63,7 +63,7 @@ namespace BlackBoxFunction
 
 		static Task Main()
 		{
-			var runner = new Runner(20);
+			var runner = new Runner(1);
 			runner.Init();
 			var message = string.Format(
 				"Solving Black-Box Problem... (minimum {0:n0} samples before displaying)",

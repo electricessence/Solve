@@ -83,7 +83,7 @@ namespace BlackBoxFunction
 					NaNcount == SampleSizeInt // All NaN basically = fail.  Don't waste time trying to correlate.
 						? double.NegativeInfinity
 						: -2,
-					double.NegativeInfinity
+					double.PositiveInfinity
 				};
 			}
 			else
@@ -96,7 +96,7 @@ namespace BlackBoxFunction
 
 				return new[] {
 					(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
-					(double.IsNaN(d) || double.IsInfinity(d)) ? double.NegativeInfinity : d
+					(double.IsNaN(d) || double.IsInfinity(d)) ? double.PositiveInfinity : d
 				};
 			}
 		}
