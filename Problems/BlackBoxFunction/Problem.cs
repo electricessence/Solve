@@ -22,7 +22,7 @@ namespace BlackBoxFunction
 		}.AsReadOnly();
 
 		protected static Fitness Fitness01(EvalGenome genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], -metrics[1]+1, -genome.GeneCount);
+			=> new Fitness(Metrics01, metrics[0], -metrics[1] + 1, -genome.GeneCount);
 
 		public readonly SampleCache Samples;
 
@@ -32,23 +32,22 @@ namespace BlackBoxFunction
 			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
-			Samples = new SampleCache(in actualFormula);
+			Samples = new SampleCache(actualFormula);
 		}
 
 		protected override double[] ProcessSampleMetrics(EvalGenome g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
-			var len = 10;
-			var correct = new double[len];
-			var divergence = new double[len];
-			var calc = new double[len];
+			var correct = new double[SampleSizeInt];
+			var divergence = new double[SampleSizeInt];
+			var calc = new double[SampleSizeInt];
 			var NaNcount = 0;
 
 			// #if DEBUG
 			// 			var gRed = g.AsReduced();
 			// #endif
 
-			for (var i = 0; i < len; i++)
+			for (var i = 0; i < SampleSizeInt; i++)
 			{
 				var sample = samples[i];
 				var s = sample.ParamValues;
@@ -81,7 +80,7 @@ namespace BlackBoxFunction
 			{
 				// We do not yet handle NaN values gracefully yet so avoid correlation.
 				return new[] {
-					NaNcount == len // All NaN basically = fail.  Don't waste time trying to correlate.
+					NaNcount == SampleSizeInt // All NaN basically = fail.  Don't waste time trying to correlate.
 						? double.NegativeInfinity
 						: -2,
 					double.NegativeInfinity

@@ -76,6 +76,7 @@ namespace Solve
 		// ReSharper disable once MemberCanBeProtected.Global
 		// ReSharper disable once NotAccessedField.Global
 		public readonly ushort SampleSize;
+		protected readonly int SampleSizeInt;
 
 		protected ProblemBase(
 			IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
@@ -83,6 +84,7 @@ namespace Solve
 			ushort championPoolSize)
 		{
 			SampleSize = sampleSize;
+			SampleSizeInt = sampleSize;
 			var c = championPoolSize;
 			Pools = fitnessTransators?.Select(t => new Pool(c, t.Metrics, t.Transform)).ToList().AsReadOnly()
 				?? throw new ArgumentNullException(nameof(fitnessTransators));

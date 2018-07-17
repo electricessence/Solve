@@ -3,11 +3,13 @@ using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace BlackBoxFunction
 {
-	class Runner : RunnerBase<EvalGenome>
+	[SuppressMessage("ReSharper", "UnusedMember.Local")]
+	internal class Runner : RunnerBase<EvalGenome>
 	{
 
 		static double AB(IReadOnlyList<double> p)
@@ -47,8 +49,8 @@ namespace BlackBoxFunction
 			_minSamples = minSamples;
 			//_minConvSamples = minConvSamples;
 		}
-		
-		public void Init(bool startWithIdealSeed = false)
+
+		public void Init()
 		{
 
 			var emitter = new EvalConsoleEmitter(_minSamples);
