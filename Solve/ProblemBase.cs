@@ -74,6 +74,7 @@ namespace Solve
 		public long TestCount => _testCount;
 
 		// ReSharper disable once MemberCanBeProtected.Global
+		// ReSharper disable once NotAccessedField.Global
 		public readonly ushort SampleSize;
 
 		protected ProblemBase(

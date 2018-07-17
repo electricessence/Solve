@@ -65,6 +65,7 @@ namespace Solve.Experiment.Console
 			return true;
 		}
 
+		// ReSharper disable once UnusedParameter.Global
 		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
 
