@@ -105,7 +105,7 @@ namespace Solve.Evaluation
 						// Try a param only version first.
 						genome = GenerateParamOnly(paramCount);
 						attempts++;
-						if (RegisterProduction(genome)) // May be supurfulous.
+						if (!AlreadyProduced(genome))
 							return genome;
 					}
 
@@ -119,7 +119,7 @@ namespace Solve.Evaluation
 						genome = operated.Current;
 						Debug.Assert(genome != null);
 						attempts++;
-						if (RegisterProduction(genome)) // May be supurfulous.
+						if (!AlreadyProduced(genome)) // May be supurfulous.
 							return genome;
 					}
 
@@ -131,7 +131,7 @@ namespace Solve.Evaluation
 						genome = functioned.Current;
 						Debug.Assert(genome != null);
 						attempts++;
-						if (RegisterProduction(genome)) // May be supurfulous.
+						if (!AlreadyProduced(genome)) // May be supurfulous.
 							return genome;
 					}
 
