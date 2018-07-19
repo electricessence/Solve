@@ -138,8 +138,9 @@ namespace Solve.Evaluation
 											//var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
 											//// Function of function? Reduce probability even further. Coin toss.
 											//if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-											return Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
-
+											var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
+											Debug.Assert(f != null);
+											return f;
 										}
 										break;
 
