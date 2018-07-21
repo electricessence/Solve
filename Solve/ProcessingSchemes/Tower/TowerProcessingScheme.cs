@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public sealed partial class TowerProcessingScheme<TGenome> : SynchronousProcessingSchemeBase<TGenome>
+	public sealed partial class TowerProcessingScheme<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;
@@ -20,7 +20,7 @@ namespace Solve.ProcessingSchemes
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(genomeFactory)
+			: base(genomeFactory/*, true*/)
 		{
 			if (poolSize.Minimum < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), "Must be at least 2.");
@@ -113,7 +113,9 @@ namespace Solve.ProcessingSchemes
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
-			return Task.WhenAll(Towers.Select(t => t.PostAsync(genome)));
+			//Debug.WriteLine($"Posting (async): {genome.Hash}", "TowerProcessingScheme");
+
+			return Task.WhenAll(Towers.Where(t => !t.Problem.HasConverged).Select(t => t.PostAsync(genome)));
 		}
 
 		protected override void Post(TGenome genome)
@@ -121,7 +123,9 @@ namespace Solve.ProcessingSchemes
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
-			foreach (var t in Towers)
+			//Debug.WriteLine($"Posting: {genome.Hash}", "TowerProcessingScheme");
+
+			foreach (var t in Towers.Where(t => !t.Problem.HasConverged))
 				t.Post(genome);
 		}
 	}

@@ -35,6 +35,9 @@ namespace Solve
 		Task<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId);
 
 		long TestCount { get; }
+
+		bool HasConverged { get; }
+		void Converged();
 	}
 
 

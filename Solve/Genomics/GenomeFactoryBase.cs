@@ -189,7 +189,7 @@ namespace Solve
 				//Debug.WriteLine("Potentially New: " + potentiallyNew?.Hash);
 			}
 
-			Debug.Assert(potentiallyNew != null, "Converged? No solutions? Saturated?");
+			Debug.WriteLineIf(potentiallyNew == null, "TryGenerateNew: Converged? No solutions? Saturated?");
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 

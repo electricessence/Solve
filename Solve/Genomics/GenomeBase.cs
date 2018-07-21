@@ -14,10 +14,8 @@ namespace Solve
 	{
 		protected GenomeBase()
 		{
-			// It's not really necessary for these to be thread safe since the answer should always be the same.
-			// Better to avoid contention all-together.
-			_hash = new Lazy<string>(GetHash, false);
-			_geneCount = new Lazy<int>(GetGeneCount, false);
+			_hash = new Lazy<string>(GetHash);
+			_geneCount = new Lazy<int>(GetGeneCount);
 		}
 
 		protected abstract string GetHash();

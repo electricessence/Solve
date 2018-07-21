@@ -50,6 +50,8 @@ namespace Solve
 				ProblemsInternal.Add(problem);
 		}
 
+		public bool HaveAllProblemsConverged => ProblemsInternal.TrueForAll(p => p.HasConverged);
+
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
 		int _state;

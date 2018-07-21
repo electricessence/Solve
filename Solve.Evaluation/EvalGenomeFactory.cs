@@ -52,12 +52,16 @@ namespace Solve.Evaluation
 				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
 					"Must have at least 2 parameter count.");
 
-			foreach (var combination in UShortRange(0, paramCount).Combinations(paramCount))
-			{
-				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
-				foreach (var op in EvaluationRegistry.Arithmetic.Operators)
-					yield return Registration(EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children));
-			}
+			var operators = EvaluationRegistry.Arithmetic.Operators;
+
+			return UShortRange(0, paramCount)
+				.Combinations(paramCount)
+				.SelectMany(combination =>
+				{
+					var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
+					return operators.Select(op =>
+						Registration(EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children)));
+				});
 		}
 
 		#endregion
@@ -113,10 +117,14 @@ namespace Solve.Evaluation
 
 					// Then try an operator based version.
 					var pcOne = paramCount;
-					var operated = OperatedCatalog.GetOrAdd(++pcOne, pc => GenerateOperated(pc).GetEnumerator());
-					if (operated.MoveNext())
+					var operated = OperatedCatalog.GetOrAdd(++pcOne, pc =>
 					{
-						genome = operated.Current;
+						var e = GenerateOperated(pc)?.GetEnumerator();
+						Debug.Assert(e != null);
+						return e;
+					});
+					if (operated.ConcurrentTryMoveNext(out genome))
+					{
 						Debug.Assert(genome != null);
 						attempts++;
 						if (!AlreadyProduced(genome)) // May be supurfulous.
@@ -147,6 +155,8 @@ namespace Solve.Evaluation
 
 		protected TGenome Registration(IGene root, Action<TGenome> onBeforeAdd = null)
 		{
+			Debug.Assert(root != null);
+			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 			if (root == null) return null;
 			Register(root.ToStringRepresentation(),
 				() => Create(root), out var target,

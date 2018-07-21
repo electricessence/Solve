@@ -6,13 +6,16 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public abstract class SynchronousProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
+	public abstract class ProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		protected SynchronousProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory)
+		protected ProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
 			: base(genomeFactory)
 		{
+			_runSynchronously = runSynchronously;
 		}
+
+		private readonly bool _runSynchronously;
 
 		protected abstract void Post(TGenome genome);
 
@@ -55,10 +58,11 @@ namespace Solve.ProcessingSchemes
 			FactoryBuffer.Writer.Complete();
 		}
 
-		async Task PostFromBufferSingle()
+		async Task PostFromBufferSingle(CancellationToken token)
 		{
 			retry:
-			if (!FactoryBuffer.Reader.TryRead(out var genome))
+			TGenome genome = null;
+			if (!token.IsCancellationRequested && !FactoryBuffer.Reader.TryRead(out genome))
 				genome = Factory.Next();
 
 			if (genome == null) return;
@@ -67,17 +71,34 @@ namespace Solve.ProcessingSchemes
 			goto retry;
 		}
 
-		Task PostFromBuffer()
+		Task PostFromBuffer(CancellationToken token)
 			=> Task.WhenAll(
 				Enumerable
 					.Range(0, System.Environment.ProcessorCount)
-					.Select(s => PostFromBufferSingle()));
+					.Select(s => PostFromBufferSingle(token)));
+
+		Task PostSynchronously(CancellationToken token)
+			=> Task.Run(() =>
+			{
+				//var pOptions = new ParallelOptions
+				//{
+				//	CancellationToken = token,
+				//};
+				//Parallel.ForEach(Factory, pOptions, Post);
+
+				foreach (var f in Factory)
+				{
+					if (!token.IsCancellationRequested)
+						Post(f);
+				}
+			});
 
 		protected override Task StartInternal(CancellationToken token)
-			=> Task.WhenAll(
+			=> _runSynchronously
+			? PostSynchronously(token)
+			: Task.WhenAll(
 				BufferGenomes(token),
-				PostFromBuffer());
-
+				PostFromBuffer(token));
 	}
 
 }

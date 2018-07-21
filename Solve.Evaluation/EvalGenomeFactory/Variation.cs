@@ -20,7 +20,8 @@ namespace Solve.Evaluation
 			int i;
 			// Remove genes one at a time.
 			for (i = 0; i < count; i++)
-				yield return Catalog.RemoveDescendantAt(sourceTree, i);
+				if (Catalog.Variation.TryRemoveValid(descendantNodes[i], out var pruned))
+					yield return pruned;
 
 			// Strip down parameter levels to search for significance.
 			var paramRemoved = sourceTree;
@@ -32,7 +33,9 @@ namespace Solve.Evaluation
 					.Where(n => n.Value is IParameter<double>)
 					.GroupBy(n => ((IParameter<double>)n.Value).ID)
 					.OrderByDescending(g => g.Key)
-					.FirstOrDefault()?.ToArray();
+					.FirstOrDefault()?
+					.Where(n => n.IsValidForRemoval())
+					.ToArray();
 
 				if (paramGroups == null || paramGroups.Length < 2)
 					break;
@@ -40,7 +43,9 @@ namespace Solve.Evaluation
 				foreach (var p in paramGroups)
 					p.Parent.Remove(p);
 
-				yield return Catalog.FixHierarchy(paramRemoved).Value;
+				yield return Catalog
+					.FixHierarchy(paramRemoved)
+					.Value;
 			}
 
 
@@ -54,7 +59,7 @@ namespace Solve.Evaluation
 				// Let mutation take care of this...
 				// foreach (var fn in Operators.Available.Functions)
 				// {
-				// 	yield return VariationCatalog.ApplyFunction(source, i, fn);
+				//		yield return VariationCatalog.ApplyFunction(source, i, fn);
 				// }
 			}
 

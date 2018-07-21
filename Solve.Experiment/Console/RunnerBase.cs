@@ -3,6 +3,7 @@ using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
@@ -33,6 +34,7 @@ namespace Solve.Experiment.Console
 		}
 
 		// ReSharper disable once VirtualMemberNeverOverridden.Global
+		// ReSharper disable once MemberCanBeProtected.Global
 		public virtual void Init(
 			EnvironmentBase<TGenome> environment,
 			ConsoleEmitterBase<TGenome> emitter,
@@ -87,7 +89,18 @@ namespace Solve.Experiment.Console
 			var cancel = new CancellationTokenSource();
 
 			Environment
-				.Subscribe(o => Emitter.EmitTopGenomeStats(o.Problem, o.GenomeFitness.Genome, o.GenomeFitness.Fitness),
+				.Subscribe(o =>
+					{
+						var fitnesses = o.GenomeFitness.Fitness;
+						Emitter.EmitTopGenomeStats(o.Problem, o.GenomeFitness.Genome, fitnesses);
+
+						if (!o.Problem.HasConverged && fitnesses.All(f => f.HasConverged(_minConvergenceSamples)))
+							o.Problem.Converged();
+
+						if (Environment.HaveAllProblemsConverged)
+							cancel.Cancel();
+
+					},
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{
