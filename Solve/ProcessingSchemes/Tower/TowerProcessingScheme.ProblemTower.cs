@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
@@ -41,6 +42,7 @@ namespace Solve.ProcessingSchemes
 			}
 
 			public Task PostAsync(TGenome next,
+				CancellationToken token,
 				bool express,
 				bool expressToTop = false)
 			{
@@ -49,6 +51,7 @@ namespace Solve.ProcessingSchemes
 
 				return Root.PostAsync(
 					(next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()),
+					token,
 					express,
 					expressToTop,
 					true);
@@ -57,8 +60,8 @@ namespace Solve.ProcessingSchemes
 			public void Post(TGenome next)
 				=> Post(next, false);
 
-			public Task PostAsync(TGenome next)
-				=> PostAsync(next, false);
+			public Task PostAsync(TGenome next, CancellationToken token)
+				=> PostAsync(next, token, false);
 
 		}
 	}

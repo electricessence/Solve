@@ -4,6 +4,7 @@ using Solve;
 using Solve.Evaluation;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace BlackBoxFunction
@@ -50,6 +51,7 @@ namespace BlackBoxFunction
 			for (var i = 0; i < SampleSizeInt; i++)
 			{
 				var sample = samples[i];
+				Debug.Assert(sample != null);
 				var s = sample.ParamValues;
 				var correctValue = sample.Correct.Value;
 				correct[i] = correctValue;

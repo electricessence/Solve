@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using Open.Threading.Tasks;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,7 +21,7 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract void Post(TGenome genome);
 
-		protected abstract Task PostAsync(TGenome genome);
+		protected abstract Task PostAsync(TGenome genome, CancellationToken token);
 
 		//protected override Task StartInternal(CancellationToken token)
 		//{
@@ -66,7 +68,7 @@ namespace Solve.ProcessingSchemes
 				genome = Factory.Next();
 
 			if (genome == null) return;
-			await PostAsync(genome).ConfigureAwait(false);
+			await PostAsync(genome, token).ConfigureAwait(false);
 
 			goto retry;
 		}
@@ -75,7 +77,11 @@ namespace Solve.ProcessingSchemes
 			=> Task.WhenAll(
 				Enumerable
 					.Range(0, System.Environment.ProcessorCount)
-					.Select(s => PostFromBufferSingle(token)));
+					.Select(s => PostFromBufferSingle(token).OnFaulted(f =>
+					{
+						// ReSharper disable once PossibleNullReferenceException
+						Debug.Fail(f.Message, f.InnerException.StackTrace);
+					})));
 
 		Task PostSynchronously(CancellationToken token)
 			=> Task.Run(() =>

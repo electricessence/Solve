@@ -108,14 +108,14 @@ namespace Solve.ProcessingSchemes
 			return base.StartInternal(token);
 		}
 
-		protected override Task PostAsync(TGenome genome)
+		protected override Task PostAsync(TGenome genome, CancellationToken token)
 		{
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
 			//Debug.WriteLine($"Posting (async): {genome.Hash}", "TowerProcessingScheme");
 
-			return Task.WhenAll(Towers.Where(t => !t.Problem.HasConverged).Select(t => t.PostAsync(genome)));
+			return Task.WhenAll(Towers.Where(t => !t.Problem.HasConverged).Select(t => t.PostAsync(genome, token)));
 		}
 
 		protected override void Post(TGenome genome)

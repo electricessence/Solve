@@ -69,6 +69,7 @@ namespace Solve.Evaluation
 			for (i = 0; i < count; i++)
 				yield return Catalog.AddConstant(descendantNodes[i], 2); // 2 ensures the constant isn't negated when adding to a product.
 
+			yield return Catalog.GetReduced(sourceTree.Value);
 		}
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
