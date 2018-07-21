@@ -24,6 +24,7 @@ namespace Solve
 			public IReadOnlyList<Metric> Metrics { get; }
 
 			public Func<TGenome, double[], Fitness> Transform { get; }
+
 			public RankedPool<TGenome> Champions { get; }
 
 			class GF
@@ -34,6 +35,7 @@ namespace Solve
 					Fitness = fitness;
 				}
 
+				// ReSharper disable once MemberCanBePrivate.Local
 				public readonly TGenome Genome;
 				public readonly Fitness Fitness;
 
@@ -62,6 +64,7 @@ namespace Solve
 				}
 				return false;
 			}
+
 		}
 
 		// ReSharper disable once StaticMemberInGenericType
@@ -77,6 +80,9 @@ namespace Solve
 		// ReSharper disable once NotAccessedField.Global
 		public readonly ushort SampleSize;
 		protected readonly int SampleSizeInt;
+
+		public bool HasConverged { get; private set; }
+		public void Converged() => HasConverged = true;
 
 		protected ProblemBase(
 			IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,

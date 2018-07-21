@@ -37,7 +37,7 @@ namespace Solve.Evaluation
 				var gv = gene.Value;
 				switch (gv)
 				{
-					case Constant _:
+					case Constant<double> _:
 						switch (RandomUtilities.Random.Next(4))
 						{
 							case 0:
@@ -46,9 +46,14 @@ namespace Solve.Evaluation
 							case 1:
 								return Catalog.Mutation
 									.MutateSign(gene, 1);
+
 							default:
-								return Catalog.RemoveNode(gene).Value;
+								if (Catalog.Variation.TryRemoveValid(gene, out var newRoot))
+									return newRoot;
+
+								break;
 						}
+						break;
 
 					case Parameter _:
 						{

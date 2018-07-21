@@ -23,8 +23,9 @@ namespace Solve.Evaluation
 
 			var aRoot = Catalog.Factory.Map(a.Root);
 			var bRoot = Catalog.Factory.Map(b.Root);
-			var aGeneNodes = aRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
-			var bGeneNodes = bRoot.GetNodesOfType<Node<IGene>, Node<IGene>>().ToArray();
+			// Descendants only?  Swapping a root node is equivalent to swapping the entire genome.
+			var aGeneNodes = aRoot.GetDescendantsOfType().ToArray();
+			var bGeneNodes = bRoot.GetDescendantsOfType().ToArray();
 			var aLen = aGeneNodes.Length;
 			var bLen = bGeneNodes.Length;
 			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
