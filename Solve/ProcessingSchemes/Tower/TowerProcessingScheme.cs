@@ -100,11 +100,14 @@ namespace Solve.ProcessingSchemes
 				.ToArray()
 				.Any();
 
-		IReadOnlyList<ProblemTower> Towers;
+		//IReadOnlyList<ProblemTower> Towers;
+		private IEnumerable<ProblemTower> ActiveTowers;
 
 		protected override Task StartInternal(CancellationToken token)
 		{
-			Towers = Problems.Select(p => new ProblemTower(p, this)).ToList().AsReadOnly();
+			var towers = Problems.Select(p => new ProblemTower(p, this)).ToList();
+			//Towers = towers.AsReadOnly();
+			ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
 			return base.StartInternal(token);
 		}
 
@@ -115,7 +118,8 @@ namespace Solve.ProcessingSchemes
 
 			//Debug.WriteLine($"Posting (async): {genome.Hash}", "TowerProcessingScheme");
 
-			return Task.WhenAll(Towers.Where(t => !t.Problem.HasConverged).Select(t => t.PostAsync(genome, token)));
+			return Task.WhenAll(ActiveTowers
+				.Select(t => t.PostAsync(genome, token)));
 		}
 
 		protected override void Post(TGenome genome)
@@ -125,7 +129,7 @@ namespace Solve.ProcessingSchemes
 
 			//Debug.WriteLine($"Posting: {genome.Hash}", "TowerProcessingScheme");
 
-			foreach (var t in Towers.Where(t => !t.Problem.HasConverged))
+			foreach (var t in ActiveTowers)
 				t.Post(genome);
 		}
 	}

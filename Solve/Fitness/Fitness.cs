@@ -112,24 +112,23 @@ namespace Solve
 			return v == 0 ? SampleCount.CompareTo(other.SampleCount) : v;
 		}
 
-		public bool HasConverged(uint minSamples = 100, double convergence = 1, double tolerance = 0)
+		public bool HasConverged(uint minSamples = 100, double tolerance = 0)
 		{
-			var results = Results;
-			if (results == null || minSamples > SampleCount) return false;
-			var ave = results.Average.Span;
-			var len = ave.Length;
-			for (var i = 0; i < len; i++)
+			if (minSamples > SampleCount) return false;
+			var c = false;
+			foreach (var (Metric, Value) in MetricAverages.Where(m => m.Metric.Convergence))
 			{
-				var s = ave[i];
-				if (s > convergence + double.Epsilon)
-					throw new Exception("Score has exceeded convergence value: " + s);
-				if (s.IsNearEqual(convergence, 0.0000001)
-					&& s.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
+				c = true;
+				var convergence = Metric.MaxValue;
+				if (Value > convergence + double.Epsilon)
+					throw new Exception("Score has exceeded convergence value: " + Value);
+				if (Value.IsNearEqual(convergence, 0.0000001)
+					&& Value.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
 					continue;
-				if (s < convergence - tolerance)
+				if (Value < convergence - tolerance)
 					return false;
 			}
-			return true;
+			return c;
 		}
 
 		public bool IsSuperiorTo(Fitness other)

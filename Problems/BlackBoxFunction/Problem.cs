@@ -17,8 +17,8 @@ namespace BlackBoxFunction
 	{
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
-			new Metric(0, "Correlation", "Correlation {0:p}", 1),
-			new Metric(0, "Divergence", "Divergence {0:p}", 1),
+			new Metric(0, "Correlation", "Correlation {0:p}", 1, true),
+			new Metric(0, "Divergence", "Divergence {0:p}", 1, true),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
 		}.AsReadOnly();
 

@@ -51,8 +51,8 @@ namespace BlackBoxFunction
 		public void Init()
 		{
 
-			var emitter = new EvalConsoleEmitter(_minSamples);
 			var factory = new EvalGenomeFactory<EvalGenome>();
+			var emitter = new EvalConsoleEmitter(factory, _minSamples);
 			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (100, 40, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2));
 

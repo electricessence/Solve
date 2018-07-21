@@ -54,6 +54,8 @@ namespace Solve
 
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
+		public CancellationToken GetToken() => Canceller.Token;
+
 		int _state;
 
 		public Task Start(params IProblem<TGenome>[] problems)
