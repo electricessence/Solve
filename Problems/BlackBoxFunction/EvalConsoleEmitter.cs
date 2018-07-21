@@ -22,17 +22,19 @@ namespace BlackBoxFunction
 
 		}
 
-		protected override void OnEmittingGenome(IProblem<EvalGenome> p, EvalGenome genome, Fitness[] fitness, StringBuilder output)
+		protected override void OnEmittingGenome(IProblem<EvalGenome> p, EvalGenome genome, Fitness[] fitness,
+			StringBuilder output)
 		{
+			//base.OnEmittingGenome(p, genome, fitness, output);
+			output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.ToAlphaParameters());
+
 			if (genome.Root is IReducibleEvaluation<IEvaluate<double>> r && r.TryGetReduced(Catalog, out var reduced))
 			{
 				output
 					.Append("Reduced:")
 					.AppendLine(BLANK)
-					.AppendLine(reduced.ToStringRepresentation());
+					.AppendLine(AlphaParameters.ConvertTo(reduced.ToStringRepresentation()));
 			}
-
-			base.OnEmittingGenome(p, genome, fitness, output);
 		}
 	}
 }
