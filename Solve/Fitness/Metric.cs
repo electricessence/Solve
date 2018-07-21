@@ -6,7 +6,7 @@ namespace Solve
 	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 	public struct Metric
 	{
-		public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity)
+		public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity, bool convergence = false)
 		{
 			if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(name));
 			if (string.IsNullOrWhiteSpace(format)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(format));
@@ -18,6 +18,7 @@ namespace Solve
 			Name = name;
 			Format = format;
 			MaxValue = maxValue;
+			Convergence = convergence;
 		}
 
 		public ushort ID { get; }
@@ -25,5 +26,6 @@ namespace Solve
 		public string Format { get; }
 
 		public double MaxValue { get; }
+		public bool Convergence { get; }
 	}
 }

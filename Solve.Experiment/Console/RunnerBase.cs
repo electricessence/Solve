@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
 
@@ -86,8 +85,6 @@ namespace Solve.Experiment.Console
 			SystemConsole.WriteLine("Starting...");
 			SystemConsole.SetCursorPosition(0, SystemConsole.CursorTop - 1);
 
-			var cancel = new CancellationTokenSource();
-
 			Environment
 				.Subscribe(o =>
 					{
@@ -98,13 +95,13 @@ namespace Solve.Experiment.Console
 							o.Problem.Converged();
 
 						if (Environment.HaveAllProblemsConverged)
-							cancel.Cancel();
+							Environment.Cancel();
 
 					},
 					ex => SystemConsole.WriteLine(ex.GetBaseException()),
 					() =>
 					{
-						cancel.Cancel();
+						Environment.Cancel();
 						SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
 					});
 
@@ -114,7 +111,7 @@ namespace Solve.Experiment.Console
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 			await Environment.Start();
-			cancel.Cancel();
+			Environment.Cancel();
 			EmitStatsAction(false);
 			SystemConsole.WriteLine("Done.");
 

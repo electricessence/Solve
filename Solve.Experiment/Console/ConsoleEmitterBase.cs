@@ -24,7 +24,7 @@ namespace Solve.Experiment.Console
 		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
-		const string BLANK = "           ";
+		protected const string BLANK = "           ";
 
 		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
 		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, IEnumerable<Fitness> fitness)
@@ -36,7 +36,7 @@ namespace Solve.Experiment.Console
 				if (f.SampleCount < SampleMinimum || !problem.Pools[i].UpdateBestFitness(genome, f)) return f;
 
 				ok = true;
-				OnEmittingGenome(problem, genome, i, f);
+				OnEmittingGenomeFitness(problem, genome, i, f);
 				return f;
 			}).ToArray();
 
@@ -44,10 +44,7 @@ namespace Solve.Experiment.Console
 
 			var sb = new StringBuilder();
 			sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
-
-			//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-			//if (!asReduced.Equals(genome))
-			//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
+			OnEmittingGenome(problem, genome, snapshots, sb);
 
 			for (var i = 0; i < snapshots.Length; i++)
 				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
@@ -65,8 +62,19 @@ namespace Solve.Experiment.Console
 			return true;
 		}
 
+		protected virtual void OnEmittingGenome(IProblem<TGenome> p,
+			TGenome genome,
+			Fitness[] fitness,
+			StringBuilder output)
+		{
+			//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
+			//if (!asReduced.Equals(genome))
+			//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
+		}
+
+
 		// ReSharper disable once UnusedParameter.Global
-		protected virtual void OnEmittingGenome(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
+		protected virtual void OnEmittingGenomeFitness(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
 
 		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
