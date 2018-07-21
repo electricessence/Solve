@@ -43,7 +43,6 @@ namespace Solve.Experiment.Console
 			if (!ok) return false;
 
 			var sb = new StringBuilder();
-			sb.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
 			OnEmittingGenome(problem, genome, snapshots, sb);
 
 			for (var i = 0; i < snapshots.Length; i++)
@@ -67,6 +66,7 @@ namespace Solve.Experiment.Console
 			Fitness[] fitness,
 			StringBuilder output)
 		{
+			output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
 			//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
 			//if (!asReduced.Equals(genome))
 			//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);

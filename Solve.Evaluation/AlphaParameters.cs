@@ -2,7 +2,7 @@
 
 namespace Solve.Evaluation
 {
-	static class AlphaParameters
+	public static class AlphaParameters
 	{
 		const string ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 		static readonly char[] VARIABLE_NAMES = ALPHABET.ToCharArray();
