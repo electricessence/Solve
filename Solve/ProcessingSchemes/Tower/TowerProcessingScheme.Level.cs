@@ -200,13 +200,14 @@ namespace Solve.ProcessingSchemes
 			}
 
 			public async Task PostAsync((TGenome Genome, Fitness[] Fitness) c,
+				CancellationToken token,
 				bool express = false,
 				bool expressToTop = false,
 				bool processPool = false)
 			{
 				PostInternal(c, await Tower.Problem.ProcessSampleAsync(c.Genome, Index), express, expressToTop);
 
-				if (processPool) await ProcessPoolAsync();
+				if (processPool) await ProcessPoolAsync(token);
 			}
 
 			bool ProcessPoolInternal()
@@ -299,31 +300,36 @@ namespace Solve.ProcessingSchemes
 				return true;
 			}
 
-			public async Task ProcessPoolAsync(bool thisLevelOnly = false)
+			public async Task ProcessPoolAsync(CancellationToken token = default, bool thisLevelOnly = false)
 			{
 				retry:
+
 				var processed = false;
 				if (!ExpressPool.IsEmpty)
 				{
+					if (token.IsCancellationRequested) return;
 					await Task.WhenAll(ExpressPool.AsDequeueingEnumerable());
+					if (token.IsCancellationRequested) return;
 					processed = ProcessPoolInternal();
 				}
 
 				if (!StandbyPool.IsEmpty)
 				{
+					if (token.IsCancellationRequested) return;
 					await Task.WhenAll(StandbyPool.AsDequeueingEnumerable());
 				}
 
+				if (token.IsCancellationRequested) return;
 				processed = ProcessPoolInternal() || processed;
 
 				if (!thisLevelOnly)
 				{
 					// walk up instead of recurse.
 					var next = this;
-					while ((next = next._nextLevel) != null)
-						await next.ProcessPoolAsync(true);
+					while (!token.IsCancellationRequested && (next = next._nextLevel) != null)
+						await next.ProcessPoolAsync(token, true);
 				}
-				if (processed) goto retry;
+				if (!token.IsCancellationRequested && processed) goto retry;
 			}
 
 		}

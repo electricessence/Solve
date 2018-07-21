@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
@@ -9,6 +10,6 @@ namespace Solve.ProcessingSchemes
 	{
 		void Post(TGenome genome);
 
-		Task PostAsync(TGenome genome);
+		Task PostAsync(TGenome genome, CancellationToken token);
 	}
 }
