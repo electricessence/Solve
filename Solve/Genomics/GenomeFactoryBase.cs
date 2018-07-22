@@ -130,6 +130,17 @@ namespace Solve
 			return result;
 		}
 
+		protected TGenome Registration(TGenome genome, (string message, string data) origin, Action<TGenome> onBeforeAdd = null)
+		{
+#if DEBUG
+			genome.AddLogEntry("Origin", origin.message, origin.data);
+#endif
+			return Registration(genome, onBeforeAdd);
+		}
+
+		protected TGenome Registration(TGenome genome, string origin, Action<TGenome> onBeforeAdd = null)
+			=> Registration(genome, (origin, null), onBeforeAdd);
+
 		protected bool RegisterProduction(TGenome genome)
 		{
 			if (genome == null)
@@ -747,7 +758,11 @@ namespace Solve
 				return bred;
 			}
 
+			public void Inject(TGenome genome)
+				=> EnqueueInternal(genome, true);
 
+			public void Inject(IEnumerable<TGenome> genome)
+				=> EnqueueInternal(genome.ToArray(), true);
 
 			internal bool EnqueueInternal(TGenome genome, bool onlyIfNotRegistered = false)
 			{

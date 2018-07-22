@@ -19,6 +19,13 @@ namespace BlackBoxFunction
 			return a * b;
 		}
 
+		static double A2B2(IReadOnlyList<double> p)
+		{
+			var a = p[0];
+			var b = p[1];
+			return a * a + b * b;
+		}
+
 		static double SqrtA2B2(IReadOnlyList<double> p)
 		{
 			var a = p[0];
@@ -43,25 +50,24 @@ namespace BlackBoxFunction
 
 		readonly ushort _minSamples;
 
-		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base(minConvSamples)
+		protected Runner(ushort minSamples, ushort minConvSamples = 20) : base(minSamples > minConvSamples ? minSamples : minConvSamples)
 		{
 			_minSamples = minSamples;
 		}
 
 		public void Init()
 		{
-
-			var factory = new EvalGenomeFactory<EvalGenome>();
+			var factory = new EvalGenomeFactory<EvalGenome>(/*"(({0} * {0}) + ({1} * {1}))"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (100, 40, 2));
-			scheme.AddProblem(Problem.Create(SqrtA2B2));
+			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (400, 40, 2));
+			scheme.AddProblem(Problem.Create(A2B2, 100));
 
 			Init(scheme, emitter, factory.Metrics);
 		}
 
 		static Task Main()
 		{
-			var runner = new Runner(1);
+			var runner = new Runner(20);
 			runner.Init();
 			var message = string.Format(
 				"Solving Black-Box Problem... (minimum {0:n0} samples before displaying)",

@@ -10,6 +10,8 @@ namespace Solve.Evaluation
 	public partial class EvalGenomeFactory<TGenome>
 		where TGenome : EvalGenome
 	{
+		private const string CROSSOVER_OF = "Crossover of";
+
 		protected override TGenome[] CrossoverInternal(TGenome a, TGenome b)
 		{
 #if DEBUG
@@ -48,10 +50,11 @@ namespace Solve.Evaluation
 					bgParent.Replace(placeholder, ag);
 					placeholder.Recycle();
 
+					var origin = (CROSSOVER_OF, $"{a.Hash}\n{b.Hash}");
 					return new[]
 					{
-						Registration(Catalog.FixHierarchy(aRoot).Recycle()),
-						Registration(Catalog.FixHierarchy(bRoot).Recycle())
+						Registration(Catalog.FixHierarchy(aRoot).Recycle(), origin),
+						Registration(Catalog.FixHierarchy(bRoot).Recycle(), origin)
 					};
 				}
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();

@@ -20,7 +20,19 @@ namespace Solve.Evaluation
 		where TGenome : EvalGenome
 
 	{
-		public EvalGenomeFactory(IEnumerable<TGenome> seeds = null) : base(seeds)
+		public EvalGenomeFactory() { }
+
+		public EvalGenomeFactory(params string[] seeds)
+		{
+			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+			if (seeds != null && seeds.Length != 0)
+				GetPriorityQueue(0).Inject(seeds.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
+		}
+
+		public EvalGenomeFactory(params TGenome[] seeds) : base(seeds)
+		{ }
+
+		public EvalGenomeFactory(IEnumerable<TGenome> seeds) : base(seeds)
 		{ }
 
 		public readonly EvaluationCatalog<double> Catalog = new EvaluationCatalog<double>();
@@ -30,7 +42,7 @@ namespace Solve.Evaluation
 		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
 
 		protected TGenome GenerateParamOnly(ushort id)
-			=> Registration(Catalog.GetParameter(id));
+			=> Registration(Catalog.GetParameter(id), "GenerateParamOnly");
 
 		#endregion
 
@@ -60,7 +72,9 @@ namespace Solve.Evaluation
 				{
 					var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
 					return operators.Select(op =>
-						Registration(EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children)));
+						Registration(
+							EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children),
+							$"EvalGenomeFactory.GenerateOperated({2})"));
 				});
 		}
 
@@ -80,8 +94,8 @@ namespace Solve.Evaluation
 				switch (op)
 				{
 					case Exponent.SYMBOL:
-						yield return Registration(Catalog.GetExponent(p, -1));
-						yield return Registration(Catalog.GetExponent(p, 0.5));
+						yield return Registration(Catalog.GetExponent(p, -1), "GenerateFunctioned > Division by Parameter");
+						yield return Registration(Catalog.GetExponent(p, 0.5), "GenerateFunctioned > Square Root of Parameter");
 						break;
 				}
 			}
@@ -151,15 +165,26 @@ namespace Solve.Evaluation
 
 		}
 
-		protected virtual TGenome Create(IGene root) => (TGenome)new EvalGenome(root);
 
-		protected TGenome Registration(IGene root, Action<TGenome> onBeforeAdd = null)
+		protected virtual TGenome Create(IGene root, (string message, string data) origin)
+		{
+#if DEBUG
+			var g = (TGenome)new EvalGenome(root);
+			g.AddLogEntry("Origin", origin.message, origin.data);
+			return g;
+#else
+			return (TGenome)new EvalGenome(root);
+#endif
+		}
+
+		protected TGenome Registration(IGene root, (string message, string data) origin, Action<TGenome> onBeforeAdd = null)
 		{
 			Debug.Assert(root != null);
 			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
+			// ReSharper disable once HeuristicUnreachableCode
 			if (root == null) return null;
 			Register(root.ToStringRepresentation(),
-				() => Create(root), out var target,
+				() => Create(root, origin), out var target,
 				t =>
 				{
 					onBeforeAdd?.Invoke(t);
@@ -168,11 +193,15 @@ namespace Solve.Evaluation
 			return target;
 		}
 
+		protected TGenome Registration(IGene root, string origin,
+			Action<TGenome> onBeforeAdd = null)
+			=> Registration(root, (origin, null), onBeforeAdd);
+
 		protected override TGenome GetReducedInternal(TGenome source)
 			=> source.Root is IReducibleEvaluation<IGene> root
 			   && root.TryGetReduced(Catalog, out var reduced)
 			   && reduced != root
-				? Create(reduced)
+				? Create(reduced, ("Reduction of", source.Hash))
 				: null;
 
 	}

@@ -17,7 +17,7 @@ namespace Solve.Evaluation
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private IGene MutateUnfrozen(TGenome target)
+		private (IGene Root, string Origin) MutateUnfrozen(TGenome target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -41,15 +41,16 @@ namespace Solve.Evaluation
 						switch (RandomUtilities.Random.Next(4))
 						{
 							case 0:
-								return Catalog.Variation
-									.ApplyRandomFunction(gene);
+								return (Catalog.Variation.ApplyRandomFunction(gene),
+										"Apply function to constant");
 							case 1:
-								return Catalog.Mutation
-									.MutateSign(gene, 1);
+								return (Catalog.Mutation.MutateSign(gene, 1),
+										"Mutate sign of constant");
 
 							default:
 								if (Catalog.Variation.TryRemoveValid(gene, out var newRoot))
-									return newRoot;
+									return (newRoot,
+										"Remove constant");
 
 								break;
 						}
@@ -63,21 +64,21 @@ namespace Solve.Evaluation
 								switch (options.RandomPluck())
 								{
 									case 0:
-										return Catalog.Mutation
-											.MutateSign(gene, 1);
+										return (Catalog.Mutation.MutateSign(gene, 1),
+												"Mutate sign");
 
 									// Simply change parameters
 									case 1:
-										return Catalog.Mutation
-											.MutateParameter(gene);
+										return (Catalog.Mutation.MutateParameter(gene),
+												"Mutate parameter");
 
 									// Apply a function
 									case 2:
 										// Reduce the pollution of functions...
 										if (RandomUtilities.Random.Next(0, 2) == 0)
 										{
-											return Catalog.Variation
-												.ApplyRandomFunction(gene);
+											return (Catalog.Variation.ApplyRandomFunction(gene),
+												"Apply random function to paramter");
 										}
 
 										break;
@@ -86,8 +87,8 @@ namespace Solve.Evaluation
 									case 3:
 										if (RandomUtilities.Random.Next(0, 3) == 0)
 										{
-											return Catalog.Mutation
-												.Square(gene);
+											return (Catalog.Mutation.Square(gene),
+												"Square parameter");
 										}
 
 										break;
@@ -95,7 +96,7 @@ namespace Solve.Evaluation
 									// Remove it!
 									default:
 										if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
-											return attempt;
+											return (attempt, "Remove descendant");
 										break;
 
 								}
@@ -108,19 +109,22 @@ namespace Solve.Evaluation
 							var options = Enumerable.Range(0, 8).ToList();
 							while (options.Any())
 							{
-								IGene ng = null;
+								(IGene Root, string Origin) ng = default;
 								switch (options.RandomPluck())
 								{
 									case 0 when gv is IOperator:
-										ng = Catalog.Mutation.MutateSign(gene, 1);
+										ng = (Catalog.Mutation.MutateSign(gene, 1),
+											"Mutate sign of function");
 										break;
 
 									case 1 when gv is IOperator:
-										ng = Catalog.Variation.PromoteChildren(gene);
+										ng = (Catalog.Variation.PromoteChildren(gene),
+											"Promote decendant children of function");
 										break;
 
 									case 2 when gv is IOperator:
-										ng = Catalog.Mutation.ChangeOperation(gene);
+										ng = (Catalog.Mutation.ChangeOperation(gene),
+											"Change operation");
 										break;
 
 									//// Apply a function
@@ -145,35 +149,38 @@ namespace Solve.Evaluation
 											//if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
 											var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
 											Debug.Assert(f != null);
-											return f;
+											return (f,
+												"Apply function to function");
 										}
 										break;
 
 									case 4:
-										Catalog.Variation.TryRemoveValid(gene, out ng);
+										if (Catalog.Variation.TryRemoveValid(gene, out var n))
+											ng = (n,
+												"Remove decendant function");
 										break;
 
 									case 5:
-										ng = Catalog.Mutation
-											.AddParameter(gene);
+										ng = (Catalog.Mutation.AddParameter(gene),
+											"Add parameter to function");
 										break;
 
 									case 6:
-										ng = Catalog.Mutation
-											.BranchOperation(gene);
+										ng = (Catalog.Mutation.BranchOperation(gene),
+											"Branch operation");
 										break;
 
 									case 7:
 										// This has a potential to really bloat the function so allow, but very sparingly.
 										if (RandomUtilities.Random.Next(0, 3) == 0)
 										{
-											return Catalog.Mutation
-												.Square(gene);
+											return (Catalog.Mutation.Square(gene),
+												"Square function");
 										}
 										break;
 								}
 
-								if (ng != null)
+								if (ng.Root != null)
 									return ng;
 							}
 						}
@@ -183,11 +190,14 @@ namespace Solve.Evaluation
 
 			}
 
-			return null;
+			return (null, null);
 
 		}
 
 		protected override TGenome MutateInternal(TGenome target)
-			=> Registration(MutateUnfrozen(target));
+		{
+			var (root, origin) = MutateUnfrozen(target);
+			return Registration(root, ($"Mutation > {origin}", target.Hash));
+		}
 	}
 }
