@@ -9,9 +9,7 @@ using System.Linq;
 
 namespace BlackBoxFunction
 {
-
 	public delegate double Formula(IReadOnlyList<double> p);
-
 
 	public class Problem : ProblemBase<EvalGenome>
 	{
