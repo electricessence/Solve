@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -111,13 +113,37 @@ namespace Solve.ProcessingSchemes
 			return base.StartInternal(token);
 		}
 
+#if DEBUG
+		static StringBuilder GetGenomeInfo(TGenome genome)
+		{
+			var sb = new StringBuilder(genome.Hash);
+			sb.AppendLine();
+			foreach (var logEntry in genome.Log)
+			{
+				sb.Append(logEntry.Category)
+					.Append(" > ")
+					.Append(logEntry.Message);
+
+				var data = logEntry.Data;
+				if (!string.IsNullOrWhiteSpace(data))
+					sb.Append(':').AppendLine().Append(data);
+
+				sb.AppendLine();
+			}
+			return sb;
+		}
+#endif
+
 		protected override Task PostAsync(TGenome genome, CancellationToken token)
 		{
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
-			//Debug.WriteLine($"Posting (async): {genome.Hash}", "TowerProcessingScheme");
-
+#if DEBUG
+			Debug.WriteLine(
+				$"Posting (async):\n{GetGenomeInfo(genome)}",
+				"TowerProcessingScheme");
+#endif
 			return Task.WhenAll(ActiveTowers
 				.Select(t => t.PostAsync(genome, token)));
 		}
@@ -127,7 +153,11 @@ namespace Solve.ProcessingSchemes
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
-			//Debug.WriteLine($"Posting: {genome.Hash}", "TowerProcessingScheme");
+#if DEBUG
+			Debug.WriteLine(
+				$"Posting:\n{GetGenomeInfo(genome)}\n",
+				"TowerProcessingScheme");
+#endif
 
 			foreach (var t in ActiveTowers)
 				t.Post(genome);

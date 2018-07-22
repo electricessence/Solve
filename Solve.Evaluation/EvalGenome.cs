@@ -29,7 +29,16 @@ namespace Solve.Evaluation
 		protected override int GetGeneCount() => Root is IParent r ? r.GetNodes().Count() : (Root == null ? 0 : 1);
 		protected override string GetHash() => Root.ToStringRepresentation();
 
-		public new EvalGenome Clone() => new EvalGenome(Root);
+		public new EvalGenome Clone()
+		{
+#if DEBUG
+			var clone = new EvalGenome(Root);
+			clone.AddLogEntry("Origin", "Cloned");
+			return clone;
+#else
+			return new EvalGenome(Root);
+#endif
+		}
 
 		protected override object CloneInternal() => Clone();
 
