@@ -110,7 +110,13 @@ namespace Solve.Experiment.Console
 			_statusEmitter.Defer(StatusDelay).ConfigureAwait(false);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
-			await Environment.Start();
+			try
+			{
+				await Environment.Start();
+			}
+			catch (TaskCanceledException)
+			{
+			}
 			Environment.Cancel();
 			EmitStatsAction(false);
 			SystemConsole.WriteLine("Done.");

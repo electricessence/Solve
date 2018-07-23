@@ -67,7 +67,7 @@ namespace BlackBoxFunction
 
 		static Task Main()
 		{
-			var runner = new Runner(10);
+			var runner = new Runner(5);
 			runner.Init();
 			var message = string.Format(
 				"Solving Black-Box Problem... (minimum {0:n0} samples before displaying)",
