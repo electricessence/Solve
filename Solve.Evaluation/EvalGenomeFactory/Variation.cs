@@ -3,10 +3,10 @@ using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
 using System.Linq;
-using IGene = Open.Evaluation.Core.IEvaluate<double>;
 
 namespace Solve.Evaluation
 {
+	using IGene = IEvaluate<double>;
 
 	public partial class EvalGenomeFactory<TGenome>
 		where TGenome : EvalGenome
@@ -82,10 +82,6 @@ namespace Solve.Evaluation
 				"Reduction");
 		}
 
-		// ReSharper disable once UnusedMember.Local
-		// ReSharper disable once StaticMemberInGenericType
-		private static readonly (string message, string data) EmptyOrigin = (null, null);
-
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 			=> GetVariations(source.Root)
 				.Where(v => v.Root != null)
@@ -96,11 +92,11 @@ namespace Solve.Evaluation
 					return Create(g.Key,
 						($"EvalGenomeFactory.GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct().ToArray())}]", source.Hash));
 #else
-					return Create(g.Key,
-						EmptyOrigin);
+					return Create(g.Key, (null, null));
 #endif
 				})
-				.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<TGenome>());
+				.Concat(base.GetVariationsInternal(source)
+						?? Enumerable.Empty<TGenome>());
 
 
 	}
