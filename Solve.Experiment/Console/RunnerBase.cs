@@ -54,9 +54,9 @@ namespace Solve.Experiment.Console
 			//_lastEmit = DateTime.Now;
 			SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
 			if (restartEmitter)
-				_statusEmitter.Defer(StatusDelay);
+				_statusEmitter?.Defer(StatusDelay);
 			else
-				_statusEmitter.Cancel();
+				_statusEmitter?.Cancel();
 		}
 
 		readonly ActionRunner _statusEmitter;

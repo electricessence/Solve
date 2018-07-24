@@ -7,7 +7,6 @@ using System.Linq;
 
 namespace Solve.Evaluation
 {
-
 	using IFunction = IFunction<double>;
 	using IGene = IEvaluate<double>;
 	using IOperator = IOperator<IEvaluate<double>, double>;
@@ -76,33 +75,31 @@ namespace Solve.Evaluation
 									case 2:
 										// Reduce the pollution of functions...
 										if (RandomUtilities.Random.Next(0, 2) == 0)
-										{
 											return (Catalog.Variation.ApplyRandomFunction(gene),
 												"Apply random function to paramter");
-										}
 
 										break;
 
 									// Split it...
 									case 3:
 										if (RandomUtilities.Random.Next(0, 3) == 0)
-										{
 											return (Catalog.Mutation.Square(gene),
 												"Square parameter");
-										}
 
 										break;
 
 									// Remove it!
 									default:
 										if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
-											return (attempt, "Remove descendant");
+											return (attempt,
+												"Remove descendant");
 										break;
 
 								}
 							}
 						}
 						break;
+
 					default:
 						if (gv is IFunction)
 						{
@@ -173,10 +170,8 @@ namespace Solve.Evaluation
 									case 7:
 										// This has a potential to really bloat the function so allow, but very sparingly.
 										if (RandomUtilities.Random.Next(0, 3) == 0)
-										{
 											return (Catalog.Mutation.Square(gene),
 												"Square function");
-										}
 										break;
 								}
 
