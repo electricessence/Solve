@@ -29,6 +29,7 @@ namespace BlackBoxFunction
 		static readonly Regex StripParensPattern = new Regex($@"\((\w+[{SuperScriptDigits}]*)\)", RegexOptions.Compiled);
 		static readonly Regex SuperScriptDigitPattern = new Regex(@"\^\d+", RegexOptions.Compiled);
 		static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
+		static readonly Regex DivisionPattern = new Regex(@"\((\w+)\^-1\)", RegexOptions.Compiled);
 
 
 		static string FormatGenomeString(string h)
@@ -52,6 +53,7 @@ namespace BlackBoxFunction
 			});
 			h = StripParensPattern.Replace(h, m => m.Groups[1].Value);
 			h = CombineMultiplePattern.Replace(h, m => m.Value.Replace(" * ", string.Empty));
+			h = DivisionPattern.Replace(h, m => $"(1/{m.Groups[1].Value}");
 			return h;
 		}
 

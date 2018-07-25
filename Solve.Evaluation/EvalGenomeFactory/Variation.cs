@@ -3,6 +3,7 @@ using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
 using System.Linq;
+using Open.Evaluation.Arithmetic;
 
 namespace Solve.Evaluation
 {
@@ -77,9 +78,13 @@ namespace Solve.Evaluation
 					Catalog.AddConstant(descendantNodes[i], 2),
 					"Add constant to descendant"); // 2 ensures the constant isn't negated when adding to a product.
 
-			yield return (
-				Catalog.GetReduced(sourceTree.Value),
-				"Reduction");
+			var reduced = Catalog.GetReduced(sourceTree.Value);
+
+			yield return (reduced, "Reduction");
+
+			if (reduced is Sum<double> sum
+				&& sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
+				yield return (extracted, "GCF Extracted Reduction");
 		}
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
