@@ -33,7 +33,9 @@ namespace Solve.Experiment.Console
 			var snapshots = fitness.Select((fx, i) =>
 			{
 				var f = fx.Clone();
-				if (f.SampleCount < SampleMinimum || !problem.Pools[i].UpdateBestFitness(genome, f)) return f;
+				var pool = problem.Pools[i];
+				if (f.SampleCount < SampleMinimum && !pool.UpdateBestFitness(genome, f))
+					return f;
 
 				ok = true;
 				OnEmittingGenomeFitness(problem, genome, i, f);

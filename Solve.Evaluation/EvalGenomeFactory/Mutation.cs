@@ -40,6 +40,7 @@ namespace Solve.Evaluation
 						switch (RandomUtilities.Random.Next(4))
 						{
 							case 0:
+								// This is a bit controversial since it can bloat constant values.
 								return (Catalog.Variation.ApplyRandomFunction(gene),
 										"Apply function to constant");
 							case 1:
@@ -123,19 +124,6 @@ namespace Solve.Evaluation
 										ng = (Catalog.Mutation.ChangeOperation(gene),
 											"Change operation");
 										break;
-
-									//// Apply a function
-									//case 3 when gv is IOperator:
-									//	if (RandomUtilities.Random.Next(0, 2) == 0)
-									//	{
-									//		var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
-									//		// Function of function? Reduce probability even further. Coin toss.
-									//		if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
-									//			return Catalog.Variation
-									//				.ApplyFunction(gene, f);
-
-									//	}
-									//	break;
 
 									case 3:
 										// Reduce the pollution of functions...
