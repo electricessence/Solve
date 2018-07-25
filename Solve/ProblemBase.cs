@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -31,6 +32,8 @@ namespace Solve
 			{
 				public GF(TGenome genome, Fitness fitness)
 				{
+					Debug.Assert(genome != null);
+					Debug.Assert(fitness != null);
 					Genome = genome;
 					Fitness = fitness;
 				}
@@ -40,7 +43,7 @@ namespace Solve
 				public readonly Fitness Fitness;
 
 				public static implicit operator (TGenome Genome, Fitness Fitness) (GF gf)
-					=> (gf.Genome, gf.Fitness);
+					=> (gf?.Genome, gf?.Fitness);
 			}
 
 			GF _bestFitness;
@@ -56,7 +59,9 @@ namespace Solve
 
 				GF contending = null;
 				GF defending;
-				while ((defending = _bestFitness) == null || f.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
+				while ((defending = _bestFitness) == null
+					   || genome == defending.Genome && f.SampleCount > defending.Fitness.SampleCount
+					   || f.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
 				{
 					contending = contending ?? new GF(genome, f);
 					if (Interlocked.CompareExchange(ref _bestFitness, contending, defending) == defending)
