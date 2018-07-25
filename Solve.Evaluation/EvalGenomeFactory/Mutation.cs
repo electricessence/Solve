@@ -58,7 +58,7 @@ namespace Solve.Evaluation
 
 					case Parameter _:
 						{
-							var options = Enumerable.Range(0, 5).ToList();
+							var options = Enumerable.Range(0, 4).ToList();
 							while (options.Any())
 							{
 								switch (options.RandomPluck())
@@ -81,13 +81,13 @@ namespace Solve.Evaluation
 
 										break;
 
-									// Split it...
-									case 3:
-										if (RandomUtilities.Random.Next(0, 3) == 0)
-											return (Catalog.Mutation.Square(gene),
-												"Square parameter");
+									//// Split it...
+									//case 3:
+									//	if (RandomUtilities.Random.Next(0, 2) == 0)
+									//		return (Catalog.Mutation.Square(gene),
+									//			"Square parameter");
 
-										break;
+									//	break;
 
 									// Remove it!
 									default:

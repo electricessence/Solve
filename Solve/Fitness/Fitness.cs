@@ -14,7 +14,6 @@ namespace Solve
 	[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 	public class Fitness : IComparable<Fitness>
 	{
-
 		public Fitness(IReadOnlyList<Metric> metrics, ProcedureResults results)
 		{
 			Metrics = metrics;

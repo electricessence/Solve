@@ -49,6 +49,10 @@ namespace Solve.Evaluation
 					"Parameter elimination");
 			}
 
+			for (i = 0; i < count; i++)
+				yield return (
+					Catalog.MultiplyNode(descendantNodes[i], -1),
+					"Invert descenant sign");
 
 			for (i = 0; i < count; i++)
 				yield return (
