@@ -140,9 +140,9 @@ namespace Solve.ProcessingSchemes
 			Contract.EndContractBlock();
 
 #if DEBUG
-			Debug.WriteLine(
-				$"Posting (async):\n{GetGenomeInfo(genome)}",
-				"TowerProcessingScheme");
+			//Debug.WriteLine(
+			//	$"Posting (async):\n{GetGenomeInfo(genome)}",
+			//	"TowerProcessingScheme");
 #endif
 			return Task.WhenAll(ActiveTowers
 				.Select(t => t.PostAsync(genome, token)));
@@ -154,9 +154,9 @@ namespace Solve.ProcessingSchemes
 			Contract.EndContractBlock();
 
 #if DEBUG
-			Debug.WriteLine(
-				$"Posting:\n{GetGenomeInfo(genome)}\n",
-				"TowerProcessingScheme");
+			//Debug.WriteLine(
+			//	$"Posting:\n{GetGenomeInfo(genome)}\n",
+			//	"TowerProcessingScheme");
 #endif
 
 			foreach (var t in ActiveTowers)

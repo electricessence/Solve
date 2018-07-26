@@ -74,7 +74,7 @@ namespace Solve.Evaluation
 					return operators.Select(op =>
 						Registration(
 							EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children),
-							$"EvalGenomeFactory.GenerateOperated({2})"));
+							$"EvalGenomeFactory.GenerateOperated({paramCount})"));
 				});
 		}
 

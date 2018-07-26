@@ -738,8 +738,9 @@ namespace Solve
 							if (genome.GeneCount < 4) decrementCurrent();
 							if (mate.genome.GeneCount < 4) decrementMate();
 
-							// Generate more (and insert at higher priority) to improve the pool;
-							EnqueueInternal(Factory.GenerateOne());
+							// Generate more (and insert at higher priority) to improve the pool.
+							// This can be problematic later on.
+							//EnqueueInternal(Factory.GenerateOne());
 						}
 
 						// Might still need more funtime.
