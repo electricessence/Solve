@@ -45,11 +45,13 @@ namespace Eater
 		//public void EmitTopGenomeFullStats(IProblem<EaterGenome> p, EaterGenome genome)
 		//	=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
-		readonly ConcurrentQueue<string> BitmapQueue = new ConcurrentQueue<string>();
+		readonly ConcurrentDictionary<string, ConcurrentQueue<string>> BitmapQueue
+			= new ConcurrentDictionary<string, ConcurrentQueue<string>>();
 		readonly object LatestWinnerImageLock = new object();
-		protected override void OnEmittingGenome(IProblem<Genome> p, Genome genome, int poolIndex, Fitness fitness)
+
+		protected override void OnEmittingGenomeFitness(IProblem<Genome> p, Genome genome, int poolIndex, Fitness fitness)
 		{
-			base.OnEmittingGenome(p, genome, poolIndex, fitness);
+			base.OnEmittingGenomeFitness(p, genome, poolIndex, fitness);
 
 			var suffix = $"{p.ID}.{poolIndex}";
 			var fileName = $"{DateTime.Now.Ticks}.{suffix}";
@@ -61,29 +63,11 @@ namespace Eater
 			{
 
 			}
-			var rendered = SaveGenomeImage(genome, fileName);
+			BitmapQueue
+				.GetOrAdd(suffix, key => new ConcurrentQueue<string>())
+				.Enqueue(SaveGenomeImage(genome, fileName));
 
-			BitmapQueue.Enqueue(rendered);
-			ThreadSafety.TryLock(LatestWinnerImageLock, () =>
-			{
-				string lastRendered = null;
-				while (BitmapQueue.TryDequeue(out var g))
-				{
-					lastRendered = g;
-				}
-				if (lastRendered != null)
-				{
-					var latestFileName = $"LatestWinner.{suffix}.jpg";
-					try
-					{
-						File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, latestFileName), true);
-					}
-					catch (IOException)
-					{
-						Debug.WriteLine($"Could not update {latestFileName}.");
-					}
-				}
-			});
+			TryUpdateImages();
 
 			//// Expand the size for clarity.
 			//var newDim = new Rectangle(0, 0, bitmap.Width * 4, bitmap.Height * 4);
@@ -96,6 +80,38 @@ namespace Eater
 			//	gr.DrawImage(bitmap, newDim);
 			//	newImage.Save(Path.Combine(Environment.CurrentDirectory, "LatestWinner.jpg"));
 			//}
+		}
+
+		void TryUpdateImages()
+		{
+			ThreadSafety.TryLock(LatestWinnerImageLock, () =>
+			{
+				bool updated;
+				do
+				{
+					updated = false;
+					foreach (var key in BitmapQueue.Keys.ToArray())
+					{
+						var bq = BitmapQueue[key];
+						string lastRendered = null;
+						while (bq.TryDequeue(out var g))
+							lastRendered = g;
+						if (lastRendered == null)
+							continue;
+
+						updated = true;
+						var latestFileName = $"LatestWinner.{key}.jpg";
+						try
+						{
+							File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, latestFileName), true);
+						}
+						catch (IOException)
+						{
+							Debug.WriteLine($"Could not update {latestFileName}.");
+						}
+					}
+				} while (updated);
+			});
 		}
 	}
 }
