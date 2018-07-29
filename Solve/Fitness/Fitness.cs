@@ -111,7 +111,7 @@ namespace Solve
 			return v == 0 ? SampleCount.CompareTo(other.SampleCount) : v;
 		}
 
-		public bool HasConverged(uint minSamples = 100, double tolerance = 0)
+		public bool HasConverged(uint minSamples = 100)
 		{
 			if (minSamples > SampleCount) return false;
 			var c = false;
@@ -119,9 +119,11 @@ namespace Solve
 			{
 				c = true;
 				var convergence = Metric.MaxValue;
+				var tolerance = Metric.Tolerance;
 				if (Value > convergence + double.Epsilon)
 					throw new Exception("Score has exceeded convergence value: " + Value);
-				if (Value.IsNearEqual(convergence, 0.0000001)
+				// ReSharper disable once CompareOfFloatsByEqualityOperator
+				if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
 					&& Value.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
 					continue;
 				if (Value < convergence - tolerance)

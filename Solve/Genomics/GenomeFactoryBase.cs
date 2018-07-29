@@ -654,18 +654,15 @@ namespace Solve
 
 			protected bool TryTakeBreeder(out (TGenome genome, int count) mate)
 			{
-				if (BreedingStock.TryDequeue(out mate) && mate.count > 0)
-				{
-					if (mate.count > 1)
-					{
-						mate.count--;
-						if (mate.count > 0) BreedingStock.Enqueue(mate);
-						mate = (mate.genome, 1);
-					}
-					return true;
-				}
+				if (!BreedingStock.TryDequeue(out mate) || mate.count <= 0)
+					return TryTakeBreederFromNextQueue(out mate);
 
-				return TryTakeBreederFromNextQueue(out mate);
+				if (mate.count <= 1) return true;
+				mate.count--;
+				if (mate.count > 0) BreedingStock.Enqueue(mate);
+				mate = (mate.genome, 1);
+				return true;
+
 			}
 
 			bool TryTakeBreederFromNextQueue(out (TGenome genome, int count) mate)
@@ -911,7 +908,18 @@ namespace Solve
 			}
 
 			bool ProcessBreeder()
-				=> BreedOne(null);
+			{
+				var count = BreedingStock.Count;
+				var c = count / 1000 + 1;
+				c *= Math.Min(count, c * c /*square it*/);
+				var bred = false;
+				for (var i = 0; i < c; i++)
+				{
+					if (BreedOne(null))
+						bred = true;
+				}
+				return bred;
+			}
 
 			bool ProcessMutation()
 			{

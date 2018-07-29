@@ -88,11 +88,13 @@ namespace Solve.Experiment.Console
 			Environment
 				.Subscribe(o =>
 					{
+						var problem = o.Problem;
 						var fitnesses = o.GenomeFitness.Fitness;
-						Emitter.EmitTopGenomeStats(o.Problem, o.GenomeFitness.Genome, fitnesses);
+						var genome = o.GenomeFitness.Genome;
+						Emitter.EmitTopGenomeStats(problem, genome, fitnesses);
 
-						if (!o.Problem.HasConverged && fitnesses.All(f => f.HasConverged(_minConvergenceSamples)))
-							o.Problem.Converged();
+						if (!problem.HasConverged && fitnesses.All(f => f.HasConverged(_minConvergenceSamples)))
+							problem.Converged();
 
 						if (Environment.HaveAllProblemsConverged)
 							Environment.Cancel();

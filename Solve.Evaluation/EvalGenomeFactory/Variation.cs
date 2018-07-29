@@ -85,10 +85,28 @@ namespace Solve.Evaluation
 			var reduced = Catalog.GetReduced(sourceTree.Value);
 
 			yield return (reduced, "Reduction");
+			sourceTree.Recycle();
+			sourceTree = Catalog.Factory.Map(reduced);
+
+			if (sourceTree.Value is Sum<double>)
+			{
+				var clonedTree = sourceTree.CloneTree();
+				var clonedChildren = clonedTree.Children.Where(c => c.Value is IConstant<double>).ToArray();
+				if (clonedTree.Count > clonedChildren.Length)
+				{
+					foreach (var c in clonedChildren)
+						c.Detatch();
+				}
+
+				yield return (Catalog.GetReduced(Catalog.FixHierarchy(clonedTree).Value), "Constants Stripped");
+				clonedTree.Recycle();
+			}
+			sourceTree.Recycle();
 
 			if (reduced is Sum<double> sum
 				&& sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
 				yield return (extracted, "GCF Extracted Reduction");
+
 		}
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)

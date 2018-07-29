@@ -29,12 +29,16 @@ namespace Solve.Experiment.Console
 		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
 		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, IEnumerable<Fitness> fitness)
 		{
+			// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
 			var ok = false;
 			var snapshots = fitness.Select((fx, i) =>
 			{
 				var f = fx.Clone();
 				var pool = problem.Pools[i];
-				if (f.SampleCount < SampleMinimum && !pool.UpdateBestFitness(genome, f))
+				if (f.SampleCount < SampleMinimum)
+					return f;
+
+				if (f.SampleCount < pool.BestFitness.Fitness?.SampleCount && !pool.UpdateBestFitness(genome, f))
 					return f;
 
 				ok = true;
