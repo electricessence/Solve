@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
@@ -9,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
+#if DEBUG
+	// ReSharper disable once RedundantUsingDirective
+	using System.Diagnostics;
+#endif
+
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome> : ProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
@@ -114,6 +118,7 @@ namespace Solve.ProcessingSchemes
 		}
 
 #if DEBUG
+		// ReSharper disable once UnusedMember.Local
 		static StringBuilder GetGenomeInfo(TGenome genome)
 		{
 			var sb = new StringBuilder(genome.Hash);

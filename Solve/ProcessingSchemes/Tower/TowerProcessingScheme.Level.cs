@@ -71,7 +71,7 @@ namespace Solve.ProcessingSchemes
 			readonly double[][] BestLevelFitness;
 			readonly double[][] BestProgressiveFitness;
 
-			static bool UpdateFitnessesIfBetter(
+			static (bool success, bool isFresh) UpdateFitnessesIfBetter(
 				Span<double[]> registry,
 				double[] contending,
 				int index)
@@ -83,13 +83,13 @@ namespace Solve.ProcessingSchemes
 				while ((defending = fRef) == null || contending.IsGreaterThan(defending))
 				{
 					if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
-						return true;
+						return (true, defending == null);
 				}
-				return false;
+				return (false, false);
 			}
 
 
-			(double[] Fitness, (bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
+			(double[] Fitness, (bool IsFresh, bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
 				(TGenome Genome, Fitness[] Fitness) progress, IEnumerable<Fitness> fitnesses)
 				=> fitnesses.Select((fitness, i) =>
 				{
@@ -106,7 +106,7 @@ namespace Solve.ProcessingSchemes
 
 					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
-					return (values, (lev, pro, lev || pro));
+					return (values, (lev.isFresh || pro.isFresh, lev.success, pro.success, lev.success || pro.success));
 				}).ToArray();
 
 			void PromoteChampion(TGenome genome)
@@ -162,6 +162,10 @@ namespace Solve.ProcessingSchemes
 					Tower.Broadcast(c);
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
+
+				// Pushed to a higher level...
+				if (result.Any(f => f.Superiority.IsFresh))
+					Tower.Broadcast(c);
 
 				// If we aren't the top, or our pool is full, go ahead and check if we should promote early.
 				// Example: if the incomming genome is already identified as superior, then no need to enter this pool.
@@ -225,7 +229,6 @@ namespace Solve.ProcessingSchemes
 				// 1) Setup selection.
 				var len = pool.Length;
 				var midPoint = pool.Length / 2;
-				var lastLevel = _nextLevel == null;
 
 				var promoted = new HashSet<string>();
 
@@ -245,7 +248,6 @@ namespace Solve.ProcessingSchemes
 					if (promoted.Add(champ.Genome.Hash))
 					{
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]); // Need to leverage potentially significant genetics...
-						if (lastLevel) Tower.Broadcast(champ);
 						NextLevel.PostExpress(champ);
 					}
 

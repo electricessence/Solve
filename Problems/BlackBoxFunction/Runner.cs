@@ -57,9 +57,9 @@ namespace BlackBoxFunction
 
 		public void Init()
 		{
-			var factory = new EvalGenomeFactory<EvalGenome>(/*"(({0} * {0}) + ({1} * {1}))"*/);
+			var factory = new EvalGenomeFactory<EvalGenome>("((({0} * {0}) + ({1} * {1}))^0.5)");
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (800, 40, 2));
+			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (100, 40, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2, 100));
 
 			Init(scheme, emitter, factory.Metrics);

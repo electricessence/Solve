@@ -25,7 +25,7 @@ namespace BlackBoxFunction
 		}
 
 		private const string SuperScriptDigits = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-		static readonly Regex SimpleProductsPattern = new Regex(@"(\w+\s\*\s)+[a-z]+", RegexOptions.Compiled);
+		static readonly Regex SimpleProductsPattern = new Regex(@"(\d+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
 		static readonly Regex StripParensPattern = new Regex($@"\((\w+[{SuperScriptDigits}]*)\)([^\^])", RegexOptions.Compiled);
 		static readonly Regex SuperScriptDigitPattern = new Regex(@"\^[0-9\.]+", RegexOptions.Compiled);
 		static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
@@ -58,7 +58,7 @@ namespace BlackBoxFunction
 			h = SuperScriptDigitPattern.Replace(h,
 				m => m.Value.Contains('.') ? m.Value : ConvertToSuperScript(m.Value.AsSpan().Slice(1)));
 			h = StripParensPattern.Replace(h,
-				m => m.Groups[1].Value);
+				m => m.Groups[1].Value + m.Groups[2].Value);
 			h = CombineMultiplePattern.Replace(h,
 				m => m.Value.Replace(" * ", string.Empty));
 			h = DivisionPattern.Replace(h, m =>

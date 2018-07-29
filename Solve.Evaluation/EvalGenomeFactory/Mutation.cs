@@ -180,7 +180,7 @@ namespace Solve.Evaluation
 		protected override TGenome MutateInternal(TGenome target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
-			return Registration(root, ($"Mutation > {origin}", target.Hash));
+			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
 		}
 	}
 }
