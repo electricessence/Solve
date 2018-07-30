@@ -55,16 +55,16 @@ namespace Solve.Experiment.Console
 				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
 
 			var hash = genome.Hash;
-			ThreadSafety.Lock(SynchronizedConsole.Sync, millisecondsTimeout: 1000, closure: () =>
-			{
+			ThreadSafety.Lock(SynchronizedConsole.Sync,
+				millisecondsTimeout: 1000,
+				closure: () =>
 				SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
 					() => LastHash == hash,
 					cursor =>
 					{
 						LastHash = hash;
 						System.Console.Write(sb.AppendLine().ToString());
-					});
-			});
+					}));
 
 			return true;
 		}
