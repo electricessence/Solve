@@ -24,7 +24,7 @@ namespace BlackBoxFunction
 		}
 
 		static readonly Regex SimpleProductsPattern = new Regex(@"(\d+|[a-z]+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
-		static readonly Regex StripParensPattern = new Regex($@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled);
+		static readonly Regex StripParensPattern = new Regex(@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled);
 		//static readonly Regex SuperScriptDigitPattern = new Regex(@"\^[0-9\.]+", RegexOptions.Compiled);
 		//static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
 		//static readonly Regex DivisionPattern = new Regex(@"\((\w+)\^-(\d+)\)", RegexOptions.Compiled);

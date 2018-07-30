@@ -94,10 +94,10 @@ namespace Solve.ProcessingSchemes
 				=> fitnesses.Select((fitness, i) =>
 				{
 					var values = fitness.Results.Sum.ToArray();
-					var lev = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
+					var (levSuccess, levIsFresh) = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
 
 					var progressiveFitness = progress.Fitness[i];
-					var pro = UpdateFitnessesIfBetter(
+					var (proSuccess, proIsFresh) = UpdateFitnessesIfBetter(
 						BestProgressiveFitness,
 						progressiveFitness
 							.Merge(values)
@@ -106,13 +106,13 @@ namespace Solve.ProcessingSchemes
 
 					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
-					return (values, (lev.isFresh || pro.isFresh, lev.success, pro.success, lev.success || pro.success));
+					return (values, (levIsFresh || proIsFresh, levSuccess, proSuccess, levSuccess || proSuccess));
 				}).ToArray();
 
 			void PromoteChampion(TGenome genome)
 			{
 				Factory.EnqueueChampion(genome);
-				Factory.EnqueueForMutation(genome);
+				//Factory.EnqueueForMutation(genome);
 				//Factory.EnqueueForMutation(genome);
 				//Factory.EnqueueForBreeding(genome);
 				//Factory.EnqueueForBreeding(genome);
@@ -121,20 +121,28 @@ namespace Solve.ProcessingSchemes
 			readonly ConcurrentQueue<Task> ExpressPool
 				= new ConcurrentQueue<Task>();
 
-			public void PostExpress((TGenome Genome, Fitness[] Fitness) c)
-				=> ExpressPool.Enqueue(
-					Tower.Problem
-						.ProcessSampleAsync(c.Genome, Index)
-						.ContinueWith(e => PostInternalFromQueue(c, e.Result, true)));
+			// ReSharper disable once UnusedMethodReturnValue.Local
+			public Task PostExpress((TGenome Genome, Fitness[] Fitness) c)
+			{
+				var task = Tower.Problem
+					.ProcessSampleAsync(c.Genome, Index)
+					.ContinueWith(e => PostInternalFromQueue(c, e.Result, true));
+				ExpressPool.Enqueue(task);
+				return task;
+			}
 
 			readonly ConcurrentQueue<Task> StandbyPool
 				= new ConcurrentQueue<Task>();
 
-			public void PostStandby((TGenome Genome, Fitness[] Fitness) c)
-				=> StandbyPool.Enqueue(
-					Tower.Problem
-						.ProcessSampleAsync(c.Genome, Index)
-						.ContinueWith(e => PostInternalFromQueue(c, e.Result, false)));
+			// ReSharper disable once UnusedMethodReturnValue.Local
+			public Task PostStandby((TGenome Genome, Fitness[] Fitness) c)
+			{
+				var task = Tower.Problem
+					.ProcessSampleAsync(c.Genome, Index)
+					.ContinueWith(e => PostInternalFromQueue(c, e.Result, false));
+				StandbyPool.Enqueue(task);
+				return task;
+			}
 
 			void PostInternalFromQueue((TGenome Genome, Fitness[] Fitness) c,
 				IEnumerable<Fitness> fitnesses,

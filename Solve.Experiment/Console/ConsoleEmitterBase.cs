@@ -54,19 +54,22 @@ namespace Solve.Experiment.Console
 			for (var i = 0; i < snapshots.Length; i++)
 				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
 
-			lock (SynchronizedConsole.Sync)
+			var hash = genome.Hash;
+			ThreadSafety.Lock(SynchronizedConsole.Sync, millisecondsTimeout: 1000, closure: () =>
 			{
-				SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate, () => LastHash == genome.Hash,
+				SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
+					() => LastHash == hash,
 					cursor =>
 					{
-						LastHash = genome.Hash;
+						LastHash = hash;
 						System.Console.Write(sb.AppendLine().ToString());
 					});
-			}
+			});
 
 			return true;
 		}
 
+		[SuppressMessage("ReSharper", "UnusedParameter.Global")]
 		protected virtual void OnEmittingGenome(IProblem<TGenome> p,
 			TGenome genome,
 			Fitness[] fitness,
@@ -80,6 +83,7 @@ namespace Solve.Experiment.Console
 
 
 		// ReSharper disable once UnusedParameter.Global
+		// ReSharper disable once VirtualMemberNeverOverridden.Global
 		protected virtual void OnEmittingGenomeFitness(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
 
