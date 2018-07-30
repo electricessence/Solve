@@ -15,13 +15,13 @@ namespace BlackBoxFunction
 	{
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
-			new Metric(0, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 			new Metric(0, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
+			new Metric(0, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
 		}.AsReadOnly();
 
 		protected static Fitness Fitness01(EvalGenome genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.GeneCount);
+			=> new Fitness(Metrics01, -metrics[1], metrics[0], -genome.GeneCount); // NOTE: swapped...
 
 		public readonly SampleCache Samples;
 
