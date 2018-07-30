@@ -24,10 +24,11 @@ namespace Solve.Evaluation
 
 		public EvalGenomeFactory(params string[] seeds)
 		{
-			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
-			if (seeds != null && seeds.Length != 0)
-				GetPriorityQueue(0).Inject(seeds.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
+			InjectSeeds(seeds);
 		}
+
+		protected void InjectSeeds(IEnumerable<string> seeds)
+			=> InjectSeeds(seeds?.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
 
 		public EvalGenomeFactory(params TGenome[] seeds) : base(seeds)
 		{ }

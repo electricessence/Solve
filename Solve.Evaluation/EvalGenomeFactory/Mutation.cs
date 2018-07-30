@@ -37,13 +37,15 @@ namespace Solve.Evaluation
 				switch (gv)
 				{
 					case Constant<double> _:
-						switch (RandomUtilities.Random.Next(4))
+						switch (RandomUtilities.Random.Next(10))
 						{
 							case 0:
 								// This is a bit controversial since it can bloat constant values.
 								return (Catalog.Variation.ApplyRandomFunction(gene),
 										"Apply function to constant");
 							case 1:
+							case 2:
+							case 3:
 								return (Catalog.Mutation.MutateSign(gene, 1),
 										"Mutate sign of constant");
 

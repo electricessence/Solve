@@ -42,7 +42,7 @@ namespace Solve.ProcessingSchemes
 		//	});
 		//}
 
-		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(/*Environment.ProcessorCount * */2);
+		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(Environment.ProcessorCount * 2);
 
 		async Task BufferGenomes(CancellationToken token)
 		{

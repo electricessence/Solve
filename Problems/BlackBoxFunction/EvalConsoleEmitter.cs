@@ -2,7 +2,6 @@
 using Solve;
 using Solve.Evaluation;
 using Solve.Experiment.Console;
-using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -24,50 +23,29 @@ namespace BlackBoxFunction
 
 		}
 
-		private const string SuperScriptDigits = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-		static readonly Regex SimpleProductsPattern = new Regex(@"(\d+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
-		static readonly Regex StripParensPattern = new Regex($@"\((\w+[{SuperScriptDigits}]*)\)([^\^])", RegexOptions.Compiled);
-		static readonly Regex SuperScriptDigitPattern = new Regex(@"\^[0-9\.]+", RegexOptions.Compiled);
-		static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
-		static readonly Regex DivisionPattern = new Regex(@"\((\w+)\^-(\d+)\)", RegexOptions.Compiled);
-		static readonly Regex DivisionTailedPattern = new Regex($@" \* \(1/(\w+[{SuperScriptDigits}]*)\)", RegexOptions.Compiled);
-		static readonly Regex NegativeMultiplePattern = new Regex(@" \+ \(-(\w+) ([*/]) ", RegexOptions.Compiled);
-
-		static string ConvertToSuperScript(ReadOnlySpan<char> number)
-		{
-			var len = number.Length;
-			var r = new char[len];
-			for (var i = 0; i < len; i++)
-			{
-				var n = char.GetNumericValue(number[i]);
-				r[i] = SuperScriptDigits[(int)n];
-			}
-
-			return new string(r);
-		}
+		static readonly Regex SimpleProductsPattern = new Regex(@"(\d+|[a-z]+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
+		static readonly Regex StripParensPattern = new Regex($@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled);
+		//static readonly Regex SuperScriptDigitPattern = new Regex(@"\^[0-9\.]+", RegexOptions.Compiled);
+		//static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
+		//static readonly Regex DivisionPattern = new Regex(@"\((\w+)\^-(\d+)\)", RegexOptions.Compiled);
+		//static readonly Regex DivisionTailedPattern = new Regex($@" \* \(1/(\w+[{Exponent.SuperScriptDigits}]*)\)", RegexOptions.Compiled);
+		//static readonly Regex NegativeMultiplePattern = new Regex(@" \+ \(-(\w+) ([*/]) ", RegexOptions.Compiled);
 
 		static string FormatGenomeString(string h)
 		{
-			h = h
-				.Replace(" + -", " - ")
-				.Replace(" + (-1 * ", " - (");
+			//h = h
+			//	.Replace(" + -", " - ")
+			//	.Replace(" + (-1 * ", " - (");
 			h = SimpleProductsPattern.Replace(h,
 				m => m.Value.Replace(" * ", string.Empty));
 			h = StripParensPattern.Replace(h,
 				m => m.Groups[1].Value + m.Groups[2].Value);
-			h = SuperScriptDigitPattern.Replace(h,
-				m => m.Value.Contains('.') ? m.Value : ConvertToSuperScript(m.Value.AsSpan().Slice(1)));
 			h = StripParensPattern.Replace(h,
 				m => m.Groups[1].Value + m.Groups[2].Value);
-			h = CombineMultiplePattern.Replace(h,
-				m => m.Value.Replace(" * ", string.Empty));
-			h = DivisionPattern.Replace(h, m =>
-			{
-				var exp = m.Groups[2].Value;
-				return exp == "1" ? $"(1/{m.Groups[1].Value})" : $"(1/{m.Groups[1].Value}{ConvertToSuperScript(exp)})";
-			});
-			h = DivisionTailedPattern.Replace(h, m => $" / {m.Groups[1].Value}");
-			h = NegativeMultiplePattern.Replace(h, m => $" - ({m.Groups[1].Value} {m.Groups[2].Value} ");
+			//h = CombineMultiplePattern.Replace(h,
+			//	m => m.Value.Replace(" * ", string.Empty));
+			//h = DivisionTailedPattern.Replace(h, m => $" / {m.Groups[1].Value}");
+			//h = NegativeMultiplePattern.Replace(h, m => $" - ({m.Groups[1].Value} {m.Groups[2].Value} ");
 			return h;
 		}
 

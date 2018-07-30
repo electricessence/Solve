@@ -14,6 +14,14 @@ namespace Solve.Evaluation
 	{
 		public IEnumerable<(IGene Root, string Origin)> GetVariations(IGene source)
 		{
+			if (Catalog.TryGetReduced(source, out var reduced))
+				yield return (reduced, "Reduction");
+			else
+				reduced = source;
+
+			foreach (var op in Open.Evaluation.Registry.Arithmetic.Functions)
+				yield return (Open.Evaluation.Registry.Arithmetic.GetFunction(Catalog, op, reduced), $"Root function ({op})");
+
 			var sourceTree = Catalog.Factory.Map(source);
 			var descendantNodes = sourceTree.GetDescendantsOfType().ToArray();
 			var count = descendantNodes.Length;
@@ -82,31 +90,25 @@ namespace Solve.Evaluation
 					Catalog.AddConstant(descendantNodes[i], 2),
 					"Add constant to descendant"); // 2 ensures the constant isn't negated when adding to a product.
 
-			var reduced = Catalog.GetReduced(sourceTree.Value);
-
-			yield return (reduced, "Reduction");
 			sourceTree.Recycle();
+			if (!(reduced is Sum<double> sum)) yield break;
+
 			sourceTree = Catalog.Factory.Map(reduced);
 
-			if (sourceTree.Value is Sum<double>)
+			var clonedChildren = sourceTree.Children.Where(c => c.Value is IConstant<double>).ToArray();
+			if (sourceTree.Count > clonedChildren.Length)
 			{
-				var clonedTree = sourceTree.CloneTree();
-				var clonedChildren = clonedTree.Children.Where(c => c.Value is IConstant<double>).ToArray();
-				if (clonedTree.Count > clonedChildren.Length)
-				{
-					foreach (var c in clonedChildren)
-						c.Detatch();
-				}
-
-				yield return (Catalog.GetReduced(Catalog.FixHierarchy(clonedTree).Value), "Constants Stripped");
-				clonedTree.Recycle();
+				foreach (var c in clonedChildren)
+					c.Detatch();
 			}
+
+			yield return (Catalog.GetReduced(Catalog.FixHierarchy(sourceTree).Value), "Constants Stripped");
 			sourceTree.Recycle();
 
-			if (reduced is Sum<double> sum
-				&& sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
+			if (sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
 				yield return (extracted, "GCF Extracted Reduction");
 
+			sourceTree.Recycle();
 		}
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
