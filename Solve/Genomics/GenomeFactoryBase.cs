@@ -33,8 +33,17 @@ namespace Solve
 			Metrics = new MetricsBuilder().Build();
 			MetricsCounter = new CounterCollection(Metrics);
 
+			InjectSeeds(seeds);
+		}
+
+		protected void InjectSeeds(IEnumerable<TGenome> seeds)
+		{
 			var s = seeds as TGenome[] ?? seeds?.ToArray();
-			if (s != null && s.Length != 0) GetPriorityQueue(0).EnqueueInternal(s, true);
+			if (s == null || s.Length == 0) return;
+
+			var q = GetPriorityQueue(0);
+			q.EnqueueInternal(s, true);
+			q.EnqueueVariations(s);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
@@ -737,7 +746,7 @@ namespace Solve
 
 							// Generate more (and insert at higher priority) to improve the pool.
 							// This can be problematic later on.
-							//EnqueueInternal(Factory.GenerateOne());
+							EnqueueInternal(Factory.GenerateOne(genome, mate.genome));
 						}
 
 						// Might still need more funtime.
@@ -825,7 +834,8 @@ namespace Solve
 
 			public void EnqueueVariations(TGenome genome)
 			{
-				if (genome != null) while (AttemptEnqueueVariation(genome)) { }
+				if (genome == null) return;
+				while (AttemptEnqueueVariation(genome)) { }
 			}
 
 			public void EnqueueVariations(in ReadOnlySpan<TGenome> genomes)

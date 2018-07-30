@@ -116,9 +116,8 @@ namespace Solve.Experiment.Console
 			{
 				await Environment.Start();
 			}
-			catch (TaskCanceledException)
-			{
-			}
+			catch (OperationCanceledException)
+			{ }
 			Environment.Cancel();
 			EmitStatsAction(false);
 			SystemConsole.WriteLine("Done.");
