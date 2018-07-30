@@ -15,13 +15,23 @@ namespace BlackBoxFunction
 	{
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
-			new Metric(0, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
 			new Metric(0, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
+			new Metric(0, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
 		}.AsReadOnly();
 
+		protected static readonly IReadOnlyList<Metric> Metrics02 = new List<Metric>
+		{
+			Metrics01[1],
+			Metrics01[0],
+			Metrics01[2]
+		}.AsReadOnly();
+
 		protected static Fitness Fitness01(EvalGenome genome, double[] metrics)
-			=> new Fitness(Metrics01, -metrics[1], metrics[0], -genome.GeneCount); // NOTE: swapped...
+			=> new Fitness(Metrics01, metrics[0], -metrics[1], -genome.GeneCount);
+
+		protected static Fitness Fitness02(EvalGenome genome, double[] metrics)
+			=> new Fitness(Metrics02, -metrics[1], metrics[0], -genome.GeneCount);
 
 		public readonly SampleCache Samples;
 
@@ -86,26 +96,25 @@ namespace BlackBoxFunction
 					double.PositiveInfinity
 				};
 			}
-			else
-			{
-				var c = correct.Correlation(calc);
-				if (c > 1) c = 1; // Must clamp double precision insanity.
-				else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
-													 //if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
-				var d = divergence.Where(v => !double.IsNaN(v)).Average();
 
-				return new[] {
-					(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
-					(double.IsNaN(d) || double.IsInfinity(d)) ? double.PositiveInfinity : d
-				};
-			}
+			var c = correct.Correlation(calc);
+			if (c > 1) c = 1; // Must clamp double precision insanity.
+			else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
+
+			//if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
+			var d = divergence.Where(v => !double.IsNaN(v)).Average();
+
+			return new[] {
+				(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
+				(double.IsNaN(d) || double.IsInfinity(d)) ? double.PositiveInfinity : d
+			};
 		}
 
 		public static Problem Create(
 			Formula actualFormula,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01));
+			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 	}
 
