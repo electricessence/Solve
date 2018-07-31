@@ -1,11 +1,13 @@
 ﻿using Open.Hierarchy;
 using Open.Numeric;
-using System.Diagnostics;
 using System.Linq;
-using IGene = Open.Evaluation.Core.IEvaluate<double>;
 
 namespace Solve.Evaluation
 {
+
+#if DEBUG
+	using System.Diagnostics;
+#endif
 
 	public partial class EvalGenomeFactory<TGenome>
 		where TGenome : EvalGenome

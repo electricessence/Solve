@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace BlackBoxFunction
 {
@@ -38,7 +37,7 @@ namespace BlackBoxFunction
 		public IEnumerable<Entry> Generate()
 		{
 			while (true)
-				yield return new Entry(Samples().Distinct().Memoize(true), _actualFormula);
+				yield return new Entry(Samples()/*.Distinct()*/.Memoize(true), _actualFormula);
 		}
 
 		public LazyList<Entry> Get(long id)

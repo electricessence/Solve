@@ -2,6 +2,7 @@
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
+using System;
 using System.Diagnostics;
 using System.Linq;
 
@@ -31,8 +32,12 @@ namespace Solve.Evaluation
 
 			while (genes.Any())
 			{
-				var gene = genes.GetNodes().ToArray().RandomSelectOne() as Node<IGene>;
-				Debug.Assert(gene != null);
+				var gene = genes
+					.GetNodes()
+					.ToArray()
+					.RandomSelectOne() as Node<IGene>
+					?? throw new InvalidCastException("Expected a Node<IGene.");
+
 				var gv = gene.Value;
 				switch (gv)
 				{

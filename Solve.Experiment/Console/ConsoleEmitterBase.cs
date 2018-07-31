@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using Open.Threading;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -25,6 +26,8 @@ namespace Solve.Experiment.Console
 		public CursorRange LastTopGenomeUpdate;
 
 		protected const string BLANK = "           ";
+
+		readonly ConcurrentQueue<(string Hash, string Output)> ConsoleQueue = new ConcurrentQueue<(string Hash, string Output)>();
 
 		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
 		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, IEnumerable<Fitness> fitness)
@@ -54,17 +57,29 @@ namespace Solve.Experiment.Console
 			for (var i = 0; i < snapshots.Length; i++)
 				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
 
-			var hash = genome.Hash;
-			ThreadSafety.Lock(SynchronizedConsole.Sync,
-				millisecondsTimeout: 1000,
-				closure: () =>
-				SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
-					() => LastHash == hash,
-					cursor =>
+			ConsoleQueue.Enqueue((genome.Hash, sb.ToString()));
+
+			ThreadSafety.TryLock(SynchronizedConsole.Sync,
+				() =>
+				{
+					while (ConsoleQueue.TryDequeue(out var o1))
 					{
-						LastHash = hash;
-						System.Console.Write(sb.AppendLine().ToString());
-					}));
+						while (ConsoleQueue.TryDequeue(out var o2))
+						{
+							o1 = o2;
+						}
+
+						var (Hash, Output) = o1;
+
+						SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
+							() => LastHash == Hash,
+							cursor =>
+							{
+								LastHash = Hash;
+								System.Console.Write(Output + '\n');
+							});
+					}
+				});
 
 			return true;
 		}
