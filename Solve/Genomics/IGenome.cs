@@ -4,8 +4,10 @@
  */
 
 using System;
+#if DEBUG
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace Solve
 {

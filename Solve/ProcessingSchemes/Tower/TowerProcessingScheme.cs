@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
 #if DEBUG
-	// ReSharper disable once RedundantUsingDirective
-	using System.Diagnostics;
+	using System.Text;
 #endif
 
 	// ReSharper disable once PossibleInfiniteInheritance

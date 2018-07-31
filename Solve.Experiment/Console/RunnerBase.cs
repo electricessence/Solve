@@ -1,5 +1,4 @@
-﻿using App.Metrics;
-using Open.Threading.Tasks;
+﻿using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -9,12 +8,15 @@ using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console
 {
+	using App.Metrics;
+
 	[SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 	public abstract class RunnerBase<TGenome>
 		where TGenome : class, IGenome
 
 	{
 		IMetricsRoot Metrics;
+
 		// ReSharper disable once StaticMemberInGenericType
 		static readonly TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
 

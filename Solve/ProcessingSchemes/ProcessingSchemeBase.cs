@@ -1,9 +1,12 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+#if DEBUG
+using System.Diagnostics;
+#endif
+
 
 namespace Solve.ProcessingSchemes
 {
@@ -42,7 +45,7 @@ namespace Solve.ProcessingSchemes
 		//	});
 		//}
 
-		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(Environment.ProcessorCount * 2);
+		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(/*Environment.ProcessorCount **/ 2);
 
 		async Task BufferGenomes(CancellationToken token)
 		{
@@ -80,13 +83,15 @@ namespace Solve.ProcessingSchemes
 					.Select(s => PostFromBufferSingle(token).ContinueWith(t =>
 					{
 						if (t.IsCanceled) return Task.CompletedTask;
+						// ReSharper disable once ConvertIfStatementToReturnStatement
 						if (!t.IsFaulted) return t;
 
+#if DEBUG
 						var f = t.Exception;
 						Debug.Assert(f != null);
 						// ReSharper disable once PossibleNullReferenceException
 						Debug.Fail(f.Message, f.InnerException.StackTrace);
-
+#endif
 						return t;
 					}, token)));
 

@@ -6,7 +6,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if DEBUG
 using System.Threading;
+#endif
 
 namespace Solve
 {

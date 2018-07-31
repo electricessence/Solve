@@ -36,7 +36,7 @@ namespace BlackBoxFunction
 		public readonly SampleCache Samples;
 
 		public Problem(Formula actualFormula,
-			ushort sampleSize = 40,
+			ushort sampleSize = 100,
 			ushort championPoolSize = 100,
 			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
@@ -56,7 +56,7 @@ namespace BlackBoxFunction
 			// 			var gRed = g.AsReduced();
 			// #endif
 
-			for (var i = 0; i < SampleSizeInt; i++)
+			for (var i = 0; i < SampleSizeInt; i++) // Parallel here if futile since there are other threads running this for other genomes.
 			{
 				var sample = samples[i];
 				Debug.Assert(sample != null);
@@ -114,7 +114,7 @@ namespace BlackBoxFunction
 			Formula actualFormula,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics02, Fitness02), (Metrics01, Fitness01));
 
 	}
 
