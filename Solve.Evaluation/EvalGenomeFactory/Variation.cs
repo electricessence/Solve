@@ -1,4 +1,6 @@
-﻿using Open.Evaluation.Catalogs;
+﻿using System;
+using System.Diagnostics;
+using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
@@ -53,7 +55,7 @@ namespace Solve.Evaluation
 					p.Parent.Remove(p);
 
 				yield return (
-					Catalog.FixHierarchy(paramRemoved).Value,
+					Catalog.FixHierarchy(paramRemoved).Recycle(),
 					"Parameter elimination");
 			}
 
@@ -80,6 +82,47 @@ namespace Solve.Evaluation
 				// }
 			}
 
+			if (source is IParent)
+			{
+				var paramExponentTree = Catalog.Factory.Map(source);
+				foreach (var p in paramExponentTree.GetDescendantsOfType().Where(d => d.Value is IParameter<double>).ToArray())
+				{
+					if (p.Parent == null)
+					{
+						Debugger.Break();
+						continue; // Should never happen.
+					}
+
+					if (p.Parent.Value is Exponent<double> exponent && exponent.Power is IConstant<double> c)
+					{
+						var a = Math.Abs(c.Value);
+						var direction = (c.Value < 0 ? -1 : +1);
+						var newValue = (a > 0 && a < 1)
+							? (c.Value > 0 ? 1 : -1)
+							: (c.Value + direction);
+
+						p.Parent[0]
+							= Catalog.Factory.GetNodeWithValue(Catalog.GetConstant(newValue));
+					}
+					else
+					{
+						p.Parent.Replace(p,
+							Catalog.Factory.Map(Catalog.GetExponent(p.Value, 2)));
+					}
+				}
+
+				var pet = Catalog.FixHierarchy(paramExponentTree).Recycle();
+				paramExponentTree.Recycle();
+
+				yield return (Catalog.TryGetReduced(pet, out var red) ? red : pet,
+					"Increase all parameter exponent");
+			}
+
+			for (i = 0; i < count; i++)
+				yield return (
+					Catalog.AdjustNodeMultiple(descendantNodes[i], +1),
+					"Increase descendant multiple");
+
 			for (i = 0; i < count; i++)
 				yield return (
 					Catalog.AdjustNodeMultiple(descendantNodes[i], +1),
@@ -102,13 +145,13 @@ namespace Solve.Evaluation
 					c.Detatch();
 			}
 
-			yield return (Catalog.GetReduced(Catalog.FixHierarchy(sourceTree).Value), "Constants Stripped");
+			var next = Catalog.FixHierarchy(sourceTree).Recycle();
 			sourceTree.Recycle();
+			yield return (Catalog.GetReduced(next), "Constants Stripped");
 
 			if (sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
 				yield return (extracted, "GCF Extracted Reduction");
 
-			sourceTree.Recycle();
 		}
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)

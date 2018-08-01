@@ -1,4 +1,5 @@
-﻿using Open.Evaluation.Catalogs;
+﻿using Open.Evaluation.Arithmetic;
+using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.Numeric;
@@ -41,20 +42,37 @@ namespace Solve.Evaluation
 				var gv = gene.Value;
 				switch (gv)
 				{
-					case Constant<double> _:
+					case Constant<double> c:
 						switch (RandomUtilities.Random.Next(10))
 						{
 							case 0:
 								// This is a bit controversial since it can bloat constant values.
 								return (Catalog.Variation.ApplyRandomFunction(gene),
 										"Apply function to constant");
-							case 1:
-							case 2:
 							case 3:
 								return (Catalog.Mutation.MutateSign(gene, 1),
 										"Mutate sign of constant");
 
+							case 4:
+							case 5:
+								if (gene.Parent?.Value is Exponent<double> exponent && exponent.Power == gv)
+									goto case 6;
+
+								goto default;
+
+							case 6:
+								var a = Math.Abs(c.Value);
+								return ((a > 0 && a < 1) // Look for fractional exponents and avoid.
+									? Catalog.ApplyClone(gene, newNode => Catalog.GetConstant(c.Value > 0 ? 1 : -1))
+									// should be rare (1/10) chance to increase multiple for non power of exponents.
+									: Catalog.AdjustNodeMultiple(gene, c.Value < 0 ? -1 : +1),
+									"Increase constant");
+
 							default:
+								if (gene.Parent?.Value is Exponent<double>)
+									return (Catalog.AdjustNodeMultiple(gene, c.Value > 0 ? -1 : +1),
+										"Decrease constant");
+
 								if (Catalog.Variation.TryRemoveValid(gene, out var newRoot))
 									return (newRoot,
 										"Remove constant");
@@ -65,7 +83,7 @@ namespace Solve.Evaluation
 
 					case Parameter _:
 						{
-							var options = Enumerable.Range(0, 4).ToList();
+							var options = Enumerable.Range(0, 5).ToList();
 							while (options.Any())
 							{
 								switch (options.RandomPluck())
@@ -81,12 +99,13 @@ namespace Solve.Evaluation
 
 									// Apply a function
 									case 2:
-										// Reduce the pollution of functions...
-										if (RandomUtilities.Random.Next(0, 2) == 0)
-											return (Catalog.Variation.ApplyRandomFunction(gene),
-												"Apply random function to paramter");
+										return (Catalog.Variation.ApplyRandomFunction(gene),
+											"Apply random function to paramter");
 
-										break;
+									// Favor squaring...
+									case 3:
+										return (Catalog.Mutation.Square(gene),
+											"Apply random function to paramter");
 
 									//// Split it...
 									//case 3:
