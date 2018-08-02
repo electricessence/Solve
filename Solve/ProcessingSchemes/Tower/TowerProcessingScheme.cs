@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes
 {
 #if DEBUG
+	using System.Diagnostics;
 	using System.Text;
 #endif
 
@@ -116,6 +117,9 @@ namespace Solve.ProcessingSchemes
 		}
 
 #if DEBUG
+
+		private const bool EMIT_GENOMES = false;
+
 		// ReSharper disable once UnusedMember.Local
 		static StringBuilder GetGenomeInfo(TGenome genome)
 		{
@@ -143,9 +147,9 @@ namespace Solve.ProcessingSchemes
 			Contract.EndContractBlock();
 
 #if DEBUG
-			//Debug.WriteLine(
-			//	$"Posting (async):\n{GetGenomeInfo(genome)}",
-			//	"TowerProcessingScheme");
+			Debug.WriteLineIf(EMIT_GENOMES,
+				$"Posting (async):\n{GetGenomeInfo(genome)}",
+				"TowerProcessingScheme");
 #endif
 			return Task.WhenAll(ActiveTowers
 				.Select(t => t.PostAsync(genome, token)));
@@ -157,9 +161,9 @@ namespace Solve.ProcessingSchemes
 			Contract.EndContractBlock();
 
 #if DEBUG
-			//Debug.WriteLine(
-			//	$"Posting:\n{GetGenomeInfo(genome)}\n",
-			//	"TowerProcessingScheme");
+			Debug.WriteLineIf(EMIT_GENOMES,
+				$"Posting:\n{GetGenomeInfo(genome)}\n",
+				"TowerProcessingScheme");
 #endif
 
 			foreach (var t in ActiveTowers)
