@@ -122,11 +122,11 @@ namespace Solve.ProcessingSchemes
 				= new ConcurrentQueue<Task>();
 
 			// ReSharper disable once UnusedMethodReturnValue.Local
-			public Task PostExpress((TGenome Genome, Fitness[] Fitness) c)
+			public Task PostExpress((TGenome Genome, Fitness[] Fitness) c, bool expressToTop = false)
 			{
 				var task = Tower.Problem
 					.ProcessSampleAsync(c.Genome, Index)
-					.ContinueWith(e => PostInternalFromQueue(c, e.Result, true));
+					.ContinueWith(e => PostInternalFromQueue(c, e.Result, true, expressToTop));
 				ExpressPool.Enqueue(task);
 				return task;
 			}
@@ -146,11 +146,28 @@ namespace Solve.ProcessingSchemes
 
 			void PostInternalFromQueue((TGenome Genome, Fitness[] Fitness) c,
 				IEnumerable<Fitness> fitnesses,
-				bool express)
+				bool express,
+				bool expressToTop = false)
 			{
 				// For debugging...
-				PostInternal(c, fitnesses, express);
+				PostInternal(c, fitnesses, express, expressToTop);
 			}
+
+#if DEBUG
+			static bool IsTrackedGenome(string hash)
+			{
+				switch (hash)
+				{
+					case "({0}² + {1}²)":
+					case "√({0}² + {1}²)":
+					case "(({0}²) + ({1}²))":
+					case "√(({0}²) + ({1}²))":
+						return true;
+				}
+
+				return false;
+			}
+#endif
 
 			void PostInternal(
 				(TGenome Genome, Fitness[] Fitness) c,
@@ -160,7 +177,20 @@ namespace Solve.ProcessingSchemes
 			{
 				// Process a test for this level.
 				var result = ProcessTestAndUpdate(c, fitnesses);
+#if DEBUG
+				var hash = c.Genome.Hash;
+				if (IsTrackedGenome(hash))
+				{
+					var expressState = express ? " express" : string.Empty;
+					if (expressToTop)
+						expressState += " top";
+					Debug.WriteLine($"Level: {Index}{expressState}\n{hash}\n");
+					//Debugger.Break();
+				}
+
+
 				Debug.Assert(c.Fitness.All(f => f.Results != null));
+#endif
 
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
 				if (IsMaxLevel)
@@ -255,8 +285,10 @@ namespace Solve.ProcessingSchemes
 					var champ = s[0].GenomeFitness;
 					if (promoted.Add(champ.Genome.Hash))
 					{
-						p.Champions?.Add(champ.Genome, champ.Fitness[i]); // Need to leverage potentially significant genetics...
-						NextLevel.PostExpress(champ);
+						// Need to leverage potentially significant genetics...
+						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
+						Factory.EnqueueChampion(champ.Genome);
+						NextLevel.PostExpress(champ, true);
 					}
 
 					// 3) Increment fitness rejection for individual fitnesses.
@@ -274,7 +306,7 @@ namespace Solve.ProcessingSchemes
 						var s = selection[i];
 						var winner = s[n].GenomeFitness;
 						if (promoted.Add(winner.Genome.Hash))
-							NextLevel.PostExpress(winner);
+							NextLevel.PostExpress(winner); // PostStandby?
 					}
 				}
 
@@ -299,6 +331,12 @@ namespace Solve.ProcessingSchemes
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
 							if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
 								f.MetricsCounter.Increment("Genome Rejected");
+
+#if DEBUG
+							if (IsTrackedGenome(gf.Genome.Hash))
+								Debugger.Break();
+#endif
+
 						}
 					}
 					else

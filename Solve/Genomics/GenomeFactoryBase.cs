@@ -511,7 +511,8 @@ namespace Solve
 
 			var h = n.Hash;
 			var added = Released.TryAdd(h, n);
-			if (added) return n;
+			if (added)
+				return n;
 
 			var actual = Released[h];
 			if (actual == n)
@@ -936,11 +937,10 @@ namespace Solve
 				while (AwaitingMutation.TryDequeue(out var mGenome))
 				{
 					Factory.MetricsCounter.Decrement(AWAITING_MUTATION);
-					if (Factory.AttemptNewMutation(mGenome, out var mutation))
-					{
-						EnqueueInternal(mutation);
-						return true;
-					}
+					if (!Factory.AttemptNewMutation(mGenome, out var mutation))
+						continue;
+					EnqueueInternal(mutation);
+					return true;
 				}
 				return false;
 			}
@@ -955,7 +955,8 @@ namespace Solve
 
 				do
 				{
-					if (!InternalQueue.TryDequeue(out genome)) continue;
+					if (!InternalQueue.TryDequeue(out genome))
+						continue;
 					Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
 					return true;
 				}
