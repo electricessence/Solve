@@ -202,8 +202,8 @@ namespace Solve.ProcessingSchemes
 				}
 
 				// Pushed to a higher level...
-				if (result.Any(f => f.Superiority.IsFresh))
-					Tower.Broadcast(c);
+				//if (result.Any(f => f.Superiority.IsFresh))
+				//	Tower.Broadcast(c);
 
 				// If we aren't the top, or our pool is full, go ahead and check if we should promote early.
 				// Example: if the incomming genome is already identified as superior, then no need to enter this pool.
@@ -222,7 +222,8 @@ namespace Solve.ProcessingSchemes
 
 					if (expressToTop || either && result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
 					{
-						NextLevel.Post(c, express, true); // expresssToTop... Since this is the reigning champ for this pool (or expressToTop).
+						// Local or progressive winners should be accellerated.
+						NextLevel.PostExpress(c, true); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
 						return; // No need to involve a obviously superior genome with this pool.
 					}
 				}
@@ -288,7 +289,8 @@ namespace Solve.ProcessingSchemes
 						// Need to leverage potentially significant genetics...
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
-						NextLevel.PostExpress(champ, true);
+						if (_nextLevel == null) Tower.Broadcast(champ);
+						NextLevel.Post(champ, true, true);
 					}
 
 					// 3) Increment fitness rejection for individual fitnesses.
