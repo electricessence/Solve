@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace BlackBoxFunction
+namespace Multiplexer
 {
 	public delegate double Formula(IReadOnlyList<double> p);
 

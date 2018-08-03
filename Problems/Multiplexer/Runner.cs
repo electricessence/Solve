@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
-namespace BlackBoxFunction
+namespace Multiplexer
 {
 	[SuppressMessage("ReSharper", "UnusedMember.Local")]
 	internal class Runner : RunnerBase<EvalGenome>
