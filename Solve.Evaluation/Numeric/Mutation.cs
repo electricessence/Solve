@@ -13,12 +13,11 @@ namespace Solve.Evaluation
 	using IGene = IEvaluate<double>;
 	using IOperator = IOperator<IEvaluate<double>, double>;
 
-	public partial class EvalGenomeFactory<TGenome>
-		where TGenome : EvalGenome
+	public partial class NumericEvalGenomeFactory
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private (IGene Root, string Origin) MutateUnfrozen(TGenome target)
+		private (IGene Root, string Origin) MutateUnfrozen(EvalGenome<double> target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -203,7 +202,7 @@ namespace Solve.Evaluation
 
 		}
 
-		protected override TGenome MutateInternal(TGenome target)
+		protected override EvalGenome<double> MutateInternal(EvalGenome<double> target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
 			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));

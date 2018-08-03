@@ -11,7 +11,7 @@ namespace Multiplexer
 {
 	public delegate double Formula(IReadOnlyList<double> p);
 
-	public class Problem : ProblemBase<EvalGenome>
+	public class Problem : ProblemBase<EvalGenome<double>>
 	{
 		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
 		{
@@ -29,10 +29,10 @@ namespace Multiplexer
 			Metrics01[3]
 		}.AsReadOnly();
 
-		protected static Fitness Fitness01(EvalGenome genome, double[] metrics)
+		protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
 			=> new Fitness(Metrics01, metrics[0], metrics[1], -metrics[2], -genome.GeneCount);
 
-		protected static Fitness Fitness02(EvalGenome genome, double[] metrics)
+		protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -metrics[2], metrics[1], -genome.GeneCount);
 
 		public readonly SampleCache Samples;
@@ -40,13 +40,13 @@ namespace Multiplexer
 		public Problem(Formula actualFormula,
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100,
-			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
 			Samples = new SampleCache(actualFormula);
 		}
 
-		protected override double[] ProcessSampleMetrics(EvalGenome g, long sampleId)
+		protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
 			var correct = new double[SampleSizeInt];

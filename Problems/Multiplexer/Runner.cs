@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Multiplexer
 {
 	[SuppressMessage("ReSharper", "UnusedMember.Local")]
-	internal class Runner : RunnerBase<EvalGenome>
+	internal class Runner : RunnerBase<EvalGenome<double>>
 	{
 
 		static double AB(IReadOnlyList<double> p)
@@ -65,9 +65,9 @@ namespace Multiplexer
 
 		public void Init()
 		{
-			var factory = new EvalGenomeFactory<EvalGenome>(/*"((({0} * {0}) + ({1} * {1}))^0.5)"*/);
+			var factory = new NumericEvalGenomeFactory(/*"((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new TowerProcessingScheme<EvalGenome>(factory, (100, 60, 2));
+			var scheme = new TowerProcessingScheme<EvalGenome<double>>(factory, (100, 60, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 100));
 
 			Init(scheme, emitter, factory.Metrics);
