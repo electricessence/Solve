@@ -6,19 +6,18 @@ using System.Linq;
 
 namespace Solve.Evaluation
 {
-	using IGene = IEvaluate<double>;
 
-	public class EvalGenome : GenomeBase, IHaveRoot<IGene>
+	public class EvalGenome<T> : GenomeBase, IHaveRoot<IEvaluate<T>>
 	{
-		public EvalGenome(IGene root)
+		public EvalGenome(IEvaluate<T> root)
 		{
 			SetRoot(root);
 		}
 
-		public IGene Root { get; private set; }
+		public IEvaluate<T> Root { get; private set; }
 		object IHaveRoot.Root => Root;
 
-		public bool SetRoot(IGene root)
+		public bool SetRoot(IEvaluate<T> root)
 		{
 			AssertIsNotFrozen();
 			if (Root == root) return false;
@@ -29,10 +28,10 @@ namespace Solve.Evaluation
 		protected override int GetGeneCount() => Root is IParent r ? r.GetNodes().Count() : (Root == null ? 0 : 1);
 		protected override string GetHash() => Root.ToStringRepresentation();
 
-		public new EvalGenome Clone()
+		public new EvalGenome<T> Clone()
 		{
 #if DEBUG
-			var clone = new EvalGenome(Root);
+			var clone = new EvalGenome<T>(Root);
 			clone.AddLogEntry("Origin", "Cloned");
 			return clone;
 #else
@@ -49,7 +48,7 @@ namespace Solve.Evaluation
 		}
 
 
-		public double Evaluate(IReadOnlyList<double> values)
+		public T Evaluate(IReadOnlyList<T> values)
 			=> Root.Evaluate(values);
 
 		public string ToAlphaParameters()

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Solve
 {
@@ -18,18 +17,11 @@ namespace Solve
 			if (a == null || b == null
 				// Avoid inbreeding. :P
 				|| a == b
-				|| GetReduced(a).Hash == GetReduced(b).Hash) return null;
+				|| GetReduced(a)?.Hash == GetReduced(b)?.Hash)
+				return null;
 
 			return base.AttemptNewCrossover(a, b, maxAttempts);
 		}
-
-		/* NOTE:
-		 * Reductions are done inside the factory since more complex problems may require special references to catalogs or other important classes that should not be retained by the genome itself.
-		 * It also ensures that a genome is kept clean and not responsible for the operation. */
-
-		readonly ConditionalWeakTable<TGenome, TGenome> Reductions = new ConditionalWeakTable<TGenome, TGenome>();
-
-		protected virtual TGenome GetReducedInternal(TGenome source) => null;
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 		{
@@ -39,13 +31,6 @@ namespace Solve
 				yield return reduced;
 		}
 
-		protected TGenome GetReduced(TGenome source)
-		{
-			if (Reductions.TryGetValue(source, out var r))
-				return r;
-
-			var result = GetReducedInternal(source);
-			return result == null ? source : Reductions.GetValue(source, key => Registration(result));
-		}
+		protected virtual TGenome GetReduced(TGenome source) => null;
 	}
 }

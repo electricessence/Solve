@@ -1,18 +1,17 @@
-﻿using Open.Evaluation.Catalogs;
+﻿using Open.Evaluation.Arithmetic;
+using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
 using System.Linq;
-using Open.Evaluation.Arithmetic;
 
 namespace Solve.Evaluation
 {
 	using IGene = IEvaluate<double>;
 
-	public partial class EvalGenomeFactory<TGenome>
-		where TGenome : EvalGenome
+	public partial class NumericEvalGenomeFactory
 	{
-		public IEnumerable<(IGene Root, string Origin)> GetVariations(IGene source)
+		protected override IEnumerable<(IGene Root, string Origin)> GetVariations(IGene source)
 		{
 			if (Catalog.TryGetReduced(source, out var reduced))
 				yield return (reduced, "Reduction");
@@ -125,22 +124,6 @@ namespace Solve.Evaluation
 				yield return (extracted, "GCF Extracted Reduction");
 
 		}
-
-		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
-			=> GetVariations(source.Root)
-				.Where(v => v.Root != null)
-				.GroupBy(v => v.Root)
-				.Select(g =>
-				{
-#if DEBUG
-					return Create(g.Key,
-						($"EvalGenomeFactory.GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct().ToArray())}]", source.Hash));
-#else
-					return Create(g.Key, (null, null));
-#endif
-				})
-				.Concat(base.GetVariationsInternal(source)
-						?? Enumerable.Empty<TGenome>());
 
 
 	}

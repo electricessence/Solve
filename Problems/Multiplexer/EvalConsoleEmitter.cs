@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Multiplexer
 {
-	public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome>
+	public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome<double>>
 	{
 		readonly ICatalog<IEvaluate<double>> Catalog;
 
@@ -17,7 +17,7 @@ namespace Multiplexer
 			Catalog = catalog;
 		}
 
-		public EvalConsoleEmitter(EvalGenomeFactory<EvalGenome> factory, uint sampleMinimum = 50)
+		public EvalConsoleEmitter(NumericEvalGenomeFactory factory, uint sampleMinimum = 50)
 			: this(factory.Catalog, sampleMinimum)
 		{
 
@@ -49,7 +49,7 @@ namespace Multiplexer
 			return h;
 		}
 
-		protected override void OnEmittingGenome(IProblem<EvalGenome> p, EvalGenome genome, Fitness[] fitness,
+		protected override void OnEmittingGenome(IProblem<EvalGenome<double>> p, EvalGenome<double> genome, Fitness[] fitness,
 			StringBuilder output)
 		{
 			//base.OnEmittingGenome(p, genome, fitness, output);
