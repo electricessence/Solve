@@ -153,21 +153,21 @@ namespace Solve.ProcessingSchemes
 				PostInternal(c, fitnesses, express, expressToTop);
 			}
 
-#if DEBUG
-			static bool IsTrackedGenome(string hash)
-			{
-				switch (hash)
-				{
-					case "({0}² + {1}²)":
-					case "√({0}² + {1}²)":
-					case "(({0}²) + ({1}²))":
-					case "√(({0}²) + ({1}²))":
-						return true;
-				}
+			//#if DEBUG
+			//			static bool IsTrackedGenome(string hash)
+			//			{
+			//				switch (hash)
+			//				{
+			//					case "({0}² + {1}²)":
+			//					case "√({0}² + {1}²)":
+			//					case "(({0}²) + ({1}²))":
+			//					case "√(({0}²) + ({1}²))":
+			//						return true;
+			//				}
 
-				return false;
-			}
-#endif
+			//				return false;
+			//			}
+			//#endif
 
 			void PostInternal(
 				(TGenome Genome, Fitness[] Fitness) c,
@@ -177,20 +177,20 @@ namespace Solve.ProcessingSchemes
 			{
 				// Process a test for this level.
 				var result = ProcessTestAndUpdate(c, fitnesses);
-#if DEBUG
-				var hash = c.Genome.Hash;
-				if (IsTrackedGenome(hash))
-				{
-					var expressState = express ? " express" : string.Empty;
-					if (expressToTop)
-						expressState += " top";
-					Debug.WriteLine($"Level: {Index}{expressState}\n{hash}\n");
-					//Debugger.Break();
-				}
+				//#if DEBUG
+				//				var hash = c.Genome.Hash;
+				//				if (IsTrackedGenome(hash))
+				//				{
+				//					var expressState = express ? " express" : string.Empty;
+				//					if (expressToTop)
+				//						expressState += " top";
+				//					Debug.WriteLine($"Level: {Index}{expressState}\n{hash}\n");
+				//					//Debugger.Break();
+				//				}
 
 
-				Debug.Assert(c.Fitness.All(f => f.Results != null));
-#endif
+				//				Debug.Assert(c.Fitness.All(f => f.Results != null));
+				//#endif
 
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
 				if (IsMaxLevel)
@@ -332,10 +332,10 @@ namespace Solve.ProcessingSchemes
 							if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
 								f.MetricsCounter.Increment("Genome Rejected");
 
-#if DEBUG
-							if (IsTrackedGenome(gf.Genome.Hash))
-								Debugger.Break();
-#endif
+							//#if DEBUG
+							//							if (IsTrackedGenome(gf.Genome.Hash))
+							//								Debugger.Break();
+							//#endif
 
 						}
 					}
