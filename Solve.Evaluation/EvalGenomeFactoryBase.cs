@@ -128,7 +128,7 @@ namespace Solve.Evaluation
 			g.AddLogEntry("Origin", origin.message, origin.data);
 			return g;
 #else
-			return new EvalGenome(root);
+			return new EvalGenome<T>(root);
 #endif
 		}
 

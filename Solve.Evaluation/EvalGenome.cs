@@ -35,7 +35,7 @@ namespace Solve.Evaluation
 			clone.AddLogEntry("Origin", "Cloned");
 			return clone;
 #else
-			return new EvalGenome(Root);
+			return new EvalGenome<T>(Root);
 #endif
 		}
 
