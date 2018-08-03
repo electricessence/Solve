@@ -53,7 +53,7 @@ namespace BlackBoxFunction
 		{
 			var a = p[0];
 			var b = p[1];
-			return Math.Sqrt(a * a + b * b + a + 2) + b + 1;
+			return Math.Sqrt(a * a + b * b + a + 2) - b + 1;
 		}
 
 		readonly ushort _minSamples;
