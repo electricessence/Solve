@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using Open.Evaluation.Catalogs;
+﻿using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
@@ -84,38 +82,12 @@ namespace Solve.Evaluation
 
 			if (source is IParent)
 			{
-				var paramExponentTree = Catalog.Factory.Map(source);
-				foreach (var p in paramExponentTree.GetDescendantsOfType().Where(d => d.Value is IParameter<double>).ToArray())
+				var paramExpIncrease = Catalog.Variation.IncreaseParameterExponents(source);
+				if (paramExpIncrease != source)
 				{
-					if (p.Parent == null)
-					{
-						Debugger.Break();
-						continue; // Should never happen.
-					}
-
-					if (p.Parent.Value is Exponent<double> exponent && exponent.Power is IConstant<double> c)
-					{
-						var a = Math.Abs(c.Value);
-						var direction = (c.Value < 0 ? -1 : +1);
-						var newValue = (a > 0 && a < 1)
-							? (c.Value > 0 ? 1 : -1)
-							: (c.Value + direction);
-
-						p.Parent[0]
-							= Catalog.Factory.GetNodeWithValue(Catalog.GetConstant(newValue));
-					}
-					else
-					{
-						p.Parent.Replace(p,
-							Catalog.Factory.Map(Catalog.GetExponent(p.Value, 2)));
-					}
+					yield return (paramExpIncrease,
+						"Increase all parameter exponent");
 				}
-
-				var pet = Catalog.FixHierarchy(paramExponentTree).Recycle();
-				paramExponentTree.Recycle();
-
-				yield return (Catalog.TryGetReduced(pet, out var red) ? red : pet,
-					"Increase all parameter exponent");
 			}
 
 			for (i = 0; i < count; i++)
