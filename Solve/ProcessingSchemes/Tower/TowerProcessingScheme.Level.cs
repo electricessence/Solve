@@ -290,7 +290,7 @@ namespace Solve.ProcessingSchemes
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
 						if (_nextLevel == null) Tower.Broadcast(champ);
-						NextLevel.Post(champ, true, true);
+						NextLevel.Post(champ, true, true); // Champs need to be posted synchronously to stay ahead of other deferred winners.
 					}
 
 					// 3) Increment fitness rejection for individual fitnesses.
