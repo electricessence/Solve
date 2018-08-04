@@ -91,8 +91,8 @@ namespace Solve.Evaluation
 
 			for (i = 0; i < count; i++)
 				yield return (
-					Catalog.AdjustNodeMultiple(descendantNodes[i], +1),
-					"Increase descendant multiple");
+					Catalog.AdjustNodeMultiple(descendantNodes[i], -1),
+					"Decrease descendant multiple");
 
 			for (i = 0; i < count; i++)
 				yield return (
