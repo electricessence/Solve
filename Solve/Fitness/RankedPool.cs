@@ -37,11 +37,10 @@ namespace Solve
 			if (rc != null) Interlocked.CompareExchange(ref _ranked, null, rc);
 
 			var count = _pool.Count;
-			if (count > PoolSize * 100)
-			{
-				Debug.WriteLine($"Champion pool size reached: {count}");
-				GetRanked(); // Overflowing?
-			}
+			if (count <= PoolSize * 100) return;
+
+			Debug.WriteLine($"Champion pool size reached: {count}");
+			GetRanked(); // Overflowing?
 		}
 
 		(TGenome Genome, Fitness Fitness)[] GetRanked()
