@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Eater
 {
-	class Runner : RunnerBase<Genome>
+	internal class Runner : RunnerBase<Genome>
 	{
 		// Keep some known viable genomes for reintroduction.
 		public static readonly string[] Seed =
