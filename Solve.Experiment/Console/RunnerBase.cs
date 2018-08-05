@@ -92,11 +92,9 @@ namespace Solve.Experiment.Console
 				.Subscribe(o =>
 					{
 						var problem = o.Problem;
-						var fitnesses = o.GenomeFitness.Fitness;
-						var genome = o.GenomeFitness.Genome;
-						Emitter.EmitTopGenomeStats(problem, genome, fitnesses);
+						Emitter.EmitTopGenomeStats(problem, o.Update);
 
-						if (!problem.HasConverged && fitnesses.All(f => f.HasConverged(_minConvergenceSamples)))
+						if (!problem.HasConverged && problem.Pools.All(pool => pool.BestFitness.Fitness?.HasConverged(_minConvergenceSamples) ?? false))
 							problem.Converged();
 
 						if (Environment.HaveAllProblemsConverged)
