@@ -118,6 +118,12 @@ namespace Solve.ProcessingSchemes
 				//Factory.EnqueueForBreeding(genome);
 			}
 
+			void PostChampion((TGenome Genome, Fitness[] Fitness) c, int poolIndex)
+			{
+				PromoteChampion(c.Genome);
+				Tower.Broadcast(c, poolIndex);
+			}
+
 			readonly ConcurrentQueue<Task> ExpressPool
 				= new ConcurrentQueue<Task>();
 
@@ -201,8 +207,7 @@ namespace Solve.ProcessingSchemes
 						var r = result[i];
 						if (!r.Superiority.Progressive) continue;
 
-						PromoteChampion(c.Genome);
-						Tower.Broadcast(c, i);
+						PostChampion(c, i);
 					}
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
@@ -243,9 +248,12 @@ namespace Solve.ProcessingSchemes
 				bool expressToTop = false,
 				bool processPool = false)
 			{
-				PostInternal(c, Tower.Problem.ProcessSample(c.Genome, Index), express, expressToTop);
+				PostInternal(c,
+					Tower.Problem.ProcessSample(c.Genome, Index),
+					express, expressToTop);
 
-				if (processPool) ProcessPoolAsync().Wait();
+				if (processPool)
+					ProcessPoolAsync().Wait();
 			}
 
 			public async Task PostAsync((TGenome Genome, Fitness[] Fitness) c,
@@ -254,14 +262,18 @@ namespace Solve.ProcessingSchemes
 				bool expressToTop = false,
 				bool processPool = false)
 			{
-				PostInternal(c, await Tower.Problem.ProcessSampleAsync(c.Genome, Index), express, expressToTop);
+				PostInternal(c,
+					await Tower.Problem.ProcessSampleAsync(c.Genome, Index),
+					express, expressToTop);
 
-				if (processPool) await ProcessPoolAsync(token);
+				if (processPool)
+					await ProcessPoolAsync(token);
 			}
 
 			bool ProcessPoolInternal()
 			{
-				if (Pool.Count < PoolSize) return false;
+				if (Pool.Count < PoolSize)
+					return false;
 
 				Entry[] pool = null;
 				// If a lock is already aquired somewhere else, then skip/ignore...
@@ -269,7 +281,8 @@ namespace Solve.ProcessingSchemes
 				{
 					if (Pool.Count >= PoolSize)
 						pool = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();
-				}) || pool == null) return true;
+				}) || pool == null)
+					return true;
 
 				// 1) Setup selection.
 				var len = pool.Length;
@@ -280,7 +293,6 @@ namespace Solve.ProcessingSchemes
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
 				var selection = new Entry[problemPoolCount][];
-				var topLevel = _nextLevel == null;
 				for (var i = 0; i < problemPoolCount; i++)
 				{
 					var p = problemPools[i];
@@ -296,9 +308,8 @@ namespace Solve.ProcessingSchemes
 						// Need to leverage potentially significant genetics...
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
-						if (topLevel)
-							Tower.Broadcast(champ, i);
-						NextLevel.Post(champ, true); // Champs need to be posted synchronously to stay ahead of other deferred winners.
+						PostChampion(champ, i);
+						NextLevel.PostExpress(champ, true); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 					}
 
 					// 3) Increment fitness rejection for individual fitnesses.
@@ -387,12 +398,12 @@ namespace Solve.ProcessingSchemes
 					while (!token.IsCancellationRequested && (next = next._nextLevel) != null)
 						await next.ProcessPoolAsync(token, true);
 				}
-				if (!token.IsCancellationRequested && processed) goto retry;
+
+				if (!token.IsCancellationRequested && processed)
+					goto retry;
 			}
 
 		}
-
-
 
 	}
 }
