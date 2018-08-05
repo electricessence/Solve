@@ -9,7 +9,7 @@ namespace Solve.ProcessingSchemes
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, Fitness[])>, IGenomeProcessor<TGenome>
+		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>, IGenomeProcessor<TGenome>
 		{
 			internal readonly TowerProcessingScheme<TGenome> Environment;
 			internal readonly IProblem<TGenome> Problem;
@@ -63,6 +63,8 @@ namespace Solve.ProcessingSchemes
 			public Task PostAsync(TGenome next, CancellationToken token)
 				=> PostAsync(next, token, false);
 
+			public void Broadcast((TGenome Genome, Fitness[] Fitnesses) gf, int index)
+				=> Broadcast((gf.Genome, index, gf.Fitnesses[index]));
 		}
 	}
 

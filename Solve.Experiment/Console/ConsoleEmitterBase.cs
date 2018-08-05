@@ -22,72 +22,70 @@ namespace Solve.Experiment.Console
 			SampleMinimum = sampleMinimum;
 		}
 
-		public string LastHash;
 		public CursorRange LastTopGenomeUpdate;
 
 		protected const string BLANK = "           ";
 
-		readonly ConcurrentQueue<(string Hash, string Output)> ConsoleQueue = new ConcurrentQueue<(string Hash, string Output)>();
+		readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue
+			= new ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
 
 		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
-		public bool EmitTopGenomeStats(IProblem<TGenome> problem, TGenome genome, IEnumerable<Fitness> fitness)
+		public void EmitTopGenomeStats(IProblem<TGenome> problem, (TGenome genome, int poolIndex, Fitness fitness) update)
 		{
 			// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
-			var ok = false;
-			var snapshots = fitness.Select((fx, i) =>
+			var (genome, poolIndex, fitness) = update;
+			var f = fitness.Clone();
+			//var pool = problem.Pools[poolIndex];
+			if (f.SampleCount >= SampleMinimum /*&& pool.UpdateBestFitness(genome, f)*/)
 			{
-				var f = fx.Clone();
-				var pool = problem.Pools[i];
-				if (f.SampleCount < SampleMinimum)
-					return f;
+				ConsoleQueue.Enqueue((problem, genome, poolIndex, f));
+				OnEmittingGenomeFitness(problem, genome, poolIndex, f);
+			}
 
-				if (f.SampleCount < pool.BestFitness.Fitness?.SampleCount && !pool.UpdateBestFitness(genome, f))
-					return f;
+			TryEmitConsole();
+		}
 
-				ok = true;
-				OnEmittingGenomeFitness(problem, genome, i, f);
-				return f;
-			}).ToArray();
-
-			if (!ok) return false;
-
-			var sb = new StringBuilder();
-			OnEmittingGenome(problem, genome, snapshots, sb);
-
-			for (var i = 0; i < snapshots.Length; i++)
-				sb.AppendLine(FitnessScoreWithLabels(problem, i, snapshots[i]));
-
-			ConsoleQueue.Enqueue((genome.Hash, sb.ToString()));
-
+		protected void TryEmitConsole()
+		{
 			ThreadSafety.TryLock(SynchronizedConsole.Sync,
 				() =>
 				{
 					while (ConsoleQueue.TryDequeue(out var o1))
 					{
-						while (ConsoleQueue.TryDequeue(out var o2))
+						var d = new Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
 						{
-							o1 = o2;
+							d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
 						}
 
-						var (Hash, Output) = o1;
+						while (ConsoleQueue.TryDequeue(out var o2))
+						{
+							d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
+						}
 
-						SynchronizedConsole.OverwriteIfSame(ref LastTopGenomeUpdate,
-							() => LastHash == Hash,
+						var output = new StringBuilder();
+						foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
+						{
+							OnEmittingGenome(g.Key, output);
+							foreach (var entry in g)
+							{
+								var (problem, _, poolIndex, fitness) = entry.Value;
+								output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
+							}
+						}
+
+						output.AppendLine();
+						SynchronizedConsole.Write(ref LastTopGenomeUpdate,
 							cursor =>
 							{
-								LastHash = Hash;
-								System.Console.Write(Output + '\n');
+								System.Console.Write(output.ToString());
 							});
 					}
 				});
-
-			return true;
 		}
 
 		[SuppressMessage("ReSharper", "UnusedParameter.Global")]
-		protected virtual void OnEmittingGenome(IProblem<TGenome> p,
+		protected virtual void OnEmittingGenome(
 			TGenome genome,
-			Fitness[] fitness,
 			StringBuilder output)
 		{
 			output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);

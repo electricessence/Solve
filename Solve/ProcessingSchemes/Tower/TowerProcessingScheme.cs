@@ -45,7 +45,7 @@ namespace Solve.ProcessingSchemes
 			MaxLossesBeforeElimination = maxLossesBeforeElimination;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-			this.Subscribe(e => Factory[0].EnqueueChampion(e.GenomeFitness.Genome));
+			this.Subscribe(e => Factory[0].EnqueueChampion(e.Update.Genome));
 		}
 
 		public TowerProcessingScheme(
@@ -169,6 +169,7 @@ namespace Solve.ProcessingSchemes
 			foreach (var t in ActiveTowers)
 				t.Post(genome);
 		}
+
 	}
 
 

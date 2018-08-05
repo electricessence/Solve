@@ -195,9 +195,15 @@ namespace Solve.ProcessingSchemes
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
 				if (IsMaxLevel)
 				{
-					if (!result.Any(f => f.Superiority.Progressive)) return;
-					PromoteChampion(c.Genome);
-					Tower.Broadcast(c);
+					var len = result.Length;
+					for (var i = 0; i < len; i++)
+					{
+						var r = result[i];
+						if (!r.Superiority.Progressive) continue;
+
+						PromoteChampion(c.Genome);
+						Tower.Broadcast(c, i);
+					}
 					return; // If we've reached the top, we've either become the top champion, or we are rejected.
 				}
 
@@ -274,6 +280,7 @@ namespace Solve.ProcessingSchemes
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
 				var selection = new Entry[problemPoolCount][];
+				var topLevel = _nextLevel == null;
 				for (var i = 0; i < problemPoolCount; i++)
 				{
 					var p = problemPools[i];
@@ -289,8 +296,9 @@ namespace Solve.ProcessingSchemes
 						// Need to leverage potentially significant genetics...
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
-						if (_nextLevel == null) Tower.Broadcast(champ);
-						NextLevel.Post(champ, true, true); // Champs need to be posted synchronously to stay ahead of other deferred winners.
+						if (topLevel)
+							Tower.Broadcast(champ, i);
+						NextLevel.Post(champ, true); // Champs need to be posted synchronously to stay ahead of other deferred winners.
 					}
 
 					// 3) Increment fitness rejection for individual fitnesses.
@@ -383,6 +391,8 @@ namespace Solve.ProcessingSchemes
 			}
 
 		}
+
+
 
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using Open.Evaluation.Core;
-using Solve;
 using Solve.Evaluation;
 using Solve.Experiment.Console;
 using System.Text;
@@ -49,7 +48,8 @@ namespace Multiplexer
 			return h;
 		}
 
-		protected override void OnEmittingGenome(IProblem<EvalGenome<double>> p, EvalGenome<double> genome, Fitness[] fitness,
+		protected override void OnEmittingGenome(
+			EvalGenome<double> genome,
 			StringBuilder output)
 		{
 			//base.OnEmittingGenome(p, genome, fitness, output);
