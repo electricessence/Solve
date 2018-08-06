@@ -40,8 +40,6 @@ namespace Solve.ProcessingSchemes
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
-			bool IsCurrentTop => _nextLevel == null;
-
 			readonly ConcurrentQueue<Entry> Pool
 				= new ConcurrentQueue<Entry>();
 
@@ -62,10 +60,10 @@ namespace Solve.ProcessingSchemes
 				BestLevelFitness = new double[tower.Problem.Pools.Count][];
 				BestProgressiveFitness = new double[tower.Problem.Pools.Count][];
 				Debug.Assert(level < tower.Environment.MaxLevels);
-				IsMaxLevel = level + 1 == tower.Environment.MaxLevels;
+				//IsMaxLevel = level + 1 == tower.Environment.MaxLevels;
 			}
 
-			public readonly bool IsMaxLevel;
+			//public readonly bool IsMaxLevel;
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
 			readonly double[][] BestLevelFitness;
@@ -118,11 +116,11 @@ namespace Solve.ProcessingSchemes
 				//Factory.EnqueueForBreeding(genome);
 			}
 
-			void PostChampion((TGenome Genome, Fitness[] Fitness) c, int poolIndex)
-			{
-				PromoteChampion(c.Genome);
-				Tower.Broadcast(c, poolIndex);
-			}
+			//void PostChampion((TGenome Genome, Fitness[] Fitness) c, int poolIndex)
+			//{
+			//	PromoteChampion(c.Genome);
+			//	Tower.Broadcast(c, poolIndex); // TODO: Need to figure out how to properly filter this.
+			//}
 
 			readonly ConcurrentQueue<Task> ExpressPool
 				= new ConcurrentQueue<Task>();
@@ -159,22 +157,6 @@ namespace Solve.ProcessingSchemes
 				PostInternal(c, fitnesses, express, expressToTop);
 			}
 
-			//#if DEBUG
-			//			static bool IsTrackedGenome(string hash)
-			//			{
-			//				switch (hash)
-			//				{
-			//					case "({0}² + {1}²)":
-			//					case "√({0}² + {1}²)":
-			//					case "(({0}²) + ({1}²))":
-			//					case "√(({0}²) + ({1}²))":
-			//						return true;
-			//				}
-
-			//				return false;
-			//			}
-			//#endif
-
 			void PostInternal(
 				(TGenome Genome, Fitness[] Fitness) c,
 				IEnumerable<Fitness> fitnesses,
@@ -183,58 +165,24 @@ namespace Solve.ProcessingSchemes
 			{
 				// Process a test for this level.
 				var result = ProcessTestAndUpdate(c, fitnesses);
-				//#if DEBUG
-				//				var hash = c.Genome.Hash;
-				//				if (IsTrackedGenome(hash))
-				//				{
-				//					var expressState = express ? " express" : string.Empty;
-				//					if (expressToTop)
-				//						expressState += " top";
-				//					Debug.WriteLine($"Level: {Index}{expressState}\n{hash}\n");
-				//					//Debugger.Break();
-				//				}
-
-
-				//				Debug.Assert(c.Fitness.All(f => f.Results != null));
-				//#endif
 
 				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
-				if (IsMaxLevel)
+				// We've either become the top champion, or we are rejected.
+				//if (IsMaxLevel)
+				//	return;
+
+				// Rules:
+				//
+				// Emit if:
+				// - For a given level if it's new, then that means it's the first at that level.
+				// - If it's no
+
+				if (_nextLevel != null/* || Pool.Count >= PoolSize*/)
 				{
-					var len = result.Length;
-					for (var i = 0; i < len; i++)
-					{
-						var r = result[i];
-						if (!r.Superiority.Progressive) continue;
-
-						PostChampion(c, i);
-					}
-					return; // If we've reached the top, we've either become the top champion, or we are rejected.
-				}
-
-				// Pushed to a higher level...
-				//if (result.Any(f => f.Superiority.IsFresh))
-				//	Tower.Broadcast(c);
-
-				// If we aren't the top, or our pool is full, go ahead and check if we should promote early.
-				// Example: if the incomming genome is already identified as superior, then no need to enter this pool.
-				if (_nextLevel != null || Pool.Count >= PoolSize)
-				{
-					bool either;
-					if (NextLevel.IsCurrentTop)
-					{
-						either = result.Any(f => f.Superiority.Either);
-						if (either) PromoteChampion(c.Genome);
-					}
-					else
-					{
-						either = true;
-					}
-
-					if (expressToTop || either && result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
+					if (expressToTop || result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
 					{
 						// Local or progressive winners should be accellerated.
-						NextLevel.PostExpress(c, true); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
+						_nextLevel.PostExpress(c, expressToTop); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
 						return; // No need to involve a obviously superior genome with this pool.
 					}
 				}
@@ -293,6 +241,7 @@ namespace Solve.ProcessingSchemes
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
 				var selection = new Entry[problemPoolCount][];
+				var isTop = _nextLevel == null;
 				for (var i = 0; i < problemPoolCount; i++)
 				{
 					var p = problemPools[i];
@@ -308,7 +257,8 @@ namespace Solve.ProcessingSchemes
 						// Need to leverage potentially significant genetics...
 						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
-						PostChampion(champ, i);
+						if (isTop)
+							Tower.Broadcast(champ, i);
 						NextLevel.PostExpress(champ, true); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 					}
 
