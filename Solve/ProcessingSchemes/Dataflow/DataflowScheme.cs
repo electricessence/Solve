@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes.Dataflow
 {
-#if DEBUG
-	using System.Diagnostics;
-	using System.Text;
-#endif
-
 	// ReSharper disable once PossibleInfiniteInheritance
-	public sealed partial class TowerProcessingScheme<TGenome> : TowerProcessingSchemeBase<TGenome>
+	public partial class DataflowScheme<TGenome> : TowerProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		public TowerProcessingScheme(
+		public DataflowScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
@@ -27,7 +24,7 @@ namespace Solve.ProcessingSchemes
 
 		}
 
-		public TowerProcessingScheme(
+		public DataflowScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevels = ushort.MaxValue,
@@ -35,8 +32,6 @@ namespace Solve.ProcessingSchemes
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
 			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
-
-		//IReadOnlyList<ProblemTower> Towers;
 		private IEnumerable<ProblemTower> ActiveTowers;
 
 		protected override Task StartInternal(CancellationToken token)
@@ -100,8 +95,5 @@ namespace Solve.ProcessingSchemes
 			foreach (var t in ActiveTowers)
 				t.Post(genome);
 		}
-
 	}
-
-
 }
