@@ -71,21 +71,6 @@ namespace Solve.ProcessingSchemes
 			return sb;
 		}
 #endif
-
-		protected override Task PostAsync(TGenome genome, CancellationToken token)
-		{
-			if (genome == null) throw new ArgumentNullException(nameof(genome));
-			Contract.EndContractBlock();
-
-#if DEBUG
-			Debug.WriteLineIf(EMIT_GENOMES,
-				$"Posting (async):\n{GetGenomeInfo(genome)}",
-				"TowerProcessingScheme");
-#endif
-			return Task.WhenAll(ActiveTowers
-				.Select(t => t.PostAsync(genome, token)));
-		}
-
 		protected override void Post(TGenome genome)
 		{
 			if (genome == null) throw new ArgumentNullException(nameof(genome));
@@ -99,6 +84,9 @@ namespace Solve.ProcessingSchemes
 
 			foreach (var t in ActiveTowers)
 				t.Post(genome);
+
+			foreach (var t in ActiveTowers)
+				t.ProcessPools();
 		}
 
 	}
