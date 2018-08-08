@@ -25,7 +25,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 			public Level(
 				uint level,
 				ProblemTower tower,
-				ushort priorityLevels = 3)
+				byte priorityLevels = 3)
 			{
 				Debug.Assert(level < tower.Environment.MaxLevels);
 
@@ -148,13 +148,13 @@ namespace Solve.ProcessingSchemes.Dataflow
 					var len = Incomming.Length;
 					for (var i = 0; i < len; i++)
 					{
-						var q = Incomming[priority];
-						while (q.TryDequeue(out var c))
-						{
-							if (!Processor.Post(c))
-								throw new Exception("Processor refused challenger.");
-							++count;
-						}
+						var q = Incomming[i];
+						if (!q.TryDequeue(out var c)) continue;
+
+						if (!Processor.Post(c))
+							throw new Exception("Processor refused challenger.");
+						i = -1; // Reset to top queue.
+						++count;
 					}
 				}
 				while (count != 0);

@@ -24,8 +24,6 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract void Post(TGenome genome);
 
-		protected abstract Task PostAsync(TGenome genome, CancellationToken token);
-
 		//protected override Task StartInternal(CancellationToken token)
 		//{
 		//	var pOptions = new ParallelOptions
@@ -63,7 +61,7 @@ namespace Solve.ProcessingSchemes
 			FactoryBuffer.Writer.Complete();
 		}
 
-		async Task PostFromBufferSingle(CancellationToken token)
+		void PostFromBufferSingle(CancellationToken token)
 		{
 			retry:
 			TGenome genome = null;
@@ -71,7 +69,7 @@ namespace Solve.ProcessingSchemes
 				genome = Factory.Next();
 
 			if (genome == null) return;
-			await PostAsync(genome, token).ConfigureAwait(false);
+			Post(genome);
 
 			goto retry;
 		}
@@ -80,20 +78,21 @@ namespace Solve.ProcessingSchemes
 			=> Task.WhenAll(
 				Enumerable
 					.Range(0, Environment.ProcessorCount)
-					.Select(s => PostFromBufferSingle(token).ContinueWith(t =>
-					{
-						if (t.IsCanceled) return Task.CompletedTask;
-						// ReSharper disable once ConvertIfStatementToReturnStatement
-						if (!t.IsFaulted) return t;
+					.Select(s => Task.Run(() => PostFromBufferSingle(token), token)
+						.ContinueWith(t =>
+						{
+							if (t.IsCanceled) return Task.CompletedTask;
+							// ReSharper disable once ConvertIfStatementToReturnStatement
+							if (!t.IsFaulted) return t;
 
 #if DEBUG
-						var f = t.Exception;
-						Debug.Assert(f != null);
-						// ReSharper disable once PossibleNullReferenceException
-						Debug.Fail(f.Message, f.InnerException.StackTrace);
+							var f = t.Exception;
+							Debug.Assert(f != null);
+							// ReSharper disable once PossibleNullReferenceException
+							Debug.Fail(f.Message, f.InnerException.StackTrace);
 #endif
-						return t;
-					}, token)));
+							return t;
+						}, token)));
 
 		Task PostSynchronously(CancellationToken token)
 			=> Task.Run(() =>

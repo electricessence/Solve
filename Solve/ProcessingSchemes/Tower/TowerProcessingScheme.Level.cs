@@ -1,6 +1,5 @@
 ﻿using Open.Collections;
 using Open.Memory;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,7 +27,8 @@ namespace Solve.ProcessingSchemes
 
 			public Level(
 				uint level,
-				ProblemTower tower)
+				ProblemTower tower,
+				byte priorityLevels = 3)
 			{
 				Debug.Assert(level < tower.Environment.MaxLevels);
 
@@ -41,176 +41,38 @@ namespace Solve.ProcessingSchemes
 				var maxDelta = First - Minimum;
 				var decrement = Index * Step;
 
-				var poolCount = tower.Problem.Pools.Count;
-				BestLevelFitness = new double[poolCount][];
-				BestProgressiveFitness = new double[poolCount][];
-				//IsMaxLevel = level + 1 == tower.Environment.MaxLevels;
-
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
+				//Pool.BatchReady += Pool_BatchReady;
+
+				Incomming = Enumerable
+					.Range(0, priorityLevels)
+					.Select(i => new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>())
+					.ToArray();
+
+				Processed = Enumerable
+					.Range(0, priorityLevels)
+					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
+					.ToArray();
 			}
+
+			//private void Pool_BatchReady(object sender, System.EventArgs e)
+			//	=> Task.Run(() => ProcessPoolInternal());
+
 
 			//public readonly bool IsMaxLevel;
 			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 
-			readonly double[][] BestLevelFitness;
-			readonly double[][] BestProgressiveFitness;
+			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>[] Incomming;
+			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
 
-			static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-				Span<double[]> registry,
-				double[] contending,
-				int index)
-			{
-				Debug.Assert(contending != null);
+			async Task<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) c)
+				=> LevelEntry.Merge(in c, (await Tower.Problem.ProcessSampleAsync(c.Genome, Index)).ToArray());
 
-				ref var fRef = ref registry[index];
-				double[] defending;
-				while ((defending = fRef) == null || contending.IsGreaterThan(defending))
-				{
-					if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
-						return (true, defending == null);
-				}
-				return (false, false);
-			}
-
-
-			(double[] Fitness,
-				(bool Local, bool Progressive, bool Either) IsFresh,
-				(bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
-				(TGenome Genome, Fitness[] Fitness) progress, IEnumerable<Fitness> fitnesses)
-				=> fitnesses.Select((fitness, i) =>
-				{
-					var values = fitness.Results.Sum.ToArray();
-					var (levSuccess, levIsFresh) = UpdateFitnessesIfBetter(BestLevelFitness, values, i);
-
-					var progressiveFitness = progress.Fitness[i];
-					var (proSuccess, proIsFresh) = UpdateFitnessesIfBetter(
-						BestProgressiveFitness,
-						progressiveFitness
-							.Merge(values)
-							.Average
-							.ToArray(), i);
-
-					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
-
-					return (values,
-						(levIsFresh, proIsFresh, levIsFresh || proIsFresh),
-						(levSuccess, proSuccess, levSuccess || proSuccess));
-				}).ToArray();
-
-			readonly ConcurrentQueue<Task> ExpressPool
-				= new ConcurrentQueue<Task>();
-
-			// ReSharper disable once UnusedMethodReturnValue.Local
-			public Task PostExpress((TGenome Genome, Fitness[] Fitness) c, bool expressToTop = false)
-			{
-				var task = Tower.Problem
-					.ProcessSampleAsync(c.Genome, Index)
-					.ContinueWith(e => PostInternalFromQueue(c, e.Result, true, expressToTop));
-				ExpressPool.Enqueue(task);
-				return task;
-			}
-
-			readonly ConcurrentQueue<Task> StandbyPool
-				= new ConcurrentQueue<Task>();
-
-			// ReSharper disable once UnusedMethodReturnValue.Local
-			public Task PostStandby((TGenome Genome, Fitness[] Fitness) c)
-			{
-				var task = Tower.Problem
-					.ProcessSampleAsync(c.Genome, Index)
-					.ContinueWith(e => PostInternalFromQueue(c, e.Result, false));
-				StandbyPool.Enqueue(task);
-				return task;
-			}
-
-			void PostInternalFromQueue((TGenome Genome, Fitness[] Fitness) c,
-				IEnumerable<Fitness> fitnesses,
-				bool express,
-				bool expressToTop = false)
-			{
-				// For debugging...
-				PostInternal(c, fitnesses, express, expressToTop);
-			}
-
-			void PostInternal(
-				(TGenome Genome, Fitness[] Fitness) c,
-				IEnumerable<Fitness> fitnesses,
-				bool express,
-				bool expressToTop = false)
-			{
-				// Process a test for this level.
-				var result = ProcessTestAndUpdate(c, fitnesses);
-
-				// If we are at a designated maximum, then the top is the top and anything else doesn't matter.
-				// We've either become the top champion, or we are rejected.
-				//if (IsMaxLevel)
-				//	return;
-
-				// Rules:
-				//
-				// Emit if:
-				// - For a given level if it's new, then that means it's the first at that level.
-				// - If it's no
-
-				bool postIfSuperior()
-				{
-					if (!result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive)) return false;
-					Factory.EnqueueChampion(c.Genome);
-					// Local or progressive winners should be accellerated.
-					NextLevel.Post(c, true);
-					return true; // No need to involve a obviously superior genome with this pool.
-				}
-
-				if (_nextLevel != null)
-				{
-					if (expressToTop)
-					{
-						// Local or progressive winners should be accellerated.
-						_nextLevel.Post(c, true, true); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
-						return; // No need to involve a obviously superior genome with this pool.
-					}
-
-					if (postIfSuperior())
-					{
-						return;
-					}
-				}
-
-				var challenger = new LevelEntry<TGenome>(c, result.Select(f => f.Fitness).ToArray());
-				Pool.Add(challenger);
-			}
-
-			public void Post((TGenome Genome, Fitness[] Fitness) c,
-				bool express = false,
-				bool expressToTop = false,
-				bool processPool = false)
-			{
-				PostInternal(c,
-					Tower.Problem.ProcessSample(c.Genome, Index),
-					express, expressToTop);
-
-				if (processPool)
-					ProcessPoolAsync().Wait();
-			}
-
-			public async Task PostAsync((TGenome Genome, Fitness[] Fitness) c,
-				CancellationToken token,
-				bool express = false,
-				bool expressToTop = false,
-				bool processPool = false)
-			{
-				PostInternal(c,
-					await Tower.Problem.ProcessSampleAsync(c.Genome, Index),
-					express, expressToTop);
-
-				if (processPool)
-					await ProcessPoolAsync(token);
-			}
 
 			bool ProcessPoolInternal()
 			{
-				if (Pool.TryDequeue(out var pool))
+				if (!Pool.TryDequeue(out var pool))
 					return false;
 
 				// 1) Setup selection.
@@ -233,14 +95,19 @@ namespace Solve.ProcessingSchemes
 
 					// 2) Signal & promote champions.
 					var champ = s[0].GenomeFitness;
-					p.Champions?.Add(champ.Genome, champ.Fitness[i]);
-					if (promoted.Add(champ.Genome.Hash))
+
+					if (isTop)
 					{
 						Factory.EnqueueChampion(champ.Genome);
-						NextLevel.Post(champ, true); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
+						Tower.Broadcast(champ, i);
 					}
 
-					if (isTop) Tower.Broadcast(champ, i);
+					if (promoted.Add(champ.Genome.Hash))
+					{
+						NextLevel.Post(0, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+					}
+
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
@@ -257,7 +124,7 @@ namespace Solve.ProcessingSchemes
 						var s = selection[i];
 						var winner = s[n].GenomeFitness;
 						if (promoted.Add(winner.Genome.Hash))
-							NextLevel.PostExpress(winner); // PostStandby?
+							NextLevel.Post(1, winner); // PostStandby?
 					}
 				}
 
@@ -276,7 +143,7 @@ namespace Solve.ProcessingSchemes
 						var gf = loser.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							NextLevel.PostStandby(gf);
+							NextLevel.Post(2, gf);
 						else
 						{
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -299,38 +166,57 @@ namespace Solve.ProcessingSchemes
 				return true;
 			}
 
-			public async Task ProcessPoolAsync(CancellationToken token = default, bool thisLevelOnly = false)
+			public void ProcessPool(bool thisLevelOnly = false)
 			{
-				retry:
+				while (ProcessPoolInternal()) { }
 
-				var processed = false;
-				if (!ExpressPool.IsEmpty)
+				if (thisLevelOnly) return;
+
+				// walk up instead of recurse.
+				var next = this;
+				while ((next = next._nextLevel) != null)
+					next.ProcessPool(true);
+			}
+
+			public void Post(int priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			{
+				Incomming[priority].Enqueue(challenger);
+
+				int count;
+				do
 				{
-					if (token.IsCancellationRequested) return;
-					await Task.WhenAll(ExpressPool.AsDequeueingEnumerable());
-					if (token.IsCancellationRequested) return;
-					processed = ProcessPoolInternal();
-				}
+					count = 0;
+					var len = Incomming.Length;
+					for (var i = 0; i < len; i++)
+					{
+						var q = Incomming[i];
+						if (!q.TryDequeue(out var c)) continue;
 
-				if (!StandbyPool.IsEmpty)
+						var p = Processed[i];
+						ProcessEntry(c).ContinueWith(e => p.Enqueue(e.Result));
+
+						i = -1; // Reset to top queue.
+						++count;
+					}
+				}
+				while (count != 0);
+
+				do
 				{
-					if (token.IsCancellationRequested) return;
-					await Task.WhenAll(StandbyPool.AsDequeueingEnumerable());
+					count = 0;
+					var len = Processed.Length;
+					for (var i = 0; i < len; i++)
+					{
+						var q = Processed[i];
+						if (!q.TryDequeue(out var p)) continue;
+
+						Pool.Add(p);
+
+						i = -1; // Reset to top queue.
+						++count;
+					}
 				}
-
-				if (token.IsCancellationRequested) return;
-				processed = ProcessPoolInternal() || processed;
-
-				if (!thisLevelOnly)
-				{
-					// walk up instead of recurse.
-					var next = this;
-					while (!token.IsCancellationRequested && (next = next._nextLevel) != null)
-						await next.ProcessPoolAsync(token, true);
-				}
-
-				if (!token.IsCancellationRequested && processed)
-					goto retry;
+				while (count != 0);
 			}
 
 		}

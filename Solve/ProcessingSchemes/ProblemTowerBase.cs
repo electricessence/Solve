@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
@@ -23,8 +21,6 @@ namespace Solve.ProcessingSchemes
 		}
 
 		public abstract void Post(TGenome next);
-
-		public abstract Task PostAsync(TGenome next, CancellationToken token);
 
 		public void Broadcast((TGenome Genome, Fitness[] Fitnesses) gf, int poolIndex)
 			=> Broadcast((gf.Genome, poolIndex, gf.Fitnesses[poolIndex]));

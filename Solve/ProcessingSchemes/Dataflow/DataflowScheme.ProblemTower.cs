@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes.Dataflow
 {
@@ -28,17 +26,6 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 				Root.Post(0, (next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()));
 			}
-
-			public override Task PostAsync(TGenome next, CancellationToken token)
-			{
-				if (next == null) throw new ArgumentNullException(nameof(next));
-				Contract.EndContractBlock();
-
-				Post(next);
-
-				return Task.CompletedTask;
-			}
-
 		}
 	}
 }

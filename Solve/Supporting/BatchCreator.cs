@@ -14,6 +14,7 @@ namespace Solve
 		private readonly ConcurrentQueue<T> _values;
 		private readonly ConcurrentQueue<T[]> _batches;
 
+		public event EventHandler BatchReady;
 
 		public BatchCreator(int batchSize)
 		{
@@ -30,13 +31,20 @@ namespace Solve
 		{
 			_values.Enqueue(value);
 
+			var batched = false;
 			while (_values.Count >= BatchSize && ThreadSafety.TryLock(_values, () =>
 			{
+				batched = false;
 				// Use 'if' instead of 'while' to ensure a single 'Add' operation doesn't get trapped in the job of batching.
-				if (_values.Count >= BatchSize)
-					_batches.Enqueue(_values.AsDequeueingEnumerable().Take(BatchSize).ToArray());
+				if (_values.Count < BatchSize) return;
+
+				_batches.Enqueue(_values.AsDequeueingEnumerable().Take(BatchSize).ToArray());
+				batched = true;
 			}))
-			{ }
+			{
+				if (batched)
+					BatchReady?.Invoke(this, EventArgs.Empty);
+			}
 		}
 
 		public bool TryDequeue(out T[] batch)
