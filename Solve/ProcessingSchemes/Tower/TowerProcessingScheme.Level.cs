@@ -43,7 +43,7 @@ namespace Solve.ProcessingSchemes
 
 				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
-				//Pool.BatchReady += Pool_BatchReady;
+				Pool.BatchReady += Pool_BatchReady;
 
 				Incomming = Enumerable
 					.Range(0, priorityLevels)
@@ -56,8 +56,8 @@ namespace Solve.ProcessingSchemes
 					.ToArray();
 			}
 
-			//private void Pool_BatchReady(object sender, System.EventArgs e)
-			//	=> Task.Run(() => ProcessPoolInternal());
+			private void Pool_BatchReady(object sender, System.EventArgs e)
+				=> Task.Run(() => ProcessPoolInternal());
 
 
 			//public readonly bool IsMaxLevel;
