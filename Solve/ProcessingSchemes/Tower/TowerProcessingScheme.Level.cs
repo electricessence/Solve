@@ -1,6 +1,5 @@
 ﻿using Open.Collections;
 using Open.Memory;
-using Open.Threading;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,21 +17,6 @@ namespace Solve.ProcessingSchemes
 	{
 		sealed class Level
 		{
-			class Entry
-			{
-				public Entry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores)
-				{
-					GenomeFitness = gf;
-					Scores = scores;
-					LevelLossRecord = 0;
-				}
-
-				public readonly (TGenome Genome, Fitness[] Fitness) GenomeFitness;
-				public readonly double[][] Scores;
-
-				public ushort LevelLossRecord;
-			}
-
 			readonly ProblemTower Tower;
 			public readonly ushort PoolSize;
 			public readonly uint Index;
@@ -40,13 +24,14 @@ namespace Solve.ProcessingSchemes
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
-			readonly ConcurrentQueue<Entry> Pool
-				= new ConcurrentQueue<Entry>();
+			private readonly BatchCreator<LevelEntry<TGenome>> Pool;
 
 			public Level(
 				uint level,
-				in ProblemTower tower)
+				ProblemTower tower)
 			{
+				Debug.Assert(level < tower.Environment.MaxLevels);
+
 				Index = level;
 				Tower = tower;
 				var env = Tower.Environment;
@@ -55,12 +40,14 @@ namespace Solve.ProcessingSchemes
 				var (First, Minimum, Step) = env.PoolSize;
 				var maxDelta = First - Minimum;
 				var decrement = Index * Step;
-				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 
-				BestLevelFitness = new double[tower.Problem.Pools.Count][];
-				BestProgressiveFitness = new double[tower.Problem.Pools.Count][];
-				Debug.Assert(level < tower.Environment.MaxLevels);
+				var poolCount = tower.Problem.Pools.Count;
+				BestLevelFitness = new double[poolCount][];
+				BestProgressiveFitness = new double[poolCount][];
 				//IsMaxLevel = level + 1 == tower.Environment.MaxLevels;
+
+				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
+				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
 			}
 
 			//public readonly bool IsMaxLevel;
@@ -87,7 +74,9 @@ namespace Solve.ProcessingSchemes
 			}
 
 
-			(double[] Fitness, (bool IsFresh, bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
+			(double[] Fitness,
+				(bool Local, bool Progressive, bool Either) IsFresh,
+				(bool Local, bool Progressive, bool Either) Superiority)[] ProcessTestAndUpdate(
 				(TGenome Genome, Fitness[] Fitness) progress, IEnumerable<Fitness> fitnesses)
 				=> fitnesses.Select((fitness, i) =>
 				{
@@ -104,23 +93,10 @@ namespace Solve.ProcessingSchemes
 
 					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
-					return (values, (levIsFresh || proIsFresh, levSuccess, proSuccess, levSuccess || proSuccess));
+					return (values,
+						(levIsFresh, proIsFresh, levIsFresh || proIsFresh),
+						(levSuccess, proSuccess, levSuccess || proSuccess));
 				}).ToArray();
-
-			void PromoteChampion(TGenome genome)
-			{
-				Factory.EnqueueChampion(genome);
-				//Factory.EnqueueForMutation(genome);
-				//Factory.EnqueueForMutation(genome);
-				//Factory.EnqueueForBreeding(genome);
-				//Factory.EnqueueForBreeding(genome);
-			}
-
-			//void PostChampion((TGenome Genome, Fitness[] Fitness) c, int poolIndex)
-			//{
-			//	PromoteChampion(c.Genome);
-			//	Tower.Broadcast(c, poolIndex); // TODO: Need to figure out how to properly filter this.
-			//}
 
 			readonly ConcurrentQueue<Task> ExpressPool
 				= new ConcurrentQueue<Task>();
@@ -177,18 +153,32 @@ namespace Solve.ProcessingSchemes
 				// - For a given level if it's new, then that means it's the first at that level.
 				// - If it's no
 
-				if (_nextLevel != null/* || Pool.Count >= PoolSize*/)
+				bool postIfSuperior()
 				{
-					if (expressToTop || result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive))
+					if (!result.Any(f => f.Superiority.Local || express && f.Superiority.Progressive)) return false;
+					Factory.EnqueueChampion(c.Genome);
+					// Local or progressive winners should be accellerated.
+					NextLevel.Post(c, true);
+					return true; // No need to involve a obviously superior genome with this pool.
+				}
+
+				if (_nextLevel != null)
+				{
+					if (expressToTop)
 					{
 						// Local or progressive winners should be accellerated.
-						_nextLevel.PostExpress(c, expressToTop); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
+						_nextLevel.Post(c, true, true); // expressToTop... Since this is the reigning champ for this pool (or expressToTop).
 						return; // No need to involve a obviously superior genome with this pool.
+					}
+
+					if (postIfSuperior())
+					{
+						return;
 					}
 				}
 
-				var challenger = new Entry(c, result.Select(f => f.Fitness).ToArray());
-				Pool.Enqueue(challenger);
+				var challenger = new LevelEntry<TGenome>(c, result.Select(f => f.Fitness).ToArray());
+				Pool.Add(challenger);
 			}
 
 			public void Post((TGenome Genome, Fitness[] Fitness) c,
@@ -220,17 +210,8 @@ namespace Solve.ProcessingSchemes
 
 			bool ProcessPoolInternal()
 			{
-				if (Pool.Count < PoolSize)
+				if (Pool.TryDequeue(out var pool))
 					return false;
-
-				Entry[] pool = null;
-				// If a lock is already aquired somewhere else, then skip/ignore...
-				if (!ThreadSafety.TryLock(Pool, () =>
-				{
-					if (Pool.Count >= PoolSize)
-						pool = Pool.AsDequeueingEnumerable().Take(PoolSize).ToArray();
-				}) || pool == null)
-					return true;
 
 				// 1) Setup selection.
 				var len = pool.Length;
@@ -240,7 +221,7 @@ namespace Solve.ProcessingSchemes
 
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
-				var selection = new Entry[problemPoolCount][];
+				var selection = new LevelEntry<TGenome>[problemPoolCount][];
 				var isTop = _nextLevel == null;
 				for (var i = 0; i < problemPoolCount; i++)
 				{
@@ -252,15 +233,14 @@ namespace Solve.ProcessingSchemes
 
 					// 2) Signal & promote champions.
 					var champ = s[0].GenomeFitness;
+					p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 					if (promoted.Add(champ.Genome.Hash))
 					{
-						// Need to leverage potentially significant genetics...
-						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
 						Factory.EnqueueChampion(champ.Genome);
-						if (isTop)
-							Tower.Broadcast(champ, i);
-						NextLevel.PostExpress(champ, true); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						NextLevel.Post(champ, true); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 					}
+
+					if (isTop) Tower.Broadcast(champ, i);
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
@@ -313,7 +293,7 @@ namespace Solve.ProcessingSchemes
 					else
 					{
 						Debug.Assert(loser.LevelLossRecord > 0);
-						Pool.Enqueue(loser); // Didn't win, but still in the game.
+						Pool.Add(loser); // Didn't win, but still in the game.
 					}
 				}
 				return true;

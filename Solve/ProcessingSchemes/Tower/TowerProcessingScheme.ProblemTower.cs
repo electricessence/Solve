@@ -9,22 +9,17 @@ namespace Solve.ProcessingSchemes
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>, IGenomeProcessor<TGenome>
+		public sealed class ProblemTower : ProblemTowerBase<TGenome>
 		{
-			internal readonly TowerProcessingScheme<TGenome> Environment;
-			internal readonly IProblem<TGenome> Problem;
 			readonly Level Root;
 
 			public ProblemTower(
 				IProblem<TGenome> problem,
+				// ReSharper disable once SuggestBaseTypeForParameter
 				TowerProcessingScheme<TGenome> environment)
+				: base(problem, environment)
 			{
-				Problem = problem ?? throw new ArgumentNullException(nameof(problem));
-				Environment = environment ?? throw new ArgumentNullException(nameof(environment));
-				Contract.EndContractBlock();
-
 				Root = new Level(0, this);
-				this.Subscribe(champion => Environment.Broadcast((Problem, champion)));
 			}
 
 			public void Post(TGenome next,
@@ -57,14 +52,11 @@ namespace Solve.ProcessingSchemes
 					true);
 			}
 
-			public void Post(TGenome next)
+			public override void Post(TGenome next)
 				=> Post(next, false);
 
-			public Task PostAsync(TGenome next, CancellationToken token)
+			public override Task PostAsync(TGenome next, CancellationToken token)
 				=> PostAsync(next, token, false);
-
-			public void Broadcast((TGenome Genome, Fitness[] Fitnesses) gf, int index)
-				=> Broadcast((gf.Genome, index, gf.Fitnesses[index]));
 		}
 	}
 

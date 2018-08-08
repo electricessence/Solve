@@ -18,7 +18,7 @@ namespace Solve
 		: BroadcasterBase<(IProblem<TGenome> Problem, (TGenome Genome, int PoolIndex, Fitness Fitness) Update)>
 		where TGenome : class, IGenome
 	{
-		protected readonly IGenomeFactory<TGenome> Factory;
+		protected internal readonly IGenomeFactory<TGenome> Factory;
 
 		protected readonly List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
