@@ -1,5 +1,4 @@
 ﻿using Open.Dataflow;
-using Open.Memory;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,22 +17,21 @@ namespace Solve.ProcessingSchemes.Dataflow
 			private Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
+			protected override bool IsTop => _nextLevel == null;
+
 			public Level(
 				uint level,
 				ProblemTower tower,
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
-				Preselector
-					= new BatchBlock<LevelEntry<TGenome>>(PoolSize);
+				var preselector
+					= new BatchBlock<LevelEntry>(PoolSize);
 
 				var selection
-					= new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(pool =>
-						Tower.Problem.Pools
-							.Select((p, i) => pool.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending).ToArray())
-							.ToArray());
+					= new TransformBlock<LevelEntry[], LevelEntry[][]>(e => RankEntries(e));
 
-				Preselector.LinkTo(selection);
+				preselector.LinkTo(selection);
 				selection.LinkTo(pools =>
 				{
 					var poolCount = pools.Length;
@@ -97,29 +95,31 @@ namespace Solve.ProcessingSchemes.Dataflow
 							else
 							{
 								Debug.Assert(loser.LevelLossRecord > 0);
-								Preselector.Post(loser); // Didn't win, but still in the game.
+								preselector.Post(loser); // Didn't win, but still in the game.
 							}
 
 						}
 					}
 				});
 
+				Processor = new ActionBlock<(TGenome Genome, Fitness[] Fitness)>(async c =>
+				{
+					var result = await ProcessEntry(c);
+					if (result != null && !preselector.Post(result))
+						throw new Exception("Processor refused challenger.");
+				});
 
 			}
 
-			readonly BatchBlock<LevelEntry<TGenome>> Preselector;
+			readonly ITargetBlock<(TGenome Genome, Fitness[] Fitness)> Processor;
 
 			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> NextLevel.Post(priority, challenger);
 
 			protected override void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 			{
-				ProcessEntry(challenger).ContinueWith(e =>
-				{
-					var result = e.Result;
-					if (result != null && !Preselector.Post(result))
-						throw new Exception("Processor refused challenger.");
-				});
+				if (!Processor.Post(challenger))
+					throw new Exception("Processor refused challenger.");
 			}
 
 		}

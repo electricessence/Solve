@@ -2,12 +2,12 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes.Tower
 {
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : ProblemTowerBase<TGenome>
+		public sealed class ProblemTower : TowerBase<TGenome>
 		{
 			readonly Level Root;
 

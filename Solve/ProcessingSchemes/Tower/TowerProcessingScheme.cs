@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes.Tower
 {
 #if DEBUG
 	using System.Diagnostics;

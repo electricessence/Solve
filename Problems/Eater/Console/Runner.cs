@@ -1,5 +1,5 @@
 ﻿using Solve.Experiment.Console;
-using Solve.ProcessingSchemes.Dataflow;
+using Solve.ProcessingSchemes.Tower;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,7 +51,7 @@ namespace Eater
 			if (seed != null) emitter.SaveGenomeImage(seed, "LatestSeed");
 
 			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
-			var scheme = new DataflowScheme<Genome>(factory, (800, 40, 2));
+			var scheme = new TowerProcessingScheme<Genome>(factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateF0102(size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
