@@ -59,7 +59,6 @@ namespace Solve.ProcessingSchemes
 				var isTop = _nextLevel == null;
 				for (byte i = 0; i < problemPoolCount; i++)
 				{
-					var p = problemPools[i];
 					var s = pool
 						.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending)
 						.ToArray();
@@ -72,10 +71,7 @@ namespace Solve.ProcessingSchemes
 						ProcessChampion(i, champ);
 
 					if (promoted.Add(champ.Genome.Hash))
-					{
 						PostNextLevel(1, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
-					}
-
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
