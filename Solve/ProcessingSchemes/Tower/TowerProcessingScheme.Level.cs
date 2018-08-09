@@ -1,5 +1,4 @@
 ﻿using Open.Collections;
-using Open.Memory;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes.Tower
 {
 	// ReSharper disable once PossibleInfiniteInheritance
 	[SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
@@ -20,7 +19,9 @@ namespace Solve.ProcessingSchemes
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
-			private readonly BatchCreator<LevelEntry<TGenome>> Pool;
+			protected override bool IsTop => _nextLevel == null;
+
+			private readonly BatchCreator<LevelEntry> Pool;
 
 			public Level(
 				uint level,
@@ -28,19 +29,19 @@ namespace Solve.ProcessingSchemes
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
-				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
+				Pool = new BatchCreator<LevelEntry>(PoolSize);
 				Pool.BatchReady += Pool_BatchReady;
 
 				Processed = Enumerable
 					.Range(0, priorityLevels)
-					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
+					.Select(i => new ConcurrentQueue<LevelEntry>())
 					.ToArray();
 			}
 
 			private void Pool_BatchReady(object sender, System.EventArgs e)
 				=> Task.Run(() => ProcessPoolInternal());
 
-			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
+			readonly ConcurrentQueue<LevelEntry>[] Processed;
 
 			bool ProcessPoolInternal()
 			{
@@ -55,14 +56,11 @@ namespace Solve.ProcessingSchemes
 
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
-				var selection = new LevelEntry<TGenome>[problemPoolCount][];
+				var selection = RankEntries(pool);
 				var isTop = _nextLevel == null;
 				for (byte i = 0; i < problemPoolCount; i++)
 				{
-					var s = pool
-						.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending)
-						.ToArray();
-					selection[i] = s;
+					var s = selection[i];
 
 					// 2) Signal & promote champions.
 					var champ = s[0].GenomeFitness;

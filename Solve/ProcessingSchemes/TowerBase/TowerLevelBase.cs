@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -10,12 +11,13 @@ namespace Solve.ProcessingSchemes
 {
 	public abstract class TowerLevelBase<TGenome, TTower>
 		where TGenome : class, IGenome
-		where TTower : ProblemTowerBase<TGenome>
+		where TTower : TowerBase<TGenome>
 	{
 		protected readonly uint Index;
 		protected readonly ushort PoolSize;
 		protected readonly TTower Tower;
 		protected readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
+		protected abstract bool IsTop { get; }
 
 		protected TowerLevelBase(
 			uint level,
@@ -102,17 +104,16 @@ namespace Solve.ProcessingSchemes
 
 		protected void ProcessChampion(byte poolIndex, (TGenome Genome, Fitness[] Fitness) champ)
 		{
-			Factory.EnqueueChampion(champ.Genome);
 			Tower.Problem.Pools[poolIndex].Champions?.Add(champ.Genome, champ.Fitness[poolIndex]);
 			Tower.Broadcast(champ, poolIndex);
 		}
 
-		protected async Task<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) c)
+		protected async Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
 		{
-			var result = (await Tower.Problem.ProcessSampleAsync(c.Genome, Index)).Select((fitness, i) =>
+			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index)).Select((fitness, i) =>
 			{
 				var values = fitness.Results.Sum.ToArray();
-				var progressiveFitness = c.Fitness[i];
+				var progressiveFitness = champ.Fitness[i];
 				var (success, fresh) = UpdateFitnessesIfBetter(
 					BestProgressiveFitness,
 					progressiveFitness
@@ -125,13 +126,58 @@ namespace Solve.ProcessingSchemes
 				return (values, success, fresh);
 			}).ToArray();
 
-			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
-				return new LevelEntry<TGenome>(in c, result.Select(r => r.values).ToArray());
+			if (IsTop)
+			{
+				for (byte i = 0; i < result.Length; i++)
+				{
+					if (result[i].success)
+						ProcessChampion(i, champ);
+				}
+			}
 
-			Factory.EnqueueChampion(c.Genome);
-			PostNextLevel(0, c);
+			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
+				return new LevelEntry(in champ, result.Select(r => r.values).ToArray());
+
+			Factory.EnqueueChampion(champ.Genome);
+			PostNextLevel(0, champ);
 			return null;
 		}
 
+		protected LevelEntry[][] RankEntries(LevelEntry[] pool)
+			=> Tower.Problem.Pools
+				.Select((p, i) => pool.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending).ToArray())
+				.ToArray();
+
+		protected class LevelEntry
+		{
+			public LevelEntry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores)
+			{
+				GenomeFitness = gf;
+				Scores = scores;
+				LevelLossRecord = 0;
+			}
+
+			public readonly (TGenome Genome, Fitness[] Fitness) GenomeFitness;
+			public readonly double[][] Scores;
+
+			public ushort LevelLossRecord;
+
+			public static LevelEntry Merge(in (TGenome Genome, Fitness[] Fitness) gf, IReadOnlyList<Fitness> scores)
+			{
+				var progressive = gf.Fitness;
+				var len = scores.Count;
+				var dScore = new double[scores.Count][];
+				Debug.Assert(len == progressive.Length);
+
+				for (var i = 0; i < len; i++)
+				{
+					var score = scores[i].Results.Sum.ToArray();
+					dScore[i] = score;
+					progressive[i].Merge(score);
+				}
+
+				return new LevelEntry(in gf, dScore);
+			}
+		}
 	}
 }

@@ -7,7 +7,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 	// ReSharper disable once PossibleInfiniteInheritance
 	public partial class DataflowScheme<TGenome>
 	{
-		sealed class ProblemTower : ProblemTowerBase<TGenome>
+		sealed class ProblemTower : TowerBase<TGenome>
 		{
 			readonly Level Root;
 

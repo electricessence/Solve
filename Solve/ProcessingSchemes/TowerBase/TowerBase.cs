@@ -3,13 +3,13 @@ using System.Diagnostics.Contracts;
 
 namespace Solve.ProcessingSchemes
 {
-	public abstract class ProblemTowerBase<TGenome> : BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>, IGenomeProcessor<TGenome>
+	public abstract class TowerBase<TGenome> : BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>, IGenomeProcessor<TGenome>
 		where TGenome : class, IGenome
 	{
 		public readonly TowerProcessingSchemeBase<TGenome> Environment;
 		public readonly IProblem<TGenome> Problem;
 
-		protected ProblemTowerBase(
+		protected TowerBase(
 			IProblem<TGenome> problem,
 			TowerProcessingSchemeBase<TGenome> environment)
 		{
