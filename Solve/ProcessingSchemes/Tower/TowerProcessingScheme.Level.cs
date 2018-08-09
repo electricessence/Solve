@@ -14,11 +14,8 @@ namespace Solve.ProcessingSchemes
 	[SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		sealed class Level
+		sealed class Level : TowerLevelBase<TGenome, ProblemTower>
 		{
-			readonly ProblemTower Tower;
-			public readonly ushort PoolSize;
-			public readonly uint Index;
 			Level _nextLevel;
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
@@ -28,27 +25,11 @@ namespace Solve.ProcessingSchemes
 			public Level(
 				uint level,
 				ProblemTower tower,
-				byte priorityLevels = 3)
+				byte priorityLevels = 4)
+				: base(level, tower, priorityLevels)
 			{
-				Debug.Assert(level < tower.Environment.MaxLevels);
-
-				Index = level;
-				Tower = tower;
-				var env = Tower.Environment;
-				Factory = env.Factory[1]; // Use a lower priority than the factory used by broadcasting.
-
-				var (First, Minimum, Step) = env.PoolSize;
-				var maxDelta = First - Minimum;
-				var decrement = Index * Step;
-
-				PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
 				Pool.BatchReady += Pool_BatchReady;
-
-				Incomming = Enumerable
-					.Range(0, priorityLevels)
-					.Select(i => new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>())
-					.ToArray();
 
 				Processed = Enumerable
 					.Range(0, priorityLevels)
@@ -59,16 +40,7 @@ namespace Solve.ProcessingSchemes
 			private void Pool_BatchReady(object sender, System.EventArgs e)
 				=> Task.Run(() => ProcessPoolInternal());
 
-
-			//public readonly bool IsMaxLevel;
-			readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
-
-			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>[] Incomming;
 			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
-
-			async Task<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) c)
-				=> LevelEntry.Merge(in c, (await Tower.Problem.ProcessSampleAsync(c.Genome, Index)).ToArray());
-
 
 			bool ProcessPoolInternal()
 			{
@@ -85,7 +57,7 @@ namespace Solve.ProcessingSchemes
 				var problemPoolCount = problemPools.Count;
 				var selection = new LevelEntry<TGenome>[problemPoolCount][];
 				var isTop = _nextLevel == null;
-				for (var i = 0; i < problemPoolCount; i++)
+				for (byte i = 0; i < problemPoolCount; i++)
 				{
 					var p = problemPools[i];
 					var s = pool
@@ -97,15 +69,11 @@ namespace Solve.ProcessingSchemes
 					var champ = s[0].GenomeFitness;
 
 					if (isTop)
-					{
-						Factory.EnqueueChampion(champ.Genome);
-						p.Champions?.Add(champ.Genome, champ.Fitness[i]);
-						Tower.Broadcast(champ, i);
-					}
+						ProcessChampion(i, champ);
 
 					if (promoted.Add(champ.Genome.Hash))
 					{
-						NextLevel.Post(0, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						PostNextLevel(1, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 					}
 
 
@@ -124,7 +92,7 @@ namespace Solve.ProcessingSchemes
 						var s = selection[i];
 						var winner = s[n].GenomeFitness;
 						if (promoted.Add(winner.Genome.Hash))
-							NextLevel.Post(1, winner); // PostStandby?
+							PostNextLevel(2, winner); // PostStandby?
 					}
 				}
 
@@ -143,7 +111,7 @@ namespace Solve.ProcessingSchemes
 						var gf = loser.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							NextLevel.Post(2, gf);
+							PostNextLevel(3, gf);
 						else
 						{
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -178,29 +146,11 @@ namespace Solve.ProcessingSchemes
 					next.ProcessPool(true);
 			}
 
-			public void Post(int priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override void OnAfterPost()
 			{
-				Incomming[priority].Enqueue(challenger);
+				base.OnAfterPost();
 
 				int count;
-				do
-				{
-					count = 0;
-					var len = Incomming.Length;
-					for (var i = 0; i < len; i++)
-					{
-						var q = Incomming[i];
-						if (!q.TryDequeue(out var c)) continue;
-
-						var p = Processed[i];
-						ProcessEntry(c).ContinueWith(e => p.Enqueue(e.Result));
-
-						i = -1; // Reset to top queue.
-						++count;
-					}
-				}
-				while (count != 0);
-
 				do
 				{
 					count = 0;
@@ -219,6 +169,18 @@ namespace Solve.ProcessingSchemes
 				while (count != 0);
 			}
 
+			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+				=> NextLevel.Post(priority, challenger);
+
+			protected override void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			{
+				ProcessEntry(challenger).ContinueWith(e =>
+				{
+					var result = e.Result;
+					if (result != null)
+						Processed[priority].Enqueue(result);
+				});
+			}
 		}
 
 	}
