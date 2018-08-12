@@ -13,14 +13,14 @@ namespace Solve.ProcessingSchemes
 		where TGenome : class, IGenome
 		where TTower : TowerBase<TGenome>
 	{
-		protected readonly uint Index;
+		protected readonly int Index;
 		protected readonly ushort PoolSize;
 		protected readonly TTower Tower;
 		protected readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 		protected abstract bool IsTop { get; }
 
 		protected TowerLevelBase(
-			uint level,
+			int level,
 			TTower tower,
 			byte priorityLevels)
 		{

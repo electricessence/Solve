@@ -24,7 +24,7 @@ namespace Solve.ProcessingSchemes.Tower
 			private readonly BatchCreator<LevelEntry> Pool;
 
 			public Level(
-				uint level,
+				int level,
 				ProblemTower tower,
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)

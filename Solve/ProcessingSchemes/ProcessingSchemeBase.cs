@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Solve.Supporting.TaskScheduling;
 #if DEBUG
 using System.Diagnostics;
 #endif
@@ -14,9 +15,14 @@ namespace Solve.ProcessingSchemes
 	public abstract class ProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
+		internal readonly PriorityQueueTaskScheduler Scheduler;
+		readonly TaskFactory PostingFactory;
+
 		protected ProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
 			: base(genomeFactory)
 		{
+			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default);
+			PostingFactory = new TaskFactory(Scheduler[1]);
 			_runSynchronously = runSynchronously;
 		}
 
@@ -77,22 +83,23 @@ namespace Solve.ProcessingSchemes
 		Task PostFromBuffer(CancellationToken token)
 			=> Task.WhenAll(
 				Enumerable
-					.Range(0, Environment.ProcessorCount)
-					.Select(s => Task.Run(() => PostFromBufferSingle(token), token)
-						.ContinueWith(t =>
-						{
-							if (t.IsCanceled) return Task.CompletedTask;
-							// ReSharper disable once ConvertIfStatementToReturnStatement
-							if (!t.IsFaulted) return t;
+				.Range(0, Environment.ProcessorCount)
+				.Select(s => PostingFactory
+					.StartNew(() => PostFromBufferSingle(token), token)
+					.ContinueWith(t =>
+					{
+						if (t.IsCanceled) return Task.CompletedTask;
+						// ReSharper disable once ConvertIfStatementToReturnStatement
+						if (!t.IsFaulted) return t;
 
 #if DEBUG
-							var f = t.Exception;
-							Debug.Assert(f != null);
-							// ReSharper disable once PossibleNullReferenceException
-							Debug.Fail(f.Message, f.InnerException.StackTrace);
+						var f = t.Exception;
+						Debug.Assert(f != null);
+						// ReSharper disable once PossibleNullReferenceException
+						Debug.Fail(f.Message, f.InnerException.StackTrace);
 #endif
-							return t;
-						}, token)));
+						return t;
+					}, token)));
 
 		Task PostSynchronously(CancellationToken token)
 			=> Task.Run(() =>
@@ -114,7 +121,7 @@ namespace Solve.ProcessingSchemes
 			=> _runSynchronously
 			? PostSynchronously(token)
 			: Task.WhenAll(
-				BufferGenomes(token),
+				PostingFactory.StartNew(() => BufferGenomes(token), token),
 				PostFromBuffer(token));
 	}
 

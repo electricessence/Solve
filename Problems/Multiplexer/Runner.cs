@@ -1,6 +1,6 @@
 ﻿using Solve.Evaluation;
 using Solve.Experiment.Console;
-using Solve.ProcessingSchemes.Tower;
+using Solve.ProcessingSchemes.Dataflow;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -67,7 +67,7 @@ namespace Multiplexer
 		{
 			var factory = new NumericEvalGenomeFactory(/*"((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new TowerProcessingScheme<EvalGenome<double>>(factory, (100, 60, 2));
+			var scheme = new DataflowScheme<EvalGenome<double>>(factory, (100, 60, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 100));
 
 			Init(scheme, emitter, factory.Metrics);

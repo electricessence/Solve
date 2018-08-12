@@ -35,7 +35,6 @@
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />
-    <Compile Remove="Supporting\QueuedTaskScheduler.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +42,7 @@
     <PackageReference Include="Nito.AsyncEx" Version="5.0.0-pre-05" />
     <PackageReference Include="Open.Arithmetic" Version="1.2.0" />
     <PackageReference Include="Open.Cloneable" Version="1.1.0" />
-    <PackageReference Include="Open.Collections" Version="2.4.4" />
+    <PackageReference Include="Open.Collections" Version="2.4.6" />
     <PackageReference Include="Open.Collections.Numeric" Version="1.2.1" />
     <PackageReference Include="Open.Disposable" Version="1.2.1" />
     <PackageReference Include="Open.Disposable.ObjectPools" Version="2.1.3" />
