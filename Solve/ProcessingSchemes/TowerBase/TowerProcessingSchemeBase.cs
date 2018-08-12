@@ -32,6 +32,7 @@ namespace Solve.ProcessingSchemes
 				throw new ArgumentException("Minumum must be less than or equal to First.", nameof(poolSize));
 			Contract.EndContractBlock();
 
+
 			PoolSize = poolSize;
 			MaxLevels = maxLevels;
 			MaxLevelLosses = maxLevelLosses;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Solve.Supporting.TaskScheduling;
+using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -11,11 +12,16 @@ namespace Solve.ProcessingSchemes.Dataflow
 		{
 			readonly Level Root;
 
+			public readonly PriorityQueueTaskScheduler Scheduler;
+
 			public ProblemTower(
 				IProblem<TGenome> problem,
 				TowerProcessingSchemeBase<TGenome> environment)
 				: base(problem, environment)
 			{
+				Scheduler = environment.Scheduler[0];
+				Scheduler.ReversePriority = true; // The top level should go first...
+
 				Root = new Level(0, this, 1);
 			}
 
