@@ -20,6 +20,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				: base(problem, environment)
 			{
 				Scheduler = environment.Scheduler[0];
+				Scheduler.Name = "ProblemTower Scheduler";
 				Scheduler.ReversePriority = true; // The top level should go first...
 
 				Root = new Level(0, this, 1);
