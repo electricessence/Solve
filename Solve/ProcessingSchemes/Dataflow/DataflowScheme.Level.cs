@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Solve.Supporting.TaskScheduling;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -25,24 +26,32 @@ namespace Solve.ProcessingSchemes.Dataflow
 				: base(level, tower, priorityLevels)
 			{
 				var scheduler = tower.Scheduler[level];
+				scheduler.Name = "Level Scheduler";
 				scheduler.ReversePriority = true;
 
-				ExecutionDataflowBlockOptions schedulerOption(int pri)
-					=> new ExecutionDataflowBlockOptions() { TaskScheduler = scheduler[pri] };
+				PriorityQueueTaskScheduler getScheduler(int pri, string name)
+				{
+					var s = scheduler[pri];
+					s.Name = name;
+					return s;
+				}
+
+				ExecutionDataflowBlockOptions schedulerOption(int pri, string name)
+					=> new ExecutionDataflowBlockOptions() { TaskScheduler = getScheduler(pri, name) };
 
 				// Step 1: Group for ranking.
 				var preselector = new BatchBlock<LevelEntry>(
 					PoolSize,
-					new GroupingDataflowBlockOptions() { TaskScheduler = scheduler[1] });
+					new GroupingDataflowBlockOptions() { TaskScheduler = getScheduler(1, "Level Preselection") });
 
 				// Step 2: Rank
 				var ranking = new TransformBlock<LevelEntry[], LevelEntry[][]>(
 					e => RankEntries(e),
-					schedulerOption(2));
+					schedulerOption(2, "Level Ranking"));
 
 				// Step 3: Selection and Propagation!
 				var selection = new ActionBlock<LevelEntry[][]>(
-					dataflowBlockOptions: schedulerOption(3),
+					dataflowBlockOptions: schedulerOption(3, "Level Selection"),
 					action: pools =>
 					{
 						var poolCount = pools.Length;
@@ -115,7 +124,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 				// Step 0: Injestion
 				Processor = new ActionBlock<(TGenome Genome, Fitness[] Fitness)>(
-					dataflowBlockOptions: schedulerOption(0),
+					dataflowBlockOptions: schedulerOption(0, "Level Injestion"),
 					action: async c =>
 					{
 						var result = await ProcessEntry(c);

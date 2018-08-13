@@ -1,5 +1,6 @@
 ﻿using Open.Collections.Synchronized;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -44,27 +45,34 @@ namespace Solve.Supporting.TaskScheduling
 		/// </summary>
 		// ReSharper disable once UnusedAutoPropertyAccessor.Global
 		public bool ReversePriority { get; set; }
+		public string Name { get; set; } // Useful for debugging.
 		private readonly TaskScheduler _parent;
 
 		private int _delegatesQueuedOrRunning;
-		private readonly LockSynchronizedLinkedList<Task> InternalQueue
-			= new LockSynchronizedLinkedList<Task>();
+		private readonly ConcurrentQueue<Task> InternalQueue
+			= new ConcurrentQueue<Task>();
 
+#if DEBUG
 		protected override bool TryDequeue(Task task)
 		{
-			if (task == null) throw new ArgumentNullException(nameof(task));
-			Contract.EndContractBlock();
+			Debug.Fail("TryDequeue should never be called");
+			return base.TryDequeue(task);
+			//if (task == null) throw new ArgumentNullException(nameof(task));
+			//Contract.EndContractBlock();
 
-			return InternalQueue.Remove(task);
+			//return InternalQueue.Remove(task);
 		}
+#endif
 
 		private bool TryGetNext(out (PriorityQueueTaskScheduler scheduler, Task task) entry)
 		{
+			//Debug.WriteLineIf(Name != null && Name.StartsWith("Level"), $"{Name} ({Id}): TryGetNext(out entry)");
+
 			entry = default;
 			if (DisposeCancellation.IsCancellationRequested)
 				return false;
 
-			if (!InternalQueue.TryTakeFirst(out var task))
+			if (!InternalQueue.TryDequeue(out var task))
 				return false;
 
 			if (task != null)
@@ -139,7 +147,6 @@ namespace Solve.Supporting.TaskScheduling
 		/// <inheritdoc />
 		protected override IEnumerable<Task> GetScheduledTasks()
 			=> InternalQueue
-				.Snapshot()
 				.Where(e => e != null)
 				.ToList();
 
@@ -187,7 +194,8 @@ namespace Solve.Supporting.TaskScheduling
 		{
 			DisposingHelper.AssertIsAlive();
 
-			InternalQueue.AddLast(task);
+			InternalQueue.Enqueue(task);
+			//Debug.WriteLineIf(Name != null && task != null, $"{Name} ({Id}): QueueTask({task?.Id})");
 
 			if (_parent is PriorityQueueTaskScheduler p)
 				p.NotifyNewWorkItem();

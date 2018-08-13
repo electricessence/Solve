@@ -21,7 +21,10 @@ namespace Solve.ProcessingSchemes
 		protected ProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
 			: base(genomeFactory)
 		{
-			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default);
+			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default)
+			{
+				Name = "ProcessingSchemeBase Scheduler"
+			};
 			PostingFactory = new TaskFactory(Scheduler[1]);
 			_runSynchronously = runSynchronously;
 		}
@@ -67,7 +70,7 @@ namespace Solve.ProcessingSchemes
 			FactoryBuffer.Writer.Complete();
 		}
 
-		void PostFromBufferSingle(CancellationToken token)
+		async Task PostFromBufferSingle(CancellationToken token)
 		{
 			retry:
 			TGenome genome = null;
@@ -76,7 +79,7 @@ namespace Solve.ProcessingSchemes
 
 			if (genome == null) return;
 			Post(genome);
-
+			await Task.Yield();
 			goto retry;
 		}
 
@@ -85,7 +88,7 @@ namespace Solve.ProcessingSchemes
 				Enumerable
 				.Range(0, Environment.ProcessorCount)
 				.Select(s => PostingFactory
-					.StartNew(() => PostFromBufferSingle(token), token)
+					.StartNew(() => PostFromBufferSingle(token), token).Unwrap()
 					.ContinueWith(t =>
 					{
 						if (t.IsCanceled) return Task.CompletedTask;
