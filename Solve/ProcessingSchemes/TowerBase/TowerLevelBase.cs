@@ -1,147 +1,49 @@
 ﻿using Open.Memory;
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
 {
-	public abstract class TowerLevelBase<TGenome, TTower>
+	public abstract class TowerLevelBase<TGenome, TTower, TEnvironment>
 		where TGenome : class, IGenome
-		where TTower : TowerBase<TGenome>
+		where TTower : TowerBase<TGenome, TEnvironment>
+		where TEnvironment : EnvironmentBase<TGenome>
 	{
 		protected readonly int Index;
 		protected readonly ushort PoolSize;
 		protected readonly TTower Tower;
-		protected readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
-		protected abstract bool IsTop { get; }
 
 		protected TowerLevelBase(
 			int level,
-			TTower tower,
-			byte priorityLevels)
+			ushort poolSize,
+			TTower tower)
 		{
-			var env = tower.Environment;
-			Debug.Assert(level < env.MaxLevels);
+			Debug.Assert(level >= 0);
 
 			Index = level;
+			PoolSize = poolSize;
 			Tower = tower;
+		}
 
-			Factory = env.Factory[1]; // Use a lower priority than the factory used by broadcasting.
+		protected TowerLevelBase(
+			int level,
+			in (ushort First, ushort Minimum, ushort Step) poolSize,
+			TTower tower)
+			: this(level, GetPoolSize(level, poolSize), tower)
+		{
+		}
 
-			var (First, Minimum, Step) = env.PoolSize;
+		internal static ushort GetPoolSize(int level, in (ushort First, ushort Minimum, ushort Step) poolSize)
+		{
+			var (First, Minimum, Step) = poolSize;
 			var maxDelta = First - Minimum;
-			var decrement = Index * Step;
-			PoolSize = decrement > maxDelta ? Minimum : (ushort)(First - decrement);
-
-			BestProgressiveFitness = new double[tower.Problem.Pools.Count][];
-
-			Incomming = Enumerable
-				.Range(0, priorityLevels)
-				.Select(i => new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>())
-				.ToArray();
+			var decrement = level * Step;
+			return decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 		}
 
-		protected abstract void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
-
-		protected readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>[] Incomming;
-
-		public void Post(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
-		{
-			Incomming[priority]
-				.Enqueue(challenger);
-
-			OnAfterPost();
-		}
-
-		protected abstract void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
-
-		protected virtual void OnAfterPost()
-		{
-			int count;
-			do
-			{
-				count = 0;
-				var len = Incomming.Length;
-				for (byte i = 0; i < len; i++)
-				{
-					retry:
-					var q = Incomming[i];
-					if (!q.TryDequeue(out var c)) continue;
-
-					ProcessInjested(i, c);
-
-					i = 0; // Reset to top queue.
-					++count;
-
-					goto retry;
-				}
-			}
-			while (count != 0);
-		}
-
-		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-			Span<double[]> registry,
-			double[] contending,
-			int index)
-		{
-			Debug.Assert(contending != null);
-
-			ref var fRef = ref registry[index];
-			double[] defending;
-			while ((defending = fRef) == null || contending.IsGreaterThan(defending))
-			{
-				if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
-					return (true, defending == null);
-			}
-			return (false, false);
-		}
-
-		readonly double[][] BestProgressiveFitness;
-
-		protected void ProcessChampion(byte poolIndex, (TGenome Genome, Fitness[] Fitness) champ)
-		{
-			Tower.Problem.Pools[poolIndex].Champions?.Add(champ.Genome, champ.Fitness[poolIndex]);
-			Tower.Broadcast(champ, poolIndex);
-		}
-
-		protected async Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
-		{
-			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index)).Select((fitness, i) =>
-			{
-				var values = fitness.Results.Sum.ToArray();
-				var progressiveFitness = champ.Fitness[i];
-				var (success, fresh) = UpdateFitnessesIfBetter(
-					BestProgressiveFitness,
-					progressiveFitness
-						.Merge(values)
-						.Average
-						.ToArray(), i);
-
-				Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
-
-				return (values, success, fresh);
-			}).ToArray();
-
-			if (IsTop)
-			{
-				for (byte i = 0; i < result.Length; i++)
-				{
-					if (result[i].success)
-						ProcessChampion(i, champ);
-				}
-			}
-
-			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
-				return new LevelEntry(in champ, result.Select(r => r.values).ToArray());
-
-			Factory.EnqueueChampion(champ.Genome);
-			PostNextLevel(0, champ);
-			return null;
-		}
+		protected abstract Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
 		protected LevelEntry[][] RankEntries(LevelEntry[] pool)
 			=> Tower.Problem.Pools

@@ -51,7 +51,7 @@ namespace Solve.ProcessingSchemes
 			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
-		public readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
+		internal protected readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
 		public readonly ushort MaxLevels;
 		public readonly ushort MaxLevelLosses;
 		public readonly ushort MaxLossesBeforeElimination;
