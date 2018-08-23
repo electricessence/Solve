@@ -7,7 +7,7 @@ namespace Solve.ProcessingSchemes.Tower
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : TowerBase<TGenome>
+		public sealed class ProblemTower : TowerBase<TGenome, TowerProcessingSchemeBase<TGenome>>
 		{
 			readonly Level Root;
 
@@ -20,7 +20,7 @@ namespace Solve.ProcessingSchemes.Tower
 				Root = new Level(0, this, 1);
 			}
 
-			public override void Post(TGenome next)
+			public void Post(TGenome next)
 			{
 				if (next == null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();

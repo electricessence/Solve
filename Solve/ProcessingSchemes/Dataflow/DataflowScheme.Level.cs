@@ -11,7 +11,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 	// ReSharper disable once PossibleInfiniteInheritance
 	public partial class DataflowScheme<TGenome>
 	{
-		sealed class Level : TowerLevelBase<TGenome, ProblemTower>
+		sealed class Level : PostingTowerLevelBase<TGenome, ProblemTower>
 		{
 			Level _nextLevel;
 			private Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,

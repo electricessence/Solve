@@ -13,7 +13,7 @@ namespace Solve.ProcessingSchemes.Tower
 	[SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		sealed class Level : TowerLevelBase<TGenome, ProblemTower>
+		sealed class Level : PostingTowerLevelBase<TGenome, ProblemTower>
 		{
 			Level _nextLevel;
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,

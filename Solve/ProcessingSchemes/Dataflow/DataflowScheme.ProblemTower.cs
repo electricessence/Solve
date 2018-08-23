@@ -8,7 +8,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 	// ReSharper disable once PossibleInfiniteInheritance
 	public partial class DataflowScheme<TGenome>
 	{
-		sealed class ProblemTower : TowerBase<TGenome>
+		sealed class ProblemTower : TowerBase<TGenome, TowerProcessingSchemeBase<TGenome>>
 		{
 			readonly Level Root;
 
@@ -26,7 +26,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				Root = new Level(0, this, 1);
 			}
 
-			public override void Post(TGenome next)
+			public void Post(TGenome next)
 			{
 				if (next == null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();

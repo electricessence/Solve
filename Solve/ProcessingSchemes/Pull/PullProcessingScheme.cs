@@ -12,6 +12,8 @@ namespace Solve.ProcessingSchemes.Pull
 		const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;
 		const ushort DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION = DEFAULT_MAX_LEVEL_LOSSES * 30;
 
+		internal protected readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
+
 		public PullProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
@@ -20,7 +22,7 @@ namespace Solve.ProcessingSchemes.Pull
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
 			: base(genomeFactory)
 		{
-
+			PoolSize = poolSize;
 		}
 
 		public PullProcessingScheme(
