@@ -1,7 +1,9 @@
 ﻿using Open.Memory;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
@@ -43,6 +45,23 @@ namespace Solve.ProcessingSchemes
 			return decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 		}
 
+		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
+			Span<double[]> registry,
+			double[] contending,
+			int index)
+		{
+			Debug.Assert(contending != null);
+
+			ref var fRef = ref registry[index];
+			double[] defending;
+			while ((defending = fRef) == null || contending.IsGreaterThan(defending))
+			{
+				if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
+					return (true, defending == null);
+			}
+			return (false, false);
+		}
+
 		protected abstract Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
 		protected LevelEntry[][] RankEntries(LevelEntry[] pool)
@@ -52,11 +71,11 @@ namespace Solve.ProcessingSchemes
 
 		protected class LevelEntry
 		{
-			public LevelEntry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores)
+			public LevelEntry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores, ushort levelLossRecord = 0)
 			{
 				GenomeFitness = gf;
 				Scores = scores;
-				LevelLossRecord = 0;
+				LevelLossRecord = levelLossRecord;
 			}
 
 			public readonly (TGenome Genome, Fitness[] Fitness) GenomeFitness;

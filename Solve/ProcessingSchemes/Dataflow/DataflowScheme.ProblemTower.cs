@@ -1,7 +1,6 @@
 ﻿using Solve.Supporting.TaskScheduling;
 using System;
 using System.Diagnostics.Contracts;
-using System.Linq;
 
 namespace Solve.ProcessingSchemes.Dataflow
 {
@@ -31,7 +30,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				if (next == null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();
 
-				Root.Post(0, (next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()));
+				Root.Post(0, (next, NewFitness()));
 			}
 		}
 	}

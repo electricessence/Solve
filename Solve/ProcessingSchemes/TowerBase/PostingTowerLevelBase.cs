@@ -1,9 +1,7 @@
-﻿using Open.Memory;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes
@@ -67,23 +65,6 @@ namespace Solve.ProcessingSchemes
 				}
 			}
 			while (count != 0);
-		}
-
-		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-			Span<double[]> registry,
-			double[] contending,
-			int index)
-		{
-			Debug.Assert(contending != null);
-
-			ref var fRef = ref registry[index];
-			double[] defending;
-			while ((defending = fRef) == null || contending.IsGreaterThan(defending))
-			{
-				if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
-					return (true, defending == null);
-			}
-			return (false, false);
 		}
 
 		readonly double[][] BestProgressiveFitness;
