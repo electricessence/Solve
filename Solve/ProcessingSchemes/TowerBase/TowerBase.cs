@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Solve.ProcessingSchemes
 {
@@ -23,5 +24,8 @@ namespace Solve.ProcessingSchemes
 
 		public void Broadcast((TGenome Genome, Fitness[] Fitnesses) gf, int poolIndex)
 			=> Broadcast((gf.Genome, poolIndex, gf.Fitnesses[poolIndex]));
+
+		public Fitness[] NewFitness()
+			=> Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray();
 	}
 }

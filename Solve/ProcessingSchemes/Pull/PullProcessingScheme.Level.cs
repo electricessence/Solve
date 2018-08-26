@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -13,7 +15,7 @@ namespace Solve.ProcessingSchemes.Pull
 	{
 		sealed class Level : TowerLevelBase<TGenome, ProblemTower, PullProcessingScheme<TGenome>>
 		{
-			LinkedListNode<Level> _levelNode;
+			readonly LinkedListNode<Level> _levelNode;
 			public Level NextLevel => _levelNode.Next?.Value;
 			readonly Level PreviousLevel;
 
@@ -29,26 +31,62 @@ namespace Solve.ProcessingSchemes.Pull
 				PreviousLevel = node.Previous?.Value;
 			}
 
-			//Channel Processing = Channel.CreateUnbounded < ()
+			readonly double[][] BestLevelFitness;
+			readonly double[][] BestProgressiveFitness;
 
-			//void PostResult()
+			readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)> Winners
+				= new ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>();
 
-			public async Task<(TGenome Genome, Fitness[] Fitness)> GetNextAsync()
+			readonly ConcurrentQueue<LevelEntry> Retained
+				= new ConcurrentQueue<LevelEntry>();
+
+			public async Task<(TGenome Genome, Fitness[] Fitness)> GetNextChampionAsync(bool retain = false)
 			{
-				var pool = new List<(TGenome Genome, Fitness[])>(PoolSize);
-				if (PreviousLevel != null)
+				retry:
+
+				if (!retain && Winners.TryDequeue(out var winner))
+					return winner;
+
+				// Step 1: get the next candidate from a lower level or the genome factory.
+				var candidate = PreviousLevel == null
+					? (Genome: Tower.Environment.Factory.Next(), Fitness: Tower.NewFitness())
+					: await PreviousLevel.GetNextChampionAsync();
+
+				// Step 2: get the results the problem as well as the level fitness and progressive fitness.
+				var result = (await Tower.Problem.ProcessSampleAsync(candidate.Genome, Index)).Select((fitness, i) =>
 				{
-					while (pool.Count < PoolSize)
-					{
-						pool.Add(await PreviousLevel.GetNextAsync());
-					}
-				}
-				else
+					var values = fitness.Results.Sum.ToArray();
+					var progressiveFitness = candidate.Fitness[i];
+
+					var level = UpdateFitnessesIfBetter(
+						BestLevelFitness,
+						values, i);
+
+					var progressive = UpdateFitnessesIfBetter(
+						BestProgressiveFitness,
+						progressiveFitness
+							.Merge(values)
+							.Average
+							.ToArray(), i);
+
+					Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
+
+					return (values, level, progressive);
+				}).ToArray();
+
+				// Step 3: if either the level fitness or progressive fitness is superior, pass on.
+				if (result.Any(e => e.level.success || e.progressive.success))
 				{
-					Tower.Environment.Factory.Take(PoolSize)
-						.Select(g => Tower.Problem.ProcessSampleAsync(g, Index));
+					if (retain) Winners.Enqueue(candidate);
+					return candidate;
 				}
-				throw new NotImplementedException();
+
+				// Step 4: retain the inferior candidate.
+				Retained.Enqueue(new LevelEntry(in candidate, result.Select(r => r.values).ToArray()));
+
+				// Step 5: try again to get a winner
+				goto retry;
+
 			}
 
 			protected override Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
