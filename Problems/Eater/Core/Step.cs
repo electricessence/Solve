@@ -18,24 +18,30 @@ namespace Eater
 
 	public struct StepCount
 	{
-		public int Count;
 		public Step Step;
+		public int Count;
+
+		public StepCount(Step step = Step.Forward, int count = 1)
+		{
+			Step = step;
+			Count = count;
+		}
 
 		public static StepCount operator +(StepCount a, StepCount b)
 		{
 			if (a.Step != b.Step)
 				throw new InvalidOperationException("Attempting to combine two StepCounts with different steps.");
-			return new StepCount() { Step = a.Step, Count = a.Count + b.Count };
+			return new StepCount(a.Step, a.Count + b.Count);
 		}
 
 		public static StepCount operator ++(StepCount a)
 		{
-			return new StepCount() { Step = a.Step, Count = a.Count + 1 };
+			return new StepCount(a.Step, a.Count + 1);
 		}
 
 		public static StepCount operator --(StepCount a)
 		{
-			return new StepCount() { Step = a.Step, Count = a.Count - 1 };
+			return new StepCount(a.Step, a.Count - 1);
 		}
 
 		public override string ToString()
@@ -81,11 +87,7 @@ namespace Eater
 				{
 					yield return last;
 
-					last = new StepCount()
-					{
-						Step = step,
-						Count = 1
-					};
+					last = new StepCount(step, 1);
 				}
 			}
 			yield return last;

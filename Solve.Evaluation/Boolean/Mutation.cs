@@ -32,7 +32,7 @@ namespace Solve.Evaluation
 					.GetNodes()
 					.ToArray()
 					.RandomSelectOne() as Node<IGene>
-					?? throw new InvalidCastException("Expected a Node<IGene.");
+					?? throw new InvalidCastException("Expected a Node<IGene>.");
 
 				var gv = gene.Value;
 				switch (gv)

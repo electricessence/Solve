@@ -1,5 +1,7 @@
 ﻿using Solve.Experiment.Console;
 using Solve.ProcessingSchemes.Dataflow;
+using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,7 +26,7 @@ namespace Eater
 			//_minConvSamples = minConvSamples;
 		}
 
-		static Genome GenerateIdealSeed(ushort size)
+		static string GenerateIdealSeed(ushort size)
 		{
 			var s = size - 1;
 			var sb = new StringBuilder();
@@ -39,7 +41,7 @@ namespace Eater
 					.Append('>').Append(s).Append('^')
 					.Append('>').Append(s).Append('^');
 
-			return new Genome(sb.ToString());
+			return sb.ToString();
 		}
 
 		public void Init(bool startWithIdealSeed = false)
@@ -47,10 +49,12 @@ namespace Eater
 			const ushort size = 10;
 
 			var emitter = new EaterConsoleEmitter(_minSamples);
-			var seed = startWithIdealSeed ? GenerateIdealSeed(size) : null;
-			if (seed != null) emitter.SaveGenomeImage(seed, "LatestSeed");
+			var seed = startWithIdealSeed ? new[] { GenerateIdealSeed(size) } : Array.Empty<string>();
+			if (seed.Length != 0) emitter.SaveGenomeImage(seed[0], "LatestSeed");
 
-			var factory = new GenomeFactory(seed, leftTurnDisabled: true);
+			const bool leftTurnDisabled = true;
+			var seeds = seed.Concat(GenomeFactory.Random(100, size * 2, leftTurnDisabled).Take(1000)).Distinct().Select(s => new Genome(s));
+			var factory = new GenomeFactory(seeds, leftTurnDisabled: leftTurnDisabled);
 			var scheme = new DataflowScheme<Genome>(factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateF0102(size));

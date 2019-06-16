@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -18,6 +19,31 @@ namespace Eater
 		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(seed == null ? default(IEnumerable<Genome>) : new[] { seed })
 		{
 
+		}
+
+		public static IEnumerable<string> Random(int moves, int maxMoveLength, bool leftTurnDisabled = false)
+		{
+			var random = new Random();
+			var size = moves * 2 - 1;
+			var pool = size > 1048576 ? null : ArrayPool<StepCount>.Shared;
+			var steps = pool?.Rent(size) ?? new StepCount[size];
+
+			for (var i = 0; i < size; i++)
+			{
+				switch (i % 2)
+				{
+					case 0:
+						steps[i] = new StepCount(Step.Forward, random.Next(maxMoveLength) + 1);
+						break;
+					case 1:
+						steps[i] = new StepCount(leftTurnDisabled ? Step.TurnRight : (random.Next(2) == 0 ? Step.TurnRight : Step.TurnLeft));
+						break;
+				}
+			}
+
+			var hash = steps.ToGenomeHash();
+			pool?.Return(steps);
+			yield return hash;
 		}
 
 		public readonly IReadOnlyList<Step> AvailableSteps;
