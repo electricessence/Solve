@@ -12,7 +12,7 @@ namespace Solve
 	public interface IProblemPool<TGenome>
 		 where TGenome : IGenome
 	{
-		IReadOnlyList<Metric> Metrics { get; }
+		ReadOnlyMemory<Metric> Metrics { get; }
 		Func<TGenome, double[], Fitness> Transform { get; }
 
 		(TGenome Genome, Fitness Fitness) BestFitness { get; }

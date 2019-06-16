@@ -2,10 +2,11 @@
 using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
-using Open.Numeric;
+using Open.RandomizationExtensions;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Solve.Evaluation
 {

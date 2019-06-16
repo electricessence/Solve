@@ -7,6 +7,7 @@ using App.Metrics;
 using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Numeric;
+using Open.RandomizationExtensions;
 using Open.Threading.Tasks;
 using Solve.Debugging;
 using System;
@@ -17,6 +18,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Solve
 {

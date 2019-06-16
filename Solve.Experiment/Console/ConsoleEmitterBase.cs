@@ -1,4 +1,5 @@
 ﻿using Open.Memory;
+using Open.Text;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;

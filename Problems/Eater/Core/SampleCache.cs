@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Eater
 {
