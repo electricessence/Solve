@@ -115,6 +115,21 @@ namespace Eater
 			}
 			return sb.ToString();
 		}
+
+		public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
+		{
+			var sb = new StringBuilder();
+			foreach (var s in steps)
+			{
+				if (s.Count != 1)
+					sb.Append(s.Count);
+				sb.Append(s.Step.ToChar());
+			}
+			return sb.ToString();
+		}
+
+		public static string ToGenomeHash(this Span<StepCount> steps)
+			=> ToGenomeHash((ReadOnlySpan<StepCount>)steps);
 	}
 
 	public static class Steps
