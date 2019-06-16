@@ -35,13 +35,13 @@ namespace Solve.ProcessingSchemes.Pull
 
 
 		//IReadOnlyList<ProblemTower> Towers;
-		private IEnumerable<ProblemTower> ActiveTowers;
+		//private IEnumerable<ProblemTower> ActiveTowers;
 
 		protected override Task StartInternal(CancellationToken token)
 		{
 			var towers = Problems.Select(p => new ProblemTower(p, this)).ToList();
 			//Towers = towers.AsReadOnly();
-			ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
+			//ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
 
 			return Task.Run(() =>
 			{
