@@ -26,24 +26,29 @@ namespace Eater
 			var random = new Random();
 			var size = moves * 2 - 1;
 			var pool = size > 1048576 ? null : ArrayPool<StepCount>.Shared;
-			var steps = pool?.Rent(size) ?? new StepCount[size];
 
-			for (var i = 0; i < size; i++)
+			while (true)
 			{
-				switch (i % 2)
+				var steps = pool?.Rent(size) ?? new StepCount[size];
+
+				for (var i = 0; i < size; i++)
 				{
-					case 0:
-						steps[i] = new StepCount(Step.Forward, random.Next(maxMoveLength) + 1);
-						break;
-					case 1:
-						steps[i] = new StepCount(leftTurnDisabled ? Step.TurnRight : (random.Next(2) == 0 ? Step.TurnRight : Step.TurnLeft));
-						break;
+					switch (i % 2)
+					{
+						case 0:
+							steps[i] = new StepCount(Step.Forward, random.Next(maxMoveLength) + 1);
+							break;
+						case 1:
+							steps[i] = new StepCount(leftTurnDisabled ? Step.TurnRight : (random.Next(2) == 0 ? Step.TurnRight : Step.TurnLeft));
+							break;
+					}
 				}
+
+				var hash = steps.AsSpan().Slice(0, size).ToGenomeHash();
+				pool?.Return(steps);
+				yield return hash;
 			}
 
-			var hash = steps.ToGenomeHash();
-			pool?.Return(steps);
-			yield return hash;
 		}
 
 		public readonly IReadOnlyList<Step> AvailableSteps;
