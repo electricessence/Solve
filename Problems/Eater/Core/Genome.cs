@@ -59,5 +59,9 @@ namespace Eater
 		IEnumerator IEnumerable.GetEnumerator()
 			=> _genes.GetEnumerator();
 
+		public static implicit operator Genome(string steps) => new Genome(steps);
+		public static implicit operator Genome(Step[] steps) => new Genome(steps);
+		public static implicit operator Genome(StepCount[] steps) => new Genome(steps);
+		public static implicit operator ReadOnlySpan<Step>(Genome genome) => genome.Genes;
 	}
 }
