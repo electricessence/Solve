@@ -1,23 +1,22 @@
 ﻿using Open.Numeric;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace Solve
 {
 	public class FitnessInterlocked : Fitness
 	{
-		public FitnessInterlocked(in IReadOnlyList<Metric> metrics)
+		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics)
 			: base(metrics)
 		{
 		}
 
-		public FitnessInterlocked(in IReadOnlyList<Metric> metrics, ProcedureResults results)
+		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics, ProcedureResults results)
 			: base(metrics, results)
 		{
 		}
 
-		public FitnessInterlocked(in IReadOnlyList<Metric> metrics, params double[] values)
+		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics, params double[] values)
 			: base(metrics, new ProcedureResults(values, 1))
 		{
 
@@ -54,7 +53,7 @@ namespace Solve
 			return sum;
 		}
 
-		public new FitnessInterlocked Clone() => new FitnessInterlocked(Metrics, _results);
+		public new FitnessInterlocked Clone() => new FitnessInterlocked(_metrics, _results);
 
 	}
 }

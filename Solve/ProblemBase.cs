@@ -14,15 +14,15 @@ namespace Solve
 	{
 		protected class Pool : IProblemPool<TGenome>
 		{
-			public Pool(ushort poolSize, in IReadOnlyList<Metric> metrics, Func<TGenome, double[], Fitness> transform)
+			public Pool(ushort poolSize, in ReadOnlyMemory<Metric> metrics, Func<TGenome, double[], Fitness> transform)
 			{
-				Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+				Metrics = metrics;
 				Transform = transform ?? throw new ArgumentNullException(nameof(transform));
 
 				Champions = poolSize == 0 ? null : new RankedPool<TGenome>(poolSize);
 			}
 
-			public IReadOnlyList<Metric> Metrics { get; }
+			public ReadOnlyMemory<Metric> Metrics { get; }
 
 			public Func<TGenome, double[], Fitness> Transform { get; }
 
@@ -90,7 +90,7 @@ namespace Solve
 		public void Converged() => HasConverged = true;
 
 		protected ProblemBase(
-			IEnumerable<(IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
+			IEnumerable<(ReadOnlyMemory<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
 			ushort sampleSize,
 			ushort championPoolSize)
 		{
@@ -104,7 +104,7 @@ namespace Solve
 		protected ProblemBase(
 			ushort sampleSize,
 			ushort championPoolSize,
-			params (IReadOnlyList<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			params (ReadOnlyMemory<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: this(fitnessTranslators, sampleSize, championPoolSize) { }
 
 		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);

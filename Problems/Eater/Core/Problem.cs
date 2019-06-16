@@ -1,6 +1,5 @@
 ﻿using Solve;
 using System;
-using System.Collections.Generic;
 
 namespace Eater
 {
@@ -12,7 +11,7 @@ namespace Eater
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100,
-			params (IReadOnlyList<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
+			params (ReadOnlyMemory<Metric> Metrics, Func<Genome, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
 			Samples = new SampleCache(gridSize);
@@ -24,19 +23,19 @@ namespace Eater
 		protected static Fitness Fitness02(Genome genome, double[] metrics)
 			=> new Fitness(Metrics02, metrics[0], -genome.GeneCount, -metrics[1]);
 
-		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
+		protected static readonly ReadOnlyMemory<Metric> Metrics01 = new[]
 		{
 			new Metric(0, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
 			new Metric(1, "Average-Energy", "Average-Energy {0:n3}"),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
-		}.AsReadOnly();
+		};
 
-		protected static readonly IReadOnlyList<Metric> Metrics02 = new List<Metric>
+		protected static readonly ReadOnlyMemory<Metric> Metrics02 = new []
 		{
-			Metrics01[0],
-			Metrics01[2],
-			Metrics01[1]
-		}.AsReadOnly();
+			Metrics01.Span[0],
+			Metrics01.Span[2],
+			Metrics01.Span[1]
+		};
 
 		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 		{

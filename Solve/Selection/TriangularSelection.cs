@@ -1,8 +1,8 @@
 ﻿using Open.Arithmetic;
-using Open.Numeric;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Solve.TriangularSelection
 {

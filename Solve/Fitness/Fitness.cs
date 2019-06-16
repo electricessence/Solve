@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using Open.Numeric;
 using Open.Numeric.Precision;
+using Open.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,16 +15,17 @@ namespace Solve
 	[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 	public class Fitness : IComparable<Fitness>
 	{
-		public Fitness(IReadOnlyList<Metric> metrics, ProcedureResults results)
+		public Fitness(in ReadOnlyMemory<Metric> metrics, ProcedureResults results)
 		{
-			Metrics = metrics;
+			_metrics = metrics;
 			if (results != null) Results = results;
 		}
 
-		public Fitness(IReadOnlyList<Metric> metrics, params double[] values)
+		public Fitness(in ReadOnlyMemory<Metric> metrics, params double[] values)
 			: this(metrics, values == null || values.Length == 0 ? null : new ProcedureResults(values, 1)) { }
 
-		public IReadOnlyList<Metric> Metrics { get; }
+		protected readonly ReadOnlyMemory<Metric> _metrics;
+		public ReadOnlySpan<Metric> Metrics => _metrics.Span;
 
 		protected ProcedureResults _results;
 		public ProcedureResults Results
@@ -31,7 +33,7 @@ namespace Solve
 			get => _results;
 			set
 			{
-				Debug.Assert(value.Sum.Length == Metrics.Count);
+				Debug.Assert(value.Sum.Length == Metrics.Length);
 				_results = value;
 			}
 		}
@@ -66,8 +68,8 @@ namespace Solve
 			{
 				var r = _results;
 				return r == null || r.Count == 0
-					? Metrics.Select(m => (m, double.NaN))
-					: Metrics.Select((m, i) => (m, r.Sum.Span[i]));
+					? Metrics.ToArray().Select(m => (m, double.NaN))
+					: Metrics.ToArray().Select((m, i) => (m, r.Sum.Span[i]));
 			}
 		}
 
@@ -77,11 +79,10 @@ namespace Solve
 			{
 				var r = _results;
 				return r == null || r.Count == 0
-					? Metrics.Select(m => (m, double.NaN))
-					: Metrics.Select((m, i) => (m, r.Average.Span[i]));
+					? Metrics.ToArray().Select(m => (m, double.NaN))
+					: Metrics.ToArray().Select((m, i) => (m, r.Average.Span[i]));
 			}
 		}
-
 
 		public override string ToString()
 		{
@@ -95,7 +96,7 @@ namespace Solve
 			return sb.ToString();
 		}
 
-		public Fitness Clone() => new Fitness(Metrics, _results);
+		public Fitness Clone() => new Fitness(_metrics, _results);
 
 		public int CompareTo(Fitness other)
 		{

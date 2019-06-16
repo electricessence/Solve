@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using Open.Hierarchy;
 using Open.Numeric;
+using Open.RandomizationExtensions;
 
 namespace Solve.Evaluation
 {
