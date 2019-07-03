@@ -10,7 +10,6 @@ namespace Solve.Supporting.TaskScheduling
 	{
 		/// <summary>Cancellation token used for disposal.</summary>
 		protected readonly CancellationTokenSource DisposeCancellation = new CancellationTokenSource();
-		protected readonly DisposeHelper DisposingHelper = new DisposeHelper();
 
 		protected virtual void OnDispose(bool calledExplicity) { }
 
@@ -19,15 +18,10 @@ namespace Solve.Supporting.TaskScheduling
 		public void Dispose()
 		{
 			DisposeCancellation.Cancel();
-			DisposingHelper.Dispose(this, OnDispose, true);
+			DisposeCancellation.Dispose();
 		}
 
 		#endregion
-
-		~DisposableTaskScheduler()
-		{
-			DisposingHelper.Dispose(this, OnDispose, false);
-		}
 
 		/// <inheritdoc />
 		protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
@@ -35,7 +29,7 @@ namespace Solve.Supporting.TaskScheduling
 			if (task == null) throw new ArgumentNullException(nameof(task));
 			Contract.EndContractBlock();
 
-			if (!DisposingHelper.IsAlive)
+			if (DisposeCancellation.Token.IsCancellationRequested)
 				return false;
 
 			if (taskWasPreviouslyQueued && !TryDequeue(task))

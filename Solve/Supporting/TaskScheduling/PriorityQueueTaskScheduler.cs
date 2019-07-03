@@ -192,7 +192,7 @@ namespace Solve.Supporting.TaskScheduling
 		/// <inheritdoc />
 		protected override void QueueTask(Task task)
 		{
-			DisposingHelper.AssertIsAlive();
+			DisposeCancellation.Token.ThrowIfCancellationRequested();
 
 			InternalQueue.Enqueue(task);
 			//Debug.WriteLineIf(Name != null && task != null, $"{Name} ({Id}): QueueTask({task?.Id})");
