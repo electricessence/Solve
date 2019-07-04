@@ -1,4 +1,5 @@
 ﻿using Open.Collections.Synchronized;
+using Open.Disposable;
 using System;
 using System.Reactive.Linq;
 using System.Threading;
@@ -9,10 +10,14 @@ namespace Solve
 	// Tasks can build up and dominate the scheduler in ways that messages from a broadcast block won't make it out.
 	// Using a synchronous announcer delegate will guarantee the announcements are recieved.
 
-	public abstract class BroadcasterBase<T> : IObservable<T>
+	public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
 	{
 		readonly IObservable<T> _subscribable;
 		ReadWriteSynchronizedLinkedList<IObserver<T>> _observers;
+
+		protected override void OnBeforeDispose() => Complete();
+
+		protected override void OnDispose() { }
 
 		protected BroadcasterBase()
 		{
@@ -61,6 +66,6 @@ namespace Solve
 		}
 
 		public IDisposable Subscribe(IObserver<T> observer)
-			=> _subscribable.Subscribe(observer);
+			=> AssertIsAlive(true) ? _subscribable.Subscribe(observer) : null;
 	}
 }
