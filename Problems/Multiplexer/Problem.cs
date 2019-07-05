@@ -13,34 +13,34 @@ namespace Multiplexer
 
 	public class Problem : ProblemBase<EvalGenome<double>>
 	{
-		protected static readonly IReadOnlyList<Metric> Metrics01 = new List<Metric>
+		protected static readonly ReadOnlyMemory<Metric> Metrics01 = new[]
 		{
 			new Metric(0, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 			new Metric(0, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 			new Metric(0, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
 			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
-		}.AsReadOnly();
+		}.AsMemory();
 
-		protected static readonly IReadOnlyList<Metric> Metrics02 = new List<Metric>
+		protected static readonly ReadOnlyMemory<Metric> Metrics02 = new[]
 		{
-			Metrics01[0],
-			Metrics01[2],
-			Metrics01[1],
-			Metrics01[3]
-		}.AsReadOnly();
+			Metrics01.Span[0],
+			Metrics01.Span[2],
+			Metrics01.Span[1],
+			Metrics01.Span[3]
+		}.AsMemory();
 
 		protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], metrics[1], -metrics[2], -genome.GeneCount);
+			=> new Fitness(in Metrics01, metrics[0], metrics[1], -metrics[2], -genome.GeneCount);
 
 		protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
-			=> new Fitness(Metrics02, metrics[0], -metrics[2], metrics[1], -genome.GeneCount);
+			=> new Fitness(in Metrics02, metrics[0], -metrics[2], metrics[1], -genome.GeneCount);
 
 		public readonly SampleCache Samples;
 
 		public Problem(Formula actualFormula,
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100,
-			params (IReadOnlyList<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
+			params (ReadOnlyMemory<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
 			Samples = new SampleCache(actualFormula);
