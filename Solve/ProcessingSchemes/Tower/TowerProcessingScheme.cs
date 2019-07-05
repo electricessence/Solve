@@ -47,30 +47,6 @@ namespace Solve.ProcessingSchemes.Tower
 			return base.StartInternal(token);
 		}
 
-#if DEBUG
-
-		private const bool EMIT_GENOMES = false;
-
-		// ReSharper disable once UnusedMember.Local
-		static StringBuilder GetGenomeInfo(TGenome genome)
-		{
-			var sb = new StringBuilder(genome.Hash);
-			sb.AppendLine();
-			foreach (var logEntry in genome.Log)
-			{
-				sb.Append(logEntry.Category)
-					.Append(" > ")
-					.Append(logEntry.Message);
-
-				var data = logEntry.Data;
-				if (!string.IsNullOrWhiteSpace(data))
-					sb.Append(':').AppendLine().Append(data);
-
-				sb.AppendLine();
-			}
-			return sb;
-		}
-#endif
 		protected override void Post(TGenome genome)
 		{
 			if (genome == null) throw new ArgumentNullException(nameof(genome));

@@ -120,7 +120,7 @@ namespace Solve
 		protected virtual Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
 			=> Task.Run(() => ProcessSampleMetrics(g, sampleId));
 
-		public async Task<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
+		public async ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 		{
 			var metrics = await ProcessSampleMetricsAsync(g, sampleId);
 			Interlocked.Increment(ref _testCount);

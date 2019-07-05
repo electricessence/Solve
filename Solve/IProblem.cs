@@ -32,7 +32,7 @@ namespace Solve
 		IReadOnlyList<IProblemPool<TGenome>> Pools { get; }
 
 		IEnumerable<Fitness> ProcessSample(TGenome g, long sampleId);
-		Task<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId);
+		ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId);
 
 		long TestCount { get; }
 
