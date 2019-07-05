@@ -40,7 +40,7 @@ namespace Solve.ProcessingSchemes.Pull
 			readonly ConcurrentQueue<LevelEntry> Retained
 				= new ConcurrentQueue<LevelEntry>();
 
-			public async Task<(TGenome Genome, Fitness[] Fitness)> GetNextChampionAsync(bool retain = false)
+			public async ValueTask<(TGenome Genome, Fitness[] Fitness)> GetNextChampionAsync(bool retain = false)
 			{
 				retry:
 
