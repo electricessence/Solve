@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Open.Collections.Synchronized;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,8 +13,10 @@ namespace Solve.ProcessingSchemes
 			IGenomeFactory<TGenome> genomeFactory)
 			:base(genomeFactory)
 		{
-
 		}
+
+		readonly LockSynchronizedLinkedList<IList<(TGenome Genome, Fitness[] Fitness)>> Population
+			= new LockSynchronizedLinkedList<IList<(TGenome Genome, Fitness[] Fitness)>>();
 
 		protected override Task StartInternal(CancellationToken token)
 		{
