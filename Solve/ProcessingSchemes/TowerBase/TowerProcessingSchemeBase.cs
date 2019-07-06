@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes.Tower
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public abstract class TowerProcessingSchemeBase<TGenome> : PushProcessingSchemeBase<TGenome>
+	public abstract class TowerProcessingSchemeBase<TGenome> : PostingProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		protected const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;

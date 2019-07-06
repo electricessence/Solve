@@ -40,7 +40,6 @@ namespace Solve
 			{
 				o.OnNext(message);
 			}
-
 		}
 
 		protected void Complete()

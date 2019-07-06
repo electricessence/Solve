@@ -18,16 +18,19 @@
     <Compile Remove="ProcessingSchemes\Kumite\**" />
     <Compile Remove="ProcessingSchemes\Pull\**" />
     <Compile Remove="ProcessingSchemes\Simple\**" />
+    <Compile Remove="ProcessingSchemes\TowerBase\**" />
     <EmbeddedResource Remove="Dataflow\**" />
     <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
     <None Remove="Dataflow\**" />
     <None Remove="ProcessingSchemes\KingOfTheHill\**" />
     <None Remove="ProcessingSchemes\Kumite\**" />
     <None Remove="ProcessingSchemes\Pull\**" />
     <None Remove="ProcessingSchemes\Simple\**" />
+    <None Remove="ProcessingSchemes\TowerBase\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,8 +42,13 @@
     <Compile Remove="IProcessingScheme.cs" />
     <Compile Remove="ProblemExtensions.cs" />
     <Compile Remove="ProcessingSchemes\IGenomeProcessor.cs" />
+    <Compile Remove="ProcessingSchemes\PostingProcessingSchemeBase.cs" />
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
+    <Compile Remove="ProcessingSchemes\Tower\TowerLevelBase - Copy.cs" />
+    <Compile Remove="ProcessingSchemes\Tower\TowerProcessingScheme.cs" />
+    <Compile Remove="ProcessingSchemes\Tower\TowerProcessingScheme.Level.cs" />
+    <Compile Remove="ProcessingSchemes\Tower\TowerProcessingScheme.ProblemTower.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />
   </ItemGroup>
 
@@ -61,6 +69,10 @@
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Reactive" Version="4.1.5" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ProcessingSchemes\Tower\Simple\" />
   </ItemGroup>
 
 </Project>

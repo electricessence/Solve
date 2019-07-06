@@ -12,13 +12,13 @@ using System.Diagnostics;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public abstract class PushProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
+	public abstract class PostingProcessingSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		internal readonly PriorityQueueTaskScheduler Scheduler;
 		readonly TaskFactory PostingFactory;
 
-		protected PushProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
+		protected PostingProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
 			: base(genomeFactory)
 		{
 			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default)

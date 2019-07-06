@@ -12,54 +12,41 @@ namespace Solve.ProcessingSchemes
 		where TTower : TowerBase<TGenome, TEnvironment>
 		where TEnvironment : EnvironmentBase<TGenome>
 	{
-		protected readonly int Index;
-		protected readonly ushort PoolSize;
+		public readonly int Index;
 		protected readonly TTower Tower;
 
 		protected TowerLevelBase(
 			int level,
-			ushort poolSize,
 			TTower tower)
 		{
 			Debug.Assert(level >= 0);
 
 			Index = level;
-			PoolSize = poolSize;
 			Tower = tower;
 		}
 
-		protected TowerLevelBase(
-			int level,
-			in (ushort First, ushort Minimum, ushort Step) poolSize,
-			TTower tower)
-			: this(level, GetPoolSize(level, poolSize), tower)
-		{
-		}
-
-		internal static ushort GetPoolSize(int level, in (ushort First, ushort Minimum, ushort Step) poolSize)
-		{
-			var (First, Minimum, Step) = poolSize;
-			var maxDelta = First - Minimum;
-			var decrement = level * Step;
-			return decrement > maxDelta ? Minimum : (ushort)(First - decrement);
-		}
+		readonly double[][] BestLevelFitness;
+		readonly double[][] BestProgressiveFitness;
 
 		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-			Span<double[]> registry,
-			double[] contending,
-			int index)
+			ref double[] defending,
+			double[] contending)
 		{
 			Debug.Assert(contending != null);
 
-			ref var fRef = ref registry[index];
-			double[] defending;
-			while ((defending = fRef) == null || contending.IsGreaterThan(defending))
+			double[] d;
+			while ((d = defending) == null || contending.IsGreaterThan(d))
 			{
-				if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
-					return (true, defending == null);
+				if (Interlocked.CompareExchange(ref defending, contending, d) == d)
+					return (true, d == null);
 			}
 			return (false, false);
 		}
+
+		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
+			Span<double[]> registry, int index,
+			double[] contending)
+			=> UpdateFitnessesIfBetter(ref registry[index], contending);
 
 		protected abstract ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
