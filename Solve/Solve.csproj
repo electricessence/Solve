@@ -38,6 +38,7 @@
     <Compile Remove="GenomeTestDelegate.cs" />
     <Compile Remove="IProcessingScheme.cs" />
     <Compile Remove="ProblemExtensions.cs" />
+    <Compile Remove="ProcessingSchemes\IGenomeProcessor.cs" />
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />
