@@ -6,7 +6,7 @@ using System.Linq;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public abstract class TowerProcessingSchemeBase<TGenome> : ProcessingSchemeBase<TGenome>
+	public abstract class TowerProcessingSchemeBase<TGenome> : PushProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		protected const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;

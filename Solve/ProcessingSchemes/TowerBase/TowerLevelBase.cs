@@ -1,6 +1,5 @@
 ﻿using Open.Memory;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -62,43 +61,11 @@ namespace Solve.ProcessingSchemes
 			return (false, false);
 		}
 
-		protected abstract Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
+		protected abstract ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
-		protected LevelEntry[][] RankEntries(LevelEntry[] pool)
+		protected LevelEntry<TGenome>[][] RankEntries(LevelEntry<TGenome>[] pool)
 			=> Tower.Problem.Pools
 				.Select((p, i) => pool.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending).ToArray())
 				.ToArray();
-
-		protected class LevelEntry
-		{
-			public LevelEntry(in (TGenome Genome, Fitness[] Fitness) gf, double[][] scores, ushort levelLossRecord = 0)
-			{
-				GenomeFitness = gf;
-				Scores = scores;
-				LevelLossRecord = levelLossRecord;
-			}
-
-			public readonly (TGenome Genome, Fitness[] Fitness) GenomeFitness;
-			public readonly double[][] Scores;
-
-			public ushort LevelLossRecord;
-
-			public static LevelEntry Merge(in (TGenome Genome, Fitness[] Fitness) gf, IReadOnlyList<Fitness> scores)
-			{
-				var progressive = gf.Fitness;
-				var len = scores.Count;
-				var dScore = new double[scores.Count][];
-				Debug.Assert(len == progressive.Length);
-
-				for (var i = 0; i < len; i++)
-				{
-					var score = scores[i].Results.Sum.ToArray();
-					dScore[i] = score;
-					progressive[i].Merge(score);
-				}
-
-				return new LevelEntry(in gf, dScore);
-			}
-		}
 	}
 }

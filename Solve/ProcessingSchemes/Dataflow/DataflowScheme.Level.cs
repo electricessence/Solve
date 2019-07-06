@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Solve.ProcessingSchemes.Dataflow
@@ -40,17 +41,17 @@ namespace Solve.ProcessingSchemes.Dataflow
 					=> new ExecutionDataflowBlockOptions() { TaskScheduler = getScheduler(pri, name) };
 
 				// Step 1: Group for ranking.
-				var preselector = new BatchBlock<LevelEntry>(
+				var preselector = new BatchBlock<LevelEntry<TGenome>>(
 					PoolSize,
 					new GroupingDataflowBlockOptions() { TaskScheduler = getScheduler(1, "Level Preselection") });
 
 				// Step 2: Rank
-				var ranking = new TransformBlock<LevelEntry[], LevelEntry[][]>(
+				var ranking = new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(
 					e => RankEntries(e),
 					schedulerOption(2, "Level Ranking"));
 
 				// Step 3: Selection and Propagation!
-				var selection = new ActionBlock<LevelEntry[][]>(
+				var selection = new ActionBlock<LevelEntry<TGenome>[][]>(
 					dataflowBlockOptions: schedulerOption(3, "Level Selection"),
 					action: pools =>
 					{
@@ -103,7 +104,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 								loser.GenomeFitness.Fitness[p].IncrementRejection();
 								if (!promoted.Add(gf.Genome.Hash)) continue;
 
-								loser.LevelLossRecord++;
+								loser.IncrementLoss();
 								if (loser.LevelLossRecord > maxLoses)
 								{
 									var fitnesses = gf.Fitness;

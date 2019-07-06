@@ -75,7 +75,7 @@ namespace Solve.ProcessingSchemes
 			Tower.Broadcast(champ, poolIndex);
 		}
 
-		protected override async Task<LevelEntry> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
+		protected override async ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
 		{
 			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index)).Select((fitness, i) =>
 			{
@@ -103,7 +103,7 @@ namespace Solve.ProcessingSchemes
 			}
 
 			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
-				return new LevelEntry(in champ, result.Select(r => r.values).ToArray());
+				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToArray());
 
 			Factory.EnqueueChampion(champ.Genome);
 			PostNextLevel(0, champ);

@@ -11,16 +11,24 @@ namespace Solve.ProcessingSchemes
 	{
 		public SimpleProcessingScheme(
 			IGenomeFactory<TGenome> genomeFactory)
-			:base(genomeFactory)
+			: base(genomeFactory)
 		{
 		}
 
 		readonly LockSynchronizedLinkedList<IList<(TGenome Genome, Fitness[] Fitness)>> Population
 			= new LockSynchronizedLinkedList<IList<(TGenome Genome, Fitness[] Fitness)>>();
 
-		protected override Task StartInternal(CancellationToken token)
+		protected override async Task StartInternal(CancellationToken token)
 		{
-			throw new NotImplementedException();
+			while (!token.IsCancellationRequested)
+			{
+				var next = Factory.Next();
+				var firstNode = Population.First;
+				if(firstNode==null)
+				{
+
+				}
+			}
 		}
 	}
 }
