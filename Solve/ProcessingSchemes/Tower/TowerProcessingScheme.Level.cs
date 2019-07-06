@@ -21,7 +21,7 @@ namespace Solve.ProcessingSchemes.Tower
 
 			protected override bool IsTop => _nextLevel == null;
 
-			private readonly BatchCreator<LevelEntry> Pool;
+			private readonly BatchCreator<LevelEntry<TGenome>> Pool;
 
 			public Level(
 				int level,
@@ -29,19 +29,19 @@ namespace Solve.ProcessingSchemes.Tower
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
-				Pool = new BatchCreator<LevelEntry>(PoolSize);
+				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
 				Pool.BatchReady += Pool_BatchReady;
 
 				Processed = Enumerable
 					.Range(0, priorityLevels)
-					.Select(i => new ConcurrentQueue<LevelEntry>())
+					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
 					.ToArray();
 			}
 
 			private void Pool_BatchReady(object sender, System.EventArgs e)
 				=> Task.Run(() => ProcessPoolInternal());
 
-			readonly ConcurrentQueue<LevelEntry>[] Processed;
+			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
 
 			bool ProcessPoolInternal()
 			{
@@ -95,14 +95,19 @@ namespace Solve.ProcessingSchemes.Tower
 				// 5) Process remaining (losers)
 				var maxLoses = Tower.Environment.MaxLevelLosses;
 				var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-				foreach (var loser in selection.Select(s => s.Skip(midPoint)).Weave().Distinct())
+				foreach (var remainder in selection.Weave().Distinct())
 				{
-					if (promoted.Contains(loser.GenomeFitness.Genome.Hash)) continue;
-					loser.LevelLossRecord++;
-
-					if (loser.LevelLossRecord > maxLoses)
+					if (promoted.Contains(remainder.GenomeFitness.Genome.Hash))
 					{
-						var gf = loser.GenomeFitness;
+						LevelEntry<TGenome>.Pool.Give(remainder);
+						continue;
+					}
+
+					remainder.IncrementLoss();
+
+					if (remainder.LevelLossRecord > maxLoses)
+					{
+						var gf = remainder.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
 							PostNextLevel(3, gf);
@@ -118,11 +123,13 @@ namespace Solve.ProcessingSchemes.Tower
 							//#endif
 
 						}
+
+						LevelEntry<TGenome>.Pool.Give(remainder);
 					}
 					else
 					{
-						Debug.Assert(loser.LevelLossRecord > 0);
-						Pool.Add(loser); // Didn't win, but still in the game.
+						Debug.Assert(remainder.LevelLossRecord > 0);
+						Pool.Add(remainder); // Didn't win, but still in the game.
 					}
 				}
 				return true;
@@ -166,14 +173,25 @@ namespace Solve.ProcessingSchemes.Tower
 			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> NextLevel.Post(priority, challenger);
 
+			void ProcessInjested(byte priority, LevelEntry<TGenome> challenger)
+			{
+				if (challenger != null)
+					Processed[priority].Enqueue(challenger);
+			}
+
 			protected override void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 			{
-				ProcessEntry(challenger).ContinueWith(e =>
+				var task = ProcessEntry(challenger);
+				if (task.IsCompletedSuccessfully)
+					ProcessInjested(priority, task.Result);
+				else
 				{
-					var result = e.Result;
-					if (result != null)
-						Processed[priority].Enqueue(result);
-				});
+					Task.Run(async () =>
+					{
+						ProcessInjested(priority, await task);
+					});
+				}
+
 			}
 		}
 
