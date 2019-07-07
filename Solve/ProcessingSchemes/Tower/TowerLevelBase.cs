@@ -7,9 +7,6 @@ namespace Solve.ProcessingSchemes.Tower
 		where TTower : TowerBase<TGenome, TEnvironment>
 		where TEnvironment : EnvironmentBase<TGenome>
 	{
-		public readonly int Index;
-		protected readonly TTower Tower;
-
 		protected TowerLevelBase(
 			int level,
 			TTower tower)
@@ -19,5 +16,8 @@ namespace Solve.ProcessingSchemes.Tower
 			Index = level;
 			Tower = tower;
 		}
+
+		public readonly int Index;
+		protected readonly TTower Tower;
 	}
 }

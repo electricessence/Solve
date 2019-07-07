@@ -4,7 +4,12 @@ using Open.Disposable;
 
 namespace Solve.ProcessingSchemes
 {
+	/// <summary>
+	/// An object-pooled class for use with retaining genome fitness within a level.
+	/// </summary>
+	/// <typeparam name="TGenome">The type of genome held.</typeparam>
 	public class LevelEntry<TGenome> : IRecyclable
+		where TGenome : class, IGenome
 	{
 		public (TGenome Genome, Fitness[] Fitness) GenomeFitness { get; private set; }
 		public double[][] Scores { get; private set; }

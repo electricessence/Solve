@@ -1,5 +1,15 @@
 ﻿# Solve: Processing Schemes
 
+## Concepts
+
+### Problems
+
+A "Problem" is a unique challenge that can be addressed by a genome within an environment.
+
+#### Problem Pools
+
+A "Problem Pool" is a specific set of fitness metrics that can be applied to a specific problem. 
+
 ## Challenges
 
 Unlike a classical Genetic/Evolutionary Algorithm, these schemes can process multi-dimensional fitnesses while simultaneously solving muliptle problems.

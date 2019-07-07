@@ -28,26 +28,6 @@ namespace Solve.ProcessingSchemes
 		readonly double[][] BestLevelFitness;
 		readonly double[][] BestProgressiveFitness;
 
-		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-			ref double[] defending,
-			double[] contending)
-		{
-			Debug.Assert(contending != null);
-
-			double[] d;
-			while ((d = defending) == null || contending.IsGreaterThan(d))
-			{
-				if (Interlocked.CompareExchange(ref defending, contending, d) == d)
-					return (true, d == null);
-			}
-			return (false, false);
-		}
-
-		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-			Span<double[]> registry, int index,
-			double[] contending)
-			=> UpdateFitnessesIfBetter(ref registry[index], contending);
-
 		protected abstract ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
 		protected LevelEntry<TGenome>[][] RankEntries(LevelEntry<TGenome>[] pool)
