@@ -14,18 +14,21 @@
 
   <ItemGroup>
     <Compile Remove="Dataflow\**" />
+    <Compile Remove="ProcessingSchemes\Dataflow\**" />
     <Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
     <Compile Remove="ProcessingSchemes\Kumite\**" />
     <Compile Remove="ProcessingSchemes\Pull\**" />
     <Compile Remove="ProcessingSchemes\Simple\**" />
     <Compile Remove="ProcessingSchemes\TowerBase\**" />
     <EmbeddedResource Remove="Dataflow\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\Dataflow\**" />
     <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
     <EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
     <None Remove="Dataflow\**" />
+    <None Remove="ProcessingSchemes\Dataflow\**" />
     <None Remove="ProcessingSchemes\KingOfTheHill\**" />
     <None Remove="ProcessingSchemes\Kumite\**" />
     <None Remove="ProcessingSchemes\Pull\**" />
@@ -69,10 +72,6 @@
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Reactive" Version="4.1.5" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ProcessingSchemes\Tower\Simple\" />
   </ItemGroup>
 
 </Project>

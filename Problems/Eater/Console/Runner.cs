@@ -1,5 +1,6 @@
 ﻿using Solve.Experiment.Console;
 using Solve.ProcessingSchemes.Tower;
+using Solve.ProcessingSchemes.Tower.Simple;
 //using Solve.ProcessingSchemes.Dataflow;
 using System;
 using System.Linq;
@@ -56,7 +57,8 @@ namespace Eater
 			const bool leftTurnDisabled = true;
 			var seeds = seed.Concat(GenomeFactory.Random(100, size * 2, leftTurnDisabled).Take(1000)).Distinct().Select(s => new Genome(s));
 			var factory = new GenomeFactory(seeds, leftTurnDisabled: leftTurnDisabled);
-			var scheme = new TowerProcessingScheme<Genome>(factory, (800, 40, 2));
+			//var scheme = new TowerProcessingScheme<Genome>(factory, (800, 40, 2));
+			var scheme = new SimpleTowerProcessingScheme<Genome>(factory);
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateF0102(size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
