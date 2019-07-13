@@ -9,7 +9,6 @@ namespace Solve.ProcessingSchemes.Tower
 {
 #if DEBUG
 	using System.Diagnostics;
-	using System.Text;
 #endif
 
 	// ReSharper disable once PossibleInfiniteInheritance

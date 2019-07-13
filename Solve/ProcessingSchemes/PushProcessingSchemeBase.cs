@@ -86,7 +86,7 @@ namespace Solve.ProcessingSchemes
 		Task PostFromBuffer(CancellationToken token)
 			=> Task.WhenAll(
 				Enumerable
-				.Range(0, Environment.ProcessorCount)
+				.Range(0, Environment.ProcessorCount * 2)
 				.Select(s => PostingFactory
 					.StartNew(() => PostFromBufferSingle(token), token).Unwrap()
 					.ContinueWith(t =>

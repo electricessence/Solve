@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Solve.ProcessingSchemes.Dataflow
@@ -30,29 +29,33 @@ namespace Solve.ProcessingSchemes.Dataflow
 				scheduler.Name = "Level Scheduler";
 				scheduler.ReversePriority = true;
 
-				PriorityQueueTaskScheduler getScheduler(int pri, string name)
+				PriorityQueueTaskScheduler GetScheduler(int pri, string name)
 				{
 					var s = scheduler[pri];
 					s.Name = name;
 					return s;
 				}
 
-				ExecutionDataflowBlockOptions schedulerOption(int pri, string name)
-					=> new ExecutionDataflowBlockOptions() { TaskScheduler = getScheduler(pri, name) };
+				ExecutionDataflowBlockOptions SchedulerOption(int pri, string name, bool singleProducer = false)
+					=> new ExecutionDataflowBlockOptions() {
+						MaxDegreeOfParallelism = Environment.ProcessorCount,
+						SingleProducerConstrained = singleProducer,
+						TaskScheduler = GetScheduler(pri, name)
+					};
 
 				// Step 1: Group for ranking.
 				var preselector = new BatchBlock<LevelEntry<TGenome>>(
 					PoolSize,
-					new GroupingDataflowBlockOptions() { TaskScheduler = getScheduler(1, "Level Preselection") });
+					new GroupingDataflowBlockOptions() { TaskScheduler = GetScheduler(1, "Level Preselection") });
 
 				// Step 2: Rank
 				var ranking = new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(
 					e => RankEntries(e),
-					schedulerOption(2, "Level Ranking"));
+					SchedulerOption(2, "Level Ranking", true));
 
 				// Step 3: Selection and Propagation!
 				var selection = new ActionBlock<LevelEntry<TGenome>[][]>(
-					dataflowBlockOptions: schedulerOption(3, "Level Selection"),
+					dataflowBlockOptions: SchedulerOption(3, "Level Selection", true),
 					action: pools =>
 					{
 						var poolCount = pools.Length;
@@ -125,7 +128,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 				// Step 0: Injestion
 				Processor = new ActionBlock<(TGenome Genome, Fitness[] Fitness)>(
-					dataflowBlockOptions: schedulerOption(0, "Level Injestion"),
+					dataflowBlockOptions: SchedulerOption(0, "Level Injestion"),
 					action: async c =>
 					{
 						var result = await ProcessEntry(c);
