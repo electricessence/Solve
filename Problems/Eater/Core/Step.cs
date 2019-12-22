@@ -427,8 +427,8 @@ namespace Eater
 
 		public static void Fill(this Bitmap target, Color color)
 		{
-			using (var graphics = Graphics.FromImage(target))
-				graphics.Clear(color);
+			using var graphics = Graphics.FromImage(target);
+			graphics.Clear(color);
 		}
 
 		public static Bitmap Render(this IEnumerable<Step> steps, int bitScale = 3)

@@ -101,7 +101,7 @@ namespace Solve.Evaluation
 
 			for (i = 0; i < count; i++)
 				yield return (
-					Catalog.AddConstant(descendantNodes[i], 2),
+					Catalog.TryAddConstant(descendantNodes[i], 2),
 					"Add constant to descendant"); // 2 ensures the constant isn't negated when adding to a product.
 
 			sourceTree.Recycle();
