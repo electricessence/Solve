@@ -31,7 +31,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
 			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
-		private IEnumerable<ProblemTower> ActiveTowers;
+		private IEnumerable<ProblemTower>? ActiveTowers;
 
 		protected override Task StartInternal(CancellationToken token)
 		{
@@ -43,7 +43,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 		protected override void Post(TGenome genome)
 		{
-			if (genome == null) throw new ArgumentNullException(nameof(genome));
+			if (genome is null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
 #if DEBUG
@@ -52,7 +52,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				"TowerProcessingScheme");
 #endif
 
-			foreach (var t in ActiveTowers)
+			foreach (var t in ActiveTowers!)
 				t.Post(genome);
 		}
 	}

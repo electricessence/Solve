@@ -2,6 +2,7 @@
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -14,7 +15,7 @@ namespace Solve
 		private readonly ConcurrentQueue<T> _values;
 		private readonly ConcurrentQueue<T[]> _batches;
 
-		public event EventHandler BatchReady;
+		public event EventHandler? BatchReady;
 
 		public BatchCreator(int batchSize)
 		{
@@ -29,6 +30,7 @@ namespace Solve
 
 		public void Add(T value)
 		{
+			if (value is null) throw new ArgumentNullException(nameof(value));
 			_values.Enqueue(value);
 
 			var batched = false;
@@ -47,8 +49,8 @@ namespace Solve
 			}
 		}
 
-		public bool TryDequeue(out T[] batch)
-			=> _batches.TryDequeue(out batch);
+		public bool TryDequeue([NotNullWhen(true)] out T[] batch)
+			=> _batches.TryDequeue(out batch!);
 
 	}
 }

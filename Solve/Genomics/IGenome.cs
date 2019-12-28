@@ -31,7 +31,7 @@ namespace Solve
 #if DEBUG
 		string StackTrace { get; }
 		IReadOnlyList<IGenomeLogEntry> Log { get; }
-		void AddLogEntry(string category, string message, string data = null);
+		void AddLogEntry(string category, string message, string? data = null);
 #endif
 	}
 
@@ -42,7 +42,7 @@ namespace Solve
 		DateTime TimeStamp { get; }
 		string Category { get; }
 		string Message { get; }
-		string Data { get; }
+		string? Data { get; }
 	}
 #endif
 

@@ -27,11 +27,13 @@ namespace Solve
 				_observers?.Add(observer);
 				return () => _observers?.Remove(observer);
 			});
+			_previous = default!;
 		}
 
 		T _previous;
 		internal void Broadcast(T message, bool uniqueOnly = false)
 		{
+			if (message is null) throw new ArgumentNullException(nameof(message));
 			if (uniqueOnly && message.Equals(_previous)) return;
 			_previous = message;
 			var observers = _observers;
@@ -45,7 +47,7 @@ namespace Solve
 
 		protected void Complete()
 		{
-			var observers = Interlocked.Exchange(ref _observers, null);
+			var observers = Interlocked.Exchange(ref _observers, null!);
 			if (observers == null) return;
 			using (observers)
 			{
@@ -56,7 +58,7 @@ namespace Solve
 
 		protected void Fault(in Exception exception)
 		{
-			var observers = Interlocked.Exchange(ref _observers, null);
+			var observers = Interlocked.Exchange(ref _observers, null!);
 			if (observers == null) return;
 			using (observers)
 			{
@@ -66,6 +68,6 @@ namespace Solve
 		}
 
 		public IDisposable Subscribe(IObserver<T> observer)
-			=> AssertIsAlive(true) ? _subscribable.Subscribe(observer) : null;
+			=> AssertIsAlive(true) ? _subscribable.Subscribe(observer) : null!;
 	}
 }

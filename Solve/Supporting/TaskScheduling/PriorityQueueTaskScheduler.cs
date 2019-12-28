@@ -45,19 +45,19 @@ namespace Solve.Supporting.TaskScheduling
 		/// </summary>
 		// ReSharper disable once UnusedAutoPropertyAccessor.Global
 		public bool ReversePriority { get; set; }
-		public string Name { get; set; } // Useful for debugging.
+		public string? Name { get; set; } // Useful for debugging.
 		private readonly TaskScheduler _parent;
 
 		private int _delegatesQueuedOrRunning;
-		private readonly ConcurrentQueue<Task> InternalQueue
-			= new ConcurrentQueue<Task>();
+		private readonly ConcurrentQueue<Task?> InternalQueue
+			= new ConcurrentQueue<Task?>();
 
 #if DEBUG
 		protected override bool TryDequeue(Task task)
 		{
 			Debug.Fail("TryDequeue should never be called");
 			return base.TryDequeue(task);
-			//if (task == null) throw new ArgumentNullException(nameof(task));
+			//if (task is null) throw new ArgumentNullException(nameof(task));
 			//Contract.EndContractBlock();
 
 			//return InternalQueue.Remove(task);
@@ -82,7 +82,7 @@ namespace Solve.Supporting.TaskScheduling
 			}
 
 			var rp = ReversePriority;
-			var node = rp ? Children.Last : Children.First;
+			LinkedListNode<PriorityQueueTaskScheduler>? node = rp ? Children.Last : Children.First;
 			while (node != null)
 			{
 				if (node.Value.TryGetNext(out entry))
@@ -109,7 +109,7 @@ namespace Solve.Supporting.TaskScheduling
 					throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero");
 				Contract.EndContractBlock();
 
-				var node = Children.First;
+				LinkedListNode<PriorityQueueTaskScheduler>? node = Children.First;
 				if (node == null)
 				{
 					Children.Modify(
@@ -148,7 +148,7 @@ namespace Solve.Supporting.TaskScheduling
 		protected override IEnumerable<Task> GetScheduledTasks()
 			=> InternalQueue
 				.Where(e => e != null)
-				.ToList();
+				.ToList()!;
 
 		private void ProcessQueues()
 		{
@@ -190,7 +190,7 @@ namespace Solve.Supporting.TaskScheduling
 		}
 
 		/// <inheritdoc />
-		protected override void QueueTask(Task task)
+		protected override void QueueTask(Task? task)
 		{
 			DisposeCancellation.Token.ThrowIfCancellationRequested();
 

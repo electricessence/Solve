@@ -21,17 +21,31 @@ namespace Solve
 		 * 3) Forces the person using this class to smartly think about how to provide the array.
 		 */
 
-		TGenome GenerateOne(params TGenome[] source);
+		TGenome? GenerateOne(
+			params TGenome[] source);
 
-		IEnumerable<TGenome> Generate(params TGenome[] source);
+		IEnumerable<TGenome> Generate(
+			params TGenome[] source);
 
-		bool TryGenerateNew(out TGenome potentiallyNew, params TGenome[] source);
 
-		IEnumerable<TGenome> GenerateNew(params TGenome[] source);
+		bool TryGenerateNew(
+			[NotNullWhen(true)] out TGenome? potentiallyNew,
+			params TGenome[] source);
 
-		bool AttemptNewMutation(TGenome source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
+		IEnumerable<TGenome> GenerateNew(
+			params TGenome[] source);
 
-		bool AttemptNewMutation(in ReadOnlySpan<TGenome> source, out TGenome mutation, byte triesPerMutationLevel = 5, byte maxMutations = 3);
+		bool AttemptNewMutation(
+			TGenome source,
+			[NotNullWhen(true)] out TGenome? mutation,
+			byte triesPerMutationLevel = 5,
+			byte maxMutations = 3);
+
+		bool AttemptNewMutation(
+			in ReadOnlySpan<TGenome> source,
+			[NotNullWhen(true)] out TGenome? mutation,
+			byte triesPerMutationLevel = 5,
+			byte maxMutations = 3);
 
 		IEnumerable<TGenome> Mutate(TGenome source);
 
@@ -39,12 +53,17 @@ namespace Solve
 
 		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
 
-		TGenome[] AttemptNewCrossover(TGenome primary, in ReadOnlySpan<TGenome> others, byte maxAttemptsPerCombination = 3);
+		TGenome[] AttemptNewCrossover(
+			TGenome primary,
+			in ReadOnlySpan<TGenome> others,
+			byte maxAttemptsPerCombination = 3);
 
-		TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3);
+		TGenome[] AttemptNewCrossover(
+			in ReadOnlySpan<TGenome> source,
+			byte maxAttemptsPerCombination = 3);
 
 		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
 
-		TGenome Next();
+		TGenome? Next();
 	}
 }

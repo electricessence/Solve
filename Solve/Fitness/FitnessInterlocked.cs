@@ -1,22 +1,23 @@
 ﻿using Open.Numeric;
 using System;
+using System.Collections.Immutable;
 using System.Threading;
 
 namespace Solve
 {
 	public class FitnessInterlocked : Fitness
 	{
-		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics)
+		public FitnessInterlocked(in ImmutableArray<Metric> metrics)
 			: base(metrics)
 		{
 		}
 
-		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics, ProcedureResults results)
+		public FitnessInterlocked(in ImmutableArray<Metric> metrics, ProcedureResults results)
 			: base(metrics, results)
 		{
 		}
 
-		public FitnessInterlocked(in ReadOnlyMemory<Metric> metrics, params double[] values)
+		public FitnessInterlocked(in ImmutableArray<Metric> metrics, params double[] values)
 			: base(metrics, new ProcedureResults(values, 1))
 		{
 
@@ -32,7 +33,7 @@ namespace Solve
 			do
 			{
 				r = _results;
-				sum = r == null ? other : (r + other);
+				sum = r.Count == 0 ? other : (r + other);
 			}
 			while (r != Interlocked.CompareExchange(ref _results, sum, r));
 			return sum;
@@ -45,15 +46,16 @@ namespace Solve
 			do
 			{
 				r = _results;
-				sum = r == null
-					? new ProcedureResults(other, count)
-					: r.Add(other, count);
+				sum = r.Count == 0
+					? new ProcedureResults(in other, count)
+					: r.Add(in other, count);
 			}
 			while (r != Interlocked.CompareExchange(ref _results, sum, r));
 			return sum;
 		}
 
-		public new FitnessInterlocked Clone() => new FitnessInterlocked(_metrics, _results);
+		public new FitnessInterlocked Clone()
+			=> new FitnessInterlocked(Metrics, _results);
 
 	}
 }

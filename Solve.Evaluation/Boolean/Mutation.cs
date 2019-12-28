@@ -1,6 +1,5 @@
 ﻿using Open.Evaluation.Core;
 using Open.Hierarchy;
-using Open.Numeric;
 using Open.RandomizationExtensions;
 using System;
 using System.Linq;
@@ -13,7 +12,7 @@ namespace Solve.Evaluation
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private (IGene Root, string Origin) MutateUnfrozen(EvalGenome<bool> target)
+		private (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<bool> target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -48,7 +47,7 @@ namespace Solve.Evaluation
 
 		}
 
-		protected override EvalGenome<bool> MutateInternal(EvalGenome<bool> target)
+		protected override EvalGenome<bool>? MutateInternal(EvalGenome<bool> target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
 			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));

@@ -53,7 +53,7 @@ namespace Solve
 
 		class LogEntry : IGenomeLogEntry
 		{
-			public LogEntry(string category, string message, string data)
+			public LogEntry(string category, string message, string? data)
 			{
 				Category = category;
 				Message = message;
@@ -62,16 +62,16 @@ namespace Solve
 			public DateTime TimeStamp { get; } = DateTime.Now;
 			public string Category { get; }
 			public string Message { get; }
-			public string Data { get; }
+			public string? Data { get; }
 		}
 
-		List<IGenomeLogEntry> _log;
+		List<IGenomeLogEntry>? _log;
 		List<IGenomeLogEntry> LogInternal => LazyInitializer.EnsureInitialized(ref _log);
 
-		IReadOnlyList<IGenomeLogEntry> _logWrapper;
+		IReadOnlyList<IGenomeLogEntry>? _logWrapper;
 		public IReadOnlyList<IGenomeLogEntry> Log => LazyInitializer.EnsureInitialized(ref _logWrapper, () => LogInternal.AsReadOnly());
 
-		public void AddLogEntry(string category, string message, string data = null)
+		public void AddLogEntry(string category, string message, string? data = null)
 			=> LogInternal.Add(new LogEntry(category, message, data));
 #endif
 

@@ -13,7 +13,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 	{
 		sealed class Level : PostingTowerLevelBase<TGenome, ProblemTower>
 		{
-			Level _nextLevel;
+			Level? _nextLevel;
 			private Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
@@ -37,7 +37,8 @@ namespace Solve.ProcessingSchemes.Dataflow
 				}
 
 				ExecutionDataflowBlockOptions SchedulerOption(int pri, string name, bool singleProducer = false)
-					=> new ExecutionDataflowBlockOptions() {
+					=> new ExecutionDataflowBlockOptions()
+					{
 						MaxDegreeOfParallelism = Environment.ProcessorCount,
 						SingleProducerConstrained = singleProducer,
 						TaskScheduler = GetScheduler(pri, name)

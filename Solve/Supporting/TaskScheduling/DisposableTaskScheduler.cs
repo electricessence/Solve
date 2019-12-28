@@ -1,5 +1,4 @@
-﻿using Open.Disposable;
-using System;
+﻿using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,7 +25,7 @@ namespace Solve.Supporting.TaskScheduling
 		/// <inheritdoc />
 		protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
 		{
-			if (task == null) throw new ArgumentNullException(nameof(task));
+			if (task is null) throw new ArgumentNullException(nameof(task));
 			Contract.EndContractBlock();
 
 			if (DisposeCancellation.Token.IsCancellationRequested)

@@ -6,7 +6,6 @@ using Open.RandomizationExtensions;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Solve.Evaluation
 {
@@ -18,7 +17,7 @@ namespace Solve.Evaluation
 	{
 
 		// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-		private (IGene Root, string Origin) MutateUnfrozen(EvalGenome<double> target)
+		private (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<double> target)
 		{
 			/* Possible mutations:
 			 * 1) Adding a parameter node to an operation.
@@ -43,7 +42,7 @@ namespace Solve.Evaluation
 				switch (gv)
 				{
 					case Constant<double> c:
-						switch (RandomUtilities.Random.Next(10))
+						switch (Randomizer.Random.Next(10))
 						{
 							case 0:
 								// This is a bit controversial since it can bloat constant values.
@@ -109,7 +108,7 @@ namespace Solve.Evaluation
 
 									//// Split it...
 									//case 3:
-									//	if (RandomUtilities.Random.Next(0, 2) == 0)
+									//	if (Randomizer.Random.Next(0, 2) == 0)
 									//		return (Catalog.Mutation.Square(gene),
 									//			"Square parameter");
 
@@ -133,7 +132,7 @@ namespace Solve.Evaluation
 							var options = Enumerable.Range(0, 8).ToList();
 							while (options.Any())
 							{
-								(IGene Root, string Origin) ng = default;
+								(IGene? Root, string? Origin) ng = default;
 								switch (options.RandomPluck())
 								{
 									case 0 when gv is IOperator:
@@ -153,11 +152,11 @@ namespace Solve.Evaluation
 
 									case 3:
 										// Reduce the pollution of functions...
-										if (RandomUtilities.Random.Next(0, gv is IOperator ? 2 : 4) == 0)
+										if (Randomizer.Random.Next(0, gv is IOperator ? 2 : 4) == 0)
 										{
 											//var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
 											//// Function of function? Reduce probability even further. Coin toss.
-											//if (f.GetType() != gene.GetType() || RandomUtilities.Random.Next(2) == 0)
+											//if (f.GetType() != gene.GetType() || Randomizer.Random.Next(2) == 0)
 											var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
 											Debug.Assert(f != null);
 											return (f,
@@ -183,7 +182,7 @@ namespace Solve.Evaluation
 
 									case 7:
 										// This has a potential to really bloat the function so allow, but very sparingly.
-										if (RandomUtilities.Random.Next(0, 3) == 0)
+										if (Randomizer.Random.Next(0, 3) == 0)
 											return (Catalog.Mutation.Square(gene),
 												"Square function");
 										break;
@@ -203,7 +202,7 @@ namespace Solve.Evaluation
 
 		}
 
-		protected override EvalGenome<double> MutateInternal(EvalGenome<double> target)
+		protected override EvalGenome<double>? MutateInternal(EvalGenome<double> target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
 			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));

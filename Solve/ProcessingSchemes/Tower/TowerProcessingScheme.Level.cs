@@ -15,7 +15,7 @@ namespace Solve.ProcessingSchemes.Tower
 	{
 		sealed class Level : PostingTowerLevelBase<TGenome, ProblemTower>
 		{
-			Level _nextLevel;
+			Level? _nextLevel;
 			public Level NextLevel => LazyInitializer.EnsureInitialized(ref _nextLevel,
 				() => new Level(Index + 1, Tower));
 
@@ -30,7 +30,7 @@ namespace Solve.ProcessingSchemes.Tower
 				: base(level, tower, priorityLevels)
 			{
 				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
-				Pool.BatchReady += Pool_BatchReady;
+				Pool.BatchReady += Pool_BatchReady!;
 
 				Processed = Enumerable
 					.Range(0, priorityLevels)
@@ -142,7 +142,7 @@ namespace Solve.ProcessingSchemes.Tower
 				if (thisLevelOnly) return;
 
 				// walk up instead of recurse.
-				var next = this;
+				Level? next = this;
 				while ((next = next._nextLevel) != null)
 					next.ProcessPool(true);
 			}
@@ -173,7 +173,7 @@ namespace Solve.ProcessingSchemes.Tower
 			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> NextLevel.Post(priority, challenger);
 
-			void ProcessInjested(byte priority, LevelEntry<TGenome> challenger)
+			void ProcessInjested(byte priority, LevelEntry<TGenome>? challenger)
 			{
 				if (challenger != null)
 					Processed[priority].Enqueue(challenger);

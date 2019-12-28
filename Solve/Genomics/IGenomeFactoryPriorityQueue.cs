@@ -26,10 +26,10 @@ namespace Solve
 		void EnqueueForBreeding(TGenome genome, int count = 1);
 		void EnqueueForBreeding(in ReadOnlySpan<TGenome> genomes);
 
-		void Breed(TGenome genome = null, int maxCount = 1);
+		void Breed(TGenome? genome = null, int maxCount = 1);
 		void Breed(in ReadOnlySpan<TGenome> genomes);
 
-		bool TryGetNext(out TGenome genome);
+		bool TryGetNext([NotNullWhen(true)] out TGenome? genome);
 
 		List<Func<bool>> ExternalProducers { get; }
 	}

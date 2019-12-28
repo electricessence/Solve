@@ -72,8 +72,8 @@ namespace Solve.ProcessingSchemes
 
 		async Task PostFromBufferSingle(CancellationToken token)
 		{
-			retry:
-			TGenome genome = null;
+		retry:
+			TGenome? genome = null;
 			if (!token.IsCancellationRequested && !FactoryBuffer.Reader.TryRead(out genome))
 				genome = Factory.Next();
 
@@ -99,7 +99,7 @@ namespace Solve.ProcessingSchemes
 						var f = t.Exception;
 						Debug.Assert(f != null);
 						// ReSharper disable once PossibleNullReferenceException
-						Debug.Fail(f.Message, f.InnerException.StackTrace);
+						Debug.Fail(f.Message, f.InnerException!.StackTrace);
 #endif
 						return t;
 					}, token)));

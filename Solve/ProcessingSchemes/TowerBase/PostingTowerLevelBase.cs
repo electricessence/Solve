@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,7 +53,7 @@ namespace Solve.ProcessingSchemes
 				var len = Incomming.Length;
 				for (byte i = 0; i < len; i++)
 				{
-					retry:
+				retry:
 					var q = Incomming[i];
 					if (!q.TryDequeue(out var c)) continue;
 
@@ -75,18 +76,18 @@ namespace Solve.ProcessingSchemes
 			Tower.Broadcast(champ, poolIndex);
 		}
 
-		protected override async ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
+		protected override async ValueTask<LevelEntry<TGenome>?> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
 		{
 			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index)).Select((fitness, i) =>
 			{
-				var values = fitness.Results.Sum.ToArray();
+				var values = fitness.Results.Sum;
 				var progressiveFitness = champ.Fitness[i];
 				var (success, fresh) = UpdateFitnessesIfBetter(
 					BestProgressiveFitness,
 					progressiveFitness
 						.Merge(values)
 						.Average
-						.ToArray(), i);
+						.AsSpan(), i);
 
 				Debug.Assert(progressiveFitness.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
@@ -103,7 +104,7 @@ namespace Solve.ProcessingSchemes
 			}
 
 			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
-				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToArray());
+				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToImmutableArray());
 
 			Factory.EnqueueChampion(champ.Genome);
 			PostNextLevel(0, champ);

@@ -36,7 +36,7 @@ namespace Solve.ProcessingSchemes.Tower
 
 
 		//IReadOnlyList<ProblemTower> Towers;
-		private IEnumerable<ProblemTower> ActiveTowers;
+		private IEnumerable<ProblemTower>? ActiveTowers;
 
 		protected override Task StartInternal(CancellationToken token)
 		{
@@ -48,7 +48,7 @@ namespace Solve.ProcessingSchemes.Tower
 
 		protected override void Post(TGenome genome)
 		{
-			if (genome == null) throw new ArgumentNullException(nameof(genome));
+			if (genome is null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
 #if DEBUG
@@ -57,7 +57,7 @@ namespace Solve.ProcessingSchemes.Tower
 				"TowerProcessingScheme");
 #endif
 
-			foreach (var t in ActiveTowers)
+			foreach (var t in ActiveTowers!)
 				t.Post(genome);
 
 			foreach (var t in ActiveTowers)

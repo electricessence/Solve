@@ -1,5 +1,4 @@
-﻿using Open.Memory;
-using Open.Text;
+﻿using Open.Text;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -99,7 +98,7 @@ namespace Solve.Experiment.Console
 		// ReSharper disable once UnusedParameter.Global
 		// ReSharper disable once VirtualMemberNeverOverridden.Global
 		protected virtual void OnEmittingGenomeFitness(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
-			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.Span.ToStringBuilder(',')},");
+			=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.ToStringBuilder(',')},");
 
 		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
 			=> $"{problem.ID}.{poolIndex}:\t{fitness}";

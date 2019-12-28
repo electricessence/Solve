@@ -1,5 +1,6 @@
 ﻿using Open.Evaluation.Core;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Solve.Evaluation
 {
@@ -13,7 +14,7 @@ namespace Solve.Evaluation
 			//var descendantNodes = sourceTree.GetDescendantsOfType().ToArray();
 			//var count = descendantNodes.Length;
 
-			return null;
+			return Enumerable.Empty<(IGene Root, string Origin)>();
 			//int i;
 			//// Remove genes one at a time.
 			//for (i = 0; i < count; i++)

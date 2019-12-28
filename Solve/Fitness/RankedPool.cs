@@ -24,7 +24,7 @@ namespace Solve
 
 		public bool IsEmpty => _pool.IsEmpty;
 
-		Lazy<(TGenome Genome, Fitness Fitness)[]> _ranked;
+		Lazy<(TGenome Genome, Fitness Fitness)[]>? _ranked;
 
 		public void Add(TGenome genome, Fitness fitness)
 		{
@@ -63,7 +63,7 @@ namespace Solve
 						return (snapshot: gf.Fitness.Results, genomeFitness: (gf.Genome, gf.Fitness));
 					})
 					// Higher sample counts are more valuable as they only arrive here as champions.
-					.OrderBy(e => e.snapshot.Average, MemoryComparer.Double.Descending)
+					.OrderBy(e => e.snapshot.Average, CollectionComparer.Double.Descending)
 					.ThenByDescending(e => e.snapshot.Count)
 					// Compile results.
 					.Select(e => e.genomeFitness)

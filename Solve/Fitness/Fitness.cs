@@ -4,8 +4,10 @@ using Open.Numeric.Precision;
 using Open.Text;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 
@@ -15,17 +17,22 @@ namespace Solve
 	[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 	public class Fitness : IComparable<Fitness>
 	{
-		public Fitness(in ReadOnlyMemory<Metric> metrics, ProcedureResults results)
+		public Fitness(in ImmutableArray<Metric> metrics, ProcedureResults results)
 		{
-			_metrics = metrics;
-			if (results != null) Results = results;
+			var len = results.Sum.Length;
+			Debug.Assert(len == 0 || len == metrics.Length);
+			Metrics = metrics;
+			_results = results ?? throw new ArgumentNullException(nameof(results));
 		}
 
-		public Fitness(in ReadOnlyMemory<Metric> metrics, params double[] values)
-			: this(metrics, values == null || values.Length == 0 ? null : new ProcedureResults(values, 1)) { }
+		public Fitness(in ImmutableArray<Metric> metrics, params double[] values)
+			: this(metrics,
+				  (values == null || values.Length == 0)
+				  ? ProcedureResults.Empty
+				  : new ProcedureResults(values, 1))
+		{ }
 
-		protected readonly ReadOnlyMemory<Metric> _metrics;
-		public ReadOnlySpan<Metric> Metrics => _metrics.Span;
+		public ImmutableArray<Metric> Metrics { get; }
 
 		protected ProcedureResults _results;
 		public ProcedureResults Results
@@ -33,12 +40,13 @@ namespace Solve
 			get => _results;
 			set
 			{
+				var r = value ?? throw new ArgumentNullException(nameof(value));
 				Debug.Assert(value.Sum.Length == Metrics.Length);
-				_results = value;
+				_results = r;
 			}
 		}
 
-		public int SampleCount => Results?.Count ?? 0;
+		public int SampleCount => _results?.Count ?? 0;
 
 		protected int _rejectionCount;
 		public int RejectionCount => _rejectionCount;
@@ -47,7 +55,7 @@ namespace Solve
 		public virtual ProcedureResults Merge(ProcedureResults other)
 		{
 			var r = _results;
-			var sum = r == null ? other : (r + other);
+			var sum = r.Count == 0 ? other : (r + other);
 			_results = sum;
 			return sum;
 		}
@@ -55,7 +63,27 @@ namespace Solve
 		public virtual ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
 		{
 			var r = _results;
-			var sum = r == null
+			var sum = r.Count == 0
+				? new ProcedureResults(in other, count)
+				: r.Add(in other, count);
+			_results = sum;
+			return sum;
+		}
+
+		public virtual ProcedureResults Merge(in ImmutableArray<double> other, int count = 1)
+		{
+			var r = _results;
+			var sum = r.Count == 0
+				? new ProcedureResults(in other, count)
+				: r.Add(other, count);
+			_results = sum;
+			return sum;
+		}
+
+		public virtual ProcedureResults Merge(IReadOnlyList<double> other, int count = 1)
+		{
+			var r = _results;
+			var sum = r.Count == 0
 				? new ProcedureResults(other, count)
 				: r.Add(other, count);
 			_results = sum;
@@ -67,9 +95,9 @@ namespace Solve
 			get
 			{
 				var r = _results;
-				return r == null || r.Count == 0
+				return r.Count == 0
 					? Metrics.ToArray().Select(m => (m, double.NaN))
-					: Metrics.ToArray().Select((m, i) => (m, r.Sum.Span[i]));
+					: Metrics.ToArray().Select((m, i) => (m, r.Sum[i]));
 			}
 		}
 
@@ -78,16 +106,16 @@ namespace Solve
 			get
 			{
 				var r = _results;
-				return r == null || r.Count == 0
+				return r.Count == 0
 					? Metrics.ToArray().Select(m => (m, double.NaN))
-					: Metrics.ToArray().Select((m, i) => (m, r.Average.Span[i]));
+					: Metrics.ToArray().Select((m, i) => (m, r.Average[i]));
 			}
 		}
 
 		public override string ToString()
 		{
 			var c = _results?.Count ?? 0;
-			if (c == 0) return base.ToString();
+			if (c == 0) return base.ToString()!;
 			var sb = MetricAverages.Select(mv => string.Format(mv.Metric.Format, mv.Value)).ToStringBuilder(", ");
 			if (c == 1)
 				sb.Append(" (1 sample)");
@@ -96,19 +124,24 @@ namespace Solve
 			return sb.ToString();
 		}
 
-		public Fitness Clone() => new Fitness(_metrics, _results);
+		public Fitness Clone()
+			=> new Fitness(Metrics, _results);
 
 		public int CompareTo(Fitness other)
 		{
-			if (other == null)
-				throw new ArgumentNullException(nameof(other));
-			if (this == other || Results == other.Results)
+			if (other is null) throw new ArgumentNullException(nameof(other));
+			Contract.EndContractBlock();
+
+			if (this == other || Results == other.Results || SampleCount == 0 && other.SampleCount == 0)
 				return 0;
-			if (Results == null)
+			if (Results.Count == 0)
 				return -1;
-			if (other.Results == null)
+			if (other.Results.Count == 0)
 				return +1;
-			var v = MemoryComparer.Double.Compare(Results.Average, other.Results.Average);
+			var v = CollectionComparer.Double.Compare(
+				Results.Average,
+				other.Results.Average);
+
 			return v == 0 ? SampleCount.CompareTo(other.SampleCount) : v;
 		}
 

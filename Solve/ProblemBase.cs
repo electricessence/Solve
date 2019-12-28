@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -10,19 +11,21 @@ using System.Threading.Tasks;
 namespace Solve
 {
 	public abstract class ProblemBase<TGenome> : IProblem<TGenome>
-		where TGenome : class, IGenome
+		where TGenome : IGenome
 	{
 		protected class Pool : IProblemPool<TGenome>
 		{
-			public Pool(ushort poolSize, in ReadOnlyMemory<Metric> metrics, Func<TGenome, double[], Fitness> transform)
+			public Pool(ushort poolSize, in ImmutableArray<Metric> metrics, Func<TGenome, double[], Fitness> transform)
 			{
-				Metrics = metrics;
+				if (poolSize == 0) throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Must be at least 1.");
 				Transform = transform ?? throw new ArgumentNullException(nameof(transform));
+				Contract.EndContractBlock();
 
-				Champions = poolSize == 0 ? null : new RankedPool<TGenome>(poolSize);
+				Metrics = metrics;
+				Champions = new RankedPool<TGenome>(poolSize);
 			}
 
-			public ReadOnlyMemory<Metric> Metrics { get; }
+			public ImmutableArray<Metric> Metrics { get; }
 
 			public Func<TGenome, double[], Fitness> Transform { get; }
 
@@ -42,28 +45,28 @@ namespace Solve
 				public readonly TGenome Genome;
 				public readonly Fitness Fitness;
 
-				public static implicit operator (TGenome Genome, Fitness Fitness) (GF gf)
-					=> (gf?.Genome, gf?.Fitness);
+				public static implicit operator (TGenome Genome, Fitness? Fitness)(GF? gf)
+					=> (gf is null ? default : gf.Genome, gf?.Fitness);
 			}
 
-			GF _bestFitness;
-			public (TGenome Genome, Fitness Fitness) BestFitness => _bestFitness;
+			GF? _bestFitness;
+			public (TGenome Genome, Fitness? Fitness) BestFitness => _bestFitness;
 
 			public bool UpdateBestFitness(TGenome genome, Fitness fitness)
 			{
-				if (genome == null) throw new ArgumentNullException(nameof(genome));
-				if (fitness == null) throw new ArgumentNullException(nameof(fitness));
+				if (genome is null) throw new ArgumentNullException(nameof(genome));
+				if (fitness is null) throw new ArgumentNullException(nameof(fitness));
 				Contract.EndContractBlock();
 
-				var f = fitness.Clone() ?? throw new ArgumentNullException(nameof(fitness));
+				var f = fitness.Clone();
 
-				GF contending = null;
-				GF defending;
+				GF? contending = null;
+				GF? defending;
 				while ((defending = _bestFitness) == null
-					   || genome == defending.Genome && f.SampleCount > defending.Fitness.SampleCount
+					   || genome.Equals(defending.Genome) && f.SampleCount > defending.Fitness.SampleCount
 					   || f.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
 				{
-					contending = contending ?? new GF(genome, f);
+					contending ??= new GF(genome, f);
 					if (Interlocked.CompareExchange(ref _bestFitness, contending, defending) == defending)
 						return true;
 				}
@@ -90,10 +93,12 @@ namespace Solve
 		public void Converged() => HasConverged = true;
 
 		protected ProblemBase(
-			IEnumerable<(ReadOnlyMemory<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
+			IEnumerable<(ImmutableArray<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)> fitnessTransators,
 			ushort sampleSize,
 			ushort championPoolSize)
 		{
+			if (championPoolSize == 0) throw new ArgumentOutOfRangeException(nameof(championPoolSize), championPoolSize, "Must be at least 1.");
+
 			SampleSize = sampleSize;
 			SampleSizeInt = sampleSize;
 			var c = championPoolSize;
@@ -104,7 +109,7 @@ namespace Solve
 		protected ProblemBase(
 			ushort sampleSize,
 			ushort championPoolSize,
-			params (ReadOnlyMemory<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
+			params (ImmutableArray<Metric> Metrics, Func<TGenome, double[], Fitness> Transform)[] fitnessTranslators)
 			: this(fitnessTranslators, sampleSize, championPoolSize) { }
 
 		protected abstract double[] ProcessSampleMetrics(TGenome g, long sampleId);

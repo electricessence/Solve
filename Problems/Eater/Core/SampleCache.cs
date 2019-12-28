@@ -1,11 +1,11 @@
 ﻿using Open.Collections;
 using Open.Numeric;
+using Open.RandomizationExtensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Eater
 {
@@ -38,7 +38,7 @@ namespace Eater
 			Boundary = new Size(gridSize, gridSize);
 
 			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
-			SeedOffset = RandomUtilities.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
+			SeedOffset = Randomizer.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
 		}
 
 		public IEnumerable<Point> GenerateXY()

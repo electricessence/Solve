@@ -85,7 +85,7 @@ namespace Solve
 
 			}
 
-			return null;
+			throw new Exception("Unknown state");
 		}
 
 		protected abstract Task StartInternal(CancellationToken token);

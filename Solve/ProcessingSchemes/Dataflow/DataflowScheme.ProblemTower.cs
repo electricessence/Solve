@@ -27,7 +27,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 			public void Post(TGenome next)
 			{
-				if (next == null) throw new ArgumentNullException(nameof(next));
+				if (next is null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();
 
 				Root.Post(0, (next, NewFitness()));

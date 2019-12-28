@@ -1,8 +1,8 @@
 ﻿using Open.Arithmetic;
+using Open.RandomizationExtensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Solve.TriangularSelection
 {
@@ -14,7 +14,7 @@ namespace Solve.TriangularSelection
 				throw new ArgumentOutOfRangeException(nameof(length), length, $"Exceeds maximum Int32 value of {Triangular.MaxInt32}.");
 
 			var possibilities = (int)Triangular.Forward(length);
-			var selected = RandomUtilities.Random.Next(possibilities);
+			var selected = Randomizer.Random.Next(possibilities);
 			var r = Triangular.Reverse(selected);
 			Debug.Assert(r < length);
 			return r;

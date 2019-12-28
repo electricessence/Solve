@@ -2,14 +2,14 @@
 using Open.Collections.Synchronized;
 using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
+using Open.Hierarchy;
+using Open.RandomizationExtensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Open.Hierarchy;
-using Open.Numeric;
-using Open.RandomizationExtensions;
 
 namespace Solve.Evaluation
 {
@@ -59,11 +59,11 @@ namespace Solve.Evaluation
 
 		#endregion
 
-		protected override EvalGenome<T> GenerateOneInternal()
+		protected override EvalGenome<T>? GenerateOneInternal()
 		{
 			// ReSharper disable once NotAccessedVariable
 			var attempts = 0; // For debugging.
-			EvalGenome<T> genome = null;
+			EvalGenome<T>? genome = null;
 
 			for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 			{
@@ -122,7 +122,7 @@ namespace Solve.Evaluation
 		}
 
 
-		protected EvalGenome<T> Create(IEvaluate<T> root, (string message, string data) origin)
+		protected EvalGenome<T> Create(IEvaluate<T> root, (string message, string? data) origin)
 		{
 #if DEBUG
 			var g = new EvalGenome<T>(root);
@@ -133,7 +133,8 @@ namespace Solve.Evaluation
 #endif
 		}
 
-		protected EvalGenome<T> Registration(IEvaluate<T> root, (string message, string data) origin, Action<EvalGenome<T>> onBeforeAdd = null)
+		[return: NotNullIfNotNull("root")]
+		protected EvalGenome<T>? Registration(IEvaluate<T>? root, (string message, string? data) origin, Action<EvalGenome<T>>? onBeforeAdd = null)
 		{
 			Debug.Assert(root != null);
 			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -150,10 +151,10 @@ namespace Solve.Evaluation
 		}
 
 		protected EvalGenome<T> Registration(IEvaluate<T> root, string origin,
-			Action<EvalGenome<T>> onBeforeAdd = null)
+			Action<EvalGenome<T>>? onBeforeAdd = null)
 			=> Registration(root, (origin, null), onBeforeAdd);
 
-		protected override EvalGenome<T> GetReduced(EvalGenome<T> source)
+		protected override EvalGenome<T>? GetReduced(EvalGenome<T> source)
 		=> Catalog.TryGetReduced(source.Root, out var reduced)
 			? Create(reduced, ("Reduction of", source.Hash))
 			: null;
@@ -202,23 +203,23 @@ namespace Solve.Evaluation
 			var bGeneNodes = bRoot.GetDescendantsOfType().ToArray();
 			var aLen = aGeneNodes.Length;
 			var bLen = bGeneNodes.Length;
-			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
+			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return Array.Empty<EvalGenome<T>>();
 
 			// Crossover scheme 1:  Swap a node.
 			while (aGeneNodes.Length != 0)
 			{
 				var ag = aGeneNodes.RandomSelectOne();
-				var agS = ag.Value.ToStringRepresentation();
-				var others = bGeneNodes.Where(g => g.Value.ToStringRepresentation() != agS).ToArray();
+				var agS = ag.Value!.ToStringRepresentation();
+				var others = bGeneNodes.Where(g => g.Value!.ToStringRepresentation() != agS).ToArray();
 				if (others.Length != 0)
 				{
 					// Do the swap...
 					var bg = others.RandomSelectOne();
-					var bgParent = bg.Parent;
+					var bgParent = bg.Parent!;
 
 					var placeholder = Catalog.Factory.GetBlankNode();
 					bgParent.Replace(bg, placeholder);
-					ag.Parent.Replace(ag, bg);
+					ag.Parent!.Replace(ag, bg);
 					bgParent.Replace(placeholder, ag);
 					placeholder.Recycle();
 
@@ -232,7 +233,7 @@ namespace Solve.Evaluation
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
 			}
 
-			return null;
+			return Array.Empty<EvalGenome<T>>();
 		}
 
 	}

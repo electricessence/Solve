@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -63,7 +64,7 @@ namespace Solve.ProcessingSchemes
 				(a, b) => a.Genome.Hash == b.Genome.Hash,
 				a => a.Genome.Hash.GetHashCode());
 
-		static ReadOnlyMemory<double> ScoreSelector((TGenome Genome, Fitness Fitness) gf)
+		static ImmutableArray<double> ScoreSelector((TGenome Genome, Fitness Fitness) gf)
 			=> gf.Fitness.Results.Average;
 
 		bool ProduceFromChampions()

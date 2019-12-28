@@ -46,26 +46,28 @@ namespace Solve.ProcessingSchemes
 
 		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
 			Span<double[]> registry,
-			double[] contending,
+			ReadOnlySpan<double> contending,
 			int index)
 		{
 			Debug.Assert(contending != null);
 
 			ref var fRef = ref registry[index];
-			double[] defending;
-			while ((defending = fRef) == null || contending.IsGreaterThan(defending))
+			double[]? defending;
+			double[]? contendingArray = null;
+			while ((defending = fRef) == null || contending.IsGreaterThan(defending.AsSpan()))
 			{
-				if (Interlocked.CompareExchange(ref fRef, contending, defending) == defending)
+				contendingArray ??= contending.ToArray();
+				if (Interlocked.CompareExchange(ref fRef!, contendingArray, defending) == defending)
 					return (true, defending == null);
 			}
 			return (false, false);
 		}
 
-		protected abstract ValueTask<LevelEntry<TGenome>> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
+		protected abstract ValueTask<LevelEntry<TGenome>?> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
 		protected LevelEntry<TGenome>[][] RankEntries(LevelEntry<TGenome>[] pool)
 			=> Tower.Problem.Pools
-				.Select((p, i) => pool.OrderBy(e => e.Scores[i], ArrayComparer<double>.Descending).ToArray())
+				.Select((p, i) => pool.OrderBy(e => e.Scores[i], CollectionComparer.Double.Descending).ToArray())
 				.ToArray();
 	}
 }

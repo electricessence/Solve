@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -8,25 +9,27 @@ namespace Solve
 {
 	public static class Pareto
 	{
-		static List<(T Value, ReadOnlyMemory<double> Score)> FilterInternal<T>(
+		static List<(T Value, ImmutableArray<double> Score)> FilterInternal<T>(
 			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
-			Func<T, ReadOnlyMemory<double>> scoreSelector)
+			Func<T, ImmutableArray<double>> scoreSelector)
 		{
 			if (source == null)
 				throw new ArgumentNullException(nameof(source));
 
-			var d = new Dictionary<T, (T Value, ReadOnlyMemory<double> Score)>(equalityComparer);
+#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
+			var d = new Dictionary<T, (T Value, ImmutableArray<double> Score)>(equalityComparer);
+#pragma warning restore CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
 			foreach (var (Value, Score) in source
 				.Select(s => (Value: s, Score: scoreSelector(s)))
-				.OrderBy(s => s.Score, MemoryComparer.Double.Descending)) // Enforce distinct by ordering.
+				.OrderBy(s => s.Score, CollectionComparer.Double.Descending)) // Enforce distinct by ordering.
 			{
 				if (!d.ContainsKey(Value))
 					d.Add(Value, (Value, Score));
 			}
 
 			bool found;
-			List<(T Value, ReadOnlyMemory<double> Score)> p;
+			List<(T Value, ImmutableArray<double> Score)> p;
 
 			do
 			{
@@ -35,7 +38,7 @@ namespace Solve
 				p = values.ToList();  // p is the return
 				foreach (var (Value, Score) in p)
 				{
-					if (IsGreaterThanAll(Score.Span, values))
+					if (IsGreaterThanAll(Score.AsSpan(), values))
 					{
 						found = true;
 						d.Remove(Value);
@@ -47,25 +50,25 @@ namespace Solve
 			return p;
 		}
 
-		public static List<(T Value, ReadOnlyMemory<double> Score)> Filter<T>(
+		public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
 			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
-			Func<T, ReadOnlyMemory<double>> scoreSelector)
+			Func<T, ImmutableArray<double>> scoreSelector)
 			=> FilterInternal(source, equalityComparer, scoreSelector);
 
-		public static List<(T Value, ReadOnlyMemory<double> Score)> Filter<T>(
+		public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
 			in ReadOnlySpan<T> source,
 			IEqualityComparer<T> equalityComparer,
-			Func<T, ReadOnlyMemory<double>> scoreSelector)
+			Func<T, ImmutableArray<double>> scoreSelector)
 			=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
-		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ReadOnlyMemory<double> Score)> values)
+		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
 		{
 			var len = score.Length;
 			foreach (var (_, Score) in values)
 			{
 				Debug.Assert(Score.Length == len);
-				var os = Score.Span;
+				var os = Score.AsSpan();
 				for (var i = 0; i < len; i++)
 				{
 					ref readonly var s = ref score[i];

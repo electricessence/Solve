@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Solve
@@ -12,10 +13,10 @@ namespace Solve
 	public interface IProblemPool<TGenome>
 		 where TGenome : IGenome
 	{
-		ReadOnlyMemory<Metric> Metrics { get; }
+		ImmutableArray<Metric> Metrics { get; }
 		Func<TGenome, double[], Fitness> Transform { get; }
 
-		(TGenome Genome, Fitness Fitness) BestFitness { get; }
+		(TGenome Genome, Fitness? Fitness) BestFitness { get; }
 		bool UpdateBestFitness(TGenome genome, Fitness fitness);
 
 		RankedPool<TGenome> Champions { get; }

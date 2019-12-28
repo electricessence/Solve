@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Solve
 {
@@ -18,7 +19,7 @@ namespace Solve
 				// Avoid inbreeding. :P
 				|| a == b
 				|| GetReduced(a)?.Hash == GetReduced(b)?.Hash)
-				return null;
+				return Array.Empty<TGenome>();
 
 			return base.AttemptNewCrossover(a, b, maxAttempts);
 		}
@@ -31,6 +32,6 @@ namespace Solve
 				yield return reduced;
 		}
 
-		protected virtual TGenome GetReduced(TGenome source) => null;
+		protected virtual TGenome? GetReduced(TGenome source) => null;
 	}
 }

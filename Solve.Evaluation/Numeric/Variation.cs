@@ -39,7 +39,7 @@ namespace Solve.Evaluation
 				//var root = paramRemoved.Root;
 				var paramGroups = paramRemoved.GetDescendantsOfType()
 					.Where(n => n.Value is IParameter<double>)
-					.GroupBy(n => ((IParameter<double>)n.Value).ID)
+					.GroupBy(n => ((IParameter<double>)n.Value!).ID)
 					.OrderByDescending(g => g.Key)
 					.FirstOrDefault()?
 					.Where(n => n.IsValidForRemoval())
@@ -49,7 +49,7 @@ namespace Solve.Evaluation
 					break;
 
 				foreach (var p in paramGroups)
-					p.Parent.Remove(p);
+					p.Parent!.Remove(p);
 
 				yield return (
 					Catalog.FixHierarchy(paramRemoved).Recycle(),
@@ -68,9 +68,9 @@ namespace Solve.Evaluation
 
 			for (i = 0; i < count; i++)
 			{
-				yield return (
-					Catalog.Variation.PromoteChildren(descendantNodes[i]),
-					"Promote descendant children");
+				var n = Catalog.Variation.PromoteChildren(descendantNodes[i]);
+				if (n is null) continue;
+				yield return (n, "Promote descendant children");
 
 				// Let mutation take care of this...
 				// foreach (var fn in Operators.Available.Functions)
@@ -100,9 +100,11 @@ namespace Solve.Evaluation
 					"Increase descendant multiple");
 
 			for (i = 0; i < count; i++)
-				yield return (
-					Catalog.TryAddConstant(descendantNodes[i], 2),
-					"Add constant to descendant"); // 2 ensures the constant isn't negated when adding to a product.
+			{
+				var n = Catalog.TryAddConstant(descendantNodes[i], 2);
+				if (n is null) continue;
+				yield return (n, "Add constant to descendant"); // 2 ensures the constant isn't negated when adding to a product.
+			}
 
 			sourceTree.Recycle();
 			if (!(reduced is Sum<double> sum)) yield break;

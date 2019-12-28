@@ -11,7 +11,7 @@ namespace Solve.Evaluation
 	{
 		public EvalGenome(IEvaluate<T> root)
 		{
-			SetRoot(root);
+			Root = root;
 		}
 
 		public IEvaluate<T> Root { get; private set; }
