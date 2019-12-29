@@ -93,7 +93,7 @@ namespace Eater
 					foreach (var key in BitmapQueue.Keys.ToArray())
 					{
 						var bq = BitmapQueue[key];
-						string lastRendered = null;
+						string? lastRendered = null;
 						while (bq.TryDequeue(out var g))
 							lastRendered = g;
 						if (lastRendered == null)

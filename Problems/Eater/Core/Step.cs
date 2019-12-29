@@ -134,52 +134,30 @@ namespace Eater
 
 	public static class Steps
 	{
-		public static Orientation TurnLeft(this Orientation orientation)
+		public static Orientation TurnLeft(this Orientation orientation) => orientation switch
 		{
-			switch (orientation)
-			{
-				case Orientation.Up:
-					return Orientation.Left;
-				case Orientation.Right:
-					return Orientation.Up;
-				case Orientation.Down:
-					return Orientation.Right;
-				case Orientation.Left:
-					return Orientation.Down;
-			}
+			Orientation.Up => Orientation.Left,
+			Orientation.Right => Orientation.Up,
+			Orientation.Down => Orientation.Right,
+			Orientation.Left => Orientation.Down,
+			_ => throw new ArgumentException("Invalid value.", nameof(orientation)),
+		};
 
-			throw new ArgumentException("Invalid value.", nameof(orientation));
-		}
-
-		public static Orientation TurnRight(this Orientation orientation)
+		public static Orientation TurnRight(this Orientation orientation) => orientation switch
 		{
-			switch (orientation)
-			{
-				case Orientation.Up:
-					return Orientation.Right;
-				case Orientation.Right:
-					return Orientation.Down;
-				case Orientation.Down:
-					return Orientation.Left;
-				case Orientation.Left:
-					return Orientation.Up;
-			}
+			Orientation.Up => Orientation.Right,
+			Orientation.Right => Orientation.Down,
+			Orientation.Down => Orientation.Left,
+			Orientation.Left => Orientation.Up,
+			_ => throw new ArgumentException("Invalid value.", nameof(orientation)),
+		};
 
-			throw new ArgumentException("Invalid value.", nameof(orientation));
-		}
-
-		public static Orientation Turn(this Orientation orientation, Step step)
+		public static Orientation Turn(this Orientation orientation, Step step) => step switch
 		{
-			switch (step)
-			{
-				case Step.TurnLeft:
-					return orientation.TurnLeft();
-				case Step.TurnRight:
-					return orientation.TurnRight();
-			}
-
-			return orientation;
-		}
+			Step.TurnLeft => orientation.TurnLeft(),
+			Step.TurnRight => orientation.TurnRight(),
+			_ => orientation,
+		};
 
 		public static Point Forward(this Point current, Orientation orientation)
 		{
@@ -223,34 +201,21 @@ namespace Eater
 
 		public static readonly IReadOnlyList<Step> ALL = (new List<Step> { Step.Forward, Step.TurnRight, Step.TurnLeft }).AsReadOnly();
 
-		public static char ToChar(this Step step)
+		public static char ToChar(this Step step) => step switch
 		{
-			switch (step)
-			{
-				case Step.Forward:
-					return FORWARD;
-				case Step.TurnLeft:
-					return TURN_LEFT;
-				case Step.TurnRight:
-					return TURN_RIGHT;
-			}
-			throw new ArgumentException("Invalid value.", nameof(step));
-		}
+			Step.Forward => FORWARD,
+			Step.TurnLeft => TURN_LEFT,
+			Step.TurnRight => TURN_RIGHT,
+			_ => throw new ArgumentException("Invalid value.", nameof(step)),
+		};
 
-		public static Step FromChar(char step)
+		public static Step FromChar(char step) => step switch
 		{
-
-			switch (step)
-			{
-				case FORWARD:
-					return Step.Forward;
-				case TURN_LEFT:
-					return Step.TurnLeft;
-				case TURN_RIGHT:
-					return Step.TurnRight;
-			}
-			throw new ArgumentException("Invalid value.", nameof(step));
-		}
+			FORWARD => Step.Forward,
+			TURN_LEFT => Step.TurnLeft,
+			TURN_RIGHT => Step.TurnRight,
+			_ => throw new ArgumentException("Invalid value.", nameof(step)),
+		};
 
 		static readonly Regex StepReplace = new Regex(@"(\d+)([<>^])", RegexOptions.Compiled);
 
@@ -329,7 +294,7 @@ namespace Eater
 
 		}
 
-		public static IEnumerable<Step> Reduce(this IEnumerable<Step> steps)
+		public static IEnumerable<Step>? Reduce(this IEnumerable<Step> steps)
 		{
 			var red = ReduceLoop(steps.ToGenomeHash());
 			return red == null ? null : FromGenomeHash(red);
@@ -346,7 +311,7 @@ namespace Eater
 
 		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + TURN_LEFT + TURN_RIGHT + "]+$");
 
-		static string ReduceLoop(string hash)
+		static string? ReduceLoop(string hash)
 		{
 			string outerReduced;
 			var reduced = hash;

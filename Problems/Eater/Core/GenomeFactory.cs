@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -9,14 +11,14 @@ namespace Eater
 
 	public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
-		public GenomeFactory(IEnumerable<Genome> seeds = null, bool leftTurnDisabled = false) : base(seeds)
+		public GenomeFactory(IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
 			LeftTurnDisabled = leftTurnDisabled;
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
 		}
 
 		// ReSharper disable once UnusedParameter.Local
-		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(seed == null ? default(IEnumerable<Genome>) : new[] { seed })
+		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(seed == null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
 		{
 
 		}
@@ -75,6 +77,7 @@ namespace Eater
 				{
 					bool carried;
 					var _node = _lastGenerated.Last;
+					Debug.Assert(_node != null);
 					do
 					{
 						carried = false;
@@ -118,7 +121,7 @@ namespace Eater
 		{
 			var aLen = a.Genes.Length;
 			var bLen = b.Genes.Length;
-			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return null;
+			if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return Array.Empty<Genome>();
 
 			var aPoint = Randomizer.Next(aLen - 1) + 1;
 			var bPoint = Randomizer.Next(bLen - 1) + 1;

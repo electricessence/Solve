@@ -10,7 +10,7 @@ namespace Solve
 		protected ReducibleGenomeFactoryBase()
 		{ }
 
-		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome> seeds) : base(seeds)
+		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome>? seeds) : base(seeds)
 		{ }
 
 		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)

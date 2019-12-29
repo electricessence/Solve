@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -47,7 +46,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 			Contract.EndContractBlock();
 
 #if DEBUG
-			Debug.WriteLineIf(EMIT_GENOMES,
+			System.Diagnostics.Debug.WriteLineIf(EMIT_GENOMES,
 				$"Posting:\n{GetGenomeInfo(genome)}\n",
 				"TowerProcessingScheme");
 #endif

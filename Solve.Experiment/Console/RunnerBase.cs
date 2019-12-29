@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
 
@@ -147,23 +146,23 @@ namespace Solve.Experiment.Console
 #if DEBUG
 			if (Metrics == null) return;
 			var snapshot = Metrics.Snapshot.Get();
-			var sb = new StringBuilder();
-			sb.AppendLine("\n==============================================================");
-			sb.AppendLine("Timestamp:");
-			sb.Append(snapshot.Timestamp).AppendLine();
-			sb.AppendLine("--------------------------------------------------------------");
-
-			foreach (var context in snapshot.Contexts)
+			Debug.Write(StringBuilderPool.Rent(sb =>
 			{
-				foreach (var counter in context.Counters)
-				{
-					sb.AppendLine($"{counter.Name}:");
-					sb.Append(counter.Value.Count).AppendLine();
-					sb.AppendLine("--------------------------------------------------------------");
-				}
-			}
+				sb.AppendLine("\n==============================================================");
+				sb.AppendLine("Timestamp:");
+				sb.Append(snapshot.Timestamp).AppendLine();
+				sb.AppendLine("--------------------------------------------------------------");
 
-			Debug.Write(sb.ToString());
+				foreach (var context in snapshot.Contexts)
+				{
+					foreach (var counter in context.Counters)
+					{
+						sb.AppendLine($"{counter.Name}:");
+						sb.Append(counter.Value.Count).AppendLine();
+						sb.AppendLine("--------------------------------------------------------------");
+					}
+				}
+			}));
 #endif
 		}
 

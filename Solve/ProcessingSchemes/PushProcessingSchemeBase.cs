@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Solve.Supporting.TaskScheduling;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Solve.Supporting.TaskScheduling;
 #if DEBUG
 using System.Diagnostics;
 #endif

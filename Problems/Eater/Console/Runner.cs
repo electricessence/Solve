@@ -1,4 +1,5 @@
-﻿using Solve.Experiment.Console;
+﻿using Solve;
+using Solve.Experiment.Console;
 using Solve.ProcessingSchemes.Dataflow;
 using System;
 using System.Linq;
@@ -27,22 +28,19 @@ namespace Eater
 		}
 
 		static string GenerateIdealSeed(ushort size)
-		{
-			var s = size - 1;
-			var sb = new StringBuilder();
-			sb.Append(s).Append('^');
+			=> StringBuilderPool.Rent(sb =>
+			{
+				var s = size - 1;
+				sb.Append(s).Append('^');
 
-			for (var i = 0; i < 2; i++)
-				sb
-					.Append('>').Append(s).Append('^');
+				for (var i = 0; i < 2; i++)
+					sb.Append('>').Append(s).Append('^');
 
-			for (; s > 0; s--)
-				sb
+				for (; s > 0; s--)
+					sb
 					.Append('>').Append(s).Append('^')
 					.Append('>').Append(s).Append('^');
-
-			return sb.ToString();
-		}
+			});
 
 		public void Init(bool startWithIdealSeed = false)
 		{
@@ -92,6 +90,9 @@ namespace Eater
 
 		static Task Main()
 		{
+			//Console.WriteLine("Press any key to start.");
+			//Console.ReadLine();
+			//Console.Clear();
 			var runner = new Runner(10);
 			runner.Init();
 			var message = string.Format(

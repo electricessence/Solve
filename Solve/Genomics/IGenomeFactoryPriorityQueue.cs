@@ -10,24 +10,24 @@ namespace Solve
 		where TGenome : class, IGenome
 	{
 		void EnqueueChampion(TGenome genome);
-		void EnqueueChampion(in ReadOnlySpan<TGenome> genomes);
+		void EnqueueChampion(IEnumerable<TGenome> genomes);
 
 		void EnqueueVariations(TGenome genome);
-		void EnqueueVariations(in ReadOnlySpan<TGenome> genomes);
+		void EnqueueVariations(IEnumerable<TGenome> genomes);
 
 		void EnqueueForVariation(TGenome genome);
-		void EnqueueForVariation(in ReadOnlySpan<TGenome> genomes);
+		void EnqueueForVariation(IEnumerable<TGenome> genomes);
 
 		bool Mutate(TGenome genome, int maxCount = 1);
 
 		void EnqueueForMutation(TGenome genome, int count = 1);
-		void EnqueueForMutation(in ReadOnlySpan<TGenome> genomes);
+		void EnqueueForMutation(IEnumerable<TGenome> genomes);
 
 		void EnqueueForBreeding(TGenome genome, int count = 1);
-		void EnqueueForBreeding(in ReadOnlySpan<TGenome> genomes);
+		void EnqueueForBreeding(IEnumerable<TGenome> genomes);
 
 		void Breed(TGenome? genome = null, int maxCount = 1);
-		void Breed(in ReadOnlySpan<TGenome> genomes);
+		void Breed(IEnumerable<TGenome> genomes);
 
 		bool TryGetNext([NotNullWhen(true)] out TGenome? genome);
 

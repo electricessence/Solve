@@ -7,7 +7,6 @@ using Open.Collections;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -105,26 +104,24 @@ namespace Solve
 		protected const bool EMIT_GENOMES = false;
 
 		// ReSharper disable once UnusedMember.Local
-		protected static StringBuilder GetGenomeInfo(TGenome genome)
-		{
-			var sb = new StringBuilder(genome.Hash);
-			sb.AppendLine();
-			foreach (var logEntry in genome.Log)
+		protected static string GetGenomeInfo(TGenome genome)
+			=> StringBuilderPool.Rent(sb =>
 			{
-				sb.Append(logEntry.Category)
-					.Append(" > ")
-					.Append(logEntry.Message);
+				foreach (var logEntry in genome.Log)
+				{
+					sb.Append(logEntry.Category)
+						.Append(" > ")
+						.Append(logEntry.Message);
 
-				var data = logEntry.Data;
-				if (!string.IsNullOrWhiteSpace(data))
-					sb.Append(':').AppendLine().Append(data);
+					var data = logEntry.Data;
+					if (!string.IsNullOrWhiteSpace(data))
+						sb.Append(':').AppendLine().Append(data);
 
-				sb.AppendLine();
-			}
-			return sb;
-		}
+					sb.AppendLine();
+				}
+			});
+
 #endif
-
 	}
 
 

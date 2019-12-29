@@ -3,20 +3,19 @@ using Solve;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
 namespace Eater
 {
-	[DebuggerDisplay("{_genes.Length}:{_hash}")]
+	[DebuggerDisplay("{Genes.Length}:{_hash.Value}")]
 	public sealed class Genome
 		: GenomeBase, ICloneable<Genome>, IEnumerable<Step>
 	{
-		static readonly Step[] EMPTY = Array.Empty<Step>();
-
-		public Genome()
+		public Genome(ImmutableArray<Step> steps)
 		{
-			_genes = EMPTY;
+			Freeze(steps);
 		}
 
 		public Genome(IEnumerable<Step> steps)
@@ -28,40 +27,43 @@ namespace Eater
 		{
 		}
 
-		public Genome(string steps)
+		public Genome(string steps) : this(Steps.FromGenomeHash(steps))
 		{
-			Freeze(Steps.FromGenomeHash(steps));
 		}
 
 		protected override string GetHash()
-			=> _genes.ToStepCounts().ToGenomeHash();
+			=> Genes.ToStepCounts().ToGenomeHash();
 
 		public new Genome Clone()
-			=> new Genome(_genes);
+			=> new Genome(Genes);
 
 		protected override object CloneInternal()
 			=> Clone();
 
-		Step[] _genes;
-		public ReadOnlySpan<Step> Genes => _genes.AsSpan();
+		public ImmutableArray<Step> Genes { get; private set; }
 
-		protected override int GetGeneCount() => _genes.Length;
+		protected override int GetGeneCount() => Genes.Length;
 
-		public void Freeze(IEnumerable<Step> steps)
+		void Freeze(IEnumerable<Step> steps)
 		{
-			_genes = steps.ToArray();
+			Freeze(steps is ImmutableArray<Step> s ? s : steps.ToImmutableArray());
+		}
+
+		void Freeze(ImmutableArray<Step> steps)
+		{
+			Genes = steps;
 			Freeze();
 		}
 
 		public IEnumerator<Step> GetEnumerator()
-			=> _genes.AsEnumerable().GetEnumerator();
+			=> Genes.AsEnumerable().GetEnumerator();
 
 		IEnumerator IEnumerable.GetEnumerator()
-			=> _genes.GetEnumerator();
+			=> Genes.AsEnumerable().GetEnumerator();
 
 		public static implicit operator Genome(string steps) => new Genome(steps);
 		public static implicit operator Genome(Step[] steps) => new Genome(steps);
 		public static implicit operator Genome(StepCount[] steps) => new Genome(steps);
-		public static implicit operator ReadOnlySpan<Step>(Genome genome) => genome.Genes;
+		public static implicit operator ImmutableArray<Step>(Genome genome) => genome.Genes;
 	}
 }

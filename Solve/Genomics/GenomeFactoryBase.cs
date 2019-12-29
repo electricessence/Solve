@@ -39,8 +39,8 @@ namespace Solve
 
 		protected void InjectSeeds(IEnumerable<TGenome>? seeds)
 		{
-			var s = seeds as TGenome[] ?? seeds?.ToArray();
-			if (s == null || s.Length == 0) return;
+			var s = seeds as IReadOnlyList<TGenome> ?? seeds?.ToArray();
+			if (s == null || s.Count == 0) return;
 
 			var q = GetPriorityQueue(0);
 			q.EnqueueInternal(s, true);
@@ -503,18 +503,18 @@ namespace Solve
 			TGenome next()
 			{
 #endif
-				var q = 0;
-				while (q < PriorityQueues.Count)
-				{
-					if (PriorityQueues[q].TryGetNext(out var genome))
-						return genome;
-					else
-						q++;
-				}
+			var q = 0;
+			while (q < PriorityQueues.Count)
+			{
+				if (PriorityQueues[q].TryGetNext(out var genome))
+					return genome;
+				else
+					q++;
+			}
 #if DEBUG
 				generated = true;
 #endif
-				return GenerateOne();
+			return GenerateOne();
 #if DEBUG
 			}
 
@@ -612,7 +612,7 @@ namespace Solve
 			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
 				= new ConcurrentQueue<(TGenome Genome, int Count)>();
 
-			public void EnqueueChampion(in ReadOnlySpan<TGenome> genomes)
+			public void EnqueueChampion(IEnumerable<TGenome> genomes)
 			{
 				foreach (var genome in genomes)
 					EnqueueChampion(genome);
@@ -625,7 +625,7 @@ namespace Solve
 				EnqueueForMutation(genome);
 			}
 
-			public void EnqueueForBreeding(in ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForBreeding(IEnumerable<TGenome> genomes)
 			{
 				if (genomes == null) return;
 				foreach (var g in genomes)
@@ -657,7 +657,7 @@ namespace Solve
 					EnqueueForBreeding(genome, count, true);
 			}
 
-			public void Breed(in ReadOnlySpan<TGenome> genomes)
+			public void Breed(IEnumerable<TGenome> genomes)
 			{
 				foreach (var g in genomes)
 					Breed(g);
@@ -781,8 +781,8 @@ namespace Solve
 			public void Inject(TGenome genome)
 				=> EnqueueInternal(genome, true);
 
-			public void Inject(IEnumerable<TGenome> genome)
-				=> EnqueueInternal(genome.ToArray(), true);
+			public void Inject(IEnumerable<TGenome> genomes)
+				=> EnqueueInternal(genomes as IReadOnlyList<TGenome> ?? genomes.ToArray(), true);
 
 			internal bool EnqueueInternal(TGenome genome, bool onlyIfNotRegistered = false)
 			{
@@ -812,7 +812,7 @@ namespace Solve
 				return false;
 			}
 
-			internal bool EnqueueInternal(in ReadOnlySpan<TGenome> genomes, bool onlyIfNotRegistered = false)
+			internal bool EnqueueInternal(IEnumerable<TGenome> genomes, bool onlyIfNotRegistered = false)
 			{
 				var added = false;
 				foreach (var g in genomes)
@@ -851,7 +851,7 @@ namespace Solve
 				while (AttemptEnqueueVariation(genome)) { }
 			}
 
-			public void EnqueueVariations(in ReadOnlySpan<TGenome> genomes)
+			public void EnqueueVariations(IEnumerable<TGenome> genomes)
 			{
 				foreach (var g in genomes)
 					EnqueueVariations(g);
@@ -866,7 +866,7 @@ namespace Solve
 				}
 			}
 
-			public void EnqueueForVariation(in ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForVariation(IEnumerable<TGenome> genomes)
 			{
 				foreach (var g in genomes)
 					EnqueueForVariation(g);
@@ -899,7 +899,7 @@ namespace Solve
 				}
 			}
 
-			public void EnqueueForMutation(in ReadOnlySpan<TGenome> genomes)
+			public void EnqueueForMutation(IEnumerable<TGenome> genomes)
 			{
 				foreach (var g in genomes)
 					EnqueueForMutation(g);
