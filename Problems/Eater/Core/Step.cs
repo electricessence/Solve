@@ -274,25 +274,55 @@ namespace Eater
 			var orientation = Orientation.Up;
 			energy = 0;
 
-			foreach (var step in steps)
+			// Reduce enumerator allocations.
+			if (steps is IReadOnlyList<Step> list)
 			{
-				energy++;
-
-				switch (step)
+				var len = list.Count;
+				for (var i = 0; i < len; i++)
 				{
-					case Step.Forward:
-						current = boundary.Forward(current, orientation);
-						if (current.Equals(food))
-							return true;
-						break;
+					var step = list[i];
+					energy++;
 
-					case Step.TurnLeft:
-						orientation = orientation.TurnLeft();
-						break;
+					switch (step)
+					{
+						case Step.Forward:
+							current = boundary.Forward(current, orientation);
+							if (current.Equals(food))
+								return true;
+							break;
 
-					case Step.TurnRight:
-						orientation = orientation.TurnRight();
-						break;
+						case Step.TurnLeft:
+							orientation = orientation.TurnLeft();
+							break;
+
+						case Step.TurnRight:
+							orientation = orientation.TurnRight();
+							break;
+					}
+				}
+			}
+			else
+			{
+				foreach (var step in steps)
+				{
+					energy++;
+
+					switch (step)
+					{
+						case Step.Forward:
+							current = boundary.Forward(current, orientation);
+							if (current.Equals(food))
+								return true;
+							break;
+
+						case Step.TurnLeft:
+							orientation = orientation.TurnLeft();
+							break;
+
+						case Step.TurnRight:
+							orientation = orientation.TurnRight();
+							break;
+					}
 				}
 			}
 
