@@ -51,7 +51,9 @@ namespace Eater
 			if (seed.Length != 0) emitter.SaveGenomeImage(seed[0], "LatestSeed");
 
 			const bool leftTurnDisabled = true;
-			var seeds = seed.Concat(GenomeFactory.Random(100, size * 2, leftTurnDisabled).Take(1000)).Distinct().Select(s => new Genome(s));
+			var seeds = seed
+				.Concat(GenomeFactory.Random(100, size * 2, leftTurnDisabled).Take(1000).AsParallel())
+				.Distinct().Select(s => new Genome(s));
 			var factory = new GenomeFactory(seeds, leftTurnDisabled: leftTurnDisabled);
 			var scheme = new DataflowScheme<Genome>(factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue

@@ -62,23 +62,33 @@ namespace Solve.Experiment.Console
 							d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
 						}
 
-						var output = new StringBuilder();
-						foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
+
+						var output = StringBuilderPool.Instance.Take();
+						try
 						{
-							OnEmittingGenome(g.Key, output);
-							foreach (var entry in g)
+							foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
 							{
-								var (problem, _, poolIndex, fitness) = entry.Value;
-								output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
+								OnEmittingGenome(g.Key, output);
+								foreach (var entry in g)
+								{
+									var (problem, _, poolIndex, fitness) = entry.Value;
+									output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
+								}
 							}
+
+							output.AppendLine();
+							SynchronizedConsole.Write(ref LastTopGenomeUpdate,
+								cursor =>
+								{
+									System.Console.Write(output.ToString());
+								});
+						}
+						finally
+						{
+							StringBuilderPool.Instance.Give(output);
 						}
 
-						output.AppendLine();
-						SynchronizedConsole.Write(ref LastTopGenomeUpdate,
-							cursor =>
-							{
-								System.Console.Write(output.ToString());
-							});
+
 					}
 				});
 		}

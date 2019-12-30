@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Solve;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -95,37 +96,44 @@ namespace Eater
 		}
 
 		public static string ToGenomeHash(this IEnumerable<Step> steps)
-		{
-			var sb = new StringBuilder();
-			foreach (var step in steps)
+			=> StringBuilderPool.Rent(sb =>
 			{
-				sb.Append(step.ToChar());
-			}
-			return sb.ToString();
-		}
+				foreach (var step in steps)
+				{
+					sb.Append(step.ToChar());
+				}
+			});
 
 		public static string ToGenomeHash(this IEnumerable<StepCount> steps)
-		{
-			var sb = new StringBuilder();
-			foreach (var s in steps)
+			=> StringBuilderPool.Rent(sb =>
 			{
-				if (s.Count != 1)
-					sb.Append(s.Count);
-				sb.Append(s.Step.ToChar());
-			}
-			return sb.ToString();
-		}
+				foreach (var s in steps)
+				{
+					if (s.Count != 1)
+						sb.Append(s.Count);
+					sb.Append(s.Step.ToChar());
+				}
+			});
+
 
 		public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
+
 		{
-			var sb = new StringBuilder();
-			foreach (var s in steps)
+			var sb = StringBuilderPool.Instance.Take();
+			try
 			{
-				if (s.Count != 1)
-					sb.Append(s.Count);
-				sb.Append(s.Step.ToChar());
+				foreach (var s in steps)
+				{
+					if (s.Count != 1)
+						sb.Append(s.Count);
+					sb.Append(s.Step.ToChar());
+				}
+				return sb.ToString();
 			}
-			return sb.ToString();
+			finally
+			{
+				StringBuilderPool.Instance.Give(sb);
+			}
 		}
 
 		public static string ToGenomeHash(this Span<StepCount> steps)
@@ -221,12 +229,10 @@ namespace Eater
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
-			hash = StepReplace.Replace(hash, m =>
+			hash = StepReplace.Replace(hash, m => StringBuilderPool.Rent(sb =>
 			{
-				var sb = new StringBuilder();
 				sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value));
-				return sb.ToString();
-			});
+			}));
 
 			foreach (var c in hash)
 			{
