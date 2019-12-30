@@ -70,8 +70,9 @@ namespace Solve.ProcessingSchemes
 
 		readonly double[][] BestProgressiveFitness;
 
-		protected void ProcessChampion(byte poolIndex, (TGenome Genome, Fitness[] Fitness) champ)
+		protected void ProcessChampion(int poolIndex, (TGenome Genome, Fitness[] Fitness) champ)
 		{
+			Debug.Assert(poolIndex >= 0);
 			Tower.Problem.Pools[poolIndex].Champions?.Add(champ.Genome, champ.Fitness[poolIndex]);
 			Tower.Broadcast(champ, poolIndex);
 		}

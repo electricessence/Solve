@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Memory;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -58,7 +59,7 @@ namespace Solve.ProcessingSchemes.Tower
 				var problemPoolCount = problemPools.Count;
 				var selection = RankEntries(pool);
 				var isTop = _nextLevel == null;
-				for (byte i = 0; i < problemPoolCount; i++)
+				for (var i = 0; i < problemPoolCount; i++)
 				{
 					var s = selection[i];
 
@@ -95,7 +96,7 @@ namespace Solve.ProcessingSchemes.Tower
 				// 5) Process remaining (losers)
 				var maxLoses = Tower.Environment.MaxLevelLosses;
 				var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-				foreach (var remainder in selection.Weave().Distinct())
+				foreach (var remainder in selection.Cast<IEnumerable<LevelEntry<TGenome>>>().Weave().Distinct())
 				{
 					if (promoted.Contains(remainder.GenomeFitness.Genome.Hash))
 					{
@@ -132,6 +133,10 @@ namespace Solve.ProcessingSchemes.Tower
 						Pool.Add(remainder); // Didn't win, but still in the game.
 					}
 				}
+
+				foreach (var sel in selection) sel.Dispose();
+				selection.Dispose();
+
 				return true;
 			}
 

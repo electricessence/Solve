@@ -1,4 +1,5 @@
-﻿using Solve.Supporting.TaskScheduling;
+﻿using Open.Memory;
+using Solve.Supporting.TaskScheduling;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -50,12 +51,12 @@ namespace Solve.ProcessingSchemes.Dataflow
 					new GroupingDataflowBlockOptions() { TaskScheduler = GetScheduler(1, "Level Preselection") });
 
 				// Step 2: Rank
-				var ranking = new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(
+				var ranking = new TransformBlock<LevelEntry<TGenome>[], TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
 					e => RankEntries(e),
 					SchedulerOption(2, "Level Ranking", true));
 
 				// Step 3: Selection and Propagation!
-				var selection = new ActionBlock<LevelEntry<TGenome>[][]>(
+				var selection = new ActionBlock<TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
 					dataflowBlockOptions: SchedulerOption(3, "Level Selection", true),
 					action: pools =>
 					{
@@ -125,6 +126,9 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 							}
 						}
+
+						foreach (var pool in pools) pool.Dispose();
+						pools.Dispose();
 					});
 
 				// Step 0: Injestion

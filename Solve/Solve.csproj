@@ -54,7 +54,7 @@
     <PackageReference Include="Open.Disposable.ObjectPools" Version="2.4.1" />
     <PackageReference Include="Open.Lazy.Extensions" Version="1.1.0" />
     <PackageReference Include="Open.Numeric" Version="2.2.2" />
-    <PackageReference Include="Open.RandomizationExtensions" Version="2.3.1" />
+    <PackageReference Include="Open.RandomizationExtensions" Version="2.4.0" />
     <PackageReference Include="Open.Text" Version="2.1.0" />
     <PackageReference Include="Open.Threading" Version="1.5.3" />
     <PackageReference Include="Open.Threading.Tasks" Version="1.1.3" />
