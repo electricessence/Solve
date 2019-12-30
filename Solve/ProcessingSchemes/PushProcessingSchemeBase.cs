@@ -52,7 +52,7 @@ namespace Solve.ProcessingSchemes
 		//	});
 		//}
 
-		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(/*Environment.ProcessorCount **/ 2);
+		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(/*Environment.ProcessorCount*/ 2);
 
 		async Task BufferGenomes(CancellationToken token)
 		{
@@ -60,11 +60,18 @@ namespace Solve.ProcessingSchemes
 
 			foreach (var genome in Factory)
 			{
+			retry:
+
 				if (token.IsCancellationRequested)
 					break;
 
-				while (!FactoryBuffer.Writer.TryWrite(genome))
-					await FactoryBuffer.Writer.WaitToWriteAsync(token).ConfigureAwait(false);
+				if (FactoryBuffer.Writer.TryWrite(genome))
+					continue;
+
+				if (!await FactoryBuffer.Writer.WaitToWriteAsync())
+					break;
+
+				goto retry;
 			}
 
 			FactoryBuffer.Writer.Complete();
@@ -86,7 +93,7 @@ namespace Solve.ProcessingSchemes
 		Task PostFromBuffer(CancellationToken token)
 			=> Task.WhenAll(
 				Enumerable
-				.Range(0, Environment.ProcessorCount * 2)
+				.Range(0, Environment.ProcessorCount * 4)
 				.Select(s => PostingFactory
 					.StartNew(() => PostFromBufferSingle(token), token).Unwrap()
 					.ContinueWith(t =>
@@ -102,7 +109,8 @@ namespace Solve.ProcessingSchemes
 						Debug.Fail(f.Message, f.InnerException!.StackTrace);
 #endif
 						return t;
-					}, token)));
+					}, token))
+				.ToArray());
 
 		Task PostSynchronously(CancellationToken token)
 			=> Task.Run(() =>

@@ -29,25 +29,6 @@ namespace Eater
 			// All forward movement lengths reduced by 1.
 			yield return source.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? --sc : sc).Steps();
 
-			// Remove step at every point.
-			if (lenMinusOne > 2)
-			{
-				for (var i = 1; i < len - 2; i++)
-				{
-					var head = source.Take(i);
-					var tail = source.Skip(i + 1);
-					yield return head.Concat(tail);
-				}
-			}
-
-			// Insert forward movement at every point.
-			for (var i = 0; i < len; i++)
-			{
-				var head = source.Take(i);
-				var tail = source.Skip(i);
-				yield return head.Concat(ForwardOne).Concat(tail);
-			}
-
 			// All forward movement lengths doubled...
 			yield return source.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1));
 
@@ -66,6 +47,25 @@ namespace Eater
 			yield return source.Skip(third);
 			yield return source.Take(2 * third);
 			yield return source.Skip(2 * third);
+
+			// Remove step at every point.
+			if (lenMinusOne > 2)
+			{
+				for (var i = 1; i < len - 2; i++)
+				{
+					var head = source.Take(i);
+					var tail = source.Skip(i + 1);
+					yield return head.Concat(tail);
+				}
+			}
+
+			// Insert forward movement at every point.
+			for (var i = 0; i < len; i++)
+			{
+				var head = source.Take(i);
+				var tail = source.Skip(i);
+				yield return head.Concat(ForwardOne).Concat(tail);
+			}
 		}
 
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)
