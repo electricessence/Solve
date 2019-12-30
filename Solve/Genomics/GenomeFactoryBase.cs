@@ -39,7 +39,7 @@ namespace Solve
 
 		protected void InjectSeeds(IEnumerable<TGenome>? seeds)
 		{
-			var s = seeds as IReadOnlyList<TGenome> ?? seeds?.ToArray();
+			var s = seeds as IReadOnlyCollection<TGenome> ?? seeds?.ToArray();
 			if (s == null || s.Count == 0) return;
 
 			var q = GetPriorityQueue(0);
