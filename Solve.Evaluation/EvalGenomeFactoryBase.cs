@@ -122,7 +122,7 @@ namespace Solve.Evaluation
 		}
 
 
-		protected EvalGenome<T> Create(IEvaluate<T> root, (string message, string? data) origin)
+		protected EvalGenome<T> Create(IEvaluate<T> root, (string? message, string? data) origin)
 		{
 #if DEBUG
 			var g = new EvalGenome<T>(root);

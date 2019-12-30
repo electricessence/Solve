@@ -92,7 +92,6 @@ namespace Eater
 				}
 			}
 			yield return last;
-
 		}
 
 		public static string ToGenomeHash(this IEnumerable<Step> steps)

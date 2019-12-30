@@ -75,7 +75,7 @@ namespace Solve.ProcessingSchemes
 
 			for (var i = 0; i < poolCount; i++)
 			{
-				var temp = arrayPool.RentDisposable(len, true);
+				var temp = arrayPool.RentDisposable(len);
 				var a = temp.Array;
 				result.Array[i] = temp;
 
