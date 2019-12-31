@@ -1,7 +1,5 @@
 ﻿using Open.ChannelExtensions;
 using Open.Collections;
-using Open.Memory;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,13 +33,13 @@ namespace Solve.ProcessingSchemes.Tower
 				: base(level, tower, priorityLevels)
 			{
 				Pool = Channel.CreateUnbounded<LevelEntry<TGenome>>();
-				
+
 				Processed = Enumerable
 					.Range(0, priorityLevels)
 					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
 					.ToArray();
 
-				PoolReader = Pool.Reader.Batch(PoolSize, false, true);
+				PoolReader = Pool.Reader.Batch(PoolSize);
 				PoolReader.ReadAllAsync(ProcessPoolAsyncInternal);
 			}
 

@@ -122,7 +122,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 								else
 								{
 									Debug.Assert(loser.LevelLossRecord > 0);
-									if(!preselector.Post(loser)) // Didn't win, but still in the game?
+									if (!preselector.Post(loser)) // Didn't win, but still in the game?
 										throw new Exception("preselector refused.");
 								}
 
