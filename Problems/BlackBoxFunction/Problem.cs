@@ -140,19 +140,17 @@ namespace BlackBoxFunction
 
 		static IEnumerable<double> Deltas(IEnumerable<double> source)
 		{
-			using (var e = source.GetEnumerator())
+			using var e = source.GetEnumerator();
+			if (!e.MoveNext())
+				yield break;
+
+			var previous = e.Current;
+
+			while (e.MoveNext())
 			{
-				if (!e.MoveNext())
-					yield break;
-
-				var previous = e.Current;
-
-				while (e.MoveNext())
-				{
-					var current = e.Current;
-					yield return current - previous;
-					previous = current;
-				}
+				var current = e.Current;
+				yield return current - previous;
+				previous = current;
 			}
 		}
 	}
