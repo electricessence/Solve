@@ -127,7 +127,7 @@ namespace Solve
 
 		public async ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 		{
-			var metrics = await ProcessSampleMetricsAsync(g, sampleId);
+			var metrics = await ProcessSampleMetricsAsync(g, sampleId).ConfigureAwait(false);
 			Interlocked.Increment(ref _testCount);
 			return Pools.Select(p => p.Transform(g, metrics));
 		}

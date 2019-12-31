@@ -58,10 +58,10 @@ namespace Solve.ProcessingSchemes.Tower
 #endif
 
 			foreach (var t in ActiveTowers!)
-				await t.PostAsync(genome);
+				await t.PostAsync(genome).ConfigureAwait(false);
 
 			foreach (var t in ActiveTowers)
-				await t.ProcessPoolsAsync();
+				await t.ProcessPoolsAsync().ConfigureAwait(false);
 		}
 
 	}

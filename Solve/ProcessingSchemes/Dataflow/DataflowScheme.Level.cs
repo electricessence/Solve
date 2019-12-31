@@ -74,7 +74,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 								if (isTop)
 									ProcessChampion(p, gf);
 								if (promoted.Add(gf.Genome.Hash))
-									await PostNextLevelAsync(1, gf);
+									await PostNextLevelAsync(1, gf).ConfigureAwait(false);
 							}
 						}
 
@@ -85,7 +85,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 							{
 								var gf = pools[p][i].GenomeFitness;
 								if (promoted.Add(gf.Genome.Hash))
-									await PostNextLevelAsync(2, gf);
+									await PostNextLevelAsync(2, gf).ConfigureAwait(false);
 							}
 						}
 
@@ -115,7 +115,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 								{
 									var fitnesses = gf.Fitness;
 									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-										await PostNextLevelAsync(3, gf);
+										await PostNextLevelAsync(3, gf).ConfigureAwait(false);
 									else if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
 										f.MetricsCounter.Increment("Genome Rejected");
 								}
@@ -138,7 +138,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 					dataflowBlockOptions: SchedulerOption(0, "Level Injestion"),
 					action: async c =>
 					{
-						var result = await ProcessEntry(c);
+						var result = await ProcessEntry(c).ConfigureAwait(false);
 						if (result != null && !preselector.Post(result))
 							throw new Exception("Processor refused challenger.");
 					});

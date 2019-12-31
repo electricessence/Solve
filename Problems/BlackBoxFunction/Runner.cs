@@ -1,6 +1,5 @@
 ﻿using Solve.Evaluation;
 using Solve.Experiment.Console;
-using Solve.ProcessingSchemes.Tower;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -9,9 +8,9 @@ using System.Threading.Tasks;
 namespace BlackBoxFunction
 {
 	[SuppressMessage("ReSharper", "UnusedMember.Local")]
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Options.")]
 	internal class Runner : RunnerBase<EvalGenome<double>>
 	{
-
 		static double AB(IReadOnlyList<double> p)
 		{
 			var a = p[0];
@@ -67,7 +66,8 @@ namespace BlackBoxFunction
 		{
 			var factory = new NumericEvalGenomeFactory(/*"((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new TowerProcessingScheme<EvalGenome<double>>(factory, (200, 60, 2));
+			//var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<EvalGenome<double>>(factory, (200, 60, 2));
+			var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 100));
 
 			Init(scheme, emitter, factory.Metrics);

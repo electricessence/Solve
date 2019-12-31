@@ -52,7 +52,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 #endif
 
 			foreach (var t in ActiveTowers!)
-				await t.PostAsync(genome);
+				await t.PostAsync(genome).ConfigureAwait(false);
 		}
 	}
 }

@@ -25,10 +25,9 @@ namespace Solve.Supporting.TaskScheduling
 				throw new ArgumentOutOfRangeException(nameof(maxConcurrencyLevel));
 			Contract.EndContractBlock();
 
-			// If 0, use the number of logical processors.  But make sure whatever value we pick
-			// is not greater than the degree of parallelism allowed by the underlying scheduler.
+			// Make sure whatever value we pick is not greater than the degree of parallelism allowed by the underlying scheduler.
 			if (maxConcurrencyLevel == 0)
-				maxConcurrencyLevel = Environment.ProcessorCount;
+				maxConcurrencyLevel = parent.MaximumConcurrencyLevel;
 
 			if (parent.MaximumConcurrencyLevel > 0
 				&& parent.MaximumConcurrencyLevel < maxConcurrencyLevel)

@@ -68,7 +68,7 @@ namespace Solve.ProcessingSchemes
 				if (FactoryBuffer.Writer.TryWrite(genome))
 					continue;
 
-				if (!await FactoryBuffer.Writer.WaitToWriteAsync())
+				if (!await FactoryBuffer.Writer.WaitToWriteAsync().ConfigureAwait(false))
 					break;
 
 				goto retry;
@@ -85,11 +85,12 @@ namespace Solve.ProcessingSchemes
 				genome = Factory.Next();
 
 			if (genome == null) return;
+
 			var p = PostAsync(genome);
 			if (p.IsCompletedSuccessfully)
 				await Task.Yield();
 			else
-				await p;
+				await p.ConfigureAwait(false);
 			goto retry;
 		}
 
@@ -126,7 +127,7 @@ namespace Solve.ProcessingSchemes
 			foreach (var f in Factory)
 			{
 				if (!token.IsCancellationRequested)
-					await PostAsync(f);
+					await PostAsync(f).ConfigureAwait(false);
 			}
 		}
 

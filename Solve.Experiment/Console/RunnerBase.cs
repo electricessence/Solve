@@ -114,7 +114,7 @@ namespace Solve.Experiment.Console
 
 			try
 			{
-				await Environment.Start();
+				await Environment.Start().ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{ }

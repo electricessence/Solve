@@ -39,7 +39,7 @@ namespace Solve.ProcessingSchemes
 			Incomming[priority]
 				.Enqueue(challenger);
 
-			await OnAfterPost();
+			await OnAfterPost().ConfigureAwait(false);
 		}
 
 		protected abstract ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
@@ -57,7 +57,7 @@ namespace Solve.ProcessingSchemes
 					var q = Incomming[i];
 					if (!q.TryDequeue(out var c)) continue;
 
-					await ProcessInjested(i, c);
+					await ProcessInjested(i, c).ConfigureAwait(false);
 
 					i = 0; // Reset to top queue.
 					++count;
@@ -79,7 +79,7 @@ namespace Solve.ProcessingSchemes
 
 		protected override async ValueTask<LevelEntry<TGenome>?> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ)
 		{
-			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index)).Select((fitness, i) =>
+			var result = (await Tower.Problem.ProcessSampleAsync(champ.Genome, Index).ConfigureAwait(false)).Select((fitness, i) =>
 			{
 				var values = fitness.Results.Sum;
 				var progressiveFitness = champ.Fitness[i];
@@ -108,7 +108,7 @@ namespace Solve.ProcessingSchemes
 				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToImmutableArray());
 
 			Factory.EnqueueChampion(champ.Genome);
-			await PostNextLevelAsync(0, champ);
+			await PostNextLevelAsync(0, champ).ConfigureAwait(false);
 			return null;
 		}
 

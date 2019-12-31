@@ -71,7 +71,7 @@ namespace Solve.ProcessingSchemes.Tower
 						ProcessChampion(i, champ);
 
 					if (promoted.Add(champ.Genome.Hash))
-						await PostNextLevelAsync(1, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						await PostNextLevelAsync(1, champ).ConfigureAwait(false); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
@@ -88,7 +88,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var s = selection[i];
 						var winner = s[n].GenomeFitness;
 						if (promoted.Add(winner.Genome.Hash))
-							await PostNextLevelAsync(2, winner); // PostStandby?
+							await PostNextLevelAsync(2, winner).ConfigureAwait(false); // PostStandby?
 					}
 				}
 
@@ -112,7 +112,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var gf = remainder.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							await PostNextLevelAsync(3, gf);
+							await PostNextLevelAsync(3, gf).ConfigureAwait(false);
 						else
 						{
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -131,7 +131,7 @@ namespace Solve.ProcessingSchemes.Tower
 					else
 					{
 						Debug.Assert(remainder.LevelLossRecord > 0);
-						await Pool.Writer.WriteAsync(remainder);// Didn't win, but still in the game.
+						await Pool.Writer.WriteAsync(remainder).ConfigureAwait(false);// Didn't win, but still in the game.
 					}
 				}
 
@@ -143,7 +143,7 @@ namespace Solve.ProcessingSchemes.Tower
 			{
 				while (PoolReader.TryRead(out var pool))
 				{
-					await ProcessPoolAsyncInternal(pool);
+					await ProcessPoolAsyncInternal(pool).ConfigureAwait(false);
 				}
 
 				if (thisLevelOnly) return;
@@ -151,12 +151,12 @@ namespace Solve.ProcessingSchemes.Tower
 				// walk up instead of recurse.
 				Level? next = this;
 				while ((next = next._nextLevel) != null)
-					await next.ProcessPoolAsync(true);
+					await next.ProcessPoolAsync(true).ConfigureAwait(false);
 			}
 
 			protected override async ValueTask OnAfterPost()
 			{
-				await base.OnAfterPost();
+				await base.OnAfterPost().ConfigureAwait(false);
 
 				int count;
 				do
@@ -168,7 +168,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var q = Processed[i];
 						if (!q.TryDequeue(out var p)) continue;
 
-						await Pool.Writer.WriteAsync(p);
+						await Pool.Writer.WriteAsync(p).ConfigureAwait(false);
 
 						i = -1; // Reset to top queue.
 						++count;
@@ -187,7 +187,7 @@ namespace Solve.ProcessingSchemes.Tower
 			}
 
 			async ValueTask ProcessInjestedAsync(byte priority, ValueTask<LevelEntry<TGenome>?> challenger)
-				=> ProcessInjested(priority, await challenger);
+				=> ProcessInjested(priority, await challenger.ConfigureAwait(false));
 
 			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> ProcessInjestedAsync(priority, ProcessEntry(challenger));
