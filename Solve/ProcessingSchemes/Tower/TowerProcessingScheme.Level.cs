@@ -1,11 +1,14 @@
-﻿using Open.Collections;
+﻿using Open.ChannelExtensions;
+using Open.Collections;
 using Open.Memory;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes.Tower
@@ -22,7 +25,8 @@ namespace Solve.ProcessingSchemes.Tower
 
 			protected override bool IsTop => _nextLevel == null;
 
-			private readonly BatchCreator<LevelEntry<TGenome>> Pool;
+			private readonly Channel<LevelEntry<TGenome>> Pool;
+			private readonly ChannelReader<List<LevelEntry<TGenome>>> PoolReader;
 
 			public Level(
 				int level,
@@ -30,28 +34,24 @@ namespace Solve.ProcessingSchemes.Tower
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
-				Pool = new BatchCreator<LevelEntry<TGenome>>(PoolSize);
-				Pool.BatchReady += Pool_BatchReady!;
-
+				Pool = Channel.CreateUnbounded<LevelEntry<TGenome>>();
+				
 				Processed = Enumerable
 					.Range(0, priorityLevels)
 					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
 					.ToArray();
-			}
 
-			private void Pool_BatchReady(object sender, System.EventArgs e)
-				=> Task.Run(() => ProcessPoolAsyncInternal());
+				PoolReader = Pool.Reader.Batch(PoolSize, false, true);
+				PoolReader.ReadAllAsync(ProcessPoolAsyncInternal);
+			}
 
 			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
 
-			async ValueTask<bool> ProcessPoolAsyncInternal()
+			async ValueTask ProcessPoolAsyncInternal(List<LevelEntry<TGenome>> pool)
 			{
-				if (!Pool.TryDequeue(out var pool))
-					return false;
-
 				// 1) Setup selection.
-				var len = pool.Length;
-				var midPoint = pool.Length / 2;
+				var len = pool.Count;
+				var midPoint = pool.Count / 2;
 
 				var promoted = new HashSet<string>();
 
@@ -130,19 +130,20 @@ namespace Solve.ProcessingSchemes.Tower
 					else
 					{
 						Debug.Assert(remainder.LevelLossRecord > 0);
-						Pool.Add(remainder); // Didn't win, but still in the game.
+						await Pool.Writer.WriteAsync(remainder);// Didn't win, but still in the game.
 					}
 				}
 
 				foreach (var sel in selection) sel.Dispose();
 				selection.Dispose();
-
-				return true;
 			}
 
 			public async ValueTask ProcessPoolAsync(bool thisLevelOnly = false)
 			{
-				while (await ProcessPoolAsyncInternal()) { }
+				while (PoolReader.TryRead(out var pool))
+				{
+					await ProcessPoolAsyncInternal(pool);
+				}
 
 				if (thisLevelOnly) return;
 
@@ -166,7 +167,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var q = Processed[i];
 						if (!q.TryDequeue(out var p)) continue;
 
-						Pool.Add(p);
+						await Pool.Writer.WriteAsync(p);
 
 						i = -1; // Reset to top queue.
 						++count;

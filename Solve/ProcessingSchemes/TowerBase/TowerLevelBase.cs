@@ -1,6 +1,7 @@
 ﻿using Open.Memory;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -66,9 +67,9 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract ValueTask<LevelEntry<TGenome>?> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
 
-		protected TemporaryArray<TemporaryArray<LevelEntry<TGenome>>> RankEntries(LevelEntry<TGenome>[] pool)
+		protected TemporaryArray<TemporaryArray<LevelEntry<TGenome>>> RankEntries(IList<LevelEntry<TGenome>> pool)
 		{
-			var len = pool.Length;
+			var len = pool.Count;
 			var poolCount = Tower.Problem.Pools.Count;
 			var result = ArrayPool<TemporaryArray<LevelEntry<TGenome>>>.Shared.RentDisposable(poolCount, true);
 			var arrayPool = ArrayPool<LevelEntry<TGenome>>.Shared;
