@@ -1,6 +1,7 @@
 ﻿using Solve.Supporting.TaskScheduling;
 using System;
 using System.Diagnostics.Contracts;
+using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes.Dataflow
 {
@@ -25,12 +26,12 @@ namespace Solve.ProcessingSchemes.Dataflow
 				Root = new Level(0, this, 1);
 			}
 
-			public void Post(TGenome next)
+			public ValueTask PostAsync(TGenome next)
 			{
 				if (next is null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();
 
-				Root.Post(0, (next, NewFitness()));
+				return Root.PostAsync(0, (next, NewFitness()));
 			}
 		}
 	}

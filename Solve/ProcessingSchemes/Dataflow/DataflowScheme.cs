@@ -40,7 +40,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 			return base.StartInternal(token);
 		}
 
-		protected override void Post(TGenome genome)
+		protected override async ValueTask PostAsync(TGenome genome)
 		{
 			if (genome is null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
@@ -52,7 +52,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 #endif
 
 			foreach (var t in ActiveTowers!)
-				t.Post(genome);
+				await t.PostAsync(genome);
 		}
 	}
 }

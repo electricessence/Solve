@@ -31,7 +31,7 @@ namespace Solve.ProcessingSchemes
 
 		private readonly bool _runSynchronously;
 
-		protected abstract void Post(TGenome genome);
+		protected abstract ValueTask PostAsync(TGenome genome);
 
 		//protected override Task StartInternal(CancellationToken token)
 		//{
@@ -85,8 +85,11 @@ namespace Solve.ProcessingSchemes
 				genome = Factory.Next();
 
 			if (genome == null) return;
-			Post(genome);
-			await Task.Yield();
+			var p = PostAsync(genome);
+			if (p.IsCompletedSuccessfully)
+				await Task.Yield();
+			else
+				await p;
 			goto retry;
 		}
 
@@ -112,21 +115,20 @@ namespace Solve.ProcessingSchemes
 					}, token))
 				.ToArray());
 
-		Task PostSynchronously(CancellationToken token)
-			=> Task.Run(() =>
-			{
-				//var pOptions = new ParallelOptions
-				//{
-				//	CancellationToken = token,
-				//};
-				//Parallel.ForEach(Factory, pOptions, Post);
+		async Task PostSynchronously(CancellationToken token)
+		{
+			//var pOptions = new ParallelOptions
+			//{
+			//	CancellationToken = token,
+			//};
+			//Parallel.ForEach(Factory, pOptions, Post);
 
-				foreach (var f in Factory)
-				{
-					if (!token.IsCancellationRequested)
-						Post(f);
-				}
-			});
+			foreach (var f in Factory)
+			{
+				if (!token.IsCancellationRequested)
+					await PostAsync(f);
+			}
+		}
 
 		protected override Task StartInternal(CancellationToken token)
 			=> _runSynchronously

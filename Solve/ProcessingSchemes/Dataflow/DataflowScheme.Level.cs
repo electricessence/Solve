@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Solve.ProcessingSchemes.Dataflow
@@ -58,7 +59,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				// Step 3: Selection and Propagation!
 				var selection = new ActionBlock<TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
 					dataflowBlockOptions: SchedulerOption(3, "Level Selection", true),
-					action: pools =>
+					action: async pools =>
 					{
 						var poolCount = pools.Length;
 						var midPoint = PoolSize / 2;
@@ -73,7 +74,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 								if (isTop)
 									ProcessChampion(p, gf);
 								if (promoted.Add(gf.Genome.Hash))
-									PostNextLevel(1, gf);
+									await PostNextLevelAsync(1, gf);
 							}
 						}
 
@@ -84,7 +85,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 							{
 								var gf = pools[p][i].GenomeFitness;
 								if (promoted.Add(gf.Genome.Hash))
-									PostNextLevel(2, gf);
+									await PostNextLevelAsync(2, gf);
 							}
 						}
 
@@ -114,14 +115,15 @@ namespace Solve.ProcessingSchemes.Dataflow
 								{
 									var fitnesses = gf.Fitness;
 									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-										PostNextLevel(3, gf);
+										await PostNextLevelAsync(3, gf);
 									else if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
 										f.MetricsCounter.Increment("Genome Rejected");
 								}
 								else
 								{
 									Debug.Assert(loser.LevelLossRecord > 0);
-									preselector.Post(loser); // Didn't win, but still in the game.
+									if(!preselector.Post(loser)) // Didn't win, but still in the game?
+										throw new Exception("preselector refused.");
 								}
 
 							}
@@ -147,13 +149,15 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 			readonly ITargetBlock<(TGenome Genome, Fitness[] Fitness)> Processor;
 
-			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
-				=> NextLevel.Post(priority, challenger);
+			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+				=> NextLevel.PostAsync(priority, challenger);
 
-			protected override void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 			{
 				if (!Processor.Post(challenger))
 					throw new Exception("Processor refused challenger.");
+
+				return new ValueTask();
 			}
 
 		}

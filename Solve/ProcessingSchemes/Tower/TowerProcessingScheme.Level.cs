@@ -40,11 +40,11 @@ namespace Solve.ProcessingSchemes.Tower
 			}
 
 			private void Pool_BatchReady(object sender, System.EventArgs e)
-				=> Task.Run(() => ProcessPoolInternal());
+				=> Task.Run(() => ProcessPoolAsyncInternal());
 
 			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;
 
-			bool ProcessPoolInternal()
+			async ValueTask<bool> ProcessPoolAsyncInternal()
 			{
 				if (!Pool.TryDequeue(out var pool))
 					return false;
@@ -70,7 +70,7 @@ namespace Solve.ProcessingSchemes.Tower
 						ProcessChampion(i, champ);
 
 					if (promoted.Add(champ.Genome.Hash))
-						PostNextLevel(1, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						await PostNextLevelAsync(1, champ); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
@@ -87,7 +87,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var s = selection[i];
 						var winner = s[n].GenomeFitness;
 						if (promoted.Add(winner.Genome.Hash))
-							PostNextLevel(2, winner); // PostStandby?
+							await PostNextLevelAsync(2, winner); // PostStandby?
 					}
 				}
 
@@ -111,7 +111,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var gf = remainder.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							PostNextLevel(3, gf);
+							await PostNextLevelAsync(3, gf);
 						else
 						{
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
@@ -140,21 +140,21 @@ namespace Solve.ProcessingSchemes.Tower
 				return true;
 			}
 
-			public void ProcessPool(bool thisLevelOnly = false)
+			public async ValueTask ProcessPoolAsync(bool thisLevelOnly = false)
 			{
-				while (ProcessPoolInternal()) { }
+				while (await ProcessPoolAsyncInternal()) { }
 
 				if (thisLevelOnly) return;
 
 				// walk up instead of recurse.
 				Level? next = this;
 				while ((next = next._nextLevel) != null)
-					next.ProcessPool(true);
+					await next.ProcessPoolAsync(true);
 			}
 
-			protected override void OnAfterPost()
+			protected override async ValueTask OnAfterPost()
 			{
-				base.OnAfterPost();
+				await base.OnAfterPost();
 
 				int count;
 				do
@@ -175,8 +175,8 @@ namespace Solve.ProcessingSchemes.Tower
 				while (count != 0);
 			}
 
-			protected override void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
-				=> NextLevel.Post(priority, challenger);
+			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+				=> NextLevel.PostAsync(priority, challenger);
 
 			void ProcessInjested(byte priority, LevelEntry<TGenome>? challenger)
 			{
@@ -184,20 +184,11 @@ namespace Solve.ProcessingSchemes.Tower
 					Processed[priority].Enqueue(challenger);
 			}
 
-			protected override void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
-			{
-				var task = ProcessEntry(challenger);
-				if (task.IsCompletedSuccessfully)
-					ProcessInjested(priority, task.Result);
-				else
-				{
-					Task.Run(async () =>
-					{
-						ProcessInjested(priority, await task);
-					});
-				}
+			async ValueTask ProcessInjestedAsync(byte priority, ValueTask<LevelEntry<TGenome>?> challenger)
+				=> ProcessInjested(priority, await challenger);
 
-			}
+			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+				=> ProcessInjestedAsync(priority, ProcessEntry(challenger));
 		}
 
 	}

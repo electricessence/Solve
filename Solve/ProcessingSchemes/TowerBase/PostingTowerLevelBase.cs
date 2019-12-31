@@ -30,21 +30,21 @@ namespace Solve.ProcessingSchemes
 				.ToArray();
 		}
 
-		protected abstract void PostNextLevel(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
+		protected abstract ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
 
 		protected readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>[] Incomming;
 
-		public void Post(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+		public async ValueTask PostAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 		{
 			Incomming[priority]
 				.Enqueue(challenger);
 
-			OnAfterPost();
+			await OnAfterPost();
 		}
 
-		protected abstract void ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
+		protected abstract ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
 
-		protected virtual void OnAfterPost()
+		protected virtual async ValueTask OnAfterPost()
 		{
 			int count;
 			do
@@ -57,7 +57,7 @@ namespace Solve.ProcessingSchemes
 					var q = Incomming[i];
 					if (!q.TryDequeue(out var c)) continue;
 
-					ProcessInjested(i, c);
+					await ProcessInjested(i, c);
 
 					i = 0; // Reset to top queue.
 					++count;
@@ -108,7 +108,7 @@ namespace Solve.ProcessingSchemes
 				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToImmutableArray());
 
 			Factory.EnqueueChampion(champ.Genome);
-			PostNextLevel(0, champ);
+			await PostNextLevelAsync(0, champ);
 			return null;
 		}
 
