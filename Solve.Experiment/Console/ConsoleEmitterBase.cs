@@ -35,8 +35,8 @@ namespace Solve.Experiment.Console
 			// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
 			var (genome, poolIndex, fitness) = update;
 			var f = fitness.Clone();
-			//var pool = problem.Pools[poolIndex];
-			if (f.SampleCount >= SampleMinimum /*&& pool.UpdateBestFitness(genome, f)*/)
+			var pool = problem.Pools[poolIndex];
+			if (f.SampleCount >= SampleMinimum && pool.UpdateBestFitness(genome, f))
 			{
 				ConsoleQueue.Enqueue((problem, genome, poolIndex, f));
 				OnEmittingGenomeFitness(problem, genome, poolIndex, f);

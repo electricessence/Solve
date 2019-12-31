@@ -54,7 +54,7 @@ namespace Solve
 
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
-		public CancellationToken GetToken() => Canceller.Token;
+		public CancellationToken CancellationToken => Canceller.Token;
 
 		int _state;
 

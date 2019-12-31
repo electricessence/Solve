@@ -120,9 +120,8 @@ namespace Solve.Experiment.Console
 			{ }
 			Environment.Cancel();
 			EmitStatsAction(false);
-			SystemConsole.WriteLine("Done.");
-
 			OnComplete();
+			SystemConsole.WriteLine("Done.");
 		}
 
 		protected virtual void OnInit()
