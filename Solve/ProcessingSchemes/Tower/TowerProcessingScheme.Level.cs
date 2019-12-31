@@ -32,14 +32,17 @@ namespace Solve.ProcessingSchemes.Tower
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
-				Pool = Channel.CreateUnbounded<LevelEntry<TGenome>>();
+				Pool = Channel.CreateUnbounded<LevelEntry<TGenome>>(new UnboundedChannelOptions
+				{
+					AllowSynchronousContinuations = true
+				});
 
 				Processed = Enumerable
 					.Range(0, priorityLevels)
 					.Select(i => new ConcurrentQueue<LevelEntry<TGenome>>())
 					.ToArray();
 
-				PoolReader = Pool.Reader.Batch(PoolSize);
+				PoolReader = Pool.Reader.Batch(PoolSize, false, true);
 				PoolReader.ReadAllAsync(ProcessPoolAsyncInternal);
 			}
 

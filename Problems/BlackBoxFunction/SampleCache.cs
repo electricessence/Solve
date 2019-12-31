@@ -1,9 +1,9 @@
 ﻿using Open.Collections;
+using Open.RandomizationExtensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace BlackBoxFunction
 {
@@ -45,10 +45,10 @@ namespace BlackBoxFunction
 
 		IEnumerable<double> Samples()
 		{
-			var offset = RandomUtilities.Random.Next(1000) - Range / 2;
+			var offset = Randomizer.Random.Next(1000) - Range / 2;
 			while (true)
 			{
-				yield return RandomUtilities.Random.NextDouble() * Range + offset;
+				yield return Randomizer.Random.NextDouble() * Range + offset;
 			}
 		}
 
