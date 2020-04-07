@@ -503,18 +503,18 @@ namespace Solve
 			TGenome next()
 			{
 #endif
-			var q = 0;
-			while (q < PriorityQueues.Count)
-			{
-				if (PriorityQueues[q].TryGetNext(out var genome))
-					return genome;
-				else
-					q++;
-			}
+				var q = 0;
+				while (q < PriorityQueues.Count)
+				{
+					if (PriorityQueues[q].TryGetNext(out var genome))
+						return genome;
+					else
+						q++;
+				}
 #if DEBUG
 				generated = true;
 #endif
-			return GenerateOne();
+				return GenerateOne();
 #if DEBUG
 			}
 
