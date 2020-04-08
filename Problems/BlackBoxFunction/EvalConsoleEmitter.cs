@@ -1,6 +1,7 @@
 ﻿using Open.Evaluation.Core;
 using Solve.Evaluation;
 using Solve.Experiment.Console;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -53,15 +54,27 @@ namespace BlackBoxFunction
 			StringBuilder output)
 		{
 			//base.OnEmittingGenome(p, genome, fitness, output);
-			output.Append("Genome:").AppendLine(BLANK).AppendLine(FormatGenomeString(genome.ToAlphaParameters()));
+			output
+				.Append("Genome:")
+				.AppendLine(BLANK)
+				.AppendLine(Format(genome.Root));
 
 			if (genome.Root is IReducibleEvaluation<IEvaluate<double>> r && r.TryGetReduced(Catalog, out var reduced))
 			{
 				output
 					.Append("Reduced:")
 					.AppendLine(BLANK)
-					.AppendLine(FormatGenomeString(AlphaParameters.ConvertTo(reduced.ToStringRepresentation())));
+					.AppendLine(Format(reduced));
 			}
+
+			static string Format(IEvaluate<double> root)
+			{
+				var hash = root.ToStringRepresentation();
+				var alpha = AlphaParameters.ConvertTo(hash);
+				var formatted = FormatGenomeString(alpha);
+				return formatted;
+			}
+				
 		}
 	}
 }
