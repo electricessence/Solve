@@ -1,6 +1,7 @@
 ﻿using Solve;
 using Solve.Experiment.Console;
-using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,20 +9,17 @@ namespace Eater
 {
 	internal class Runner : RunnerBase<Genome>
 	{
-		// Keep some known viable genomes for reintroduction.
-		public static readonly string[] Seed =
-		{
-			"^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^",
-			"^^^>^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^^>^^^^^^^^>^^^^^^^^>^^^^^^^>^^^^^^^>^^^^^^>^^^^^^>^^^^^>^^^^^>^^^^>^^^^>^^^>^^^>^^>^^>^>^^^^^>^^^^^>^^^^^^^^^>^^^^^^^>^^",
-			"3^>6^>9^>9^>9^>8^>8^>7^>7^>6^>6^>5^>5^>4^>4^>3^>3^>2^>2^>^>5^>5^>9^>5^"
-		};
+		readonly ushort _size;
 
-		readonly ushort _minSamples;
 		//readonly ushort _minConvSamples;
+		readonly EaterConsoleEmitter _emitter;
 
-		protected Runner(ushort minSamples/*, ushort minConvSamples = 20*/)
+		const bool leftTurnDisabled = true;
+
+		protected Runner(ushort size, ushort minSamples = 10/*, ushort minConvSamples = 20*/)
 		{
-			_minSamples = minSamples;
+			_size = size;
+			_emitter = new EaterConsoleEmitter(minSamples);
 			//_minConvSamples = minConvSamples;
 		}
 
@@ -40,26 +38,26 @@ namespace Eater
 					.Append('>').Append(s).Append('^');
 			});
 
-		public void Init(bool startWithIdealSeed = false)
+		public void InitIdealSeed()
 		{
-			const ushort size = 10;
+			var ideal = GenerateIdealSeed(_size);
+			_emitter.SaveGenomeImage(ideal, "IdealSeed");
+			Init(ideal);
+		}
 
-			var emitter = new EaterConsoleEmitter(_minSamples);
-			var seed = startWithIdealSeed ? new[] { GenerateIdealSeed(size) } : Array.Empty<string>();
-			if (seed.Length != 0) emitter.SaveGenomeImage(seed[0], "LatestSeed");
-
-			const bool leftTurnDisabled = true;
-			var seeds = seed
-				.Concat(GenomeFactory.Random(100, size * 2, leftTurnDisabled).Take(1000).AsParallel())
+		public void Init(params string[] seeds)
+		{
+			var seedGenomes = seeds
+				.Concat(GenomeFactory.Random(100, _size * 2, leftTurnDisabled).Take(1000).AsParallel())
 				.Distinct().Select(s => new Genome(s));
-			var factory = new GenomeFactory(seeds, leftTurnDisabled: leftTurnDisabled);
+			var factory = new GenomeFactory(seedGenomes, leftTurnDisabled: leftTurnDisabled);
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<Genome>(factory, (800, 40, 2));
 			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<Genome>(factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue
-			scheme.AddProblem(Problem.CreateF0102(size));
+			scheme.AddProblem(Problem.CreateF0102(_size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
-			Init(scheme, emitter, factory.Metrics);
+			Init(scheme, _emitter, factory.Metrics);
 
 			//{
 			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
@@ -89,17 +87,34 @@ namespace Eater
 			//}
 		}
 
-		static Task Main()
+		static async IAsyncEnumerable<string> Seeds()
+		{
+			const string fileName = "Seeds.txt";
+			if (!File.Exists(fileName))
+				yield break;
+
+			using var reader = File.OpenText(fileName);
+			string? line;
+			while(null!=(line = await reader.ReadLineAsync()))
+			{
+				if (string.IsNullOrWhiteSpace(line)) continue;
+				yield return line;
+			}
+		}
+
+		static async Task Main()
 		{
 			//Console.WriteLine("Press any key to start.");
 			//Console.ReadLine();
 			//Console.Clear();
-			var runner = new Runner(10);
-			runner.Init();
+			var runner = new Runner(20);
+			runner.Init(await Seeds().ToArrayAsync());
+
 			var message = string.Format(
 				"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
-				runner._minSamples);
-			return runner.Start(message);
+				runner._emitter.SampleMinimum);
+
+			await runner.Start(message);
 		}
 
 	}

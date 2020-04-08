@@ -34,4 +34,10 @@
     <ProjectReference Include="..\Core\Eater.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Seeds.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
