@@ -63,11 +63,19 @@ namespace Eater
 			{
 
 			}
-			BitmapQueue
-				.GetOrAdd(suffix, key => new ConcurrentQueue<string>())
-				.Enqueue(SaveGenomeImage(genome, fileName));
 
-			TryUpdateImages();
+			try
+			{
+				BitmapQueue
+					.GetOrAdd(suffix, key => new ConcurrentQueue<string>())
+					.Enqueue(SaveGenomeImage(genome, fileName));
+
+				TryUpdateImages();
+			}
+			catch (InvalidOperationException)
+			{
+
+			}
 
 			//// Expand the size for clarity.
 			//var newDim = new Rectangle(0, 0, bitmap.Width * 4, bitmap.Height * 4);

@@ -50,6 +50,7 @@ namespace Eater
 
 		void Freeze(ImmutableArray<Step> steps)
 		{
+			Debug.Assert(steps[0] == Step.Forward && steps[^1] == Step.Forward);
 			Genes = steps;
 			Freeze();
 		}

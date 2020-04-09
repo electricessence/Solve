@@ -73,6 +73,6 @@ namespace Eater
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)
 			=> GetVariations(source.Genes.ToArray())
 				.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<Genome>())
-				.Select(steps => new Genome(steps));
+				.Select(steps => new Genome(steps.TrimTurns()));
 	}
 }

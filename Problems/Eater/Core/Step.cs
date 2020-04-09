@@ -34,21 +34,17 @@ namespace Eater
 			return new StepCount(a.Step, a.Count + b.Count);
 		}
 
-		public static StepCount operator ++(StepCount a)
-		{
-			return new StepCount(a.Step, a.Count + 1);
-		}
-
-		public static StepCount operator --(StepCount a)
-		{
-			return new StepCount(a.Step, a.Count - 1);
-		}
+		public static StepCount operator ++(StepCount a) => new StepCount(a.Step, a.Count + 1);
+		public static StepCount operator --(StepCount a) => new StepCount(a.Step, a.Count - 1);
+		public static StepCount Forward(int count) => new StepCount(Step.Forward, count);
 
 		public override string ToString()
 		{
 			if (Count < 1) throw new InvalidOperationException($"Step count is less than 1. ({Count})");
 			return (Count == 1 ? string.Empty : Count.ToString()) + Step.ToChar();
 		}
+
+		public static implicit operator StepCount(Step step) => new StepCount(step);
 	}
 
 	public enum Orientation
@@ -326,6 +322,50 @@ namespace Eater
 
 			return false;
 
+		}
+
+
+		public static IEnumerable<Step> TrimTurns(this IEnumerable<Step> steps)
+		{
+			if (steps is ICollection<Step> c)
+			{
+				var count = c.Count;
+				if(count==0 || steps is IList<Step> list && list[0] == Step.Forward && list[count - 1] == Step.Forward)
+					return steps;
+			}
+
+			return Enumerate();
+
+			IEnumerable<Step> Enumerate()
+			{
+				var turnQueue = new Queue<Step>();
+				var start = true;
+				foreach (var step in steps)
+				{
+					if (start)
+					{
+						if (step == Step.Forward)
+						{
+							yield return step;
+							start = false;
+						}
+					}
+					else
+					{
+						if (step == Step.Forward)
+						{
+							while (turnQueue.TryDequeue(out var turn))
+								yield return turn;
+
+							yield return step;
+						}
+						else
+						{
+							turnQueue.Enqueue(step);
+						}
+					}
+				}
+			}
 		}
 
 		public static IEnumerable<Step>? Reduce(this IEnumerable<Step> steps)

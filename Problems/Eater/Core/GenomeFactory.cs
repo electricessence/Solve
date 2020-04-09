@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -12,7 +13,6 @@ namespace Eater
 	{
 		public GenomeFactory(IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false) : base(seeds)
 		{
-			LeftTurnDisabled = leftTurnDisabled;
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToList().AsReadOnly() : Steps.ALL;
 		}
 
@@ -24,42 +24,38 @@ namespace Eater
 
 		public static IEnumerable<string> Random(int moves, int maxMoveLength, bool leftTurnDisabled = false)
 		{
-			var random = new Random();
 			var size = moves * 2 - 1;
-			var pool = size > 1048576 ? null : ArrayPool<StepCount>.Shared;
+			var steps = new StepCount[size];
+			var random = new Random();
 
 			while (true)
 			{
-				var steps = pool?.Rent(size) ?? new StepCount[size];
-
 				for (var i = 0; i < size; i++)
 				{
-					switch (i % 2)
+					steps[i] = (i % 2) switch
 					{
-						case 0:
-							steps[i] = new StepCount(Step.Forward, random.Next(maxMoveLength) + 1);
-							break;
-						case 1:
-							steps[i] = new StepCount(leftTurnDisabled ? Step.TurnRight : (random.Next(2) == 0 ? Step.TurnRight : Step.TurnLeft));
-							break;
-					}
+						0 => new StepCount(Step.Forward, random.Next(maxMoveLength) + 1),
+						1 => new StepCount(leftTurnDisabled ? Step.TurnRight : (random.Next(2) == 0 ? Step.TurnRight : Step.TurnLeft)),
+						_ => throw new NotImplementedException()
+					};
 				}
 
-				var hash = steps.AsSpan().Slice(0, size).ToGenomeHash();
-				pool?.Return(steps);
+				// Must start and end with foward movements.  Turns are wasted.
+				Debug.Assert(steps[0].Step == Step.Forward);
+				Debug.Assert(steps[size - 1].Step == Step.Forward);
+
+				var hash = steps.AsSpan().ToGenomeHash();
 				yield return hash;
 			}
-
 		}
 
 		public readonly IReadOnlyList<Step> AvailableSteps;
 
-		private int _generatedCount;
-		public int GeneratedCount => _generatedCount;
+		public int GeneratedCount { get; private set; }
 
-		readonly LinkedList<Step> _lastGenerated = new LinkedList<Step>();
+		readonly LinkedList<StepCount> _lastGenerated = new LinkedList<StepCount>();
 		readonly Random Randomizer = new Random();
-		readonly bool LeftTurnDisabled;
+
 		/*
          * The goal here is to produce unique eaters.
          */
@@ -67,51 +63,18 @@ namespace Eater
 		{
 			lock (_lastGenerated)
 			{
-				var lastIndex = _lastGenerated.Count;
-				if (lastIndex == 0)
+				var count = GeneratedCount;
+				if (count == 0)
 				{
 					_lastGenerated.AddLast(Step.Forward);
 				}
 				else
 				{
-					bool carried;
-					var _node = _lastGenerated.Last;
-					Debug.Assert(_node != null);
-					do
-					{
-						carried = false;
-
-						// ReSharper disable once SwitchStatementMissingSomeCases
-						switch (_node.Value)
-						{
-							case Step.Forward:
-								_node.Value = LeftTurnDisabled ? Step.TurnRight : Step.TurnLeft;
-								break;
-
-							case Step.TurnLeft:
-								_node.Value = Step.TurnRight;
-								break;
-
-							case Step.TurnRight:
-								_node.Value = Step.Forward;
-								_node = _node.Previous;
-								if (_node == null)
-								{
-									_node = _lastGenerated.AddFirst(Step.Forward);
-								}
-								else
-								{
-									carried = true;
-								}
-								break;
-						}
-
-					}
-					while (carried || _lastGenerated.HasConcecutiveTurns());
+					_lastGenerated.AddLast(Step.TurnRight);
+					_lastGenerated.AddLast(StepCount.Forward(Randomizer.Next(count * 2)));
 				}
 
-
-				Interlocked.Increment(ref _generatedCount);
+				++GeneratedCount;
 				return new Genome(_lastGenerated);
 			}
 		}
@@ -130,8 +93,8 @@ namespace Eater
 
 			return new[]
 			{
-				new Genome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint))),
-				new Genome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint))),
+				new Genome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint)).TrimTurns()),
+				new Genome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint)).TrimTurns()),
 			};
 		}
 
@@ -149,19 +112,19 @@ namespace Eater
 			{
 				// Remove 1, 2, or 3?
 				var r = Randomizer.Next(Math.Min(3, length / 6)) + 1;
-				var asRemoved = Remove(genes, index, r).ToArray();
+				var asRemoved = Remove(genes, index, r).ToImmutableArray();
 				var rlen = asRemoved.Length;
 				var n = Randomizer.Next(rlen * 3); // 1 in 3 chances to 'swap' instead of remove.
 				if (n == index) n++;
 				return n < rlen
-					? new Genome(Splice(asRemoved, n, genes.Skip(index).Take(r).ToArray()))
-					: new Genome(asRemoved);
+					? new Genome(Splice(asRemoved, n, genes.Skip(index).Take(r)).TrimTurns())
+					: new Genome(asRemoved.TrimTurns());
 			}
 
 			// Replace or insert...
 			var g = AvailableSteps[i];
 			Genome Insert(Step s, int count)
-				=> new Genome(Splice(genes, index, s, count));
+				=> new Genome(Splice(genes, index, s, count).TrimTurns());
 
 			// ReSharper disable once SwitchStatementMissingSomeCases
 			switch (value)
@@ -186,7 +149,7 @@ namespace Eater
 			}
 
 			genes[index] = g;
-			return new Genome(genes);
+			return new Genome(genes.TrimTurns());
 
 		}
 
