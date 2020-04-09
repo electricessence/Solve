@@ -1,5 +1,6 @@
 ﻿using Solve;
 using Solve.Experiment.Console;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,14 +13,15 @@ namespace Eater
 		readonly ushort _size;
 
 		//readonly ushort _minConvSamples;
-		readonly EaterConsoleEmitter _emitter;
+		readonly Lazy<EaterConsoleEmitter> _emitter;
 
 		const bool leftTurnDisabled = true;
+		bool _init;
 
 		protected Runner(ushort size, ushort minSamples = 10/*, ushort minConvSamples = 20*/)
 		{
 			_size = size;
-			_emitter = new EaterConsoleEmitter(minSamples);
+			_emitter = new Lazy<EaterConsoleEmitter>(() => EaterConsoleEmitter.Create(minSamples));
 			//_minConvSamples = minConvSamples;
 		}
 
@@ -41,12 +43,18 @@ namespace Eater
 		public void InitIdealSeed()
 		{
 			var ideal = GenerateIdealSeed(_size);
-			_emitter.SaveGenomeImage(ideal, "IdealSeed");
+			_emitter.Value.SaveGenomeImage(ideal, "IdealSeed");
 			Init(ideal);
 		}
 
-		public void Init(params string[] seeds)
+		public void InitPreviousWinners() => Init(_emitter.Value.PreviousWinners);
+		public async ValueTask InitSeedsAsync() => Init(await Seeds().ToArrayAsync());
+		public void Init(params string[] seeds) => Init(seeds as IEnumerable<string> ?? Enumerable.Empty<string>());
+		public void Init(IEnumerable<string> seeds)
 		{
+			if (_init) throw new InvalidOperationException("Can only initialize once.");
+			_init = true;
+
 			var seedGenomes = seeds
 				.Concat(GenomeFactory.Random(100, _size * 2, leftTurnDisabled).Take(1000).AsParallel())
 				.Distinct().Select(s => new Genome(s));
@@ -57,7 +65,7 @@ namespace Eater
 			scheme.AddProblem(Problem.CreateF0102(_size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
-			Init(scheme, _emitter, factory.Metrics);
+			Init(scheme, _emitter.Value, factory.Metrics);
 
 			//{
 			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
@@ -95,7 +103,7 @@ namespace Eater
 
 			using var reader = File.OpenText(fileName);
 			string? line;
-			while(null!=(line = await reader.ReadLineAsync()))
+			while (null != (line = await reader.ReadLineAsync()))
 			{
 				if (string.IsNullOrWhiteSpace(line)) continue;
 				yield return line;
@@ -108,11 +116,12 @@ namespace Eater
 			//Console.ReadLine();
 			//Console.Clear();
 			var runner = new Runner(20);
-			runner.Init(await Seeds().ToArrayAsync());
+			//await runner.InitSeedsAsync();
+			runner.InitPreviousWinners();
 
 			var message = string.Format(
 				"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
-				runner._emitter.SampleMinimum);
+				runner._emitter.Value.SampleMinimum);
 
 			await runner.Start(message);
 		}

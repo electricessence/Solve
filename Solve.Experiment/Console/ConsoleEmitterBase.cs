@@ -1,4 +1,5 @@
-﻿using Open.Text;
+﻿using Open.Disposable;
+using Open.Text;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -47,50 +48,53 @@ namespace Solve.Experiment.Console
 
 		protected void TryEmitConsole()
 		{
-			ThreadSafety.TryLock(SynchronizedConsole.Sync,
-				() =>
+		retry:
+			var locked = ThreadSafety.TryLock(SynchronizedConsole.Sync, () =>
+			{
+				while (ConsoleQueue.TryDequeue(out var o1))
 				{
-					while (ConsoleQueue.TryDequeue(out var o1))
+					var d = new Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
 					{
-						var d = new Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
-						{
-							d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
-						}
-
-						while (ConsoleQueue.TryDequeue(out var o2))
-						{
-							d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
-						}
-
-
-						var output = StringBuilderPool.Instance.Take();
-						try
-						{
-							foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
-							{
-								OnEmittingGenome(g.Key, output);
-								foreach (var entry in g)
-								{
-									var (problem, _, poolIndex, fitness) = entry.Value;
-									output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
-								}
-							}
-
-							output.AppendLine();
-							SynchronizedConsole.Write(ref LastTopGenomeUpdate,
-								cursor =>
-								{
-									System.Console.Write(output.ToString());
-								});
-						}
-						finally
-						{
-							StringBuilderPool.Instance.Give(output);
-						}
-
-
+						d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
 					}
-				});
+
+					while (ConsoleQueue.TryDequeue(out var o2))
+					{
+						d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
+					}
+
+
+					var output = StringBuilderPool.Instance.Take();
+					try
+					{
+						foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
+						{
+							OnEmittingGenome(g.Key, output);
+							foreach (var entry in g)
+							{
+								var (problem, _, poolIndex, fitness) = entry.Value;
+								output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
+							}
+						}
+
+						output.AppendLine();
+						SynchronizedConsole.Write(ref LastTopGenomeUpdate,
+							cursor =>
+							{
+								System.Console.Write(output.ToString());
+							});
+					}
+					finally
+					{
+						StringBuilderPool.Instance.Give(output);
+					}
+
+
+				}
+			});
+
+			if (locked && !ConsoleQueue.IsEmpty)
+				goto retry;
 		}
 
 		[SuppressMessage("ReSharper", "UnusedParameter.Global")]
@@ -112,6 +116,5 @@ namespace Solve.Experiment.Console
 
 		public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
 			=> $"{problem.ID}.{poolIndex}:\t{fitness}";
-
 	}
 }
