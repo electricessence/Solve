@@ -14,25 +14,25 @@ namespace Eater
 
 			var len = source.Count;
 			var lenMinusOne = len - 1;
-			if (lenMinusOne > 1)
-			{
-				IEnumerable<Step> removeTail = source.Take(lenMinusOne).ToArray();
-				yield return removeTail;
-				yield return Enumerable.Repeat(source[lenMinusOne], 1).Concat(removeTail);
+			//if (lenMinusOne > 1)
+			//{
+			//	IEnumerable<Step> removeTail = source.Take(lenMinusOne).ToArray();
+			//	yield return removeTail;
+			//	yield return Enumerable.Repeat(source[lenMinusOne], 1).Concat(removeTail);
 
-				IEnumerable<Step> removeHead = source.Skip(1).ToArray();
-				yield return removeHead;
-				yield return removeHead.Concat(Enumerable.Repeat(source[0], 1));
-			}
+			//	IEnumerable<Step> removeHead = source.Skip(1).ToArray();
+			//	yield return removeHead;
+			//	yield return removeHead.Concat(Enumerable.Repeat(source[0], 1));
+			//}
+
+			yield return ForwardOne.Concat(source);
+			yield return source.Concat(ForwardOne);
 
 			// All forward movement lengths reduced by 1.
 			yield return source.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? --sc : sc).Steps();
 
 			// All forward movement lengths doubled...
 			yield return source.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1));
-
-			yield return ForwardOne.Concat(source);
-			yield return source.Concat(ForwardOne);
 
 			// Pattern is doubled.
 			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
@@ -50,24 +50,24 @@ namespace Eater
 			yield return source.Take(2 * third);
 			yield return source.Skip(2 * third);
 
-			//// Remove step at every point.
-			//if (lenMinusOne > 2)
-			//{
-			//	for (var i = 1; i < len - 2; i++)
-			//	{
-			//		var head = source.Take(i);
-			//		var tail = source.Skip(i + 1);
-			//		yield return head.Concat(tail);
-			//	}
-			//}
+			// Remove step at every point.
+			if (lenMinusOne > 2)
+			{
+				for (var i = 1; i < len - 2; i++)
+				{
+					var head = source.Take(i);
+					var tail = source.Skip(i + 1);
+					yield return head.Concat(tail);
+				}
+			}
 
-			//// Insert forward movement at every point.
-			//for (var i = 1; i < lenMinusOne; i++)
-			//{
-			//	var head = source.Take(i);
-			//	var tail = source.Skip(i);
-			//	yield return head.Concat(ForwardOne).Concat(tail);
-			//}
+			// Insert forward movement at every point.
+			for (var i = 1; i < lenMinusOne; i++)
+			{
+				var head = source.Take(i);
+				var tail = source.Skip(i);
+				yield return head.Concat(ForwardOne).Concat(tail);
+			}
 		}
 
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)

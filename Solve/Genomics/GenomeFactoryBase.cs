@@ -18,6 +18,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Solve
 {
@@ -851,17 +852,15 @@ namespace Solve
 				return false;
 			}
 
-			public void EnqueueVariations(TGenome genome)
+			public void EnqueueVariations(TGenome genome, int count = int.MaxValue)
 			{
 				if (genome == null) return;
-				while (AttemptEnqueueVariation(genome)) { }
+				var i = 0;
+				while (AttemptEnqueueVariation(genome) && i++ < count) { }
 			}
 
-			public void EnqueueVariations(IEnumerable<TGenome> genomes)
-			{
-				foreach (var g in genomes)
-					EnqueueVariations(g);
-			}
+			public void EnqueueVariations(IEnumerable<TGenome> genomes, int count = int.MaxValue)
+				=> Parallel.ForEach(genomes, g => EnqueueVariations(g, count));
 
 			public void EnqueueForVariation(TGenome genome)
 			{

@@ -12,8 +12,8 @@ namespace Solve
 		void EnqueueChampion(TGenome genome);
 		void EnqueueChampion(IEnumerable<TGenome> genomes);
 
-		void EnqueueVariations(TGenome genome);
-		void EnqueueVariations(IEnumerable<TGenome> genomes);
+		void EnqueueVariations(TGenome genome, int count = int.MaxValue);
+		void EnqueueVariations(IEnumerable<TGenome> genomes, int count = int.MaxValue);
 
 		void EnqueueForVariation(TGenome genome);
 		void EnqueueForVariation(IEnumerable<TGenome> genomes);
