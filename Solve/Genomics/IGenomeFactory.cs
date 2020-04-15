@@ -4,15 +4,19 @@
  */
 
 
+using Open.RandomizationExtensions;
+using Open.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace Solve
 {
 	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
-	public interface IGenomeFactory<TGenome> : IEnumerable<TGenome>
-	 where TGenome : class, IGenome
+	public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
+		where TGenome : class, IGenome
 	{
 		/*
 		 * Note that the input collections are all arrays for some important reasons:
@@ -21,12 +25,8 @@ namespace Solve
 		 * 3) Forces the person using this class to smartly think about how to provide the array.
 		 */
 
-		TGenome? GenerateOne(
+		TGenome GenerateOne(
 			params TGenome[] source);
-
-		IEnumerable<TGenome> Generate(
-			params TGenome[] source);
-
 
 		bool TryGenerateNew(
 			[NotNullWhen(true)] out TGenome? potentiallyNew,
@@ -35,35 +35,96 @@ namespace Solve
 		IEnumerable<TGenome> GenerateNew(
 			params TGenome[] source);
 
+		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
+
+		public IEnumerable<TGenome> Generate(params TGenome[] source)
+		{
+		next:
+			using (TimeoutHandler.New(9000, ms =>
+			{
+				Console.WriteLine("Warning: {0}.GenerateOne() is taking longer than {1} milliseconds.\n", this, ms);
+			}))
+			{
+				yield return GenerateOne(source);
+			}
+			goto next;
+		}
+
 		bool AttemptNewMutation(
 			TGenome source,
 			[NotNullWhen(true)] out TGenome? mutation,
 			byte triesPerMutationLevel = 5,
 			byte maxMutations = 3);
 
-		bool AttemptNewMutation(
-			in ReadOnlySpan<TGenome> source,
-			[NotNullWhen(true)] out TGenome? mutation,
+		public bool AttemptNewMutation(
+			IEnumerable<TGenome> source,
+			[NotNullWhen(true)] out TGenome? genome,
 			byte triesPerMutationLevel = 5,
-			byte maxMutations = 3);
+			byte maxMutations = 3)
+		{
+			var count = 0;
+			foreach (var g in source)
+			{
+				count++;
+				if (AttemptNewMutation(g, out genome, triesPerMutationLevel, maxMutations))
+					return true;
+			}
+			Debug.Assert(count != 0, "Should never pass an empty source for mutation.");
+			genome = default!;
+			return false;
+		}
 
-		IEnumerable<TGenome> Mutate(TGenome source);
+
+		public IEnumerable<TGenome> Mutate(TGenome source)
+		{
+			while (AttemptNewMutation(source, out var next))
+			{
+				yield return next;
+			}
+		}
 
 		// These will return null if the attempt fails.
 
 		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
 
-		TGenome[] AttemptNewCrossover(
-			TGenome primary,
-			in ReadOnlySpan<TGenome> others,
-			byte maxAttemptsPerCombination = 3);
+		// Random matchmaking...  It's possible to include repeats in the source to improve their chances. Possile O(n!) operaion.
+		public TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3)
+		{
+			var len = source.Length;
+			if (len == 2 && source[0] != source[1])
+				return AttemptNewCrossover(source[0], source[1], maxAttemptsPerCombination);
+			if (len <= 2)
+				return Array.Empty<TGenome>(); //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
 
-		TGenome[] AttemptNewCrossover(
-			in ReadOnlySpan<TGenome> source,
-			byte maxAttemptsPerCombination = 3);
+			var s0 = source.ToArray();
+			var isFirst = true;
+			do
+			{
+				// Take one.
+				var a = s0.RandomSelectOne();
+				// Get all others (in orignal order/duplicates).
+				var s1 = s0.Where(g => g != a).ToArray();
 
-		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
+				// Any left?
+				while (s1.Length != 0)
+				{
+					isFirst = false;
+					var b = s1.RandomSelectOne();
+					var offspring = AttemptNewCrossover(a, b, maxAttemptsPerCombination);
+					if (offspring.Length != 0) return offspring;
+					// Reduce the possibilites.
+					s1 = s1.Where(g => g != b).ToArray();
+				}
 
-		TGenome? Next();
+				if (isFirst) // There were no other available candicates to cross over with. :(
+					return Array.Empty<TGenome>(); //throw new InvalidOperationException("Must have at least two unique genomes to crossover with.");
+
+				// Okay so we've been through all of them with 'a' Now move on to another.
+				s0 = s0.Where(g => g != a).ToArray();
+			}
+			while (source.Length > 1); // Less than 2 left? Then we have no other options.
+
+			return Array.Empty<TGenome>();
+		}
 	}
 }

@@ -25,8 +25,8 @@ namespace Solve
 		/// </summary>
 		string Hash { get; }
 
-		// Simply added for potential convienience.  Equals may create problems.
-		bool Equivalent(IGenome other);
+		public bool Equivalent(IGenome other)
+			=> this == other || Hash == other.Hash;
 
 #if DEBUG
 		string StackTrace { get; }

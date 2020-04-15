@@ -25,9 +25,6 @@ namespace Solve
 		readonly Lazy<string> _hash;
 		public string Hash => IsFrozen ? _hash.Value : GetHash();
 
-		public bool Equivalent(IGenome other)
-			=> this == other || Hash == other.Hash;
-
 		protected abstract object CloneInternal();
 
 		public object Clone()
