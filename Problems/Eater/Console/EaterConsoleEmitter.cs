@@ -57,7 +57,7 @@ namespace Eater
 
 			current.Create();
 			return emitter;
-		}		
+		}
 
 		public string SaveGenomeImage(Genome genome, string fileName)
 		{

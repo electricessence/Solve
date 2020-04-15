@@ -1,5 +1,4 @@
-﻿using Open.Disposable;
-using Open.Text;
+﻿using Open.Text;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;

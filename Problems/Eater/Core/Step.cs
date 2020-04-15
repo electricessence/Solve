@@ -330,7 +330,7 @@ namespace Eater
 			if (steps is ICollection<Step> c)
 			{
 				var count = c.Count;
-				if(count==0 || steps is IList<Step> list && list[0] == Step.Forward && list[count - 1] == Step.Forward)
+				if (count == 0 || steps is IList<Step> list && list[0] == Step.Forward && list[count - 1] == Step.Forward)
 					return steps;
 			}
 

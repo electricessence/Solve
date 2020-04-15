@@ -1,7 +1,6 @@
 ﻿using Open.Evaluation.Core;
 using Solve.Evaluation;
 using Solve.Experiment.Console;
-using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -74,7 +73,7 @@ namespace BlackBoxFunction
 				var formatted = FormatGenomeString(alpha);
 				return formatted;
 			}
-				
+
 		}
 	}
 }
