@@ -25,36 +25,58 @@ namespace Solve
 		 * 3) Forces the person using this class to smartly think about how to provide the array.
 		 */
 
-		TGenome GenerateOne(
-			params TGenome[] source);
-
 		bool TryGenerateNew(
 			[NotNullWhen(true)] out TGenome? potentiallyNew,
-			params TGenome[] source);
-
-		IEnumerable<TGenome> GenerateNew(
-			params TGenome[] source);
-
-		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
-
-		public IEnumerable<TGenome> Generate(params TGenome[] source)
-		{
-		next:
-			using (TimeoutHandler.New(9000, ms =>
-			{
-				Console.WriteLine("Warning: {0}.GenerateOne() is taking longer than {1} milliseconds.\n", this, ms);
-			}))
-			{
-				yield return GenerateOne(source);
-			}
-			goto next;
-		}
+			IReadOnlyList<TGenome>? source = null);
 
 		bool AttemptNewMutation(
 			TGenome source,
 			[NotNullWhen(true)] out TGenome? mutation,
 			byte triesPerMutationLevel = 5,
 			byte maxMutations = 3);
+
+		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
+
+		IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
+
+		#region Default Implmentations
+		public TGenome GenerateOne()
+			=> GenerateOneFrom(null!) ?? throw new Exception("Unable to generate new genome.");
+
+		// These will return null if the attempt fails.
+		public TGenome? GenerateOneFrom(IReadOnlyList<TGenome> source)
+		{
+			TGenome? one = null;
+			using (TimeoutHandler.New(9000, ms =>
+			{
+				Console.WriteLine("Warning: {0}.GenerateOneFrom() is taking longer than {1} milliseconds.\n", this, ms);
+			}))
+			{
+				byte attempts = 0;
+				while (attempts < 100 && !TryGenerateNew(out one, source))
+					attempts++;
+			}
+
+			if (one is null)
+			{
+				Console.WriteLine("GenomeFactory failed GenerateOneFrom()");
+			}
+
+			return one;
+		}
+
+		public TGenome? GenerateOneFrom(params TGenome[] source)
+			=> GenerateOneFrom((IReadOnlyList<TGenome>)source);
+
+		public IEnumerable<TGenome> GenerateFrom(IReadOnlyList<TGenome> source)
+		{
+			TGenome? one;
+			while((one = GenerateOneFrom(source)) != null)
+			{
+				yield return one;
+			}
+		}
+
 
 		public bool AttemptNewMutation(
 			IEnumerable<TGenome> source,
@@ -82,10 +104,6 @@ namespace Solve
 				yield return next;
 			}
 		}
-
-		// These will return null if the attempt fails.
-
-		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
 
 		// Random matchmaking...  It's possible to include repeats in the source to improve their chances. Possile O(n!) operaion.
 		public TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3)
@@ -126,5 +144,7 @@ namespace Solve
 
 			return Array.Empty<TGenome>();
 		}
+		#endregion
+
 	}
 }

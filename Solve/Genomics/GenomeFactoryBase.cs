@@ -45,7 +45,7 @@ namespace Solve
 
 			var q = GetPriorityQueue(0);
 			q.EnqueueInternal(s, true);
-			q.EnqueueVariations(s);
+			q.EnqueueForVariation(s);
 		}
 
 		const string BREEDING_STOCK = "BreedingStock";
@@ -199,7 +199,7 @@ namespace Solve
 		const string GENERATE_NEW_SUCCESS = "Generate New SUCCEDED";
 		const string GENERATE_NEW_FAIL = "Generate New FAILED";
 
-		public bool TryGenerateNew([NotNullWhen(true)] out TGenome? potentiallyNew, params TGenome[] source)
+		public bool TryGenerateNew([NotNullWhen(true)] out TGenome? potentiallyNew, IReadOnlyList<TGenome>? source = null)
 		{
 			var factory = ((IGenomeFactory<TGenome>)this);
 			using (TimeoutHandler.New(5000, ms =>
@@ -210,7 +210,7 @@ namespace Solve
 				// Note: for now, we will only mutate by 1.
 
 				// See if it's possible to mutate from the provided genomes.
-				if (source != null && source.Length != 0 && factory.AttemptNewMutation(source, out potentiallyNew))
+				if (source != null && source.Count != 0 && factory.AttemptNewMutation(source, out potentiallyNew))
 				{
 					MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
 					return true;
@@ -236,35 +236,6 @@ namespace Solve
 			}
 			return generated;
 		}
-
-		public TGenome GenerateOne(params TGenome[] source)
-			=> GenerateNew(source).FirstOrDefault();
-
-		public IEnumerable<TGenome> GenerateNew(params TGenome[] source)
-		{
-			while (true)
-			{
-				TGenome? one = null;
-				using (TimeoutHandler.New(9000, ms =>
-				{
-					Console.WriteLine("Warning: {0}.GenerateNew() is taking longer than {1} milliseconds.\n", this, ms);
-				}))
-				{
-					byte attempts = 0;
-					while (attempts < 100 && !TryGenerateNew(out one, source))
-						attempts++;
-				}
-				if (one == null)
-				{
-					Console.WriteLine("GenomeFactory failed GenerateNew()");
-					break;
-				}
-
-				yield return one;
-			}
-		}
-
-
 
 
 		// Be sure to call Registration within the GenerateOne call.
@@ -401,7 +372,7 @@ namespace Solve
 #if DEBUG
 				generated = true;
 #endif
-				return GenerateOne();
+				return ((IGenomeFactory<TGenome>)this).GenerateOne();
 #if DEBUG
 			}
 
@@ -644,7 +615,8 @@ namespace Solve
 
 							// Generate more (and insert at higher priority) to improve the pool.
 							// This can be problematic later on.
-							EnqueueInternal(Factory.GenerateOne(genome, mate.genome));
+							var g = ((IGenomeFactory<TGenome>)Factory).GenerateOneFrom(genome, mate.genome);
+							if(g!=null) EnqueueInternal(g);
 						}
 
 						// Might still need more funtime.
@@ -798,6 +770,7 @@ namespace Solve
 				= new ConcurrentQueue<TGenome>();
 
 			readonly List<Func<bool>> ProducerTriggers;
+
 			public List<Func<bool>> ExternalProducers { get; } = new List<Func<bool>>();
 
 			bool ProcessVariation()
@@ -864,7 +837,7 @@ namespace Solve
 				// We still want random production to occur every so often.
 
 				// ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-				ExternalProducers.Any(p => p?.Invoke() ?? false);
+				ExternalProducers.Any(p => p.Invoke());
 				Factory.MetricsCounter.Increment("External Producer Queried");
 
 				return false;
