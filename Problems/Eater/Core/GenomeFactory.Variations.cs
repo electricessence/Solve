@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Open.Collections;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Eater
 			// Cut lenghts in half.
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
-			for (var i = 0; i < stepCount; i++)
+			foreach (var i in Enumerable.Range(0, stepCount).Shuffle())
 			{
 				var step = stepCounts[i];
 
@@ -29,14 +30,14 @@ namespace Eater
 
 				if (step.Count < 2) continue;
 
-				// Add one.
-				yield return head
-					.Concat(StepCount.Forward(step.Count + 1))
-					.Concat(tail);
-
 				// Half a length.
 				yield return head
 					.Concat(StepCount.Forward(step.Count / 2))
+					.Concat(tail);
+
+				// Add one.
+				yield return head
+					.Concat(StepCount.Forward(step.Count + 1))
 					.Concat(tail);
 			}
 
