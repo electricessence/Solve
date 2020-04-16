@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,64 +11,93 @@ namespace Eater
 
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
+			// Cut lenghts in half.
+			var stepCounts = source.ToStepCounts().ToArray();
+			var stepCount = stepCounts.Length;
+			for (var i = 0; i < stepCount; i++)
+			{
+				var step = stepCounts[i];
+
+				if (step.Step != Step.Forward) continue;
+				var head = stepCounts.Take(i).Steps();
+				var tail = stepCounts.Skip(i + 1).Steps();
+
+				// Double a length.
+				yield return head
+					.Concat(StepCount.Forward(step.Count * 2))
+					.Concat(tail);
+
+				if (step.Count < 2) continue;
+
+				// Add one.
+				yield return head
+					.Concat(StepCount.Forward(step.Count + 1))
+					.Concat(tail);
+
+				// Half a length.
+				yield return head
+					.Concat(StepCount.Forward(step.Count / 2))
+					.Concat(tail);
+			}
+
 			yield return source.Reverse();
-
-			var len = source.Count;
-			var lenMinusOne = len - 1;
-			//if (lenMinusOne > 1)
-			//{
-			//	IEnumerable<Step> removeTail = source.Take(lenMinusOne).ToArray();
-			//	yield return removeTail;
-			//	yield return Enumerable.Repeat(source[lenMinusOne], 1).Concat(removeTail);
-
-			//	IEnumerable<Step> removeHead = source.Skip(1).ToArray();
-			//	yield return removeHead;
-			//	yield return removeHead.Concat(Enumerable.Repeat(source[0], 1));
-			//}
-
-			yield return ForwardOne.Concat(source);
-			yield return source.Concat(ForwardOne);
-
-			// All forward movement lengths reduced by 1.
-			yield return source.ToStepCounts().Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? --sc : sc).Steps();
-
-			// All forward movement lengths doubled...
-			yield return source.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1));
 
 			// Pattern is doubled.
 			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
 
-			var half = len / 2;
-			if (half <= 2) yield break;
-			yield return source.Take(half);
-			yield return source.Skip(half);
+			//var len = source.Count;
+			//var lenMinusOne = len - 1;
+			////if (lenMinusOne > 1)
+			////{
+			////	var removeTail = source.Take(lenMinusOne);
+			////	yield return removeTail.TrimTurns();
 
-			var third = len / 3;
-			if (third <= 2) yield break;
-			yield return source.Take(third);
-			yield return source.Skip(third).Take(third);
-			yield return source.Skip(third);
-			yield return source.Take(2 * third);
-			yield return source.Skip(2 * third);
+			////	var removeHead = source.Skip(1);
+			////	yield return removeHead.TrimTurns();
+			////}
 
-			// Remove step at every point.
-			if (lenMinusOne > 2)
-			{
-				for (var i = 1; i < len - 2; i++)
-				{
-					var head = source.Take(i);
-					var tail = source.Skip(i + 1);
-					yield return head.Concat(tail);
-				}
-			}
+			////yield return ForwardOne.Concat(source);
+			////yield return source.Concat(ForwardOne);
 
-			// Insert forward movement at every point.
-			for (var i = 1; i < lenMinusOne; i++)
-			{
-				var head = source.Take(i);
-				var tail = source.Skip(i);
-				yield return head.Concat(ForwardOne).Concat(tail);
-			}
+			//// All forward movement lengths reduced by 1.
+			//yield return stepCounts.Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? --sc : sc).Steps();
+
+			//// Remove step at every point.
+			//if (lenMinusOne > 2)
+			//{
+			//	for (var i = 1; i < len - 2; i++)
+			//	{
+			//		var head = source.Take(i);
+			//		var tail = source.Skip(i + 1);
+			//		yield return head.Concat(tail);
+			//	}
+			//}
+
+			//// All forward movement lengths doubled...
+			//yield return source.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1));
+
+
+
+			//var half = len / 2;
+			//if (half <= 2) yield break;
+			//yield return source.Take(half);
+			//yield return source.Skip(half);
+
+			//var third = len / 3;
+			//if (third <= 2) yield break;
+			//yield return source.Take(third);
+			//yield return source.Skip(third).Take(third);
+			//yield return source.Skip(third);
+			//yield return source.Take(2 * third);
+			//yield return source.Skip(2 * third);
+
+			//// Insert forward movement at every point.
+			//for (var i = 1; i < lenMinusOne; i++)
+			//{
+			//	var head = source.Take(i);
+			//	var tail = source.Skip(i);
+			//	yield return head.Concat(ForwardOne).Concat(tail);
+			//}
 		}
 
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)

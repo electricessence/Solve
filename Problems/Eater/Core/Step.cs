@@ -1,5 +1,6 @@
 ﻿using Solve;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -16,7 +17,7 @@ namespace Eater
 		TurnLeft
 	}
 
-	public struct StepCount
+	public struct StepCount : IEnumerable<Step>
 	{
 		public Step Step;
 		public int Count;
@@ -44,6 +45,15 @@ namespace Eater
 			return (Count == 1 ? string.Empty : Count.ToString()) + Step.ToChar();
 		}
 
+		public IEnumerable<Step> AsEnumerable()
+			=> Enumerable.Repeat(Step, Count);
+
+		public IEnumerator<Step> GetEnumerator()
+			=> AsEnumerable().GetEnumerator();
+
+		IEnumerator IEnumerable.GetEnumerator()
+			=> GetEnumerator();
+
 		public static implicit operator StepCount(Step step) => new StepCount(step);
 	}
 
@@ -58,7 +68,7 @@ namespace Eater
 	public static class StepExtensions
 	{
 		public static IEnumerable<Step> Steps(this IEnumerable<StepCount> steps)
-			=> steps.SelectMany(s => Enumerable.Repeat(s.Step, s.Count));
+			=> steps.SelectMany(s => s.AsEnumerable());
 
 		public static IEnumerable<StepCount> ToStepCounts(this IEnumerable<Step> steps)
 		{
