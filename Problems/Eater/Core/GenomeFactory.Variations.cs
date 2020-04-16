@@ -8,7 +8,7 @@ namespace Eater
 {
 	public partial class GenomeFactory
 	{
-		static readonly IEnumerable<Step> ForwardOne = Enumerable.Repeat(Step.Forward, 1);
+		static readonly IEnumerable<Step> ForwardOne = StepCount.Forward(1);
 
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
@@ -46,16 +46,16 @@ namespace Eater
 			// Pattern is doubled.
 			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
 
-			//var len = source.Count;
-			//var lenMinusOne = len - 1;
-			////if (lenMinusOne > 1)
-			////{
-			////	var removeTail = source.Take(lenMinusOne);
-			////	yield return removeTail.TrimTurns();
+			var len = source.Count;
+			var lenMinusOne = len - 1;
+			//if (lenMinusOne > 1)
+			//{
+			//	var removeTail = source.Take(lenMinusOne);
+			//	yield return removeTail.TrimTurns();
 
-			////	var removeHead = source.Skip(1);
-			////	yield return removeHead.TrimTurns();
-			////}
+			//	var removeHead = source.Skip(1);
+			//	yield return removeHead.TrimTurns();
+			//}
 
 			////yield return ForwardOne.Concat(source);
 			////yield return source.Concat(ForwardOne);
@@ -91,14 +91,6 @@ namespace Eater
 			//yield return source.Skip(third);
 			//yield return source.Take(2 * third);
 			//yield return source.Skip(2 * third);
-
-			//// Insert forward movement at every point.
-			//for (var i = 1; i < lenMinusOne; i++)
-			//{
-			//	var head = source.Take(i);
-			//	var tail = source.Skip(i);
-			//	yield return head.Concat(ForwardOne).Concat(tail);
-			//}
 		}
 
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)

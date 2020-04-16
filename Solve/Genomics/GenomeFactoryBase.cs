@@ -6,11 +6,9 @@
 using App.Metrics;
 using Open.Collections;
 using Open.Collections.Synchronized;
-using Open.RandomizationExtensions;
 using Open.Threading.Tasks;
 using Solve.Debugging;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -210,10 +208,11 @@ namespace Solve
 				// Note: for now, we will only mutate by 1.
 
 				// See if it's possible to mutate from the provided genomes.
-				if (source != null && source.Count != 0 && factory.AttemptNewMutation(source, out potentiallyNew))
+				if (source != null && source.Count != 0)
 				{
+					var success = factory.AttemptNewMutation(source, out potentiallyNew);
 					MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
-					return true;
+					return success;
 				}
 
 				potentiallyNew = Registration(GenerateOneInternal());
@@ -244,7 +243,7 @@ namespace Solve
 		public bool AttemptNewMutation(
 			TGenome source,
 			[NotNullWhen(true)] out TGenome? mutation,
-			byte triesPerMutationLevel = 5,
+			byte triesPerMutationLevel = 2,
 			byte maxMutations = 3)
 		{
 			if (source is null) throw new ArgumentNullException(nameof(source));
@@ -615,8 +614,8 @@ namespace Solve
 
 							// Generate more (and insert at higher priority) to improve the pool.
 							// This can be problematic later on.
-							var g = ((IGenomeFactory<TGenome>)Factory).GenerateOneFrom(genome, mate.genome);
-							if(g!=null) EnqueueInternal(g);
+							//var g = ((IGenomeFactory<TGenome>)Factory).GenerateOneFrom(genome, mate.genome);
+							//if (g != null) EnqueueInternal(g);
 						}
 
 						// Might still need more funtime.
@@ -779,8 +778,9 @@ namespace Solve
 				{
 					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
 					if (!AttemptEnqueueVariation(vGenome)) continue;
-					// Taken one off, now put it back.
-					EnqueueForVariation(vGenome);
+					// Taken one off, now put it back.  But don't reinsert at highest priority.
+					if (Index == 0) Factory.GetPriorityQueue(1).EnqueueForVariation(vGenome);
+					else EnqueueForVariation(vGenome);
 					return true;
 				}
 				return false;

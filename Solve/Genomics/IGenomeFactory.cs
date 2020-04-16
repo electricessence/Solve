@@ -32,7 +32,7 @@ namespace Solve
 		bool AttemptNewMutation(
 			TGenome source,
 			[NotNullWhen(true)] out TGenome? mutation,
-			byte triesPerMutationLevel = 5,
+			byte triesPerMutationLevel = 2,
 			byte maxMutations = 3);
 
 		TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3);
@@ -53,7 +53,7 @@ namespace Solve
 			}))
 			{
 				byte attempts = 0;
-				while (attempts < 100 && !TryGenerateNew(out one, source))
+				while (attempts < 2 && !TryGenerateNew(out one, source))
 					attempts++;
 			}
 
@@ -71,7 +71,7 @@ namespace Solve
 		public IEnumerable<TGenome> GenerateFrom(IReadOnlyList<TGenome> source)
 		{
 			TGenome? one;
-			while((one = GenerateOneFrom(source)) != null)
+			while ((one = GenerateOneFrom(source)) != null)
 			{
 				yield return one;
 			}
@@ -81,7 +81,7 @@ namespace Solve
 		public bool AttemptNewMutation(
 			IEnumerable<TGenome> source,
 			[NotNullWhen(true)] out TGenome? genome,
-			byte triesPerMutationLevel = 5,
+			byte triesPerMutationLevel = 2,
 			byte maxMutations = 3)
 		{
 			var count = 0;
