@@ -9,7 +9,7 @@ namespace Eater
 	public partial class GenomeFactory
 	{
 		protected override Genome MutateInternal(Genome target)
-			=> new Genome(MutateCore(target.Genes).TrimTurns());
+			=> new Genome(MutateCore(target.Genes).Reduce().TrimTurns());
 
 		private IEnumerable<Step> MutateCore(IReadOnlyList<Step> genes)
 		{

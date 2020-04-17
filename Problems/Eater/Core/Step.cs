@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -379,10 +380,19 @@ namespace Eater
 			}
 		}
 
-		public static IEnumerable<Step>? Reduce(this IEnumerable<Step> steps)
+		public static bool TryReduce(this IEnumerable<Step> steps, [NotNullWhen(true)] out IEnumerable<Step> reduced)
 		{
 			var red = ReduceLoop(steps.ToGenomeHash());
-			return red == null ? null : FromGenomeHash(red);
+			reduced = steps;
+			if (red is null) return false;
+			reduced = FromGenomeHash(red);
+			return true;
+		}
+
+		public static IEnumerable<Step> Reduce(this IEnumerable<Step> steps)
+		{
+			var red = ReduceLoop(steps.ToGenomeHash());
+			return red == null ? steps : FromGenomeHash(red);
 		}
 
 		static readonly string TURN_LEFT_4 = new string(TURN_LEFT, 4);
