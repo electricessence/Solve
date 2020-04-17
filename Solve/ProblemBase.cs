@@ -122,8 +122,11 @@ namespace Solve
 		}
 
 		// ReSharper disable once VirtualMemberNeverOverridden.Global
-		protected virtual Task<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
-			=> Task.Run(() => ProcessSampleMetrics(g, sampleId));
+		protected virtual async ValueTask<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
+		{
+			await Task.Yield();
+			return ProcessSampleMetrics(g, sampleId);
+		}
 
 		public async ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 		{
