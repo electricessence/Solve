@@ -15,6 +15,9 @@ namespace Eater
 
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
+			// Try to simply shorten the result first.
+			yield return source.Take(source.Count - 1);
+
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
 
