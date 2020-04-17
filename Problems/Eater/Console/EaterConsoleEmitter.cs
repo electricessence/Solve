@@ -37,23 +37,24 @@ namespace Eater
 			emitter.PreviousWinners = !progression.Exists
 				? ImmutableArray<string>.Empty
 				: progression
-				.EnumerateDirectories()
-				.OrderBy(d => d.Name).Last()
-				.EnumerateFiles("*.txt")
-				.GroupBy(file =>
-				{
-					var name = file.Name;
-					var i = name.IndexOf('.');
-					if (i == -1) return string.Empty;
-					return name.Substring(i);
-				})
-				.Select(g => g.OrderBy(file => file.Name).Last())
-				.Select(file =>
-				{
-					using var reader = file.OpenText();
-					return reader.ReadToEnd().Trim();
-				})
-				.ToImmutableArray();
+					.EnumerateDirectories()
+					.OrderBy(d => d.Name).LastOrDefault()?
+					.EnumerateFiles("*.txt")
+					.GroupBy(file =>
+					{
+						var name = file.Name;
+						var i = name.IndexOf('.');
+						if (i == -1) return string.Empty;
+						return name.Substring(i);
+					})
+					.Select(g => g.OrderBy(file => file.Name).Last())
+					.Select(file =>
+					{
+						using var reader = file.OpenText();
+						return reader.ReadToEnd().Trim();
+					})
+					.ToImmutableArray()
+					?? ImmutableArray<string>.Empty;
 
 			current.Create();
 			return emitter;
