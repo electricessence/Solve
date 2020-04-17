@@ -33,25 +33,6 @@ namespace Solve.ProcessingSchemes
 
 		protected abstract ValueTask PostAsync(TGenome genome);
 
-		//protected override Task StartInternal(CancellationToken token)
-		//{
-		//	var pOptions = new ParallelOptions
-		//	{
-		//		CancellationToken = token,
-		//	};
-
-		//	return Task.Run(cancellationToken: token, action: () =>
-		//	{
-		//		//Parallel.ForEach(Factory, pOptions, Post);
-
-		//		foreach (var f in Factory)
-		//		{
-		//			if (!token.IsCancellationRequested)
-		//				Post(f);
-		//		}
-		//	});
-		//}
-
 		readonly Channel<TGenome> FactoryBuffer = Channel.CreateBounded<TGenome>(/*Environment.ProcessorCount*/ 2);
 
 		async Task BufferGenomes(CancellationToken token)
@@ -137,6 +118,26 @@ namespace Solve.ProcessingSchemes
 			: Task.WhenAll(
 				PostingFactory.StartNew(() => BufferGenomes(token), token),
 				PostFromBuffer(token));
+
+		//protected override Task StartInternal(CancellationToken token)
+		//{
+		//	var pOptions = new ParallelOptions
+		//	{
+		//		CancellationToken = token,
+		//	};
+
+		//	return Task.Run(cancellationToken: token, action: () =>
+		//	{
+		//		//Parallel.ForEach(Factory, pOptions, Post);
+
+		//		foreach (var f in Factory)
+		//		{
+		//			if (!token.IsCancellationRequested)
+		//				Post(f);
+		//		}
+		//	});
+		//}
+
 	}
 
 }
