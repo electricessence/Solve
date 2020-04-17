@@ -2,7 +2,6 @@
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -52,7 +51,7 @@ namespace Solve.Experiment.Console
 			{
 				while (ConsoleQueue.TryDequeue(out var o1))
 				{
-					var d = new Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
+					var d = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Take();
 					{
 						d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
 					}
@@ -62,8 +61,7 @@ namespace Solve.Experiment.Console
 						d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
 					}
 
-
-					var output = StringBuilderPool.Instance.Take();
+					var output = StringBuilderPool.Take();
 					try
 					{
 						foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
@@ -85,7 +83,8 @@ namespace Solve.Experiment.Console
 					}
 					finally
 					{
-						StringBuilderPool.Instance.Give(output);
+						StringBuilderPool.Give(output);
+						DictionaryPool.Give(d);
 					}
 
 

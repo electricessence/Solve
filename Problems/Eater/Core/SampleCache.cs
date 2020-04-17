@@ -75,17 +75,20 @@ namespace Eater
 		{
 			double found = 0;
 			double energy = 0;
+			double wasted = 0;
 			var count = 0;
 			foreach (var entry in GenerateOrdered())
 			{
-				if (genome.Try(Boundary, entry.EaterStart, entry.Food, out var e))
+				if (genome.Try(Boundary, entry.EaterStart, entry.Food, out var e, out var w))
 					found++;
 				energy += e;
+				wasted += w;
 				count++;
 			}
 
 			return new[] {
 				new ProcedureResult(found, count),
+				new ProcedureResult(- wasted, count),
 				new ProcedureResult(- energy, count),
 				new ProcedureResult(- genome.Length * count, count)
 			};

@@ -81,50 +81,50 @@ namespace Solve.Evaluation
 						break;
 
 					case Parameter _:
+					{
+						var options = Enumerable.Range(0, 5).ToList();
+						while (options.Any())
 						{
-							var options = Enumerable.Range(0, 5).ToList();
-							while (options.Any())
+							switch (options.RandomPluck())
 							{
-								switch (options.RandomPluck())
-								{
-									case 0:
-										return (Catalog.Mutation.MutateSign(gene, 1),
-												"Mutate sign");
+								case 0:
+									return (Catalog.Mutation.MutateSign(gene, 1),
+											"Mutate sign");
 
-									// Simply change parameters
-									case 1:
-										return (Catalog.Mutation.MutateParameter(gene),
-												"Mutate parameter");
+								// Simply change parameters
+								case 1:
+									return (Catalog.Mutation.MutateParameter(gene),
+											"Mutate parameter");
 
-									// Apply a function
-									case 2:
-										return (Catalog.Variation.ApplyRandomFunction(gene),
-											"Apply random function to paramter");
+								// Apply a function
+								case 2:
+									return (Catalog.Variation.ApplyRandomFunction(gene),
+										"Apply random function to paramter");
 
-									// Favor squaring...
-									case 3:
-										return (Catalog.Mutation.Square(gene),
-											"Apply random function to paramter");
+								// Favor squaring...
+								case 3:
+									return (Catalog.Mutation.Square(gene),
+										"Apply random function to paramter");
 
-									//// Split it...
-									//case 3:
-									//	if (Randomizer.Random.Next(0, 2) == 0)
-									//		return (Catalog.Mutation.Square(gene),
-									//			"Square parameter");
+								//// Split it...
+								//case 3:
+								//	if (Randomizer.Random.Next(0, 2) == 0)
+								//		return (Catalog.Mutation.Square(gene),
+								//			"Square parameter");
 
-									//	break;
+								//	break;
 
-									// Remove it!
-									default:
-										if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
-											return (attempt,
-												"Remove descendant");
-										break;
+								// Remove it!
+								default:
+									if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
+										return (attempt,
+											"Remove descendant");
+									break;
 
-								}
 							}
 						}
-						break;
+					}
+					break;
 
 					default:
 						if (gv is IFunction)

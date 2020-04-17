@@ -125,7 +125,7 @@ namespace Eater
 		public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
 
 		{
-			var sb = StringBuilderPool.Instance.Take();
+			var sb = StringBuilderPool.Take();
 			try
 			{
 				foreach (var s in steps)
@@ -138,7 +138,7 @@ namespace Eater
 			}
 			finally
 			{
-				StringBuilderPool.Instance.Give(sb);
+				StringBuilderPool.Give(sb);
 			}
 		}
 
@@ -261,14 +261,14 @@ namespace Eater
 
 		public static bool Try(this IEnumerable<Step> steps,
 			Size boundary, Point start, Point food)
-			=> Try(steps, boundary, start, food, out _);
+			=> Try(steps, boundary, start, food, out _, out _);
 
 		public static bool Try(this string steps,
-			Size boundary, Point start, Point food, out int energy)
-			=> Try(FromGenomeHash(steps), boundary, start, food, out energy);
+			Size boundary, Point start, Point food, out int energy, out int wasted)
+			=> Try(FromGenomeHash(steps), boundary, start, food, out energy, out wasted);
 
 		public static bool Try(this IEnumerable<Step> steps,
-			Size boundary, Point start, Point food, out int energy)
+			Size boundary, Point start, Point food, out int energy, out int wasted)
 		{
 			if (start.X > boundary.Width || start.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(start), start, "Start exceeds grid boundary.");
@@ -276,39 +276,15 @@ namespace Eater
 			if (food.X > boundary.Width || food.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(food), food, "Food exceeds grid boundary.");
 
-			var current = start;
-			var orientation = Orientation.Up;
-			energy = 0;
-
-			// Reduce enumerator allocations.
-			if (steps is IReadOnlyList<Step> list)
+			var cPool = CollectionPool<Point, HashSet<Point>>.Instance;
+			var wasteTracking = cPool.Take();
+			try
 			{
-				var len = list.Count;
-				for (var i = 0; i < len; i++)
-				{
-					var step = list[i];
-					energy++;
+				var current = start;
+				var orientation = Orientation.Up;
+				energy = 0;
+				wasted = 0;
 
-					switch (step)
-					{
-						case Step.Forward:
-							current = boundary.Forward(current, orientation);
-							if (current.Equals(food))
-								return true;
-							break;
-
-						case Step.TurnLeft:
-							orientation = orientation.TurnLeft();
-							break;
-
-						case Step.TurnRight:
-							orientation = orientation.TurnRight();
-							break;
-					}
-				}
-			}
-			else
-			{
 				foreach (var step in steps)
 				{
 					energy++;
@@ -317,6 +293,7 @@ namespace Eater
 					{
 						case Step.Forward:
 							current = boundary.Forward(current, orientation);
+							if (!wasteTracking.Add(current)) wasted++;
 							if (current.Equals(food))
 								return true;
 							break;
@@ -330,9 +307,13 @@ namespace Eater
 							break;
 					}
 				}
-			}
 
-			return false;
+				return false;
+			}
+			finally
+			{
+				cPool.Give(wasteTracking);
+			}
 
 		}
 

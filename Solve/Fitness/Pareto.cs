@@ -13,13 +13,12 @@ namespace Solve
 			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ImmutableArray<double>> scoreSelector)
+			where T : notnull
 		{
 			if (source == null)
 				throw new ArgumentNullException(nameof(source));
 
-#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
 			var d = new Dictionary<T, (T Value, ImmutableArray<double> Score)>(equalityComparer);
-#pragma warning restore CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
 			foreach (var (Value, Score) in source
 				.Select(s => (Value: s, Score: scoreSelector(s)))
 				.OrderBy(s => s.Score, CollectionComparer.Double.Descending)) // Enforce distinct by ordering.
@@ -47,6 +46,7 @@ namespace Solve
 			}
 			while (found);
 
+			d.Clear();
 			return p;
 		}
 
@@ -54,12 +54,14 @@ namespace Solve
 			IEnumerable<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ImmutableArray<double>> scoreSelector)
+			where T : notnull
 			=> FilterInternal(source, equalityComparer, scoreSelector);
 
 		public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
 			in ReadOnlySpan<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ImmutableArray<double>> scoreSelector)
+			where T : notnull
 			=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
 		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)

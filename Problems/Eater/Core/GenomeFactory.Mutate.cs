@@ -16,7 +16,7 @@ namespace Eater
 			var rand = Randomizer.Random;
 			var length = genes.Count;
 			var index = rand.Next(length);
-			var segments = SplicedEnumerable.Create(genes, index);
+			var segments = genes.SpliceAt(index);
 			var value = genes[index];
 
 			switch (rand.Next(4))
@@ -47,7 +47,7 @@ namespace Eater
 					throw new NotSupportedException();
 			}
 		}
-			
+
 
 
 	}

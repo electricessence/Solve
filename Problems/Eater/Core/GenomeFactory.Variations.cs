@@ -23,7 +23,7 @@ namespace Eater
 
 			var hash = stepCounts.Steps().ToGenomeHash();
 			var matches = UTurn.Matches(hash);
-			foreach(var match in matches.Cast<Match>())
+			foreach (var match in matches.Cast<Match>())
 			{
 				yield return Steps.FromGenomeHash(
 					hash.Substring(0, match.Index) +
