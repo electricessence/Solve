@@ -1,51 +1,65 @@
 ﻿using Open.Collections;
+using Solve;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Eater
 {
 	public partial class GenomeFactory
 	{
+		static readonly Regex UTurn = new Regex(@"\^([<>])\1\^", RegexOptions.Compiled);
+		static readonly Regex Loop = new Regex(@"(\^[<>])\1{2}\^", RegexOptions.Compiled);
+
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
-			// Cut lenghts in half.
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
+
+			var hash = stepCounts.Steps().ToGenomeHash();
+			var matches = UTurn.Matches(hash);
+			foreach(var match in matches.Cast<Match>())
+			{
+				yield return Steps.FromGenomeHash(
+					hash.Substring(0, match.Index) +
+					match.Value.Trim('^') +
+					hash.Substring(match.Index + match.Length));
+			}
+
+			matches = Loop.Matches(hash);
+			foreach (var match in matches.Cast<Match>())
+			{
+				yield return Steps.FromGenomeHash(
+					hash.Substring(0, match.Index) +
+					match.Value.Replace("^", string.Empty) +
+					hash.Substring(match.Index + match.Length));
+			}
+
 			foreach (var i in Enumerable.Range(0, stepCount).Shuffle())
 			{
+				var segments = SplicedEnumerable.Create(stepCounts.Take(i).Steps(), stepCounts.Skip(i + 1).Steps());
 				var step = stepCounts[i];
-				var head = stepCounts.Take(i).Steps();
-				var tail = stepCounts.Skip(i + 1).Steps();
 
 				// Remove one.
-				yield return head
-					.Concat(tail);
+				yield return segments;
 
 				if (step.Step != Step.Forward) continue;
 
 				// Double a length.
-				yield return head
-					.Concat(StepCount.Forward(step.Count * 2))
-					.Concat(tail);
+				yield return segments.InsertSegment(StepCount.Forward(step.Count * 2));
 
 				if (step.Count < 2) continue;
 
 				// Half a length.
-				yield return head
-					.Concat(StepCount.Forward(step.Count / 2))
-					.Concat(tail);
+				yield return segments.InsertSegment(StepCount.Forward(step.Count / 2));
 
 				// Add one.
-				yield return head
-					.Concat(StepCount.Forward(step.Count + 1))
-					.Concat(tail);
+				yield return segments.InsertSegment(StepCount.Forward(step.Count + 1));
 
-				// Add one.
-				yield return head
-					.Concat(StepCount.Forward(step.Count - 1))
-					.Concat(tail);
+				// Remove one.
+				yield return segments.InsertSegment(StepCount.Forward(step.Count - 1));
 			}
 
 			yield return source.Reverse();

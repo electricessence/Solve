@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -211,7 +212,7 @@ namespace Eater
 		public const char TURN_RIGHT = '>';
 		public const char TURN_LEFT = '<';
 
-		public static readonly IReadOnlyList<Step> ALL = (new List<Step> { Step.Forward, Step.TurnRight, Step.TurnLeft }).AsReadOnly();
+		public static readonly IReadOnlyList<Step> ALL = new[] { Step.Forward, Step.TurnRight, Step.TurnLeft }.ToImmutableArray();
 
 		public static char ToChar(this Step step) => step switch
 		{

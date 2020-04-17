@@ -51,26 +51,6 @@ namespace Solve
 		const string AWAITING_VARIATION = "AwaitingVariation";
 		const string AWAITING_MUTATION = "AwaitingMutation";
 
-		protected static IEnumerable<T> Remove<T>(ICollection<T> source, int index, int count = 1)
-		{
-			Debug.Assert(index < source.Count);
-			return source
-				.Take(index)
-				.Concat(source.Skip(index + count));
-		}
-
-		protected static IEnumerable<T> Splice<T>(ICollection<T> source, int index, IEnumerable<T> e)
-		{
-			Debug.Assert(index < source.Count);
-			return source
-				.Take(index)
-				.Concat(e)
-				.Concat(source.Skip(index));
-		}
-
-		protected static IEnumerable<T> Splice<T>(ICollection<T> source, int index, T e, int count = 1)
-			=> Splice(source, index, Enumerable.Repeat(e, count));
-
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry
