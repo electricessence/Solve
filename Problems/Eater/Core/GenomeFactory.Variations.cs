@@ -18,6 +18,11 @@ namespace Eater
 			// Try to simply shorten the result first.
 			yield return source.Take(source.Count - 1);
 
+			// Pattern is doubled.
+			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
+
+			yield return source.Reverse();
+
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
 
@@ -28,15 +33,6 @@ namespace Eater
 				yield return Steps.FromGenomeHash(
 					hash.Substring(0, match.Index) +
 					match.Value.Trim('^') +
-					hash.Substring(match.Index + match.Length));
-			}
-
-			matches = Loop.Matches(hash);
-			foreach (var match in matches.Cast<Match>())
-			{
-				yield return Steps.FromGenomeHash(
-					hash.Substring(0, match.Index) +
-					match.Value.Replace("^", string.Empty) +
 					hash.Substring(match.Index + match.Length));
 			}
 
@@ -65,11 +61,6 @@ namespace Eater
 				yield return segments.InsertSegment(StepCount.Forward(step.Count - 1));
 			}
 
-			yield return source.Reverse();
-
-			// Pattern is doubled.
-			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
-
 			// All forward movement lengths reduced by 1.
 			yield return stepCounts.Select(sc => sc.Step == Step.Forward && sc.Count > 1 ? --sc : sc).Steps();
 
@@ -89,6 +80,15 @@ namespace Eater
 			yield return source.Skip(third);
 			yield return source.Take(2 * third);
 			yield return source.Skip(2 * third);
+
+			matches = Loop.Matches(hash);
+			foreach (var match in matches.Cast<Match>())
+			{
+				yield return Steps.FromGenomeHash(
+					hash.Substring(0, match.Index) +
+					match.Value.Replace("^", string.Empty) +
+					hash.Substring(match.Index + match.Length));
+			}
 		}
 
 		protected override IEnumerable<Genome> GetVariationsInternal(Genome source)

@@ -16,7 +16,7 @@ namespace Eater
 		static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
 		static readonly EncoderParameters EncParams = new EncoderParameters(1)
 		{
-			Param = { [0] = new EncoderParameter(Encoder.Quality, 20L) }
+			Param = { [0] = new EncoderParameter(Encoder.Quality, 10L) }
 		};
 
 		readonly string ProgressionDirectoryPath;
@@ -65,6 +65,19 @@ namespace Eater
 			var rendered = Path.Combine(ProgressionDirectoryPath, $"{fileName}.jpg");
 			using (var bitmap = genome.Genes.ToArray().Render2())
 				bitmap.Save(rendered, JpgEncoder, EncParams);
+
+			//var file = new FileInfo(rendered);
+			//double before = file.Length;
+
+			//var optimizer = new ImageOptimizer()
+			//{
+			//	OptimalCompression = true
+			//};
+			//optimizer.Compress(file);
+
+			//file.Refresh();
+			//Console.WriteLine("Size changed: {0:p2}", before / file.Length);
+
 			return rendered;
 		}
 

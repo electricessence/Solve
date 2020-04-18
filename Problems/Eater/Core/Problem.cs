@@ -21,36 +21,98 @@ namespace Eater
 
 		const int FoodFoundRate = 0;
 		const int AverageEnergy = 1;
-		const int AveargeWasted = 2;
+		const int AverageWasted = 2;
+		const int GeneCount = 3;
 
-		protected static Fitness Fitness01(Genome genome, double[] metrics)
-			=> new Fitness(Metrics01,
-				metrics[FoodFoundRate],
-				-metrics[AveargeWasted],
-				-metrics[AverageEnergy],
-				-genome.GeneCount);
+
+		protected static readonly ImmutableArray<Metric> MetricsPrimary = new[]
+		{
+			new Metric(FoodFoundRate, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
+			new Metric(AverageEnergy, "Average-Energy", "Average-Energy {0:n3}"),
+			new Metric(AverageWasted, "Average-Wasted", "Average-Wasted {0:n3}"),
+			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}")
+		}.ToImmutableArray();
+
+		protected static Fitness FitnessPrimary(Genome genome, double[] metrics)
+			=> GetPrimaryMetricValues(MetricsPrimary, genome, metrics);
+
+		protected static readonly ImmutableArray<Metric> MetricsSecondary01 = new[]
+		{
+			MetricsPrimary[FoodFoundRate],
+			MetricsPrimary[AverageEnergy],
+			MetricsPrimary[GeneCount]
+		}.ToImmutableArray();
+
+		protected static Fitness FitnessSecondary01(Genome genome, double[] metrics)
+			=> GetSecondaryMetricValues(MetricsSecondary01, genome, metrics);
+
+		protected static readonly ImmutableArray<Metric> MetricsSecondary02 = new[]
+		{
+			MetricsPrimary[FoodFoundRate],
+			MetricsPrimary[GeneCount],
+			MetricsPrimary[AverageEnergy]
+		}.ToImmutableArray();
+
+		protected static Fitness FitnessSecondary02(Genome genome, double[] metrics)
+			=> GetSecondaryMetricValues(MetricsSecondary02, genome, metrics);
+
+		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
+		{
+			var len = metrics.Length;
+			var result = new double[metrics.Length];
+			for (var i = 0; i < len; i++)
+			{
+				var metric = metrics[i];
+				result[i] = metric.ID switch
+				{
+					FoodFoundRate => values[FoodFoundRate],
+					AverageEnergy => -values[AverageEnergy],
+					AverageWasted => -values[AverageWasted],
+					GeneCount => -genome.GeneCount,
+					_ => throw new IndexOutOfRangeException()
+				};
+			}
+			return new Fitness(metrics, result);
+		}
+
+		static Fitness GetSecondaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
+		{
+			var len = metrics.Length;
+			var result = new double[metrics.Length];
+			for (var i = 0; i < len; i++)
+			{
+				var metric = metrics[i];
+				result[i] = metric.ID switch
+				{
+					FoodFoundRate => values[FoodFoundRate],
+					AverageEnergy => -values[AverageEnergy] - values[AverageWasted] * 2,
+					GeneCount => -genome.GeneCount,
+					_ => throw new IndexOutOfRangeException()
+				};
+			}
+			return new Fitness(metrics, result);
+		}
 
 		protected static Fitness Fitness02(Genome genome, double[] metrics)
-			=> new Fitness(Metrics02,
-				metrics[FoodFoundRate],
-				-metrics[AveargeWasted],
-				-genome.GeneCount,
-				-metrics[AverageEnergy]);
+			=> GetPrimaryMetricValues(Metrics02, genome, metrics);
 
-		protected static readonly ImmutableArray<Metric> Metrics01 = new[]
-		{
-			new Metric(0, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
-			new Metric(1, "Average-Wasted", "Average-Wasted {0:n3}"),
-			new Metric(2, "Average-Energy", "Average-Energy {0:n3}"),
-			new Metric(3, "Gene-Count", "Gene-Count {0:n0}")
-		}.ToImmutableArray();
+		protected static Fitness Fitness03(Genome genome, double[] metrics)
+			=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
 		protected static readonly ImmutableArray<Metric> Metrics02 = new[]
 		{
-			Metrics01[0],
-			Metrics01[1],
-			Metrics01[3],
-			Metrics01[2]
+			MetricsPrimary[FoodFoundRate],
+			MetricsPrimary[AverageWasted],
+			MetricsPrimary[GeneCount],
+			MetricsPrimary[AverageEnergy]
+		}.ToImmutableArray();
+
+		protected static readonly ImmutableArray<Metric> Metrics03 = new[]
+		{
+			MetricsPrimary[FoodFoundRate],
+			MetricsPrimary[GeneCount],
+			MetricsPrimary[AverageEnergy],
+			MetricsPrimary[AverageWasted],
 		}.ToImmutableArray();
 
 		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
@@ -87,11 +149,17 @@ namespace Eater
 			};
 		}
 
-		public static Problem CreateF01(
+		public static Problem CreateFitnessPrimary(
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01));
+			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary));
+
+		public static Problem CreateFitnessSecondary(
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsSecondary01, FitnessSecondary01), (MetricsSecondary02, FitnessSecondary02));
 
 		public static Problem CreateF02(
 			ushort gridSize = 10,
@@ -103,7 +171,13 @@ namespace Eater
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02));
+
+		public static Problem CreateF010203(
+			ushort gridSize = 10,
+			ushort sampleSize = 40,
+			ushort championPoolSize = 100)
+			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02), (Metrics03, Fitness03));
 
 	}
 
