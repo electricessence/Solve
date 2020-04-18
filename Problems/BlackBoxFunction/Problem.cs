@@ -14,38 +14,62 @@ namespace BlackBoxFunction
 
 	public class Problem : ProblemBase<EvalGenome<double>>
 	{
+		const int Direction = 0;
+		const int Correlation = 1;
+		const int Divergence = 2;
+		const int GeneCount = 3;
+
+		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
+		{
+			var len = metrics.Length;
+			var result = new double[metrics.Length];
+			for (var i = 0; i < len; i++)
+			{
+				var metric = metrics[i];
+				result[i] = metric.ID switch
+				{
+					Direction => values[Direction],
+					Correlation => values[Correlation],
+					Divergence => -values[Divergence],
+					GeneCount => -genome.GeneCount,
+					_ => throw new IndexOutOfRangeException()
+				};
+			}
+			return new Fitness(metrics, result);
+		}
+
 		protected static readonly ImmutableArray<Metric> Metrics01 = new[]
 		{
-			new Metric(0, "Direction", "Direction {0:p1}", 1, double.Epsilon),
-			new Metric(0, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
-			new Metric(0, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
-			new Metric(2, "Gene-Count", "Gene-Count {0:n0}")
+			new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
+			new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
+			new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
+			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}")
 		}.ToImmutableArray();
 
 		protected static readonly ImmutableArray<Metric> Metrics02 = new[]
 		{
-			Metrics01[0],
-			Metrics01[2],
-			Metrics01[1],
-			Metrics01[3]
+			Metrics01[Direction],
+			Metrics01[Divergence],
+			Metrics01[Correlation],
+			Metrics01[GeneCount]
 		}.ToImmutableArray();
 
 		protected static readonly ImmutableArray<Metric> Metrics03 = new[]
 {
-			Metrics01[1],
-			Metrics01[2],
-			Metrics01[0],
-			Metrics01[3]
+			Metrics01[Correlation],
+			Metrics01[Divergence],
+			Metrics01[Direction],
+			Metrics01[GeneCount]
 		}.ToImmutableArray();
 
 		protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
-			=> new Fitness(Metrics01, metrics[0], metrics[1], -metrics[2], -genome.GeneCount);
+			=> GetPrimaryMetricValues(Metrics01, genome, metrics);
 
 		protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
-			=> new Fitness(Metrics02, metrics[0], -metrics[2], metrics[1], -genome.GeneCount);
+			=> GetPrimaryMetricValues(Metrics02, genome, metrics);
 
 		protected static Fitness Fitness03(EvalGenome<double> genome, double[] metrics)
-			=> new Fitness(Metrics03, metrics[1], -metrics[2], metrics[0], -genome.GeneCount);
+			=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
 		public readonly SampleCache Samples;
 
@@ -70,7 +94,7 @@ namespace BlackBoxFunction
 			// 			var gRed = g.AsReduced();
 			// #endif
 
-			for (var i = 0; i < SampleSizeInt; i++) // Parallel here if futile since there are other threads running this for other genomes.
+			for (var i = 0; i < SampleSizeInt; i++) // Parallel here is futile since there are other threads running this for other genomes.
 			{
 				var sample = samples[i];
 				Debug.Assert(sample != null);

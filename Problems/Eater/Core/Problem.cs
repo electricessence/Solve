@@ -24,6 +24,24 @@ namespace Eater
 		const int AverageWasted = 2;
 		const int GeneCount = 3;
 
+		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
+		{
+			var len = metrics.Length;
+			var result = new double[metrics.Length];
+			for (var i = 0; i < len; i++)
+			{
+				var metric = metrics[i];
+				result[i] = metric.ID switch
+				{
+					FoodFoundRate => values[FoodFoundRate],
+					AverageEnergy => -values[AverageEnergy],
+					AverageWasted => -values[AverageWasted],
+					GeneCount => -genome.GeneCount,
+					_ => throw new IndexOutOfRangeException()
+				};
+			}
+			return new Fitness(metrics, result);
+		}
 
 		protected static readonly ImmutableArray<Metric> MetricsPrimary = new[]
 		{
@@ -56,24 +74,7 @@ namespace Eater
 		protected static Fitness FitnessSecondary02(Genome genome, double[] metrics)
 			=> GetSecondaryMetricValues(MetricsSecondary02, genome, metrics);
 
-		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
-		{
-			var len = metrics.Length;
-			var result = new double[metrics.Length];
-			for (var i = 0; i < len; i++)
-			{
-				var metric = metrics[i];
-				result[i] = metric.ID switch
-				{
-					FoodFoundRate => values[FoodFoundRate],
-					AverageEnergy => -values[AverageEnergy],
-					AverageWasted => -values[AverageWasted],
-					GeneCount => -genome.GeneCount,
-					_ => throw new IndexOutOfRangeException()
-				};
-			}
-			return new Fitness(metrics, result);
-		}
+
 
 		static Fitness GetSecondaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
 		{

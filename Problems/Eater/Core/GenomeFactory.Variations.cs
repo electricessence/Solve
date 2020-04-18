@@ -18,11 +18,6 @@ namespace Eater
 			// Try to simply shorten the result first.
 			yield return source.Take(source.Count - 1);
 
-			// Pattern is doubled.
-			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
-
-			yield return source.Reverse();
-
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
 
@@ -35,6 +30,8 @@ namespace Eater
 					match.Value.Trim('^') +
 					hash.Substring(match.Index + match.Length));
 			}
+
+			yield return source.Reverse();
 
 			foreach (var i in Enumerable.Range(0, stepCount).Shuffle())
 			{
@@ -66,6 +63,9 @@ namespace Eater
 
 			// All forward movement lengths doubled...
 			yield return source.SelectMany(g => Enumerable.Repeat(g, g == Step.Forward ? 2 : 1));
+
+			// Pattern is doubled.
+			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
 
 			var len = source.Count;
 			var half = len / 2;
