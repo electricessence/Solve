@@ -3,6 +3,7 @@ using Solve;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Eater
 {
@@ -121,13 +122,15 @@ namespace Eater
 		{
 			var boundary = Samples.Boundary;
 			var samples = Samples.Get((int)sampleId);
-			var count = SampleSize;
+			samples = sampleId == -1 ? samples : samples.Take(SampleSize);
 			double found = 0;
 			double energy = 0;
 			double wasted = 0;
 
+			var count = 0;
 			foreach (var s in samples)
 			{
+				count++;
 				var success = g.Try(boundary, s.EaterStart, s.Food, out var e, out var w);
 				if (success) found++;
 
