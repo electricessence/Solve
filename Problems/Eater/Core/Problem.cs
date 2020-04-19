@@ -1,4 +1,5 @@
-﻿using Solve;
+﻿using Open.Numeric;
+using Solve;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -125,9 +126,8 @@ namespace Eater
 			double energy = 0;
 			double wasted = 0;
 
-			for (var i = 0; i < count; i++)
+			foreach (var s in samples)
 			{
-				var s = samples[i];
 				var success = g.Try(boundary, s.EaterStart, s.Food, out var e, out var w);
 				if (success) found++;
 
@@ -149,6 +149,13 @@ namespace Eater
 				averageWasted
 			};
 		}
+
+
+		public double[] TestAllSamples(Genome g)
+			=> ProcessSampleMetrics(g, -1);
+
+		public ProcedureResult[] TestAll(Genome genome)
+			=> TestAll(genome.Hash);
 
 		public static Problem CreateFitnessPrimary(
 			ushort gridSize = 10,

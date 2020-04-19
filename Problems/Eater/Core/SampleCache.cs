@@ -30,7 +30,7 @@ namespace Eater
 		public readonly Size Boundary;
 		public readonly int SeedOffset;
 
-		public SampleCache(ushort gridSize = 10)
+		public SampleCache(ushort gridSize)
 		{
 			if (gridSize < 2)
 				throw new ArgumentOutOfRangeException(nameof(gridSize), gridSize, "Must be at least 2.");
@@ -71,34 +71,8 @@ namespace Eater
 			// ReSharper disable once IteratorNeverReturns
 		}
 
-		public ProcedureResult[] TestAll(string genome)
-		{
-			double found = 0;
-			double energy = 0;
-			double wasted = 0;
-			var count = 0;
-			foreach (var entry in GenerateOrdered())
-			{
-				if (genome.Try(Boundary, entry.EaterStart, entry.Food, out var e, out var w))
-					found++;
-				energy += e;
-				wasted += w;
-				count++;
-			}
-
-			return new[] {
-				new ProcedureResult(found, count),
-				new ProcedureResult(- wasted, count),
-				new ProcedureResult(- energy, count),
-				new ProcedureResult(- genome.Length * count, count)
-			};
-		}
-
-		public ProcedureResult[] TestAll(Genome genome)
-			=> TestAll(genome.Hash);
-
-		public LazyList<Entry> Get(int id)
-			=> _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
+		public IEnumerable<Entry> Get(int id)
+			=> id == -1 ? GenerateOrdered() : _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
 
 		Point RandomPosition(Random random)
 			=> new Point(random.Next(GridSize), random.Next(GridSize));
