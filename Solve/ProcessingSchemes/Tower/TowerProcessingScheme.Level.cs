@@ -58,20 +58,21 @@ namespace Solve.ProcessingSchemes.Tower
 
 				var problemPools = Tower.Problem.Pools;
 				var problemPoolCount = problemPools.Count;
-				var selection = RankEntries(pool);
+				using var selection = RankEntries(pool);
 				var isTop = _nextLevel == null;
 				for (var i = 0; i < problemPoolCount; i++)
 				{
 					var s = selection[i];
 
 					// 2) Signal & promote champions.
-					var champ = s[0].GenomeFitness;
+					var champEntry = s[0];
+					var champ = champEntry.GenomeFitness;
 
 					if (isTop)
 						ProcessChampion(i, champ);
 
 					if (promoted.Add(champ.Genome.Hash))
-						await PostNextLevelAsync(1, champ).ConfigureAwait(false); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
+						await PromoteAsync(1, champEntry).ConfigureAwait(false); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
 
 					// 3) Increment fitness rejection for individual fitnesses.
 					for (var n = midPoint; n < len; n++)
@@ -86,9 +87,9 @@ namespace Solve.ProcessingSchemes.Tower
 					for (var i = 0; i < problemPoolCount; i++)
 					{
 						var s = selection[i];
-						var winner = s[n].GenomeFitness;
-						if (promoted.Add(winner.Genome.Hash))
-							await PostNextLevelAsync(2, winner).ConfigureAwait(false); // PostStandby?
+						var winner = s[n];
+						if (promoted.Add(winner.GenomeFitness.Genome.Hash))
+							await PromoteAsync(2, winner).ConfigureAwait(false); // PostStandby?
 					}
 				}
 
@@ -97,13 +98,10 @@ namespace Solve.ProcessingSchemes.Tower
 				// 5) Process remaining (losers)
 				var maxLoses = Tower.Environment.MaxLevelLosses;
 				var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-				foreach (var remainder in selection.Cast<IEnumerable<LevelEntry<TGenome>>>().Weave().Distinct())
+				foreach (var remainder in selection.Cast<IEnumerable<LevelEntry<TGenome>>>().Weave())
 				{
-					if (promoted.Contains(remainder.GenomeFitness.Genome.Hash))
-					{
-						LevelEntry<TGenome>.Pool.Give(remainder);
+					if (!promoted.Add(remainder.GenomeFitness.Genome.Hash))
 						continue;
-					}
 
 					remainder.IncrementLoss();
 
@@ -112,9 +110,11 @@ namespace Solve.ProcessingSchemes.Tower
 						var gf = remainder.GenomeFitness;
 						var fitnesses = gf.Fitness;
 						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							await PostNextLevelAsync(3, gf).ConfigureAwait(false);
+							await PromoteAsync(3, remainder).ConfigureAwait(false);
 						else
 						{
+							LevelEntry<TGenome>.Pool.Give(remainder);
+
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
 							if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
 								f.MetricsCounter.Increment("Genome Rejected");
@@ -123,20 +123,16 @@ namespace Solve.ProcessingSchemes.Tower
 							//							if (IsTrackedGenome(gf.Genome.Hash))
 							//								Debugger.Break();
 							//#endif
-
 						}
-
-						LevelEntry<TGenome>.Pool.Give(remainder);
 					}
 					else
 					{
 						Debug.Assert(remainder.LevelLossRecord > 0);
-						await Pool.Writer.WriteAsync(remainder).ConfigureAwait(false);// Didn't win, but still in the game.
+						await PostThisLevelAsync(remainder).ConfigureAwait(false);// Didn't win, but still in the game.
 					}
 				}
 
 				foreach (var sel in selection) sel.Dispose();
-				selection.Dispose();
 			}
 
 			public async ValueTask ProcessPoolAsync(bool thisLevelOnly = false)
@@ -168,7 +164,7 @@ namespace Solve.ProcessingSchemes.Tower
 						var q = Processed[i];
 						if (!q.TryDequeue(out var p)) continue;
 
-						await Pool.Writer.WriteAsync(p).ConfigureAwait(false);
+						await PostThisLevelAsync(p).ConfigureAwait(false);
 
 						i = -1; // Reset to top queue.
 						++count;
@@ -179,6 +175,9 @@ namespace Solve.ProcessingSchemes.Tower
 
 			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> NextLevel.PostAsync(priority, challenger);
+
+			protected override ValueTask PostThisLevelAsync(LevelEntry<TGenome> entry)
+				=> Pool.Writer.WriteAsync(entry);
 
 			void ProcessInjested(byte priority, LevelEntry<TGenome>? challenger)
 			{

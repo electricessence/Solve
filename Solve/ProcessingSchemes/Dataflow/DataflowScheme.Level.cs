@@ -50,6 +50,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				var preselector = new BatchBlock<LevelEntry<TGenome>>(
 					PoolSize,
 					new GroupingDataflowBlockOptions() { TaskScheduler = GetScheduler(1, "Level Preselection") });
+				Preselector = preselector;
 
 				// Step 2: Rank
 				var ranking = new TransformBlock<LevelEntry<TGenome>[], TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
@@ -70,11 +71,12 @@ namespace Solve.ProcessingSchemes.Dataflow
 						{
 							for (byte p = 0; p < poolCount; ++p)
 							{
-								var gf = pools[p][0].GenomeFitness;
+								var e = pools[p][0];
+								var gf = e.GenomeFitness;
 								if (isTop)
 									ProcessChampion(p, gf);
 								if (promoted.Add(gf.Genome.Hash))
-									await PostNextLevelAsync(1, gf).ConfigureAwait(false);
+									await PromoteAsync(1, e).ConfigureAwait(false);
 							}
 						}
 
@@ -83,9 +85,10 @@ namespace Solve.ProcessingSchemes.Dataflow
 						{
 							for (var p = 0; p < poolCount; ++p)
 							{
-								var gf = pools[p][i].GenomeFitness;
+								var e = pools[p][i];
+								var gf = e.GenomeFitness;
 								if (promoted.Add(gf.Genome.Hash))
-									await PostNextLevelAsync(2, gf).ConfigureAwait(false);
+									await PromoteAsync(2, e).ConfigureAwait(false);
 							}
 						}
 
@@ -115,9 +118,13 @@ namespace Solve.ProcessingSchemes.Dataflow
 								{
 									var fitnesses = gf.Fitness;
 									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-										await PostNextLevelAsync(3, gf).ConfigureAwait(false);
-									else if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-										f.MetricsCounter.Increment("Genome Rejected");
+										await PromoteAsync(3, loser).ConfigureAwait(false);
+									else
+									{
+										LevelEntry<TGenome>.Pool.Give(loser);
+										if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
+											f.MetricsCounter.Increment("Genome Rejected");
+									}
 								}
 								else
 								{
@@ -140,17 +147,26 @@ namespace Solve.ProcessingSchemes.Dataflow
 					{
 						var result = await ProcessEntry(c).ConfigureAwait(false);
 						if (result != null && !preselector.Post(result))
-							throw new Exception("Processor refused challenger.");
+							throw new Exception("Preselector refused challenger.");
 					});
 
 				preselector.LinkTo(ranking);
 				ranking.LinkTo(selection);
 			}
 
+			readonly ITargetBlock<LevelEntry<TGenome>> Preselector;
 			readonly ITargetBlock<(TGenome Genome, Fitness[] Fitness)> Processor;
 
 			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 				=> NextLevel.PostAsync(priority, challenger);
+
+			protected override ValueTask PostThisLevelAsync(LevelEntry<TGenome> entry)
+			{
+				if(!Preselector.Post(entry))
+					throw new Exception("Preselector refused challenger.");
+
+				return new ValueTask();
+			}
 
 			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
 			{

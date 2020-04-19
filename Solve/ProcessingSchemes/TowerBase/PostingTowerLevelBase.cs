@@ -14,12 +14,17 @@ namespace Solve.ProcessingSchemes
 		protected readonly IGenomeFactoryPriorityQueue<TGenome> Factory;
 		protected abstract bool IsTop { get; }
 
+		protected readonly bool IsMax;
+
 		protected PostingTowerLevelBase(
 			int level,
 			TTower tower,
 			byte priorityLevels)
 			: base(level, tower?.Environment.PoolSize ?? throw new ArgumentNullException(nameof(tower)), tower)
 		{
+			var max = tower.Environment.MaxLevels;
+			if (level > max) throw new ArgumentOutOfRangeException(nameof(level), level, $"Must be below maximum of {max}.");
+			IsMax = level + 1 == tower.Environment.MaxLevels;
 			Factory = tower.Environment.Factory[1]; // Use a lower priority than the factory used by broadcasting.
 
 			BestProgressiveFitness = new double[tower.Problem.Pools.Count][];
@@ -31,6 +36,22 @@ namespace Solve.ProcessingSchemes
 		}
 
 		protected abstract ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger);
+
+		protected abstract ValueTask PostThisLevelAsync(LevelEntry<TGenome> entry);
+
+		protected ValueTask PromoteAsync(byte priority, LevelEntry<TGenome> challenger)
+		{
+			if (IsMax) return PostThisLevelAsync(challenger);
+
+			try
+			{
+				return PostNextLevelAsync(priority, challenger.GenomeFitness);
+			}
+			finally
+			{
+				LevelEntry<TGenome>.Pool.Give(challenger);
+			}
+		}
 
 		protected readonly ConcurrentQueue<(TGenome Genome, Fitness[] Fitness)>[] Incomming;
 
@@ -104,7 +125,7 @@ namespace Solve.ProcessingSchemes
 				}
 			}
 
-			if (result.Any(r => r.fresh) || !result.Any(r => r.success))
+			if (IsMax || result.Any(r => r.fresh) || !result.Any(r => r.success))
 				return LevelEntry<TGenome>.Init(in champ, result.Select(r => r.values).ToImmutableArray());
 
 			Factory.EnqueueChampion(champ.Genome);
