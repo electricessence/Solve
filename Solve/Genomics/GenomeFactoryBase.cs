@@ -758,9 +758,8 @@ namespace Solve
 				{
 					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
 					if (!AttemptEnqueueVariation(vGenome)) continue;
-					// Taken one off, now put it back.  But don't reinsert at highest priority.
-					if (Index == 0) Factory.GetPriorityQueue(1).EnqueueForVariation(vGenome);
-					else EnqueueForVariation(vGenome);
+					// Taken one off, now put it back.
+					EnqueueForVariation(vGenome);
 					return true;
 				}
 				return false;
