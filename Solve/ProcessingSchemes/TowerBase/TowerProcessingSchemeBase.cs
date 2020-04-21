@@ -1,4 +1,5 @@
-﻿using System;
+﻿using App.Metrics;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
@@ -14,12 +15,13 @@ namespace Solve.ProcessingSchemes
 		protected const ushort DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION = DEFAULT_MAX_LEVEL_LOSSES * 30;
 
 		protected TowerProcessingSchemeBase(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(genomeFactory/*, true*/)
+			: base(metrics, genomeFactory/*, true*/)
 		{
 			if (poolSize.Minimum < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), "Must be at least 2.");
@@ -44,12 +46,13 @@ namespace Solve.ProcessingSchemes
 		}
 
 		protected TowerProcessingSchemeBase(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
+			: this(metrics, genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
 		internal protected readonly (ushort First, ushort Minimum, ushort Step) PoolSize;

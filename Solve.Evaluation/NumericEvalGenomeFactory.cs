@@ -1,4 +1,5 @@
-﻿using Open.Collections;
+﻿using App.Metrics.Counter;
+using Open.Collections;
 using Open.Evaluation;
 using Open.Evaluation.Arithmetic;
 using Open.Evaluation.Core;
@@ -13,21 +14,29 @@ namespace Solve.Evaluation
 	// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 	public partial class NumericEvalGenomeFactory : EvalGenomeFactoryBase<double>
 	{
-		public NumericEvalGenomeFactory() { }
+		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics)
+			: base(metrics) { }
 
-		public NumericEvalGenomeFactory(params string[] seeds)
+		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, IEnumerable<EvalGenome<double>> seeds)
+			: base(metrics, seeds) { }
+
+		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, params EvalGenome<double>[] seeds)
+			: base(metrics, seeds) { }
+
+		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, IEnumerable<string> seeds)
+			: base(metrics)
 		{
 			InjectSeeds(seeds);
+		}
+
+		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, params string[] seeds)
+			: this(metrics, (IEnumerable<string>)seeds)
+		{
 		}
 
 		protected void InjectSeeds(IEnumerable<string> seeds)
 			=> InjectSeeds(seeds?.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
 
-		public NumericEvalGenomeFactory(params EvalGenome<double>[] seeds) : base(seeds)
-		{ }
-
-		public NumericEvalGenomeFactory(IEnumerable<EvalGenome<double>> seeds) : base(seeds)
-		{ }
 
 		#region Operated
 		protected override IEnumerable<EvalGenome<double>> GenerateOperated(ushort paramCount = 2)

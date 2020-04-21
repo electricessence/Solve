@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes.Tower
 {
+	using App.Metrics;
 #if DEBUG
 	using System.Diagnostics;
 #endif
@@ -16,23 +17,25 @@ namespace Solve.ProcessingSchemes.Tower
 		where TGenome : class, IGenome
 	{
 		public TowerProcessingScheme(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
+			: base(metrics, genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
 		{
 
 		}
 
 		public TowerProcessingScheme(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
+			: this(metrics, genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
 
 		//IReadOnlyList<ProblemTower> Towers;

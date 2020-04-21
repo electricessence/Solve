@@ -116,8 +116,8 @@ namespace Solve.ProcessingSchemes.Tower
 							LevelEntry<TGenome>.Pool.Give(remainder);
 
 							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
-							if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-								f.MetricsCounter.Increment("Genome Rejected");
+							//if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
+							//	f.MetricsCounter.Increment("Genome Rejected");
 
 							//#if DEBUG
 							//							if (IsTrackedGenome(gf.Genome.Hash))

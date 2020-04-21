@@ -1,4 +1,5 @@
-﻿using Open.Collections;
+﻿using App.Metrics.Counter;
+using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
@@ -17,10 +18,10 @@ namespace Solve.Evaluation
 	public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<EvalGenome<T>>
 		where T : IComparable
 	{
-		protected EvalGenomeFactoryBase()
+		protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics) : base(metrics)
 		{ }
 
-		protected EvalGenomeFactoryBase(IEnumerable<EvalGenome<T>> seeds) : base(seeds)
+		protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<EvalGenome<T>>? seeds) : base(metrics, seeds)
 		{ }
 
 		public readonly EvaluationCatalog<T> Catalog = new EvaluationCatalog<T>();

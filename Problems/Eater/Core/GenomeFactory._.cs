@@ -1,4 +1,6 @@
-﻿using System;
+﻿using App.Metrics;
+using App.Metrics.Counter;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -9,13 +11,15 @@ namespace Eater
 
 	public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
-		public GenomeFactory(IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false) : base(seeds)
+		public GenomeFactory(IProvideCounterMetrics metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
+			: base(metrics, seeds)
 		{
 			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToImmutableArray() : Steps.ALL;
 		}
 
 		// ReSharper disable once UnusedParameter.Local
-		public GenomeFactory(Genome seed, bool leftTurnDisabled = false) : this(seed == null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
+		public GenomeFactory(IProvideCounterMetrics metrics, Genome seed, bool leftTurnDisabled = false)
+			: this(metrics, seed == null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
 		{
 
 		}

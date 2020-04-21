@@ -122,8 +122,8 @@ namespace Solve.ProcessingSchemes.Dataflow
 									else
 									{
 										LevelEntry<TGenome>.Pool.Give(loser);
-										if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-											f.MetricsCounter.Increment("Genome Rejected");
+										//if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
+										//	f.MetricsCounter.Increment("Genome Rejected");
 									}
 								}
 								else

@@ -1,4 +1,5 @@
-﻿using Open.Threading.Tasks;
+﻿using App.Metrics;
+using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -8,12 +9,9 @@ using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console
 {
-	using App.Metrics;
-
 	[SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 	public abstract class RunnerBase<TGenome>
 		where TGenome : class, IGenome
-
 	{
 		IMetricsRoot Metrics;
 
@@ -44,8 +42,8 @@ namespace Solve.Experiment.Console
 			if (Environment != null)
 				throw new InvalidOperationException("Already initialized.");
 
-			Environment = environment;
-			Emitter = emitter;
+			Environment = environment ?? throw new ArgumentNullException(nameof(environment));
+			Emitter = emitter ?? throw new ArgumentNullException(nameof(emitter));
 			Metrics = metrics;
 			OnInit();
 		}
@@ -60,6 +58,9 @@ namespace Solve.Experiment.Console
 			else
 				_statusEmitter?.Cancel();
 		}
+
+		public void Cancel()
+			=> Environment.Cancel();
 
 		readonly ActionRunner _statusEmitter;
 
@@ -129,6 +130,8 @@ namespace Solve.Experiment.Console
 
 		}
 
+		public IProvideMetricValues MetricsSnapshot => Metrics.Snapshot;
+
 		protected virtual void EmitStats(Cursor cursor)
 		{
 			SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
@@ -170,9 +173,9 @@ namespace Solve.Experiment.Console
 		{
 			_statusEmitter.Dispose();
 
-			SystemConsole.WriteLine();
-			SystemConsole.WriteLine("Press any key to continue.");
-			SystemConsole.ReadKey();
+			//SystemConsole.WriteLine();
+			//SystemConsole.WriteLine("Press any key to continue.");
+			//SystemConsole.ReadKey();
 		}
 	}
 }

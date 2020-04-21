@@ -1,4 +1,5 @@
-﻿using System;
+﻿using App.Metrics.Counter;
+using System;
 using System.Collections.Generic;
 
 namespace Solve
@@ -6,11 +7,10 @@ namespace Solve
 	public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
 		where TGenome : class, IGenome
 	{
-
-		protected ReducibleGenomeFactoryBase()
+		protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics) : base(metrics)
 		{ }
 
-		protected ReducibleGenomeFactoryBase(IEnumerable<TGenome>? seeds) : base(seeds)
+		protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds) : base(metrics, seeds)
 		{ }
 
 		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)

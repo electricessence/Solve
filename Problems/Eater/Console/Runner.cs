@@ -1,4 +1,5 @@
-﻿using Solve;
+﻿using App.Metrics;
+using Solve;
 using Solve.Experiment.Console;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Eater
 {
-	internal class Runner : RunnerBase<Genome>
+	class Runner : RunnerBase<Genome>
 	{
 		readonly ushort _size;
 
@@ -58,14 +59,15 @@ namespace Eater
 			var seedGenomes = seeds
 				.Concat(GenomeFactory.Random(100, _size * 2, leftTurnDisabled).Take(1000).AsParallel())
 				.Distinct().Select(s => new Genome(s));
-			var factory = new GenomeFactory(seedGenomes, leftTurnDisabled: leftTurnDisabled);
+			var metrics = new MetricsBuilder().Build();
+			var factory = new GenomeFactory(metrics.Provider.Counter, seedGenomes, leftTurnDisabled: leftTurnDisabled);
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<Genome>(factory, (800, 40, 2));
-			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<Genome>(factory, (800, 40, 2));
+			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<Genome>(metrics, factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateFitnessSecondary(_size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
 
-			Init(scheme, _emitter.Value, factory.Metrics);
+			Init(scheme, _emitter.Value, metrics);
 
 			//{
 			//	var seeds = Seed.Select(s => new EaterGenome(s)).ToArray();//.Concat(Seed.SelectMany(s => factory.Expand(new EaterGenome(s)))).ToArray();
@@ -110,7 +112,9 @@ namespace Eater
 			}
 		}
 
-		static async Task Main()
+		static Task Main() => Start().completion;
+
+		public static (Runner runner, Task completion) Start()
 		{
 			//Console.WriteLine("Press any key to start.");
 			//Console.ReadLine();
@@ -123,7 +127,7 @@ namespace Eater
 				"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
 				runner._emitter.Value.SampleMinimum);
 
-			await runner.Start(message);
+			return (runner, runner.Start(message));
 		}
 
 	}

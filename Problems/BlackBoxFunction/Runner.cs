@@ -1,4 +1,5 @@
-﻿using Solve.Evaluation;
+﻿using App.Metrics;
+using Solve.Evaluation;
 using Solve.Experiment.Console;
 using System;
 using System.Collections.Generic;
@@ -64,13 +65,15 @@ namespace BlackBoxFunction
 
 		public void Init()
 		{
-			var factory = new NumericEvalGenomeFactory(/*"((({0} * {0}) + ({1} * {1}))^0.5)"*/);
+			var metrics = new MetricsBuilder().Build();
+			var factory = new NumericEvalGenomeFactory(metrics.Provider.Counter /*, "((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
-			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<EvalGenome<double>>(factory, (200, 60, 2));
+
+			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<EvalGenome<double>>(metrics, factory, (200, 60, 2));
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
 			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 100));
 
-			Init(scheme, emitter, factory.Metrics);
+			Init(scheme, emitter, metrics);
 		}
 
 		static Task Main()

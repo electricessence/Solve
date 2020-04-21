@@ -3,6 +3,7 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
+using App.Metrics;
 using Open.Collections;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,9 @@ namespace Solve
 		protected readonly List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
-		protected EnvironmentBase(IGenomeFactory<TGenome> genomeFactory)
+		protected EnvironmentBase(IMetricsRoot metrics, IGenomeFactory<TGenome> genomeFactory)
 		{
+			Metrics = metrics;
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
 			Contract.EndContractBlock();
 
@@ -55,6 +57,8 @@ namespace Solve
 		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
 
 		public CancellationToken CancellationToken => Canceller.Token;
+
+		protected IMetricsRoot Metrics { get; }
 
 		int _state;
 

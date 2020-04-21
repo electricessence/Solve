@@ -1,4 +1,5 @@
-﻿using System;
+﻿using App.Metrics;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -12,23 +13,25 @@ namespace Solve.ProcessingSchemes.Dataflow
 		where TGenome : class, IGenome
 	{
 		public DataflowScheme(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
+			: base(metrics, genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
 		{
 
 		}
 
 		public DataflowScheme(
+			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			ushort poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
 			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: this(genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
+			: this(metrics, genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
 
 		private IEnumerable<ProblemTower>? ActiveTowers;
 

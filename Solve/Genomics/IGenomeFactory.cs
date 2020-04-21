@@ -4,6 +4,7 @@
  */
 
 
+using App.Metrics;
 using Open.RandomizationExtensions;
 using Open.Threading.Tasks;
 using System;
@@ -14,17 +15,9 @@ using System.Linq;
 
 namespace Solve
 {
-	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
 	public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 		where TGenome : class, IGenome
 	{
-		/*
-		 * Note that the input collections are all arrays for some important reasons:
-		 * 1) The underlying computation does not want an enumerable that can change in size while selecing for a genome.
-		 * 2) In order to select at random, the length of the collection must be known.
-		 * 3) Forces the person using this class to smartly think about how to provide the array.
-		 */
-
 		bool TryGenerateNew(
 			[NotNullWhen(true)] out TGenome? potentiallyNew,
 			IReadOnlyList<TGenome>? source = null);

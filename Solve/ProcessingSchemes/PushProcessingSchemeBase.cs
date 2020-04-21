@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using App.Metrics;
 #if DEBUG
 using System.Diagnostics;
 #endif
@@ -18,8 +19,10 @@ namespace Solve.ProcessingSchemes
 		internal readonly PriorityQueueTaskScheduler Scheduler;
 		readonly TaskFactory PostingFactory;
 
-		protected PushProcessingSchemeBase(IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
-			: base(genomeFactory)
+		protected PushProcessingSchemeBase(
+			IMetricsRoot metrics,
+			IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
+			: base(metrics, genomeFactory)
 		{
 			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default)
 			{

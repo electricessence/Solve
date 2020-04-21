@@ -1,0 +1,16 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"strict": true,
+		"removeComments": false,
+		"sourceMap": true,
+		"target": "es6",
+		"moduleResolution": "Node"
+	},
+	"exclude": [
+		"node_modules"
+	],
+	"typeAcquisition": {
+		"enable": true
+	}
+}

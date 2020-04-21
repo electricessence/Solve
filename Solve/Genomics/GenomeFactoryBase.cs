@@ -3,11 +3,10 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using App.Metrics;
+using App.Metrics.Counter;
 using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Threading.Tasks;
-using Solve.Debugging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -24,32 +23,26 @@ namespace Solve
 	public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		where TGenome : class, IGenome
 	{
+		readonly GenomeFactoryMetrics.Logger Metrics;
 
-		public readonly IMetricsRoot Metrics;
-		internal readonly CounterCollection MetricsCounter;
-
-		protected GenomeFactoryBase(IEnumerable<TGenome>? seeds = null)
+		protected GenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds = null)
 		{
-			Metrics = new MetricsBuilder().Build();
-			MetricsCounter = new CounterCollection(Metrics);
+			Metrics = new GenomeFactoryMetrics.Logger(metrics ?? throw new ArgumentNullException(nameof(metrics)));
 
 			InjectSeeds(seeds);
 		}
 
 		protected void InjectSeeds(IEnumerable<TGenome>? seeds)
 		{
-			var s = seeds as IReadOnlyCollection<TGenome> ?? seeds?.ToArray();
-			if (s == null || s.Count == 0) return;
+			if (seeds == null) return;
+			var s = seeds as IReadOnlyCollection<TGenome> ?? seeds.ToArray();
+			if (s.Count == 0) return;
 
 			var q = GetPriorityQueue(0);
 			q.EnqueueInternal(s, true);
 			q.EnqueueForVariation(s);
 		}
 
-		const string BREEDING_STOCK = "BreedingStock";
-		const string INTERNAL_QUEUE_COUNT = "InternalQueue.Count";
-		const string AWAITING_VARIATION = "AwaitingVariation";
-		const string AWAITING_MUTATION = "AwaitingMutation";
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
@@ -174,9 +167,6 @@ namespace Solve
 		// Be sure to call Registration within the GenerateNew call.
 		protected abstract TGenome? GenerateOneInternal();
 
-		const string GENERATE_NEW_SUCCESS = "Generate New SUCCEDED";
-		const string GENERATE_NEW_FAIL = "Generate New FAILED";
-
 		public bool TryGenerateNew([NotNullWhen(true)] out TGenome? potentiallyNew, IReadOnlyList<TGenome>? source = null)
 		{
 			var factory = ((IGenomeFactory<TGenome>)this);
@@ -191,7 +181,7 @@ namespace Solve
 				if (source != null && source.Count != 0)
 				{
 					var success = factory.AttemptNewMutation(source, out potentiallyNew);
-					MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
+					Metrics.GenerateNew(true);
 					return success;
 				}
 
@@ -204,15 +194,8 @@ namespace Solve
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
 			var generated = potentiallyNew != null && RegisterProduction(potentiallyNew);
-			if (generated)
-			{
-				MetricsCounter.Increment(GENERATE_NEW_SUCCESS);
-			}
-			else
-			{
-				potentiallyNew = default!;
-				MetricsCounter.Increment(GENERATE_NEW_FAIL);
-			}
+			Metrics.GenerateNew(generated);
+			if (!generated) potentiallyNew = default!;
 			return generated;
 		}
 
@@ -241,11 +224,11 @@ namespace Solve
 				{
 					mutation = Mutate(source, m);
 					if (mutation == null || !RegisterProduction(mutation)) continue;
-					MetricsCounter.Increment("Mutation SUCCEDED");
+					Metrics.Mutation(true);
 					return true;
 				}
 			}
-			MetricsCounter.Increment("Mutation FAILED");
+			Metrics.Mutation(false);
 
 			mutation = default!;
 			return false;
@@ -318,13 +301,13 @@ namespace Solve
 				var offspring = Crossover(a, b).Where(RegisterProduction).ToArray();
 				if (offspring.Length != 0)
 				{
-					MetricsCounter.Increment("Crossover SUCCEDED");
+					Metrics.Crossover(true);
 					return offspring;
 				}
 				--m;
 			}
 
-			MetricsCounter.Increment("Crossover Failed");
+			Metrics.Crossover(false);
 			return Array.Empty<TGenome>();
 		}
 
@@ -471,7 +454,7 @@ namespace Solve
 			{
 				if (count > 0)
 				{
-					if (incrementMetrics) Factory.MetricsCounter.Increment(BREEDING_STOCK, count);
+					if (incrementMetrics) Factory.Metrics.BreedingStock.Increment(count);
 					BreedingStock.Enqueue((genome, count));
 				}
 			}
@@ -481,7 +464,7 @@ namespace Solve
 				var count = entry.Count;
 				if (count > 0)
 				{
-					if (incrementMetrics) Factory.MetricsCounter.Increment(BREEDING_STOCK, count);
+					if (incrementMetrics) Factory.Metrics.BreedingStock.Increment(count);
 					BreedingStock.Enqueue(entry);
 				}
 			}
@@ -503,7 +486,7 @@ namespace Solve
 				for (var i = 0; i < maxCount; i++)
 				{
 					if (genome != null)
-						Factory.MetricsCounter.Increment(BREEDING_STOCK);
+						Factory.Metrics.BreedingStock.Increment();
 					if (!BreedOne(genome))
 						break;
 				}
@@ -570,12 +553,12 @@ namespace Solve
 						void decrementCurrent()
 						{
 							current.count--;
-							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+							Factory.Metrics.BreedingStock.Decrement();
 						}
 						void decrementMate()
 						{
 							mate.count--;
-							Factory.MetricsCounter.Decrement(BREEDING_STOCK);
+							Factory.Metrics.BreedingStock.Decrement();
 						}
 
 						// We have a valid mate!
@@ -637,7 +620,7 @@ namespace Solve
 					}
 #endif
 
-					Factory.MetricsCounter.Increment(INTERNAL_QUEUE_COUNT);
+					Factory.Metrics.InternalQueueCount.Increment();
 					InternalQueue.Enqueue(genome);
 					return true;
 				}
@@ -695,7 +678,7 @@ namespace Solve
 			{
 				if (genome != null)
 				{
-					Factory.MetricsCounter.Increment(AWAITING_VARIATION);
+					Factory.Metrics.AwaitingVariation.Increment();
 					AwaitingVariation.Enqueue(genome);
 				}
 			}
@@ -728,7 +711,7 @@ namespace Solve
 			{
 				if (genome != null)
 				{
-					Factory.MetricsCounter.Increment(AWAITING_MUTATION);
+					Factory.Metrics.AwaitingMutation.Increment();
 					AwaitingMutation.Enqueue(genome);
 				}
 			}
@@ -756,7 +739,7 @@ namespace Solve
 			{
 				while (AwaitingVariation.TryDequeue(out var vGenome))
 				{
-					Factory.MetricsCounter.Decrement(AWAITING_VARIATION);
+					Factory.Metrics.AwaitingVariation.Decrement();
 					if (!AttemptEnqueueVariation(vGenome)) continue;
 					// Taken one off, now put it back.
 					EnqueueForVariation(vGenome);
@@ -783,7 +766,7 @@ namespace Solve
 			{
 				while (AwaitingMutation.TryDequeue(out var mGenome))
 				{
-					Factory.MetricsCounter.Decrement(AWAITING_MUTATION);
+					Factory.Metrics.AwaitingMutation.Decrement();
 					if (!Factory.AttemptNewMutation(mGenome, out var mutation))
 						continue;
 					EnqueueInternal(mutation);
@@ -804,7 +787,7 @@ namespace Solve
 				{
 					if (!InternalQueue.TryDequeue(out genome))
 						continue;
-					Factory.MetricsCounter.Decrement(INTERNAL_QUEUE_COUNT);
+					Factory.Metrics.InternalQueueCount.Decrement();
 					return true;
 				}
 				// Next check for high priority items..
@@ -817,7 +800,7 @@ namespace Solve
 
 				// ReSharper disable once ReturnValueOfPureMethodIsNotUsed
 				ExternalProducers.Any(p => p.Invoke());
-				Factory.MetricsCounter.Increment("External Producer Queried");
+				Factory.Metrics.ExternalProducer();
 
 				return false;
 			}

@@ -1,0 +1,67 @@
+﻿@page "/factory"
+@using Solve
+@using System.Threading;
+@using Eater.Console
+@inject IJSRuntime jsRunTime;
+@inject RunnerManager runnerManager;
+@inject NavigationManager navigationManager
+
+<h1>Genome Factory</h1>
+
+<div>
+
+	<div id="genomeFactoryDashboard" class="amChartContainer"></div>
+
+	<ul class="metricList">
+		<li><span>Generate New</span> : <span class="succeded">@metrics.GenerateNew.Succeeded</span> / <span class="failed">@metrics.GenerateNew.Failed</span></li>
+		<li><span>Mutation</span> : <span class="succeded">@metrics.Mutation.Succeeded</span> / <span class="failed">@metrics.Mutation.Failed</span></li>
+		<li><span>Crossover</span> : <span class="succeded">@metrics.Crossover.Succeeded</span> / <span class="failed">@metrics.Crossover.Failed</span></li>
+		<li><span>External</span> : <span>@metrics.ExternalProducerQueried</span></li>
+	</ul>
+
+</div>
+
+@code {
+
+	GenomeFactoryMetrics metrics;
+	Timer timer;
+
+	protected override Task OnInitializedAsync()
+	{
+		navigationManager.LocationChanged += HandleLocationChanged;
+		metrics = runnerManager.FactoryMetrics;
+
+		return base.OnInitializedAsync();
+	}
+
+	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		Interlocked.Exchange(ref timer, null)?.Dispose();
+		jsRunTime.InvokeVoidAsync(CHART_DISPOSE);
+	}
+
+	const string CHART_DISPOSE = "Site.genomeFactoryDashboard.dispose";
+	const string CHART_UPDATE = "Site.genomeFactoryDashboard.update";
+
+
+	protected async Task UpdateChart()
+	{
+		await jsRunTime.InvokeVoidAsync(CHART_UPDATE, false, metrics.QueueStates);
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await jsRunTime.InvokeVoidAsync(CHART_UPDATE, firstRender, metrics.QueueStates);
+		await base.OnAfterRenderAsync(firstRender);
+
+		if (firstRender)
+		{
+			var old = Interlocked.Exchange(ref timer, new Timer(_ =>
+			{
+				metrics = runnerManager.FactoryMetrics;
+				InvokeAsync(StateHasChanged);
+			}, null, 1000, 1000));
+			if (old != null) await old.DisposeAsync();
+		}
+	}
+}

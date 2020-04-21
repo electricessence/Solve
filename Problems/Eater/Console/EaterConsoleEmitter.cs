@@ -19,13 +19,15 @@ namespace Eater
 			Param = { [0] = new EncoderParameter(Encoder.Quality, 10L) }
 		};
 
+		readonly string ProgressionRootPath;
 		readonly string ProgressionDirectoryPath;
 		public ImmutableArray<string> PreviousWinners { get; private set; }
 
 		protected EaterConsoleEmitter(uint sampleMinimum)
 			: base(sampleMinimum /*, Path.Combine(Environment.CurrentDirectory, $"Log-{DateTime.Now.Ticks}.csv")*/)
 		{
-			ProgressionDirectoryPath = Path.Combine(Environment.CurrentDirectory, "Progression", DateTime.Now.Ticks.ToString());
+			ProgressionRootPath = Path.Combine(Environment.CurrentDirectory, "Progression");
+			ProgressionDirectoryPath = Path.Combine(ProgressionRootPath, DateTime.Now.Ticks.ToString());
 		}
 
 		public static EaterConsoleEmitter Create(uint sampleMinimum = 50)
@@ -132,7 +134,7 @@ namespace Eater
 					while (queue.TryDequeue(out var g))
 						lastRendered = g;
 
-					var latestFileName = $"LatestWinner.{suffix}.jpg";
+					var latestFileName = Path.Combine(ProgressionRootPath, $"LatestWinner.{suffix}.jpg");
 					try
 					{
 						File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, latestFileName), true);

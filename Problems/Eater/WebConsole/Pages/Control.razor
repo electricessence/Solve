@@ -1,0 +1,13 @@
+﻿@page "/control"
+@using Eater.Console
+@inject RunnerManager runnerManager
+
+<h1>Control</h1>
+
+<p>Running: @runnerManager.IsRunning</p>
+
+<button class="btn btn-primary" @onclick="Toggle">@(runnerManager.IsRunning ? "Stop" : "Start")</button>
+
+@code {
+	private void Toggle() => runnerManager.Toggle();
+}

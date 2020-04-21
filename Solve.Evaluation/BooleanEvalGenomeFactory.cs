@@ -1,4 +1,5 @@
-﻿using Open.Collections;
+﻿using App.Metrics.Counter;
+using Open.Collections;
 using Open.Evaluation;
 using Open.Evaluation.Boolean;
 using Open.Evaluation.Core;
@@ -13,7 +14,8 @@ namespace Solve.Evaluation
 	// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 	public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
 	{
-		//public BooleanEvalGenomeFactory() { }
+		public BooleanEvalGenomeFactory(IProvideCounterMetrics metrics)
+			: base(metrics) { }
 
 		//public BooleanEvalGenomeFactory(params string[] seeds)
 		//{
