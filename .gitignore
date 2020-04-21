@@ -256,6 +256,6 @@ ModelManifest.xml
 
 # End of https://www.gitignore.io/api/visualstudiocode
 
-Problems/Eater/Console/LatestWinner*.jpg
 Problems/Eater/Console/Log-*.csv
 Problems/Eater/Console/Progression
+Problems/Eater/WebConsole/Progression
