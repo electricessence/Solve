@@ -12,12 +12,28 @@
 
   <ItemGroup>
     <Folder Include="Data\" />
+    <Folder Include="wwwroot\js\" />
   </ItemGroup>
 
 	<ItemGroup>
 		<Content Remove="$(JsLibRoot)**" />
 		<None Remove="$(JsLibRoot)**" />
 		<None Include="$(JsLibRoot)**" Exclude="$(JsLibRoot)node_modules\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="JsLib\src\three\Utils.ts" />
+	  <None Remove="JsLib\src\TowerProgressionView.ts" />
+	  <None Remove="JsLib\src\View3D.ts" />
+	  <None Remove="JsLib\tsconfig.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="JsLib\tsconfig.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>

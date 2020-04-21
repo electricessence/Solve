@@ -1,0 +1,58 @@
+﻿@page "/progression"
+@using Solve;
+@using System.Threading;
+@using Eater.Console;
+@inject IJSRuntime jsRunTime;
+@inject RunnerManager runnerManager;
+@inject NavigationManager navigationManager;
+@implements IAsyncDisposable;
+
+<h1>Progression</h1>
+
+<div id="towerProgression" class="fullPaneView"></div>
+
+@code {
+
+	Task chartDispose = Task.CompletedTask;
+	//GenomeFactoryMetrics metrics;
+	Timer timer;
+
+	protected override Task OnInitializedAsync()
+	{
+		navigationManager.LocationChanged += HandleLocationChanged;
+		//metrics = runnerManager.FactoryMetrics;
+
+		return base.OnInitializedAsync();
+	}
+
+	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		chartDispose = DisposeChart(chartDispose);
+	}
+
+	async Task DisposeChart(Task previous)
+	{
+		var completed = previous.IsCompleted;
+		await previous;
+		if (completed) await jsRunTime.InvokeVoidAsync(CHART_DISPOSE);
+	}
+
+	const string CHART_DISPOSE = "Site.towerProgressionView.dispose";
+	const string CHART_INIT = "Site.towerProgressionView.init";
+
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await chartDispose;
+		if (firstRender)
+			await jsRunTime.InvokeVoidAsync(CHART_INIT, "towerProgression");
+		await base.OnAfterRenderAsync(firstRender);
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		var d = DisposeChart(chartDispose);
+		chartDispose = d;
+		await d;
+	}
+}

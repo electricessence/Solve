@@ -1,16 +1,17 @@
-﻿@page "/factory"
-@using Solve
+﻿@page "/genome-factory"
+@using Solve;
 @using System.Threading;
-@using Eater.Console
+@using Eater.Console;
 @inject IJSRuntime jsRunTime;
 @inject RunnerManager runnerManager;
-@inject NavigationManager navigationManager
+@inject NavigationManager navigationManager;
+@implements IAsyncDisposable;
 
 <h1>Genome Factory</h1>
 
 <div>
 
-	<div id="genomeFactoryDashboard" class="amChartContainer"></div>
+	<div id="genomeFactoryDashboard" class="fullPaneView"></div>
 
 	<ul class="metricList">
 		<li><span>Generate New</span> : <span class="succeded">@metrics.GenerateNew.Succeeded</span> / <span class="failed">@metrics.GenerateNew.Failed</span></li>
@@ -23,6 +24,7 @@
 
 @code {
 
+	Task chartDispose = Task.CompletedTask;
 	GenomeFactoryMetrics metrics;
 	Timer timer;
 
@@ -37,16 +39,17 @@
 	private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
 	{
 		Interlocked.Exchange(ref timer, null)?.Dispose();
-		jsRunTime.InvokeVoidAsync(CHART_DISPOSE);
+		chartDispose = DisposeChart(chartDispose);
 	}
 
 	const string CHART_DISPOSE = "Site.genomeFactoryDashboard.dispose";
 	const string CHART_UPDATE = "Site.genomeFactoryDashboard.update";
 
-
-	protected async Task UpdateChart()
+	async Task DisposeChart(Task previous)
 	{
-		await jsRunTime.InvokeVoidAsync(CHART_UPDATE, false, metrics.QueueStates);
+		var completed = previous.IsCompleted;
+		await previous;
+		if (completed) await jsRunTime.InvokeVoidAsync(CHART_DISPOSE);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -63,5 +66,12 @@
 			}, null, 1000, 1000));
 			if (old != null) await old.DisposeAsync();
 		}
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		var d = DisposeChart(chartDispose);
+		chartDispose = d;
+		await d;
 	}
 }
