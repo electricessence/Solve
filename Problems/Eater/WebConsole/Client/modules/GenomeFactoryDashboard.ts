@@ -41,6 +41,12 @@ function areSame<T>(a: T[], b: T[]): boolean {
 	return true;
 }
 
+function addDataItem(category: string): am4charts.PieSeries3DDataItem {
+	var di = series.dataItems.create();
+	di.category = category;
+	return di;
+}
+
 async function update() {
 	const data = await client.get();
 	// possible that after delay, this was disposed.
@@ -53,16 +59,15 @@ async function update() {
 			queueStates.data = newData;
 			return;
 		}
-		//var map: { [key: string]: number } = {};
-		//for (var e of newData) {
-		//	map[e.key] = e.value;
-		//}
-		const dataItems = series.dataItems.values;
+
+		const dataItems: { [key: string]: am4charts.PieSeries3DDataItem } = {};
+		for (var e of series.dataItems.values) dataItems[e.category] = e;
+
 		const len = newData.length;
 		for (let i = 0; i < newData.length; i++) {
 			const n = newData[i];
 			const o = oldData[i];
-			const dataItem = dataItems[i];
+			const dataItem = dataItems[n.key] || addDataItem(n.key);
 			dataItem.value = n.value;
 			// let's keep the data in-sync.
 			if (o) {
@@ -72,6 +77,7 @@ async function update() {
 				oldData[i] = n;
 			}
 		}
+
 		oldData.length = len;
 		series.validateDataItems();
 	}
