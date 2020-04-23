@@ -1,36 +1,28 @@
-﻿@page "/genome-factory"
+﻿@page "/progression-3d"
 @using Solve;
 @using System.Threading;
 @using Eater.Console;
 @inject IJSRuntime jsRunTime;
+@inject RunnerManager runnerManager;
 @inject NavigationManager navigationManager;
 @implements IAsyncDisposable;
 
-<h1>Genome Factory</h1>
+<h1>Progression</h1>
 
-<div>
-
-	<div id="@ChartContainerId" class="fullPaneView"></div>
-
-	<ul id="@StatsContainerId" class="metricList">
-		<li><span>Generate New</span> : <span class="succeded">0</span> / <span class="failed">0</span></li>
-		<li><span>Mutation</span> : <span class="succeded">0</span> / <span class="failed">0</span></li>
-		<li><span>Crossover</span> : <span class="succeded">0</span> / <span class="failed">0</span></li>
-		<li><span>External</span> : <span>0</span></li>
-	</ul>
-
-</div>
+<div id="@ChartContainerId" class="fullPaneView"></div>
 
 @code {
 
-	const string ChartContainerId = "genomeFactoryDashboard";
-	const string StatsContainerId = "genomeFactoryStats";
+	const string ChartContainerId = "progressionChart";
 
 	Task chartDispose = Task.CompletedTask;
+	//GenomeFactoryMetrics metrics;
+	//Timer? timer = null;
 
 	protected override Task OnInitializedAsync()
 	{
 		navigationManager.LocationChanged += HandleLocationChanged!;
+		//metrics = runnerManager.FactoryMetrics;
 
 		return base.OnInitializedAsync();
 	}
@@ -40,10 +32,6 @@
 		chartDispose = DisposeChart(chartDispose);
 	}
 
-	const string JS_PREFIX = "main.genomeFactoryDashboard.";
-	const string CHART_INIT = JS_PREFIX + "init";
-	const string CHART_DISPOSE = JS_PREFIX + "dispose";
-
 	async Task DisposeChart(Task previous)
 	{
 		var completed = previous.IsCompleted;
@@ -51,10 +39,17 @@
 		if (completed) await jsRunTime.InvokeVoidAsync(CHART_DISPOSE);
 	}
 
+	const string JS_PREFIX = "main.towerProgressionView.";
+	const string CHART_INIT = JS_PREFIX + "init";
+	const string CHART_DISPOSE = JS_PREFIX + "dispose";
+
+
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
+		await chartDispose;
+		if (firstRender)
+			await jsRunTime.InvokeVoidAsync(CHART_INIT, ChartContainerId);
 		await base.OnAfterRenderAsync(firstRender);
-		if (firstRender) await jsRunTime.InvokeVoidAsync(CHART_INIT, ChartContainerId, StatsContainerId);
 	}
 
 	public async ValueTask DisposeAsync()

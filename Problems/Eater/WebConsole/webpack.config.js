@@ -57,10 +57,10 @@ module.exports = {
                 test: /\.ts$/,
                 use: "ts-loader"
             },
-            {
-                test: /\.less/,
-                use: "less-loader"
-            },
+            //{
+            //    test: /\.less/,
+            //    use: "less-loader"
+            //},
             {
                 test: /\.css$/,
                 use: [MiniCssExtractPlugin.loader, "css-loader"]

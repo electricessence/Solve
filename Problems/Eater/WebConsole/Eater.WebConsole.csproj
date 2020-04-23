@@ -18,6 +18,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Client\modules\amchart.sample-data.ts" />
+	  <None Remove="Client\modules\TowerProgressionView.amchart.ts" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Include="package.json" />
 	</ItemGroup>
 
