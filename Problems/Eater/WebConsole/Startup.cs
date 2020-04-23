@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Eater.Console;
+using Eater.WebConsole.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -25,6 +26,7 @@ namespace Eater.WebConsole
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.AddSignalR();
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddSingleton(new RunnerManager());
@@ -44,11 +46,12 @@ namespace Eater.WebConsole
 			}
 
 			app.UseStaticFiles();
-
+			//app.UseDefaultFiles();
 			app.UseRouting();
 
 			app.UseEndpoints(endpoints =>
 			{
+				endpoints.MapHub<GenomeFactoryMetricsHub>("/metrics/genome-factory");
 				endpoints.MapBlazorHub();
 				endpoints.MapFallbackToPage("/_Host");
 			});
