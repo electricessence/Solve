@@ -7,10 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Client\_build\**" />
-		<Content Remove="Client\_build\**" />
-		<EmbeddedResource Remove="Client\_build\**" />
-		<None Remove="Client\_build\**" />
+		<Compile Remove="Client\.build\**" />
+		<Content Remove="Client\.build\**" />
+		<EmbeddedResource Remove="Client\.build\**" />
+		<None Remove="Client\.build\**" />
 	</ItemGroup>
 
 	<ItemGroup>

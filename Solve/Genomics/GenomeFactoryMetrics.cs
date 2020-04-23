@@ -29,7 +29,7 @@ namespace Solve
 		{
 			var counters = context?.Counters.ToImmutableDictionary(c => c.Name, c => c.Value) ?? ImmutableDictionary<string, CounterValue>.Empty;
 			Timestamp = DateTime.Now;
-			var queueStates = new List<KeyValuePair<string, long>>();
+			var queueStates = new List<QueueCount>();
 
 			BreedingStock = AddQueueState(BREEDING_STOCK);
 			InternalQueueCount = AddQueueState(INTERNAL_QUEUE_COUNT);
@@ -47,7 +47,7 @@ namespace Solve
 			long AddQueueState(string key)
 			{
 				var value = GetCount(key);
-				queueStates.Add(KeyValuePair.Create(key, value));
+				queueStates.Add(new QueueCount(key, value));
 				return value;
 			}
 
@@ -58,7 +58,7 @@ namespace Solve
 				=> new SuccessFailCount(GetCount(key.Succeded), GetCount(key.Failed));
 		}
 
-		public ImmutableArray<KeyValuePair<string, long>> QueueStates { get; }
+		public ImmutableArray<QueueCount> QueueStates { get; }
 
 		public DateTime Timestamp { get; }
 

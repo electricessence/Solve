@@ -1,4 +1,4 @@
 node_modules/
 wwwroot/css/webpack/
 wwwroot/js/webpack/
-Client/_build/
+Client/.build/

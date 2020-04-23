@@ -61,14 +61,14 @@ export interface IGenomeFactoryMetrics {
     internalQueueCount: number;
     awaitingVariation: number;
     awaitingMutation: number;
-    queueStates: KeyValuePairOfStringAndLong[];
+    queueStates: QueueCount[];
     generateNew: SuccessFailCount;
     mutation: SuccessFailCount;
     crossover: SuccessFailCount;
     externalProducerQueried: number;
 }
 
-export interface KeyValuePairOfStringAndLong {
+export interface QueueCount {
     key: string;
     value: number;
 }

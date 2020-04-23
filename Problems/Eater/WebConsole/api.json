@@ -69,7 +69,7 @@
         "queueStates": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/KeyValuePairOfStringAndLong"
+            "$ref": "#/definitions/QueueCount"
           }
         },
         "generateNew": {
@@ -87,7 +87,7 @@
         }
       }
     },
-    "KeyValuePairOfStringAndLong": {
+    "QueueCount": {
       "type": "object",
       "required": [
         "key",
