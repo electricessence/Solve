@@ -1,0 +1,124 @@
+﻿{
+  "x-generator": "NSwag v13.4.2.0 (NJsonSchema v10.1.11.0 (Newtonsoft.Json v12.0.0.0))",
+  "swagger": "2.0",
+  "info": {
+    "title": "My Title",
+    "version": "1.0.0"
+  },
+  "produces": [
+    "text/plain",
+    "application/json",
+    "text/json"
+  ],
+  "paths": {
+    "/GenomeFactoryMetrics": {
+      "get": {
+        "tags": [
+          "GenomeFactoryMetrics"
+        ],
+        "operationId": "GenomeFactoryMetrics_Get",
+        "responses": {
+          "200": {
+            "x-nullable": false,
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/IGenomeFactoryMetrics"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "IGenomeFactoryMetrics": {
+      "type": "object",
+      "x-abstract": true,
+      "required": [
+        "timestamp",
+        "breedingStock",
+        "internalQueueCount",
+        "awaitingVariation",
+        "awaitingMutation",
+        "queueStates",
+        "generateNew",
+        "mutation",
+        "crossover",
+        "externalProducerQueried"
+      ],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "breedingStock": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "internalQueueCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "awaitingVariation": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "awaitingMutation": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "queueStates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePairOfStringAndLong"
+          }
+        },
+        "generateNew": {
+          "$ref": "#/definitions/SuccessFailCount"
+        },
+        "mutation": {
+          "$ref": "#/definitions/SuccessFailCount"
+        },
+        "crossover": {
+          "$ref": "#/definitions/SuccessFailCount"
+        },
+        "externalProducerQueried": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "KeyValuePairOfStringAndLong": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SuccessFailCount": {
+      "type": "object",
+      "required": [
+        "succeeded",
+        "failed"
+      ],
+      "properties": {
+        "succeeded": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

@@ -15,11 +15,11 @@
 
 	Task chartDispose = Task.CompletedTask;
 	//GenomeFactoryMetrics metrics;
-	Timer timer;
+	//Timer? timer = null;
 
 	protected override Task OnInitializedAsync()
 	{
-		navigationManager.LocationChanged += HandleLocationChanged;
+		navigationManager.LocationChanged += HandleLocationChanged!;
 		//metrics = runnerManager.FactoryMetrics;
 
 		return base.OnInitializedAsync();
