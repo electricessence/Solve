@@ -16,7 +16,7 @@ namespace Solve.ProcessingSchemes.Tower.Simple
 			{
 				if(LevelsInNeed.TryDequeue(out var level))
 				{
-					level.
+					//level.
 				}
 			}
 
