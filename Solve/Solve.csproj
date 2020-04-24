@@ -11,6 +11,7 @@
     <Compile Remove="ProcessingSchemes\Kumite\**" />
     <Compile Remove="ProcessingSchemes\Pull\**" />
     <Compile Remove="ProcessingSchemes\Simple\**" />
+    <Compile Remove="ProcessingSchemes\TowerBaseOld\**" />
     <Compile Remove="ProcessingSchemes\TowerBase\**" />
     <EmbeddedResource Remove="Dataflow\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Dataflow\**" />
@@ -18,6 +19,7 @@
     <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\TowerBaseOld\**" />
     <EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
     <None Remove="Dataflow\**" />
     <None Remove="ProcessingSchemes\Dataflow\**" />
@@ -25,6 +27,7 @@
     <None Remove="ProcessingSchemes\Kumite\**" />
     <None Remove="ProcessingSchemes\Pull\**" />
     <None Remove="ProcessingSchemes\Simple\**" />
+    <None Remove="ProcessingSchemes\TowerBaseOld\**" />
     <None Remove="ProcessingSchemes\TowerBase\**" />
   </ItemGroup>
 

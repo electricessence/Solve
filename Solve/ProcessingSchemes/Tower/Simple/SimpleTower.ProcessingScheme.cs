@@ -13,23 +13,39 @@ namespace Solve.ProcessingSchemes.Tower.Simple
 		{
 		}
 
-		IEnumerable<Tower> ActiveTowers;
-
 		Tower CreateTower(IProblem<TGenome> problem)
 			=> new Tower(problem, this);
 
-		protected override Task StartInternal(CancellationToken cancellationToken)
+		protected override Task StartInternal(CancellationToken token)
 		{
 			var towers = Problems.Select(CreateTower).ToList();
 			//Towers = towers.AsReadOnly();
-			ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
-			return StartInternalCore(cancellationToken);
+			var activeTowers = towers.Where(t => !t.Problem.HasConverged);
+			return Task.WhenAll(
+				Enumerable
+					.Repeat<Func<Task>>(
+						StartInternalCore,
+						Environment.ProcessorCount)
+					.Select(s => s())
+					.ToArray());
 
-			async Task StartInternalCore(CancellationToken token)
+			async Task StartInternalCore()
 			{
-				while(!token.IsCancellationRequested)
+				while (!token.IsCancellationRequested)
 				{
+					var stillActive = false;
+					foreach (var tower in activeTowers)
+					{
+						if (token.IsCancellationRequested)
+							break;
 
+						stillActive = true;
+
+						await tower.Process();
+					}
+
+					if (!stillActive)
+						break;
 				}
 			}
 		}

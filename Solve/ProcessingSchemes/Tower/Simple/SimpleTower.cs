@@ -13,11 +13,18 @@ namespace Solve.ProcessingSchemes.Tower.Simple
 			}
 
 			public ValueTask Process()
+				=> LevelsInNeed.TryDequeue(out var level)
+				? ProcessCore(level)
+				: new ValueTask();
+
+			protected async ValueTask ProcessCore(Level level)
 			{
 				if(LevelsInNeed.TryDequeue(out var level))
 				{
 					//level.
-				}
+
+				while (await level.ProcessChallenger()) { }
+				await level.ProcessRetained();
 			}
 
 			public readonly ConcurrentQueue<Level> LevelsInNeed = new ConcurrentQueue<Level>();
