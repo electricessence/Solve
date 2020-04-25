@@ -70,47 +70,33 @@ export class Service {
 	}
 }
 
-class Level {
-	count = 0;
+class Level extends LinkedNodeList<Node> {
 
-	entries = new LinkedNodeList<Node>();
-
-	add(node: Node) {
-		const e = this.entries;
+	insertByFitness(node: Node) {
+		const e = this;
 		const f = node.value.fitness;
-		let tail: Node | null | undefined = e.last;
+		let tail = e.last;
 		if (!tail) {
-			this.entries.addNode(node);
-			this.count++;
+			this.addNode(node);
 			return;
 		} else {
-			let head: Node | null | undefined = e.first;
+			let head = e.first;
 			while (head && tail) {
 				if (tail.value.fitness < f) {
-					this.entries.addNodeAfter(node, tail);
-					this.count++;
+					this.addNodeAfter(node, tail);
 					return;
 				}
 				tail = tail.previous;
 				if (head.value.fitness >= f) {
-					this.entries.addNodeBefore(node, head);
-					this.count++;
+					this.addNodeBefore(node, head);
 					return;
 				}
 				if (head == tail) break;
 				head = head.next;
 			}
 		}
-		throw "Unexpected emtpy.";
+		throw "Unexpected error.";
 	}
-
-	takeLast(): Node | null {
-		const e = this.entries;
-		const last = e.last;
-		if (last && e.removeLast()) this.count--;
-		return last;
-	}
-
 }
 
 let newIndex = 0;
@@ -142,33 +128,34 @@ export function simulate(service: Service, updateDelay: number = 0): () => void 
 	const intervalId: NodeJS.Timeout = setInterval(update, updateDelay);
 	function update() {
 		const newEl = statePool.take();
-		levels[0].add(newEl);
+		levels[0].insertByFitness(newEl);
 		service.changed(newEl.value);
 		const levelCount = levels.length;
 		for (let level = 0; level < levelCount; level++) {
 			const nextLevel = level + 1;
 			let a = levels[level];
-			let len = a.count;
+			let len = a.unsafeCount;
 			if (len > 1) {
 
 				let mid = Math.ceil(len / 2);
 
 				if (len >= poolSize) {
 					while (a.count > mid) {
-						const n = a.takeLast()!;
+						const n = a.takeLast();
+						if (n == null) throw "Unexpected null.";
 						promote(n.value);
 						let b = levels[nextLevel] = levels[nextLevel] || new Level();
-						b.add(n);
+						b.insertByFitness(n);
 						service.changed(n.value);
 					}
 					{
-						let n: Node | null | undefined = a.entries.first;
+						let n = a.first;
 						while (n) {
-							const next: Node | null | undefined = n.next;
+							const next = n.next;
 							const v = n.value;
 							v.level += lossInc;
 							if (v.level >= nextLevel) {
-								a.entries.removeNode(n);
+								a.removeNode(n);
 								statePool.give(n);
 							}
 							n = next;
@@ -180,14 +167,14 @@ export function simulate(service: Service, updateDelay: number = 0): () => void 
 				}
 
 				if (len > 1) {
-					a.entries.forEach((n, i) => {
+					a.forEach((n, i) => {
 						updateRank(n.value, i < mid ? (i - mid) : (i - mid + 1));
 					});
 				}
 			}
 
 			if (len == 1)
-				updateRank(a.entries.first!.value, 0);
+				updateRank(a.first!.value, 0);
 		}
 	}
 

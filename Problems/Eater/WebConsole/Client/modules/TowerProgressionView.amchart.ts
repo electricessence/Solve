@@ -91,8 +91,7 @@ export function init(chartContainerId: string) {
 	chart.scrollbarX = new am4core.Scrollbar();
 	chart.scrollbarY = new am4core.Scrollbar();
 
-	chart.data = DATA;
-	//intervalId = setInterval(update, 1);
+	intervalId = setInterval(update, 1);
 }
 
 let intervalId: NodeJS.Timeout;
@@ -155,8 +154,7 @@ function update() {
 		}
 	}
 
-	chart.validateData();
-	//chart.validate();
+	chart.validateRawData();
 }
 
 function injest(e: GenomeFitness) {
