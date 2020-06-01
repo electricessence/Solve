@@ -1,4 +1,5 @@
 ﻿using App.Metrics;
+using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -20,8 +21,9 @@ namespace Solve.ProcessingSchemes
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(metrics, genomeFactory/*, true*/)
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			GenomeProgressionLog? genomeProgressionLog = null)
+			: base(metrics, genomeFactory, genomeProgressionLog/*, true*/)
 		{
 			if (poolSize.Minimum < 2)
 				throw new ArgumentOutOfRangeException(nameof(poolSize), "Must be at least 2.");

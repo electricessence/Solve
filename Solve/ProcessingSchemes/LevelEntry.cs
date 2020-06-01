@@ -27,8 +27,10 @@ namespace Solve.ProcessingSchemes
 			{
 				ScoreIndex = scoreIndex;
 			}
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 			public int Compare(LevelEntry<TGenome> x, LevelEntry<TGenome> y)
 				=> CollectionComparer.Double.Descending.Compare(x.Scores[ScoreIndex], y.Scores[ScoreIndex]);
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 		}
 
 		public static LevelEntry<TGenome> Merge(in (TGenome Genome, Fitness[] Fitness) gf, IReadOnlyList<Fitness> scores)

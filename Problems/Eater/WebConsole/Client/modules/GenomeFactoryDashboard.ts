@@ -1,6 +1,7 @@
 ﻿import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import { GenomeFactoryMetricsClient, IGenomeFactoryMetrics } from "../controllers";
+import * as signalR from "@microsoft/signalr";
 
 let chart: am4charts.PieChart3D;
 let stats: Stats;

@@ -1,6 +1,10 @@
 ﻿import { Scene, Camera, PerspectiveCamera, Renderer, WebGLRenderer, Object3D } from 'three';
+import { Action } from '@tsdotnet/common-interfaces';
+import dispatch from '@tsdotnet/array-dispatch';
 
 export class View3D {
+
+	private readonly _beforeRender: Action<this>[] = [];
 
 	camera: Camera;
 	readonly scene: Scene = new Scene();
@@ -44,6 +48,7 @@ export class View3D {
 	dispose() {
 		const _ = this;
 		_._state = -1;
+		_._beforeRender.length = 0;
 		_._container.removeChild(_._renderer.domElement);
 		_.scene.dispose();
 	}
@@ -104,9 +109,17 @@ export class View3D {
 			_._state = 0;
 	}
 
+	onBeforeRender(handler: Action<this>) {
+		this._beforeRender.push(handler);
+	}
+
 	render() {
-		if (this.camera)
-			this._renderer.render(this.scene, this.camera);
+		const _ = this;
+		if (_.camera) {
+			dispatch.unsafe(_._beforeRender, _);
+			_._renderer.render(_.scene, _.camera);
+		}
+
 	}
 }
 

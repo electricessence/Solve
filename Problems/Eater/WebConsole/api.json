@@ -27,6 +27,23 @@
           }
         }
       }
+    },
+    "/GenomeProgressMetrics": {
+      "get": {
+        "tags": [
+          "GenomeProgressMetrics"
+        ],
+        "operationId": "GenomeProgressMetrics_Get",
+        "responses": {
+          "200": {
+            "x-nullable": false,
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/IGenomeFactoryMetrics"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {

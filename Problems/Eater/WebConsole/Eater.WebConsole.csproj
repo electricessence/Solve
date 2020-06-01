@@ -51,7 +51,7 @@
 	<Target Name="ClientBuild" AfterTargets="PostBuildEvent">
 		<Exec EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development" Command="$(NSwagExe_Core31) aspnetcore2openapi /assembly:$(TargetDir)Eater.WebConsole.dll /output:api.json" />
 		<Exec Command="$(NSwagExe_Core31) run config.nswag /variables:Configuration=$(Configuration)" />
-		<Exec Command="npm install --silent" />
+		<Exec Command="pnpm i --silent" />
 		<Exec Condition="$(Configuration) == 'Debug'" Command="npm run build" />
 		<Exec Condition="$(Configuration) == 'Release'" Command="npm run release" />
 	</Target>

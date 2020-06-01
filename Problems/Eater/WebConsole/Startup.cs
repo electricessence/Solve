@@ -58,7 +58,7 @@ namespace Eater.WebConsole
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
-				endpoints.MapHub<GenomeFactoryMetricsHub>("/metrics/genome-factory");
+				endpoints.MapHub<GenomeProgressionHub>("/metrics/genome-factory");
 				endpoints.MapBlazorHub();
 				endpoints.MapFallbackToPage("/_Host");
 			});

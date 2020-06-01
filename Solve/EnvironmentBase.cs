@@ -5,6 +5,7 @@
 
 using App.Metrics;
 using Open.Collections;
+using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -24,10 +25,11 @@ namespace Solve
 		protected readonly List<IProblem<TGenome>> ProblemsInternal;
 		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
 
-		protected EnvironmentBase(IMetricsRoot metrics, IGenomeFactory<TGenome> genomeFactory)
+		protected EnvironmentBase(IMetricsRoot metrics, IGenomeFactory<TGenome> genomeFactory, GenomeProgressionLog? genomeProgressionLog = null)
 		{
 			Metrics = metrics;
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
+			GenomeProgress = genomeProgressionLog;
 			Contract.EndContractBlock();
 
 			ProblemsInternal = new List<IProblem<TGenome>>();
@@ -59,6 +61,7 @@ namespace Solve
 		public CancellationToken CancellationToken => Canceller.Token;
 
 		protected IMetricsRoot Metrics { get; }
+		protected GenomeProgressionLog? GenomeProgress { get; }
 
 		int _state;
 

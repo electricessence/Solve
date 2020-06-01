@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes.Tower
 {
 	using App.Metrics;
+	using Solve.Metrics;
 #if DEBUG
 	using System.Diagnostics;
 #endif
@@ -22,7 +23,8 @@ namespace Solve.ProcessingSchemes.Tower
 			in (ushort First, ushort Minimum, ushort Step) poolSize,
 			ushort maxLevels = ushort.MaxValue,
 			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
+			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			GenomeProgressionLog? genomeProgressionLog = null)
 			: base(metrics, genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
 		{
 

@@ -1,34 +1,45 @@
-﻿import createView, { View3D } from './three/View3D';
-import { AxesHelper, GridHelper, PerspectiveCamera, PointLight } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { addSphereTo, ColorParam } from './three/Utils';
+﻿import tweenFactory from '@tsdotnet/tween-factory';
+import * as easing from '@tsdotnet/tween-factory/dist/easing';
+import {AxesHelper, GridHelper, Mesh, PerspectiveCamera, PointLight} from 'three';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
+import {addSphereTo, ColorParam} from './three/Utils';
+import createView, {View3D} from './three/View3D';
+import DataService from './TowerProgression.Service';
+import {simulate} from "./TowerProgression.Service.Simulator";
 
 let view: View3D;
+let registry: Record<string, Mesh>;
 let controls: OrbitControls;
+let service: DataService;
+let simulation: Function;
 
-export function init(container: string | HTMLElement): View3D {
+const tweenBehavior = tweenFactory(500, easing.exponential.easeOut);
+
+export function init(container: string | HTMLElement): View3D
+{
 
 	// width:100%;height:99%;min-width:250px;min-height:250px;overflow:hidden;
 	dispose();
 
 	view = createView(container, new PerspectiveCamera(45, 1, 0.1, 20000));
-	view.camera.position.set(225, 225, 225);
-	var scene = view.scene;
+	view.camera.position.set(-25, 100, 225);
+	const scene = view.scene;
 
-	//var geometry = new BoxGeometry(0.2, 0.2, 0.2);
-	//var material = new MeshNormalMaterial();
-	//var mesh = new Mesh(geometry, material);
+	//const geometry = new BoxGeometry(0.2, 0.2, 0.2);
+	//const material = new MeshNormalMaterial();
+	//const mesh = new Mesh(geometry, material);
 	//view.addObject(mesh);
 
-	var gridHelper = new GridHelper(1000, 100);
-	gridHelper.position.setY(-0.2);
+	const gridHelper = new GridHelper(1000, 200, 0x222222, 0x111111);
+	gridHelper.rotateX(90 * Math.PI / 180);
+	//gridHelper.position.setY(-0.2);
 	scene.add(gridHelper);
 
-	var axesHelper = new AxesHelper(1000);
+	const axesHelper = new AxesHelper(1000);
 	//axesHelper.scale.set(10, 10, 10);
 	scene.add(axesHelper);
 
-	var light = new PointLight(0xffffff);
+	const light = new PointLight(0xffffff, 2);
 	light.position.set(150, 250, 150);
 	scene.add(light);
 
@@ -39,33 +50,84 @@ export function init(container: string | HTMLElement): View3D {
 	//view.addObject(axesHelper);
 
 	controls = new OrbitControls(view.camera, view.domElement);
+	controls.zoomSpeed = 0.2;
+
+	registry = {};
+	service = new DataService();
+	view.onBeforeRender(update)
 	view.start();
 
+	tweenBehavior.updateOnAnimationFrame();
+
+	simulation = simulate(service);
 	return view;
 }
 
-export function addSphere(color: ColorParam, x: number, y: number, z: number, radius: number, segments: number = 16, rings: number = 16) {
+function addSphere(color: ColorParam, x: number, y: number, z: number, radius: number, segments: number = 16, rings: number = 16)
+{
 	return addSphereTo(view.scene, color, x, y, z, radius, segments, rings);
 }
 
-export function dispose() {
-	if (controls) {
+export function dispose()
+{
+	if (simulation)
+	{
+		simulation();
+		simulation = undefined!;
+		registry = undefined!;
+	}
+	if (controls)
+	{
 		controls.dispose();
 		controls = undefined!;
 	}
-	if (view) {
+	if (view)
+	{
 		view.dispose();
 		view = undefined!;
 	}
+	tweenBehavior.clearInterval();
+	tweenBehavior.active.cancel();
 }
 
-//export function animate() {
+export function update()
+{
+	const xScale = 2;
+	let change = service.dequeueChange();
+	while (change)
+	{
+		const {hash, level, lossCount} = change;
 
-//	requestAnimationFrame( animate );
+		const point = registry[hash];
+		if (point)
+		{
+			if (!change.alive)
+			{
+				point.visible = false;
+				view.scene.remove(point);
+				delete registry[hash];
+			} else
+			{
+				tweenBehavior.tweenDeltas(point.position, {x: level * xScale, y: change.ranking, z: -lossCount});
+			}
+		} else if (change.alive)
+		{
+			const p = registry[hash] = addSphere(randomColor(), 0, 0, 0, 0.4 + Math.random() * 0.03);
+			tweenBehavior.tweenDeltas(p.position, {x: level * xScale, y: change.ranking, z: -lossCount});
+		}
+		change = service.dequeueChange();
+	}
+}
 
-//	mesh.rotation.x += 0.01;
-//	mesh.rotation.y += 0.02;
+function nextInt(max: number)
+{
+	return Math.floor(Math.random() * max);
+}
 
-//	renderer.render( scene, camera );
-
-//}
+function randomColor(): string
+{
+	let start = "#";
+	for (let i = 0; i < 6; i++)
+		start += nextInt(5) + 4;
+	return start;
+}

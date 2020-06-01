@@ -22,29 +22,29 @@ function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number,
 export function makeTextSprite(message: string, parameters: { [key: string]: any }): Sprite {
 	if (parameters === undefined) parameters = {};
 
-	var fontface = parameters.hasOwnProperty("fontface") ?
+	const fontface = parameters.hasOwnProperty("fontface") ?
 		parameters["fontface"] : "Arial";
 
-	var fontsize = parameters.hasOwnProperty("fontsize") ?
+	const fontsize = parameters.hasOwnProperty("fontsize") ?
 		parameters["fontsize"] : 18;
 
-	var borderThickness = parameters.hasOwnProperty("borderThickness") ?
+	const borderThickness = parameters.hasOwnProperty("borderThickness") ?
 		parameters["borderThickness"] : 4;
 
-	var borderColor = parameters.hasOwnProperty("borderColor") ?
-		parameters["borderColor"] : { r: 0, g: 0, b: 0, a: 1.0 };
+	const borderColor = parameters.hasOwnProperty("borderColor") ?
+		parameters["borderColor"] : {r: 0, g: 0, b: 0, a: 1.0};
 
-	var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
-		parameters["backgroundColor"] : { r: 255, g: 255, b: 255, a: 1.0 };
+	const backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
+		parameters["backgroundColor"] : {r: 255, g: 255, b: 255, a: 1.0};
 
-	var canvas = document.createElement('canvas');
-	var context = canvas.getContext('2d');
+	const canvas = document.createElement('canvas');
+	const context = canvas.getContext('2d');
 	if (context == null) throw "2d context not found.";
 	context.font = "Bold " + fontsize + "px " + fontface;
 
 	// get size data (height depends only on font size)
-	var metrics = context.measureText(message);
-	var textWidth = metrics.width;
+	const metrics = context.measureText(message);
+	const textWidth = metrics.width;
 
 	// background color
 	context.fillStyle = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
@@ -63,23 +63,23 @@ export function makeTextSprite(message: string, parameters: { [key: string]: any
 	context.fillText(message, borderThickness, fontsize + borderThickness);
 
 	// canvas contents will be used for a texture
-	var texture = new Texture(canvas)
+	const texture = new Texture(canvas);
 	texture.needsUpdate = true;
 
-	var spriteMaterial = new SpriteMaterial({ map: texture });
-	var sprite = new Sprite(spriteMaterial);
+	const spriteMaterial = new SpriteMaterial({map: texture});
+	const sprite = new Sprite(spriteMaterial);
 	sprite.scale.set(100, 50, 1.0);
 	return sprite;
 }
 
 export function addSphereTo(parent: Object3D, color: ColorParam, x: number, y: number, z: number, radius: number, segments: number = 16, rings: number = 16) {
 	// create the sphere's material
-	var sphereMaterial = new MeshLambertMaterial({ color: color });
+	const sphereMaterial = new MeshLambertMaterial({color: color});
 
 	// create a new mesh with
 	// sphere geometry - we will cover
 	// the sphereMaterial next!
-	var sphere = new Mesh(
+	const sphere = new Mesh(
 		new SphereGeometry(
 			radius,
 			segments,
@@ -95,8 +95,12 @@ export function addSphereTo(parent: Object3D, color: ColorParam, x: number, y: n
 };
 
 export function addMarkerTo(parent: Object3D, x: number, y: number, z: number, text: string) {
-	var sprite = makeTextSprite(text ? text : "   ", { fontsize: 12, backgroundColor: { r: 100, g: 0, b: 0, a: 1 }, borderThickness: 2 });
-	var p = sprite.position;
+	const sprite = makeTextSprite(text ? text : "   ", {
+		fontsize: 12,
+		backgroundColor: {r: 100, g: 0, b: 0, a: 1},
+		borderThickness: 2
+	});
+	const p = sprite.position;
 	p.x = x;
 	p.y = y;
 	p.z = z;

@@ -5,7 +5,9 @@ dependencies:
   '@tsdotnet/common-interfaces': 1.0.4
   '@tsdotnet/linked-node-list': 1.3.13
   '@tsdotnet/object-pool': 1.0.6
-  '@tsdotnet/tween-factory': 2.0.1
+  '@tsdotnet/ordered-registry': 1.0.16
+  '@tsdotnet/queue': 1.2.2
+  '@tsdotnet/tween-factory': 2.0.2
   three: 0.117.1
   tslib: 2.0.0
 devDependencies:
@@ -153,7 +155,15 @@ packages:
     dev: false
     resolution:
       integrity: sha512-Or5S6kyJWS3MpWyFgn2uyE5ZNcVCJ49UIGipnzvNn0KG2k+tfx2LrWCDG1R6LIpi1vqTb1LQDqtm99FB5AQbkw==
-  /@tsdotnet/tween-factory/2.0.1:
+  /@tsdotnet/queue/1.2.2:
+    dependencies:
+      '@tsdotnet/collection-base': 2.0.6
+      '@tsdotnet/exceptions': 1.0.16
+      tslib: 2.0.0
+    dev: false
+    resolution:
+      integrity: sha512-ZRqj7XsyJ2H93VtQsIxXFUycX513npGuZq1vFHOhQNEyjsDtsABDMKRjVOFfhG68AoRaL3H7/SliL3c7T4J88w==
+  /@tsdotnet/tween-factory/2.0.2:
     dependencies:
       '@tsdotnet/disposable': 1.1.20
       '@tsdotnet/event-factory': 1.1.1
@@ -162,7 +172,7 @@ packages:
       tslib: 2.0.0
     dev: false
     resolution:
-      integrity: sha512-67ZavYuENwPga7rE7W8Z5DT3gIKSCfrTEchTqBmkWhrTGCk730OmwdWhMuY75+g/Qok60RcMWJ4JbpqbjxluvA==
+      integrity: sha512-grxagDG8ky/oUMjZ+xxdzDViW3bJLXMoyzgHIkwLCBnk3KQp/8SvNBOsgamhgaFPun8fdNj+dTuSoISEoZi1hQ==
   /@tsdotnet/type/1.0.8:
     dependencies:
       '@tsdotnet/common-interfaces': 1.0.4
@@ -5098,8 +5108,10 @@ specifiers:
   '@tsdotnet/common-interfaces': ^1.0.4
   '@tsdotnet/linked-node-list': ^1.3.13
   '@tsdotnet/object-pool': ^1.0.6
-  '@tsdotnet/tween-factory': ^2.0.1
-  '@types/node': ^14.0.5
+  '@tsdotnet/ordered-registry': ^1.0.16
+  '@tsdotnet/queue': ^1.2.2
+  '@tsdotnet/tween-factory': ^2.0.2
+  '@types/node': ^14.0.6
   clean-webpack-plugin: 3.0.0
   css-loader: 3.5.3
   html-webpack-plugin: 4.3.0

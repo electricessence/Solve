@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using App.Metrics;
+using Solve.Metrics;
 #if DEBUG
 using System.Diagnostics;
 #endif
@@ -21,8 +22,8 @@ namespace Solve.ProcessingSchemes
 
 		protected PushProcessingSchemeBase(
 			IMetricsRoot metrics,
-			IGenomeFactory<TGenome> genomeFactory, bool runSynchronously = false)
-			: base(metrics, genomeFactory)
+			IGenomeFactory<TGenome> genomeFactory, GenomeProgressionLog? genomeProgressionLog = null, bool runSynchronously = false)
+			: base(metrics, genomeFactory, genomeProgressionLog)
 		{
 			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default)
 			{
@@ -70,6 +71,7 @@ namespace Solve.ProcessingSchemes
 
 			if (genome == null) return;
 
+			GenomeProgress?[genome.Hash].Add(GenomeEvent.EventType.Born);
 			var p = PostAsync(genome);
 			if (p.IsCompletedSuccessfully)
 				await Task.Yield();
