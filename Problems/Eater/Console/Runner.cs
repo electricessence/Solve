@@ -62,7 +62,7 @@ namespace Eater
 			var metrics = new MetricsBuilder().Build();
 			var factory = new GenomeFactory(metrics.Provider.Counter, seedGenomes, leftTurnDisabled: leftTurnDisabled);
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<Genome>(metrics, factory, (800, 40, 2));
-			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<Genome>(metrics, factory, (800, 40, 2));
+			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<Genome>(factory, (800, 40, 2));
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateFitnessSecondary(_size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));

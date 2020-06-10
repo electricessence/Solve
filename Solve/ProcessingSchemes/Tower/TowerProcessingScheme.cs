@@ -18,21 +18,19 @@ namespace Solve.ProcessingSchemes.Tower
 		where TGenome : class, IGenome
 	{
 		public TowerProcessingScheme(
-			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			SchemeConfig config,
 			GenomeProgressionLog? genomeProgressionLog = null)
-			: base(metrics, genomeFactory, config, genomeProgressionLog)
+			: base(genomeFactory, config, genomeProgressionLog)
 		{
 
 		}
 
 		public TowerProcessingScheme(
-			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			SchemeConfig.PoolSizing config,
 			GenomeProgressionLog? genomeProgressionLog = null)
-			: this(metrics, genomeFactory, new SchemeConfig { PoolSize = config }, genomeProgressionLog)
+			: this(genomeFactory, new SchemeConfig { PoolSize = config }, genomeProgressionLog)
 		{
 
 		}

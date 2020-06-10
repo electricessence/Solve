@@ -1,8 +1,4 @@
-﻿using App.Metrics;
-using Solve;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Solve;
 
 namespace Eater.Console
 {

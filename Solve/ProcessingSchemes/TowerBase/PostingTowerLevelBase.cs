@@ -1,5 +1,4 @@
-﻿using Open.Memory;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -169,7 +168,7 @@ namespace Solve.ProcessingSchemes
 			var config = Tower.Environment.Config;
 			var maxLoses = config.MaxLevelLoss;
 			var maxRejection = config.MaxConsecutiveRejections;
-			var rejectionLimit = 95 * Index;
+			var percentRejectionLimit = config.PercentRejectedBeforeElimination;
 			for (var i = midPoint; i < PoolSize; ++i)
 			{
 				for (var p = 0; p < poolCount; ++p)
@@ -184,11 +183,9 @@ namespace Solve.ProcessingSchemes
 					{
 						var lossRecord = progress.Losses;
 						var totalRejections = lossRecord.IncrementRejection(Index);
-						if (lossRecord.ConcecutiveRejection > maxRejection || Index > 50 && 100 * totalRejections > rejectionLimit)
+						if (lossRecord.ConcecutiveRejection > maxRejection && 100 * totalRejections > Index * percentRejectionLimit)
 						{
 							LevelEntry<TGenome>.Pool.Give(loser);
-							//if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-							//	f.MetricsCounter.Increment("Genome Rejected");
 						}
 						else
 						{

@@ -95,7 +95,6 @@ namespace Solve
 			public void GenerateNew(bool success)
 				=> this[GENERATE_NEW.Switch(success)].Increment();
 
-
 			public void Mutation(bool success)
 				=> this[MUTATION.Switch(success)].Increment();
 

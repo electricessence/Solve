@@ -1,5 +1,4 @@
-﻿using Open.Memory;
-using Solve.Supporting.TaskScheduling;
+﻿using Solve.Supporting.TaskScheduling;
 using System;
 using System.Buffers;
 using System.Threading;

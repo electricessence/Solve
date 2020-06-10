@@ -21,9 +21,10 @@ namespace Solve.ProcessingSchemes
 		readonly TaskFactory PostingFactory;
 
 		protected PushProcessingSchemeBase(
-			IMetricsRoot metrics,
-			IGenomeFactory<TGenome> genomeFactory, GenomeProgressionLog? genomeProgressionLog = null, bool runSynchronously = false)
-			: base(metrics, genomeFactory, genomeProgressionLog)
+			IGenomeFactory<TGenome> genomeFactory,
+			GenomeProgressionLog? genomeProgressionLog = null,
+			bool runSynchronously = false)
+			: base(genomeFactory, genomeProgressionLog)
 		{
 			Scheduler = new PriorityQueueTaskScheduler(TaskScheduler.Default)
 			{

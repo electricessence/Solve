@@ -9,6 +9,7 @@ namespace Solve.ProcessingSchemes
 		ushort MaxLevels { get; }
 		ushort MaxLevelLoss { get; }
 		ushort MaxConsecutiveRejections { get; }
+		ushort PercentRejectedBeforeElimination { get; }
 
 		SchemeConfig.Values Immutable { get; }
 	}
@@ -17,18 +18,20 @@ namespace Solve.ProcessingSchemes
 	{
 		public struct Values : ISchemeConfig
 		{
-			public Values(PoolSizing poolSize, ushort maxLevels, ushort maxLevelLoss, ushort maxConsecutiveRejections)
+			public Values(PoolSizing poolSize, ushort maxLevels, ushort maxLevelLoss, ushort maxConsecutiveRejections, ushort percentRejectedBeforeElimination)
 			{
 				PoolSize = poolSize;
 				MaxLevels = maxLevels;
 				MaxLevelLoss = maxLevelLoss;
 				MaxConsecutiveRejections = maxConsecutiveRejections;
+				PercentRejectedBeforeElimination = percentRejectedBeforeElimination;
 			}
 
 			public PoolSizing PoolSize { get; }
 			public ushort MaxLevels { get; }
 			public ushort MaxLevelLoss { get; }
 			public ushort MaxConsecutiveRejections { get; }
+			public ushort PercentRejectedBeforeElimination { get; }
 
 			public Values Immutable => this;
 		}
@@ -88,8 +91,10 @@ namespace Solve.ProcessingSchemes
 
 		public PoolSizing PoolSize { get; set; }
 		public ushort MaxLevels { get; set; } = ushort.MaxValue;
-		public ushort MaxLevelLoss { get; set; } = 5;
+		public ushort MaxLevelLoss { get; set; } = 3;
 		public ushort MaxConsecutiveRejections { get; set; } = 10;
+
+		public ushort PercentRejectedBeforeElimination { get; set; } = 70;
 
 		public static implicit operator Values(SchemeConfig config) => config.Immutable;
 
@@ -98,10 +103,11 @@ namespace Solve.ProcessingSchemes
 			PoolSize = PoolSize,
 			MaxLevels = MaxLevels,
 			MaxLevelLoss = MaxLevelLoss,
-			MaxConsecutiveRejections = MaxConsecutiveRejections
+			MaxConsecutiveRejections = MaxConsecutiveRejections,
+			PercentRejectedBeforeElimination = PercentRejectedBeforeElimination
 		};
 
-		public Values Immutable => new Values(PoolSize, MaxLevels, MaxLevelLoss, MaxConsecutiveRejections);
+		public Values Immutable => new Values(PoolSize, MaxLevels, MaxLevelLoss, MaxConsecutiveRejections, PercentRejectedBeforeElimination);
 
 	}
 }

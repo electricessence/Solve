@@ -1,5 +1,4 @@
-﻿using App.Metrics;
-using App.Metrics.Counter;
+﻿using App.Metrics.Counter;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;

@@ -14,11 +14,10 @@ namespace Solve.ProcessingSchemes
 	{
 
 		protected TowerProcessingSchemeBase(
-			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
 			SchemeConfig config,
 			GenomeProgressionLog? genomeProgressionLog = null)
-			: base(metrics, genomeFactory, genomeProgressionLog/*, true*/)
+			: base(genomeFactory, genomeProgressionLog/*, true*/)
 		{
 			Config = config ?? throw new ArgumentNullException(nameof(config));
 			Contract.EndContractBlock();
