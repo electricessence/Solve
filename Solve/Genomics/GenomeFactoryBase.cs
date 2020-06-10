@@ -180,9 +180,13 @@ namespace Solve
 				// See if it's possible to mutate from the provided genomes.
 				if (source != null && source.Count != 0)
 				{
-					var success = factory.AttemptNewMutation(source, out potentiallyNew);
-					Metrics.GenerateNew(true);
-					return success;
+					if(factory.AttemptNewMutation(source, out potentiallyNew))
+					{
+						Metrics.GenerateNew(true);
+						return true;
+					}
+					Metrics.GenerateNew(false);
+					return false;
 				}
 
 				potentiallyNew = Registration(GenerateOneInternal());
@@ -193,10 +197,14 @@ namespace Solve
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
-			var generated = potentiallyNew != null && RegisterProduction(potentiallyNew);
-			Metrics.GenerateNew(generated);
-			if (!generated) potentiallyNew = default!;
-			return generated;
+			if (potentiallyNew == null || !RegisterProduction(potentiallyNew))
+			{
+				Metrics.GenerateNew(false);
+				return false;
+			}
+
+			Metrics.GenerateNew(true);
+			return true;
 		}
 
 

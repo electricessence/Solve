@@ -24,7 +24,7 @@ namespace Eater
 				else
 				{
 					_lastGenerated.AddLast(Step.TurnRight);
-					_lastGenerated.AddLast(StepCount.Forward(Randomizer.Random.Next(count * 2)));
+					_lastGenerated.AddLast(StepCount.Forward(Randomizer.Random.Next(count * 2) + 1));
 				}
 
 				++GeneratedCount;

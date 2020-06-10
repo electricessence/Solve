@@ -1,10 +1,12 @@
 ﻿using Open.ChannelExtensions;
-using Open.Collections;
+using Open.Memory;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -50,89 +52,10 @@ namespace Solve.ProcessingSchemes.Tower
 
 			async ValueTask ProcessPoolAsyncInternal(List<LevelEntry<TGenome>> pool)
 			{
-				// 1) Setup selection.
-				var len = pool.Count;
-				var midPoint = pool.Count / 2;
+				var selection = RankEntries(pool);
+				await ProcessSelection(selection);
+				ArrayPool<LevelEntry<TGenome>[]>.Shared.Return(selection, true);
 
-				var promoted = new HashSet<string>();
-
-				var problemPools = Tower.Problem.Pools;
-				var problemPoolCount = problemPools.Count;
-				using var selection = RankEntries(pool);
-				var isTop = _nextLevel == null;
-				for (var i = 0; i < problemPoolCount; i++)
-				{
-					var s = selection[i];
-
-					// 2) Signal & promote champions.
-					var champEntry = s[0];
-					var champ = champEntry.GenomeFitness;
-
-					if (isTop)
-						ProcessChampion(i, champ);
-
-					if (promoted.Add(champ.Genome.Hash))
-						await PromoteAsync(1, champEntry).ConfigureAwait(false); // Champs may need to be posted synchronously to stay ahead of other deferred winners.
-
-					// 3) Increment fitness rejection for individual fitnesses.
-					for (var n = midPoint; n < len; n++)
-					{
-						s[n].GenomeFitness.Fitness[i].IncrementRejection();
-					}
-				}
-
-				// 4) Promote remaining winners (weaving to ensure that other threads honor the priority)
-				for (var n = 1; n < midPoint; n++)
-				{
-					for (var i = 0; i < problemPoolCount; i++)
-					{
-						var s = selection[i];
-						var winner = s[n];
-						if (promoted.Add(winner.GenomeFitness.Genome.Hash))
-							await PromoteAsync(2, winner).ConfigureAwait(false); // PostStandby?
-					}
-				}
-
-				//NextLevel.ProcessPool(true); // Prioritize winners and express.
-
-				// 5) Process remaining (losers)
-				var maxLoses = Tower.Environment.MaxLevelLosses;
-				var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-				foreach (var remainder in selection.Cast<IEnumerable<LevelEntry<TGenome>>>().Weave())
-				{
-					if (!promoted.Add(remainder.GenomeFitness.Genome.Hash))
-						continue;
-
-					remainder.IncrementLoss();
-
-					if (remainder.LevelLossRecord > maxLoses)
-					{
-						var gf = remainder.GenomeFitness;
-						var fitnesses = gf.Fitness;
-						if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-							await PromoteAsync(3, remainder).ConfigureAwait(false);
-						else
-						{
-							LevelEntry<TGenome>.Pool.Give(remainder);
-
-							//Host.Problem.Reject(loser.GenomeFitness.Genome.Hash);
-							//if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-							//	f.MetricsCounter.Increment("Genome Rejected");
-
-							//#if DEBUG
-							//							if (IsTrackedGenome(gf.Genome.Hash))
-							//								Debugger.Break();
-							//#endif
-						}
-					}
-					else
-					{
-						Debug.Assert(remainder.LevelLossRecord > 0);
-						await PostThisLevelAsync(remainder).ConfigureAwait(false);// Didn't win, but still in the game.
-					}
-				}
-
-				foreach (var sel in selection) sel.Dispose();
 			}
 
 			public async ValueTask ProcessPoolAsync(bool thisLevelOnly = false)
@@ -173,7 +96,7 @@ namespace Solve.ProcessingSchemes.Tower
 				while (count != 0);
 			}
 
-			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override ValueTask PostNextLevelAsync(byte priority, LevelProgress<TGenome> challenger)
 				=> NextLevel.PostAsync(priority, challenger);
 
 			protected override ValueTask PostThisLevelAsync(LevelEntry<TGenome> entry)
@@ -188,7 +111,7 @@ namespace Solve.ProcessingSchemes.Tower
 			async ValueTask ProcessInjestedAsync(byte priority, ValueTask<LevelEntry<TGenome>?> challenger)
 				=> ProcessInjested(priority, await challenger.ConfigureAwait(false));
 
-			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override ValueTask ProcessInjested(byte priority, LevelProgress<TGenome> challenger)
 				=> ProcessInjestedAsync(priority, ProcessEntry(challenger));
 		}
 

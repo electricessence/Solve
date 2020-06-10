@@ -1,9 +1,7 @@
 ﻿using Open.Memory;
 using Solve.Supporting.TaskScheduling;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -50,98 +48,25 @@ namespace Solve.ProcessingSchemes.Dataflow
 				var preselector = new BatchBlock<LevelEntry<TGenome>>(
 					PoolSize,
 					new GroupingDataflowBlockOptions() { TaskScheduler = GetScheduler(1, "Level Preselection") });
+
 				Preselector = preselector;
 
 				// Step 2: Rank
-				var ranking = new TransformBlock<LevelEntry<TGenome>[], TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
+				var ranking = new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(
 					e => RankEntries(e),
 					SchedulerOption(2, "Level Ranking", true));
 
 				// Step 3: Selection and Propagation!
-				var selection = new ActionBlock<TemporaryArray<TemporaryArray<LevelEntry<TGenome>>>>(
+				var selection = new ActionBlock<LevelEntry<TGenome>[][]>(
 					dataflowBlockOptions: SchedulerOption(3, "Level Selection", true),
 					action: async pools =>
 					{
-						var poolCount = pools.Length;
-						var midPoint = PoolSize / 2;
-						var promoted = new HashSet<string>();
-
-						var isTop = _nextLevel == null;
-						// Place champions first.
-						{
-							for (byte p = 0; p < poolCount; ++p)
-							{
-								var e = pools[p][0];
-								var gf = e.GenomeFitness;
-								if (isTop)
-									ProcessChampion(p, gf);
-								if (promoted.Add(gf.Genome.Hash))
-									await PromoteAsync(1, e).ConfigureAwait(false);
-							}
-						}
-
-						// Remaining top 50% (winners) should go before any losers.
-						for (var i = 1; i < midPoint; ++i)
-						{
-							for (var p = 0; p < poolCount; ++p)
-							{
-								var e = pools[p][i];
-								var gf = e.GenomeFitness;
-								if (promoted.Add(gf.Genome.Hash))
-									await PromoteAsync(2, e).ConfigureAwait(false);
-							}
-						}
-
-						// Make sure losers have thier rejection count incremented.
-						for (var i = midPoint; i < PoolSize; ++i)
-						{
-							for (var p = 0; p < poolCount; ++p)
-							{
-								pools[p][i].GenomeFitness.Fitness[p].IncrementRejection();
-							}
-						}
-
-						// Distribute losers either back into the pool, pass them to the next level, or let them disapear (rejected).
-						var maxLoses = Tower.Environment.MaxLevelLosses;
-						var maxRejection = Tower.Environment.MaxLossesBeforeElimination;
-						for (var i = midPoint; i < PoolSize; ++i)
-						{
-							for (var p = 0; p < poolCount; ++p)
-							{
-								var loser = pools[p][i];
-								var gf = loser.GenomeFitness;
-								loser.GenomeFitness.Fitness[p].IncrementRejection();
-								if (!promoted.Add(gf.Genome.Hash)) continue;
-
-								loser.IncrementLoss();
-								if (loser.LevelLossRecord > maxLoses)
-								{
-									var fitnesses = gf.Fitness;
-									if (fitnesses.Any(f => f.RejectionCount < maxRejection))
-										await PromoteAsync(3, loser).ConfigureAwait(false);
-									else
-									{
-										LevelEntry<TGenome>.Pool.Give(loser);
-										//if (Tower.Environment.Factory is GenomeFactoryBase<TGenome> f)
-										//	f.MetricsCounter.Increment("Genome Rejected");
-									}
-								}
-								else
-								{
-									Debug.Assert(loser.LevelLossRecord > 0);
-									if (!preselector.Post(loser)) // Didn't win, but still in the game?
-										throw new Exception("preselector refused.");
-								}
-
-							}
-						}
-
-						foreach (var pool in pools) pool.Dispose();
-						pools.Dispose();
+						await ProcessSelection(pools);
+						ArrayPool<LevelEntry<TGenome>[]>.Shared.Return(pools, true);
 					});
 
 				// Step 0: Injestion
-				Processor = new ActionBlock<(TGenome Genome, Fitness[] Fitness)>(
+				Processor = new ActionBlock<LevelProgress<TGenome>>(
 					dataflowBlockOptions: SchedulerOption(0, "Level Injestion"),
 					action: async c =>
 					{
@@ -155,20 +80,20 @@ namespace Solve.ProcessingSchemes.Dataflow
 			}
 
 			readonly ITargetBlock<LevelEntry<TGenome>> Preselector;
-			readonly ITargetBlock<(TGenome Genome, Fitness[] Fitness)> Processor;
+			readonly ITargetBlock<LevelProgress<TGenome>> Processor;
 
-			protected override ValueTask PostNextLevelAsync(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override ValueTask PostNextLevelAsync(byte priority, LevelProgress<TGenome> challenger)
 				=> NextLevel.PostAsync(priority, challenger);
 
 			protected override ValueTask PostThisLevelAsync(LevelEntry<TGenome> entry)
 			{
-				if(!Preselector.Post(entry))
+				if (!Preselector.Post(entry))
 					throw new Exception("Preselector refused challenger.");
 
 				return new ValueTask();
 			}
 
-			protected override ValueTask ProcessInjested(byte priority, (TGenome Genome, Fitness[] Fitness) challenger)
+			protected override ValueTask ProcessInjested(byte priority, LevelProgress<TGenome> challenger)
 			{
 				if (!Processor.Post(challenger))
 					throw new Exception("Processor refused challenger.");

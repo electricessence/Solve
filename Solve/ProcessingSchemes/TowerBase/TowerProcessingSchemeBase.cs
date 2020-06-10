@@ -12,55 +12,24 @@ namespace Solve.ProcessingSchemes
 	public abstract class TowerProcessingSchemeBase<TGenome> : PushProcessingSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
-		protected const ushort DEFAULT_MAX_LEVEL_LOSSES = 3;
-		protected const ushort DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION = DEFAULT_MAX_LEVEL_LOSSES * 30;
 
 		protected TowerProcessingSchemeBase(
 			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
-			in (ushort First, ushort Minimum, ushort Step) poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION,
+			SchemeConfig config,
 			GenomeProgressionLog? genomeProgressionLog = null)
 			: base(metrics, genomeFactory, genomeProgressionLog/*, true*/)
 		{
-			if (poolSize.Minimum < 2)
-				throw new ArgumentOutOfRangeException(nameof(poolSize), "Must be at least 2.");
-			if (poolSize.First % 2 == 1)
-				throw new ArgumentException("Must be a mutliple of 2.", nameof(poolSize.First));
-			if (poolSize.Minimum % 2 == 1)
-				throw new ArgumentException("Must be a mutliple of 2.", nameof(poolSize.Minimum));
-			if (poolSize.Step % 2 == 1)
-				throw new ArgumentException("Must be a mutliple of 2.", nameof(poolSize.Step));
-			if (poolSize.First < poolSize.Minimum)
-				throw new ArgumentException("Minumum must be less than or equal to First.", nameof(poolSize));
+			Config = config ?? throw new ArgumentNullException(nameof(config));
 			Contract.EndContractBlock();
 
-
-			PoolSize = poolSize;
-			MaxLevels = maxLevels;
-			MaxLevelLosses = maxLevelLosses;
-			MaxLossesBeforeElimination = maxLossesBeforeElimination;
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
 			this.Subscribe(e => Factory[0].EnqueueChampion(e.Update.Genome));
 		}
 
-		protected TowerProcessingSchemeBase(
-			IMetricsRoot metrics,
-			IGenomeFactory<TGenome> genomeFactory,
-			ushort poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: this(metrics, genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
-
 		// First, and Minimum allow for tapering of pool size as generations progress.
-		internal protected readonly (ushort First, ushort Minimum, ushort Step) PoolSize;
-		public readonly ushort MaxLevels;
-		public readonly ushort MaxLevelLosses;
-		public readonly ushort MaxLossesBeforeElimination;
+		public SchemeConfig.Values Config { get; } 
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
 
 

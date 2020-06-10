@@ -23,9 +23,6 @@ namespace Solve
 
 		}
 
-		public override int IncrementRejection()
-			=> Interlocked.Increment(ref _rejectionCount);
-
 		public override ProcedureResults Merge(ProcedureResults other)
 		{
 			ProcedureResults r;

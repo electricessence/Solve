@@ -31,7 +31,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				if (next is null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();
 
-				return Root.PostAsync(0, (next, NewFitness()));
+				return Root.PostAsync(0, new LevelProgress<TGenome>(next, NewFitness()));
 			}
 		}
 	}

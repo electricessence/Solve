@@ -26,7 +26,7 @@ namespace Solve.ProcessingSchemes.Tower
 				if (next is null) throw new ArgumentNullException(nameof(next));
 				Contract.EndContractBlock();
 
-				return Root.PostAsync(0, (next, Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray()));
+				return Root.PostAsync(0, new LevelProgress<TGenome>(next, NewFitness()));
 			}
 
 			public ValueTask ProcessPoolsAsync()

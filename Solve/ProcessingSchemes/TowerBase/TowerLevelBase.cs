@@ -31,18 +31,10 @@ namespace Solve.ProcessingSchemes
 
 		protected TowerLevelBase(
 			int level,
-			in (ushort First, ushort Minimum, ushort Step) poolSize,
+			in SchemeConfig.PoolSizing poolSize,
 			TTower tower)
-			: this(level, GetPoolSize(level, poolSize), tower)
+			: this(level, poolSize.GetPoolSize(level), tower)
 		{
-		}
-
-		internal static ushort GetPoolSize(int level, in (ushort First, ushort Minimum, ushort Step) poolSize)
-		{
-			var (First, Minimum, Step) = poolSize;
-			var maxDelta = First - Minimum;
-			var decrement = level * Step;
-			return decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 		}
 
 		protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
@@ -64,23 +56,22 @@ namespace Solve.ProcessingSchemes
 			return (false, false);
 		}
 
-		protected abstract ValueTask<LevelEntry<TGenome>?> ProcessEntry((TGenome Genome, Fitness[] Fitness) champ);
+		protected abstract ValueTask<LevelEntry<TGenome>?> ProcessEntry(LevelProgress<TGenome> champ);
 
-		protected TemporaryArray<TemporaryArray<LevelEntry<TGenome>>> RankEntries(IList<LevelEntry<TGenome>> pool)
+		protected LevelEntry<TGenome>[][] RankEntries(IList<LevelEntry<TGenome>> pool)
 		{
 			var len = pool.Count;
 			var poolCount = Tower.Problem.Pools.Count;
-			var result = ArrayPool<TemporaryArray<LevelEntry<TGenome>>>.Shared.RentDisposable(poolCount, true);
+			var result = ArrayPool<LevelEntry<TGenome>[]>.Shared.Rent(poolCount);
 			var arrayPool = ArrayPool<LevelEntry<TGenome>>.Shared;
 
 			for (var i = 0; i < poolCount; i++)
-			{
-				var temp = arrayPool.RentDisposable(len);
-				var a = temp.Array;
-				result.Array[i] = temp;
+			{ 
+				var temp = arrayPool.Rent(len);
+				result[i] = temp;
 
-				pool.CopyTo(a, 0);
-				Array.Sort(a, 0, len, LevelEntry<TGenome>.GetScoreComparer(i));
+				pool.CopyTo(temp, 0);
+				Array.Sort(temp, 0, len, LevelEntry<TGenome>.GetScoreComparer(i));
 			}
 
 			return result;

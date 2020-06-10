@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -22,10 +23,10 @@ namespace Solve.ProcessingSchemes
 			this.Subscribe(champion => Environment.Broadcast((Problem, champion)));
 		}
 
-		public void Broadcast((TGenome Genome, Fitness[] Fitnesses) gf, int poolIndex)
-			=> Broadcast((gf.Genome, poolIndex, gf.Fitnesses[poolIndex]));
+		public void Broadcast(LevelProgress<TGenome> progress, int poolIndex)
+			=> Broadcast((progress.Genome, poolIndex, progress.Fitnesses[poolIndex]));
 
-		public Fitness[] NewFitness()
-			=> Problem.Pools.Select(f => new Fitness(f.Metrics)).ToArray();
+		public ImmutableArray<Fitness> NewFitness()
+			=> Problem.Pools.Select(f => new Fitness(f.Metrics)).ToImmutableArray();
 	}
 }

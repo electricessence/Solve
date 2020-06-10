@@ -1,4 +1,5 @@
 ﻿using App.Metrics;
+using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -15,11 +16,9 @@ namespace Solve.ProcessingSchemes.Dataflow
 		public DataflowScheme(
 			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
-			in (ushort First, ushort Minimum, ushort Step) poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: base(metrics, genomeFactory, in poolSize, maxLevels, maxLevelLosses, maxLossesBeforeElimination)
+			SchemeConfig config,
+			GenomeProgressionLog? genomeProgressionLog = null)
+			: base(metrics, genomeFactory, config, genomeProgressionLog)
 		{
 
 		}
@@ -27,11 +26,12 @@ namespace Solve.ProcessingSchemes.Dataflow
 		public DataflowScheme(
 			IMetricsRoot metrics,
 			IGenomeFactory<TGenome> genomeFactory,
-			ushort poolSize,
-			ushort maxLevels = ushort.MaxValue,
-			ushort maxLevelLosses = DEFAULT_MAX_LEVEL_LOSSES,
-			ushort maxLossesBeforeElimination = DEFAULT_MAX_LOSSES_BEFORE_ELIMINATION)
-			: this(metrics, genomeFactory, (poolSize, poolSize, 2), maxLevels, maxLevelLosses, maxLossesBeforeElimination) { }
+			SchemeConfig.PoolSizing config,
+			GenomeProgressionLog? genomeProgressionLog = null)
+			: this(metrics, genomeFactory, new SchemeConfig { PoolSize = config }, genomeProgressionLog)
+		{
+
+		}
 
 		private IEnumerable<ProblemTower>? ActiveTowers;
 

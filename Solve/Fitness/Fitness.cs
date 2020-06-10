@@ -48,10 +48,6 @@ namespace Solve
 
 		public int SampleCount => _results?.Count ?? 0;
 
-		protected int _rejectionCount;
-		public int RejectionCount => _rejectionCount;
-		public virtual int IncrementRejection() => ++_rejectionCount;
-
 		public virtual ProcedureResults Merge(ProcedureResults other)
 		{
 			var r = _results;
@@ -127,10 +123,9 @@ namespace Solve
 		public Fitness Clone()
 			=> new Fitness(Metrics, _results);
 
-		public int CompareTo(Fitness other)
+		public int CompareTo(Fitness? other)
 		{
-			if (other is null) throw new ArgumentNullException(nameof(other));
-			Contract.EndContractBlock();
+			if (other is null) return +1;
 
 			if (this == other || Results == other.Results || SampleCount == 0 && other.SampleCount == 0)
 				return 0;
