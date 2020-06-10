@@ -3,7 +3,6 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using App.Metrics;
 using Open.Collections;
 using Solve.Metrics;
 using System;

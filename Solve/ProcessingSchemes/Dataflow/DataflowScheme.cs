@@ -1,5 +1,4 @@
-﻿using App.Metrics;
-using Solve.Metrics;
+﻿using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;

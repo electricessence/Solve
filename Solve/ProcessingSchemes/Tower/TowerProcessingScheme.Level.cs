@@ -1,4 +1,5 @@
 ﻿using Open.ChannelExtensions;
+using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -31,6 +32,8 @@ namespace Solve.ProcessingSchemes.Tower
 				byte priorityLevels = 4)
 				: base(level, tower, priorityLevels)
 			{
+				Console.WriteLine("Level Created: {0}", level);
+
 				Pool = Channel.CreateUnbounded<LevelEntry<TGenome>>(new UnboundedChannelOptions
 				{
 					AllowSynchronousContinuations = true

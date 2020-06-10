@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes.Tower
 {
-	using App.Metrics;
 	using Solve.Metrics;
 #if DEBUG
 	using System.Diagnostics;
