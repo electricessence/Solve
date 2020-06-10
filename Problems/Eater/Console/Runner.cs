@@ -50,7 +50,7 @@ namespace Eater
 
 		public void InitPreviousWinners() => Init(_emitter.Value.PreviousWinners);
 		public async ValueTask InitSeedsAsync() => Init(await Seeds().ToArrayAsync());
-		public void Init(params string[] seeds) => Init(seeds as IEnumerable<string> ?? Enumerable.Empty<string>());
+		public void Init(params string[] seeds) => Init(seeds ?? Enumerable.Empty<string>());
 		public void Init(IEnumerable<string> seeds)
 		{
 			if (_init) throw new InvalidOperationException("Can only initialize once.");
