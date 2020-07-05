@@ -1,0 +1,19 @@
+﻿@page "/solve-runner-control"
+@inherits SolveRunnerControlBase
+
+<h1>Runner Control</h1>
+
+<Label>New Task Runner: 
+<Select TValue="int" @bind-SelectedValue="@Option">
+	@foreach(var e in Enum.GetValues(typeof(TaskRunnerOption)))
+	{
+		<SelectItem Value="@((int)e)">@e</SelectItem>
+	}
+</Select>
+</Label>
+<Button Clicked="OnAdd"> + Add </Button>
+
+@foreach (var id in ActiveIds.OrderBy(i => i))
+{
+	<div><span>@id</span>: <TaskRunnerControl TaskId="@id" /></div>
+}

@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Open.TaskManager.Client
+@using Microsoft.Extensions.Logging
+@page "/hub-test"
+@inject IHubConnectionFactory<SolveRunnerRegistryProxy> hubConnectionFactory
+@inject ILogger<HubTest> Logger;
+@implements IDisposable
+
+<h1>Hub Test</h1>
+
+Connected: @isConnected
+
+@code {
+	HubConnection? connection = null;
+	bool isConnected;
+
+	protected override async Task OnInitializedAsync()
+	{
+		connection = hubConnectionFactory.Create();
+
+		Logger.LogInformation("Hub Test: Starting HubConnection.");
+		await connection.StartAsync();
+		Logger.LogWarning("Hub Test: Started HubConnection.");
+		isConnected = true;
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		Logger.LogInformation("Hub Test: Disposing HubConnection.");
+		_ = connection?.DisposeAsync();
+	}
+}

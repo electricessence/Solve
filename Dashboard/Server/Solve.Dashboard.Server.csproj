@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Solve.Dashboard.ClientApp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.0" />
+    <PackageReference Include="Blazorise.Bootstrap" Version="0.9.1.1" />
+    <PackageReference Include="Blazorise.Icons.FontAwesome" Version="0.9.1.1" />
+    <PackageReference Include="Open.TaskManager.Server" Version="1.0.0" />		
+  </ItemGroup>
+
+  <ItemGroup>
+		<ProjectReference Include="..\Common\Solve.Dashboard.Common.csproj" />
+		
+		<!-- This must be included for Blazor WASM to work. -->
+    <ProjectReference Include="..\ClientApp\Solve.Dashboard.ClientApp.csproj" />
+  </ItemGroup>
+
+</Project>

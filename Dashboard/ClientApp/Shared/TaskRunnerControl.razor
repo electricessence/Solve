@@ -1,0 +1,38 @@
+﻿@inherits TaskRunnerControlBase
+
+<Buttons>
+	<Button
+			Color="@(IsRunning && !IsStopping ? Color.Primary : Color.Secondary)"
+			Disabled="@(!IsRunning || !IsStateInSync)"
+			Clicked="OnStop">
+		<span class='fa-left fas fa-stop'></span> Stop
+	</Button>
+	<Button
+			Color="Color.Primary"
+			Disabled="@(!IsConnected || IsStopping || IsRunning || !IsStateInSync)"
+			Clicked="OnStart">
+		<span class='fa-left fas fa-play'></span> Start
+	</Button>
+</Buttons>
+
+<Switch TValue="bool"
+		Checked="@(IsRunning || IsStopping)"
+		CheckedChanged="OnToggle"
+		Disabled="@(!IsConnected || IsStopping || !IsStateInSync)">
+	<Badge Color="@(IsRunning ? Color.Success : IsStopping ? Color.Danger : Color.Light)">
+		@if (IsStopping)
+		{
+			<span class='fa-left fas fa-sync-alt spinning'></span>
+		}
+		else if (IsRunning)
+		{
+			<span class='fa-left fas fa-play'></span>
+		}
+		else
+		{
+			<span class='fa-left fas fa-stop'></span>
+		}
+		@(StateText)
+	</Badge>
+	<span>@ProgressText</span>
+</Switch>
