@@ -1,4 +1,5 @@
 ﻿using Open.TaskManager;
+using Open.TaskManager.Server;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -8,13 +9,13 @@ namespace Solve.Dashboard.Server
 {
 	public static class TaskRunnerRegistryServiceExtensions
 	{
-		public static Func<CancellationToken, Action<object?>, Task> GetFactory(TaskRunnerOption option)
+		public static TaskRunnerFactoryDelegate GetFactory(TaskRunnerOption option)
 		{
 			switch (option)
 			{
 				case TaskRunnerOption.Delay:
 				{
-					return async (token, progress) =>
+					return async (id, token, progress) =>
 					{
 						var delay = Task.Delay(200000, token);
 						progress("running");
@@ -33,7 +34,7 @@ namespace Solve.Dashboard.Server
 
 				case TaskRunnerOption.Countdown:
 				{
-					return async (token, progress) =>
+					return async (id, token, progress) =>
 					{
 						var start = Task.Delay(1000);
 						progress("started");

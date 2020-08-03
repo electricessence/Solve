@@ -14,8 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Numeric" Version="2.2.2" />
-    <PackageReference Include="Open.RandomizationExtensions" Version="2.4.2" />
+    <PackageReference Include="Open.Numeric" Version="2.3.0" />
+    <PackageReference Include="Open.RandomizationExtensions" Version="2.5.0" />
   </ItemGroup>
 
   <ItemGroup>

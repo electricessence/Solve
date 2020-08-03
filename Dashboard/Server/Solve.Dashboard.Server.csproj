@@ -7,14 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Solve.Dashboard.ClientApp.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.0" />
-    <PackageReference Include="Blazorise.Bootstrap" Version="0.9.1.1" />
-    <PackageReference Include="Blazorise.Icons.FontAwesome" Version="0.9.1.1" />
-    <PackageReference Include="Open.TaskManager.Server" Version="1.0.0" />		
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.1" />
+    <PackageReference Include="Blazorise.Bootstrap" Version="0.9.1.2" />
+    <PackageReference Include="Blazorise.Icons.FontAwesome" Version="0.9.1.2" />
+    <PackageReference Include="Open.TaskManager.Server" Version="1.1.0" />		
   </ItemGroup>
 
   <ItemGroup>

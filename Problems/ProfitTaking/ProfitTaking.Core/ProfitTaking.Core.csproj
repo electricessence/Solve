@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>ProfitTaking</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Open.Cloneable" Version="1.1.2" />
+    <PackageReference Include="Open.Collections" Version="2.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Solve\Solve.csproj" />
+  </ItemGroup>
+
+</Project>

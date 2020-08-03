@@ -3,6 +3,7 @@ using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Solve.Evaluation
@@ -52,7 +53,7 @@ namespace Solve.Evaluation
 					p.Parent!.Remove(p);
 
 				yield return (
-					Catalog.FixHierarchy(paramRemoved).Recycle(),
+					Catalog.FixHierarchy(paramRemoved).Recycle()!,
 					"Parameter elimination");
 			}
 
@@ -118,7 +119,8 @@ namespace Solve.Evaluation
 					c.Detatch();
 			}
 
-			var next = Catalog.FixHierarchy(sourceTree).Recycle();
+			var next = Catalog.FixHierarchy(sourceTree).Recycle()!;
+			Debug.Assert(next != null);
 			sourceTree.Recycle();
 			yield return (Catalog.GetReduced(next), "Constants Stripped");
 

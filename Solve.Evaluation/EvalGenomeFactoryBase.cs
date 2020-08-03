@@ -227,8 +227,8 @@ namespace Solve.Evaluation
 					var origin = (CROSSOVER_OF, $"{a.Hash}\n{b.Hash}");
 					return new[]
 					{
-						Registration(Catalog.FixHierarchy(aRoot).Recycle(), origin),
-						Registration(Catalog.FixHierarchy(bRoot).Recycle(), origin)
+						Registration(Catalog.FixHierarchy(aRoot).Recycle()!, origin),
+						Registration(Catalog.FixHierarchy(bRoot).Recycle()!, origin)
 					};
 				}
 				aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();

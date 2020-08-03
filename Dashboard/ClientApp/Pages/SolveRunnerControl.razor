@@ -1,4 +1,4 @@
-﻿@page "/solve-runner-control"
+﻿@page "/solve-runner"
 @inherits SolveRunnerControlBase
 
 <h1>Runner Control</h1>
@@ -15,5 +15,5 @@
 
 @foreach (var id in ActiveIds.OrderBy(i => i))
 {
-	<div><span>@id</span>: <TaskRunnerControl TaskId="@id" /></div>
+	<div><a class="btn btn-light" href="solve-runner/@id">@id</a> <TaskRunnerControl TaskId="@id" /></div>
 }

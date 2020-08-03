@@ -15,7 +15,7 @@ namespace Solve
 	public interface IGenome : IFreezable, ICloneable
 	{
 		/// <summary>
-		/// A relative measuere of the complexity of a genome.
+		/// A relative measure of the complexity of a genome.
 		/// </summary>
 		int GeneCount { get; }
 
