@@ -33,12 +33,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="NSwag.AspNetCore" Version="13.6.2" />
-		<PackageReference Include="NSwag.MSBuild" Version="13.6.2">
+		<PackageReference Include="NSwag.AspNetCore" Version="13.11.3" />
+		<PackageReference Include="NSwag.MSBuild" Version="13.11.3">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="3.9.7">
+		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.3.2">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
