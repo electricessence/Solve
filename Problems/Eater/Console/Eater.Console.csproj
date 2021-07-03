@@ -25,7 +25,7 @@
     <PackageReference Include="Open.DateTime.Extensions" Version="1.2.0" />
     <PackageReference Include="Open.Threading.Dataflow" Version="2.4.0" />
     <PackageReference Include="Open.Threading.ReadWrite" Version="1.4.0" />
-    <PackageReference Include="Open.Threading.Tasks" Version="1.2.1" />
+    <PackageReference Include="Open.Threading.Tasks" Version="1.2.2" />
   </ItemGroup>
 
   <ItemGroup>

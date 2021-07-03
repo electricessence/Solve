@@ -54,14 +54,14 @@
     <PackageReference Include="Open.Arithmetic" Version="1.5.0" />
     <PackageReference Include="Open.ChannelExtensions" Version="5.0.0" />
     <PackageReference Include="Open.Cloneable" Version="1.1.2" />
-    <PackageReference Include="Open.Collections.Numeric" Version="1.5.0" />
+    <PackageReference Include="Open.Collections.Numeric" Version="1.5.1" />
     <PackageReference Include="Open.Disposable.ObjectPools" Version="2.6.0" />
     <PackageReference Include="Open.Lazy.Extensions" Version="1.1.1" />
-    <PackageReference Include="Open.Numeric" Version="2.3.0" />
+    <PackageReference Include="Open.Numeric" Version="2.3.1" />
     <PackageReference Include="Open.RandomizationExtensions" Version="2.5.0" />
     <PackageReference Include="Open.Text" Version="2.3.2" />
     <PackageReference Include="Open.Threading" Version="1.6.0" />
-    <PackageReference Include="Open.Threading.Tasks" Version="1.2.1" />
+    <PackageReference Include="Open.Threading.Tasks" Version="1.2.2" />
     <PackageReference Include="System.Interactive.Async" Version="5.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="System.Reactive" Version="5.0.0" />
