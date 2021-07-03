@@ -18,7 +18,7 @@ namespace Solve.ProcessingSchemes
 		public InterlockedInt LossCount => _losses ?? throw new InvalidOperationException("Accessing an uninitialized LevelEntry.");
 
 		private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers
-			= new ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>>();
+			= new();
 		public static IComparer<LevelEntry<TGenome>> GetScoreComparer(int index)
 			=> Comparers.GetOrAdd(index, i => new LevelEntryScoreComparer(i));
 

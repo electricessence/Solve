@@ -22,7 +22,7 @@ namespace Solve
 	public static class StringBuilderPool
 	{
 		public static readonly ConcurrentQueueObjectPool<StringBuilder> Instance
-			= new ConcurrentQueueObjectPool<StringBuilder>(
+			= new(
 				() => new StringBuilder(),
 				sb =>
 				{
@@ -53,7 +53,7 @@ namespace Solve
 		where TColl : class, ICollection<T>, new()
 	{
 		public static readonly ConcurrentQueueObjectPool<TColl> Instance
-			= new ConcurrentQueueObjectPool<TColl>(
+			= new(
 				() => new TColl(),
 				d => d.Clear(),
 				null,
@@ -79,7 +79,7 @@ namespace Solve
 		where TKey : notnull
 	{
 		public static readonly ConcurrentQueueObjectPool<Dictionary<TKey, TValue>> Instance
-			= new ConcurrentQueueObjectPool<Dictionary<TKey, TValue>>(
+			= new(
 				() => new Dictionary<TKey, TValue>(),
 				d => d.Clear(),
 				null,

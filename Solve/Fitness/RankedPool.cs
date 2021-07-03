@@ -20,7 +20,7 @@ namespace Solve
 
 		public readonly ushort PoolSize;
 		readonly ConcurrentQueue<(TGenome Genome, Fitness Fitness)> _pool
-			= new ConcurrentQueue<(TGenome Genome, Fitness Fitness)>();
+			= new();
 
 		public bool IsEmpty => _pool.IsEmpty;
 

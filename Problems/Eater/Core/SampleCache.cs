@@ -74,7 +74,7 @@ namespace Eater
 			=> id == -1 ? GenerateOrdered() : _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
 
 		Point RandomPosition(Random random)
-			=> new Point(random.Next(GridSize), random.Next(GridSize));
+			=> new(random.Next(GridSize), random.Next(GridSize));
 
 
 	}

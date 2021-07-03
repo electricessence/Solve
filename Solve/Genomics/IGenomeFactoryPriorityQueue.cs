@@ -4,8 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Solve
 {
-	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
-	[SuppressMessage("ReSharper", "UnusedParameter.Global")]
 	public interface IGenomeFactoryPriorityQueue<TGenome>
 		where TGenome : class, IGenome
 	{

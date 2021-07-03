@@ -6,7 +6,6 @@
 using System;
 #if DEBUG
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 #endif
 
 namespace Solve
@@ -36,7 +35,6 @@ namespace Solve
 	}
 
 #if DEBUG
-	[SuppressMessage("ReSharper", "UnusedMemberInSuper.Global")]
 	public interface IGenomeLogEntry
 	{
 		DateTime TimeStamp { get; }

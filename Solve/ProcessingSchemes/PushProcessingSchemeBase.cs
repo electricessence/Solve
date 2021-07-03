@@ -53,7 +53,7 @@ namespace Solve.ProcessingSchemes
 				if (FactoryBuffer.Writer.TryWrite(genome))
 					continue;
 
-				if (!await FactoryBuffer.Writer.WaitToWriteAsync().ConfigureAwait(false))
+				if (!await FactoryBuffer.Writer.WaitToWriteAsync(token).ConfigureAwait(false))
 					break;
 
 				goto retry;

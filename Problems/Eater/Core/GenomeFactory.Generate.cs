@@ -7,7 +7,7 @@ namespace Eater
 	{
 		public int GeneratedCount { get; private set; }
 
-		readonly LinkedList<StepCount> _lastGenerated = new LinkedList<StepCount>();
+		readonly LinkedList<StepCount> _lastGenerated = new();
 
 		/*
          * The goal here is to produce unique eaters.

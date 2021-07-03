@@ -47,10 +47,10 @@ namespace Solve
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry
-			= new ConcurrentDictionary<string, Lazy<TGenome>>();
+			= new();
 
 		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced
-			 = new LockSynchronizedHashSet<string>();
+			 = new();
 
 		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
@@ -321,7 +321,7 @@ namespace Solve
 
 #if DEBUG
 		readonly ConcurrentDictionary<string, TGenome> Released
-			= new ConcurrentDictionary<string, TGenome>();
+			= new();
 #endif
 
 		public TGenome Next()
@@ -367,7 +367,7 @@ namespace Solve
 		}
 
 		protected readonly List<PriorityQueue> PriorityQueues
-			= new List<PriorityQueue>();
+			= new();
 
 		protected PriorityQueue GetPriorityQueue(int index)
 		{
@@ -396,7 +396,7 @@ namespace Solve
 			=> GetPriorityQueue(index);
 
 		readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations
-			= new ConditionalWeakTable<TGenome, IEnumerator<TGenome>>();
+			= new();
 
 		protected virtual IEnumerable<TGenome>? GetVariationsInternal(TGenome source) => null;
 
@@ -436,7 +436,7 @@ namespace Solve
 			 * Returning any valid breeders whom haven't mated enough.
 			 */
 			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
-				= new ConcurrentQueue<(TGenome Genome, int Count)>();
+				= new();
 
 			public void EnqueueChampion(IEnumerable<TGenome> genomes)
 			{
@@ -731,13 +731,13 @@ namespace Solve
 			}
 
 			protected readonly ConcurrentQueue<TGenome> InternalQueue
-				= new ConcurrentQueue<TGenome>();
+				= new();
 
 			protected readonly ConcurrentQueue<TGenome> AwaitingVariation
-				= new ConcurrentQueue<TGenome>();
+				= new();
 
 			protected readonly ConcurrentQueue<TGenome> AwaitingMutation
-				= new ConcurrentQueue<TGenome>();
+				= new();
 
 			readonly List<Func<bool>> ProducerTriggers;
 
@@ -807,7 +807,7 @@ namespace Solve
 				// We still want random production to occur every so often.
 
 				// ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-				ExternalProducers.Any(p => p.Invoke());
+				_ = ExternalProducers.Any(p => p.Invoke());
 				Factory.Metrics.ExternalProducer();
 
 				return false;

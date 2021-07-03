@@ -2,14 +2,12 @@
 using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console
 {
-	[SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 	public abstract class RunnerBase<TGenome>
 		where TGenome : class, IGenome
 	{

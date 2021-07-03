@@ -2,7 +2,6 @@
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -26,9 +25,8 @@ namespace Solve.Experiment.Console
 		protected const string BLANK = "           ";
 
 		readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue
-			= new ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>();
+			= new();
 
-		[SuppressMessage("ReSharper", "ImplicitlyCapturedClosure")]
 		public void EmitTopGenomeStats(IProblem<TGenome> problem, (TGenome genome, int poolIndex, Fitness fitness) update)
 		{
 			// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
@@ -95,7 +93,6 @@ namespace Solve.Experiment.Console
 				goto retry;
 		}
 
-		[SuppressMessage("ReSharper", "UnusedParameter.Global")]
 		protected virtual void OnEmittingGenome(
 			TGenome genome,
 			StringBuilder output)

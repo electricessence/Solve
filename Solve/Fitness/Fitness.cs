@@ -6,14 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 
 namespace Solve
 {
 	[DebuggerDisplay("{this.ToString()}")]
-	[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 	public class Fitness : IComparable<Fitness>
 	{
 		public Fitness(in ImmutableArray<Metric> metrics, ProcedureResults results)
@@ -120,7 +118,7 @@ namespace Solve
 		}
 
 		public Fitness Clone()
-			=> new Fitness(Metrics, _results);
+			=> new(Metrics, _results);
 
 		public int CompareTo(Fitness? other)
 		{

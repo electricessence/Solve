@@ -6,7 +6,7 @@ namespace Solve.Metrics
 {
 	public class GenomeHistory : IEnumerable<GenomeEvent>
 	{
-		readonly SortedDictionary<long, GenomeEvent> _events = new SortedDictionary<long, GenomeEvent>();
+		readonly SortedDictionary<long, GenomeEvent> _events = new();
 
 		public GenomeHistory(string hash)
 		{

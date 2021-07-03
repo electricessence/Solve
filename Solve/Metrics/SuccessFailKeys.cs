@@ -22,6 +22,6 @@ namespace Solve.Metrics
 			=> success ? Succeded : Failed;
 
 		public static implicit operator SuccessFailKeys(string prefix)
-			=> new SuccessFailKeys(prefix);
+			=> new(prefix);
 	}
 }

@@ -49,7 +49,7 @@ namespace Solve.Supporting.TaskScheduling
 
 		private int _delegatesQueuedOrRunning;
 		private readonly ConcurrentQueue<Task?> InternalQueue
-			= new ConcurrentQueue<Task?>();
+			= new();
 
 #if DEBUG
 		protected override bool TryDequeue(Task task)
@@ -94,7 +94,7 @@ namespace Solve.Supporting.TaskScheduling
 		}
 
 		private readonly ReadWriteSynchronizedLinkedList<PriorityQueueTaskScheduler> Children
-			= new ReadWriteSynchronizedLinkedList<PriorityQueueTaskScheduler>();
+			= new();
 
 		void NotifyNewWorkItem()
 			// ReSharper disable once AssignNullToNotNullAttribute
@@ -162,13 +162,13 @@ namespace Solve.Supporting.TaskScheduling
 						Debug.Assert(scheduler != null);
 						Debug.Assert(task != null);
 
-						scheduler.TryExecuteTask(task);
+						_ = scheduler.TryExecuteTask(task);
 					}
 				}
 				finally
 				{
 					// ReSharper disable once InvertIf
-					if (InternalQueue.Count == 0)
+					if (InternalQueue.IsEmpty)
 					{
 						// Now that we think we're done, verify that there really is
 						// no more work to do.  If there's not, highlight
@@ -176,7 +176,7 @@ namespace Solve.Supporting.TaskScheduling
 						lock (InternalQueue)
 						{
 							// ReSharper disable once InvertIf
-							if (InternalQueue.Count == 0)
+							if (InternalQueue.IsEmpty)
 							{
 								--_delegatesQueuedOrRunning;
 								continueProcessing = false;
@@ -216,12 +216,9 @@ namespace Solve.Supporting.TaskScheduling
 			}
 		}
 
-		protected override void OnDispose(bool calledExplicity)
+		protected override void OnDispose()
 		{
-			if (calledExplicity)
-			{
-				Children.Dispose();
-			}
+			Children.Dispose();
 		}
 
 

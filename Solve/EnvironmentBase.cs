@@ -56,7 +56,7 @@ namespace Solve
 
 		public bool HaveAllProblemsConverged => ProblemsInternal.TrueForAll(p => p.HasConverged);
 
-		protected readonly CancellationTokenSource Canceller = new CancellationTokenSource();
+		protected readonly CancellationTokenSource Canceller = new();
 
 		public CancellationToken CancellationToken => Canceller.Token;
 

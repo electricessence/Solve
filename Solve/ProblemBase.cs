@@ -46,7 +46,7 @@ namespace Solve
 				public readonly Fitness Fitness;
 
 				public static implicit operator (TGenome Genome, Fitness? Fitness)(GF? gf)
-					=> (gf is null ? default : gf.Genome, gf?.Fitness);
+					=> (gf is null ? default! : gf.Genome, gf?.Fitness);
 			}
 
 			GF? _bestFitness;

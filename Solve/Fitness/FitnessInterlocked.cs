@@ -52,7 +52,7 @@ namespace Solve
 		}
 
 		public new FitnessInterlocked Clone()
-			=> new FitnessInterlocked(Metrics, _results);
+			=> new(Metrics, _results);
 
 	}
 }

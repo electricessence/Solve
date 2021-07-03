@@ -37,9 +37,9 @@ namespace Eater
 			return new StepCount(a.Step, a.Count + b.Count);
 		}
 
-		public static StepCount operator ++(StepCount a) => new StepCount(a.Step, a.Count + 1);
-		public static StepCount operator --(StepCount a) => new StepCount(a.Step, a.Count - 1);
-		public static StepCount Forward(int count) => new StepCount(Step.Forward, count);
+		public static StepCount operator ++(StepCount a) => new(a.Step, a.Count + 1);
+		public static StepCount operator --(StepCount a) => new(a.Step, a.Count - 1);
+		public static StepCount Forward(int count) => new(Step.Forward, count);
 
 		public override string ToString()
 		{
@@ -56,7 +56,7 @@ namespace Eater
 		IEnumerator IEnumerable.GetEnumerator()
 			=> GetEnumerator();
 
-		public static implicit operator StepCount(Step step) => new StepCount(step);
+		public static implicit operator StepCount(Step step) => new(step);
 	}
 
 	public enum Orientation
@@ -231,7 +231,7 @@ namespace Eater
 			_ => throw new ArgumentException("Invalid value.", nameof(step)),
 		};
 
-		static readonly Regex StepReplace = new Regex(@"(\d+)([<>^])", RegexOptions.Compiled);
+		static readonly Regex StepReplace = new(@"(\d+)([<>^])", RegexOptions.Compiled);
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
@@ -376,16 +376,16 @@ namespace Eater
 			return red == null ? steps : FromGenomeHash(red);
 		}
 
-		static readonly string TURN_LEFT_4 = new string(TURN_LEFT, 4);
-		static readonly string TURN_RIGHT_4 = new string(TURN_RIGHT, 4);
+		static readonly string TURN_LEFT_4 = new(TURN_LEFT, 4);
+		static readonly string TURN_RIGHT_4 = new(TURN_RIGHT, 4);
 
-		static readonly string TURN_LEFT_3 = new string(TURN_LEFT, 3);
-		static readonly string TURN_RIGHT_3 = new string(TURN_RIGHT, 3);
+		static readonly string TURN_LEFT_3 = new(TURN_LEFT, 3);
+		static readonly string TURN_RIGHT_3 = new(TURN_RIGHT, 3);
 
 		static readonly string TURN_LEFT_RIGHT = string.Empty + TURN_LEFT + TURN_RIGHT;
 		static readonly string TURN_RIGHT_LEFT = string.Empty + TURN_RIGHT + TURN_LEFT;
 
-		static readonly Regex ENDING_TURNS_REGEX = new Regex("[" + TURN_LEFT + TURN_RIGHT + "]+$");
+		static readonly Regex ENDING_TURNS_REGEX = new("[" + TURN_LEFT + TURN_RIGHT + "]+$");
 
 		static string? ReduceLoop(string hash)
 		{

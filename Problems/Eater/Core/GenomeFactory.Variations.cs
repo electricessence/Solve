@@ -10,8 +10,8 @@ namespace Eater
 {
 	public partial class GenomeFactory
 	{
-		static readonly Regex UTurn = new Regex(@"\^([<>])\1\^", RegexOptions.Compiled);
-		static readonly Regex Loop = new Regex(@"(\^[<>])\1{2}\^", RegexOptions.Compiled);
+		static readonly Regex UTurn = new(@"\^([<>])\1\^", RegexOptions.Compiled);
+		static readonly Regex Loop = new(@"(\^[<>])\1{2}\^", RegexOptions.Compiled);
 
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
@@ -28,7 +28,7 @@ namespace Eater
 				yield return Steps.FromGenomeHash(
 					hash.Substring(0, match.Index) +
 					match.Value.Trim('^') +
-					hash.Substring(match.Index + match.Length));
+					hash[(match.Index + match.Length)..]);
 			}
 
 			yield return source.Reverse();
@@ -87,7 +87,7 @@ namespace Eater
 				yield return Steps.FromGenomeHash(
 					hash.Substring(0, match.Index) +
 					match.Value.Replace("^", string.Empty) +
-					hash.Substring(match.Index + match.Length));
+					hash[(match.Index + match.Length)..]);
 			}
 		}
 

@@ -6,8 +6,8 @@ namespace Solve.Metrics
 {
 	public class GenomeProgressionLog
 	{
-		readonly ConcurrentHashSet<string> _dead = new ConcurrentHashSet<string>();
-		readonly  ConcurrentDictionary<string, GenomeHistory> _log = new ConcurrentDictionary<string, GenomeHistory>();
+		readonly ConcurrentHashSet<string> _dead = new();
+		readonly  ConcurrentDictionary<string, GenomeHistory> _log = new();
 
 		public GenomeHistory this[string hash] => _log.GetOrAdd(hash, key => new GenomeHistory(key));
 

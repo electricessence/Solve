@@ -36,7 +36,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 				}
 
 				ExecutionDataflowBlockOptions SchedulerOption(int pri, string name, bool singleProducer = false)
-					=> new ExecutionDataflowBlockOptions()
+					=> new()
 					{
 						MaxDegreeOfParallelism = Environment.ProcessorCount,
 						SingleProducerConstrained = singleProducer,

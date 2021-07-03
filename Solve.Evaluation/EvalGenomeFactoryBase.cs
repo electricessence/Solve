@@ -24,11 +24,11 @@ namespace Solve.Evaluation
 		protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<EvalGenome<T>>? seeds) : base(metrics, seeds)
 		{ }
 
-		public readonly EvaluationCatalog<T> Catalog = new EvaluationCatalog<T>();
+		public readonly EvaluationCatalog<T> Catalog = new();
 
 		#region ParamOnly
 
-		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new LockSynchronizedHashSet<int>();
+		readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new();
 
 		protected EvalGenome<T> GenerateParamOnly(ushort id)
 			=> Registration(Catalog.GetParameter(id), "GenerateParamOnly");
@@ -45,7 +45,7 @@ namespace Solve.Evaluation
 		}
 
 		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> OperatedCatalog =
-			new ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>>();
+			new();
 
 		protected abstract IEnumerable<EvalGenome<T>> GenerateOperated(ushort paramCount = 2);
 
@@ -54,7 +54,7 @@ namespace Solve.Evaluation
 		#region Functions
 
 		readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> FunctionedCatalog =
-			new ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>>();
+			new();
 
 		protected abstract IEnumerable<EvalGenome<T>> GenerateFunctioned(ushort id);
 

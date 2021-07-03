@@ -164,31 +164,31 @@ namespace Eater
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary));
+			=> new(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary));
 
 		public static Problem CreateFitnessSecondary(
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsSecondary01, FitnessSecondary01), (MetricsSecondary02, FitnessSecondary02));
+			=> new(gridSize, sampleSize, championPoolSize, (MetricsSecondary01, FitnessSecondary01), (MetricsSecondary02, FitnessSecondary02));
 
 		public static Problem CreateF02(
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (Metrics02, Fitness02));
+			=> new(gridSize, sampleSize, championPoolSize, (Metrics02, Fitness02));
 
 		public static Problem CreateF0102(
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02));
+			=> new(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02));
 
 		public static Problem CreateF010203(
 			ushort gridSize = 10,
 			ushort sampleSize = 40,
 			ushort championPoolSize = 100)
-			=> new Problem(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02), (Metrics03, Fitness03));
+			=> new(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02), (Metrics03, Fitness03));
 
 	}
 

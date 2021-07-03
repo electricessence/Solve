@@ -8,6 +8,6 @@ namespace Solve
 		public override bool Equals(TGenome x, TGenome y) => x?.Hash == y?.Hash;
 		public override int GetHashCode(TGenome genome) => genome?.Hash.GetHashCode() ?? 0;
 
-		public static readonly GenomeEqualityComparer<TGenome> Instance = new GenomeEqualityComparer<TGenome>();
+		public static readonly GenomeEqualityComparer<TGenome> Instance = new();
 	}
 }

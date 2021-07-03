@@ -45,7 +45,7 @@ namespace Solve.ProcessingSchemes.Tower
 					.ToArray();
 
 				PoolReader = Pool.Reader.Batch(PoolSize, false, true);
-				PoolReader.ReadAllAsync(ProcessPoolAsyncInternal);
+				_ = PoolReader.ReadAllAsync(ProcessPoolAsyncInternal).AsTask();
 			}
 
 			readonly ConcurrentQueue<LevelEntry<TGenome>>[] Processed;

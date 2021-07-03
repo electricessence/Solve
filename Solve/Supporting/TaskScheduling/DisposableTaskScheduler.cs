@@ -8,16 +8,24 @@ namespace Solve.Supporting.TaskScheduling
 	public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 	{
 		/// <summary>Cancellation token used for disposal.</summary>
-		protected readonly CancellationTokenSource DisposeCancellation = new CancellationTokenSource();
+		protected readonly CancellationTokenSource DisposeCancellation = new();
 
-		protected virtual void OnDispose(bool calledExplicity) { }
+		int _wasDisposed = 0;
+
+		protected virtual void OnDispose() { }
 
 		#region IDisposable Members
 
 		public void Dispose()
 		{
+			if (_wasDisposed != 0
+			|| Interlocked.CompareExchange(ref _wasDisposed, 1, 0) != 0)
+				return;
+
 			DisposeCancellation.Cancel();
 			DisposeCancellation.Dispose();
+
+			OnDispose();
 		}
 
 		#endregion

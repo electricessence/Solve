@@ -74,7 +74,7 @@ namespace Solve.ProcessingSchemes
 			public ushort Step { get; }
 
 			public static implicit operator PoolSizing((ushort First, ushort Minimum, ushort Step) values)
-				=> new PoolSizing(values);
+				=> new(values);
 
 			public static implicit operator (ushort First, ushort Minimum, ushort Step)(PoolSizing sizing)
 				=> (sizing.First, sizing.Minimum, sizing.Step);
@@ -98,7 +98,7 @@ namespace Solve.ProcessingSchemes
 
 		public static implicit operator Values(SchemeConfig config) => config.Immutable;
 
-		public SchemeConfig Clone() => new SchemeConfig
+		public SchemeConfig Clone() => new()
 		{
 			PoolSize = PoolSize,
 			MaxLevels = MaxLevels,
@@ -107,7 +107,7 @@ namespace Solve.ProcessingSchemes
 			PercentRejectedBeforeElimination = PercentRejectedBeforeElimination
 		};
 
-		public Values Immutable => new Values(PoolSize, MaxLevels, MaxLevelLoss, MaxConsecutiveRejections, PercentRejectedBeforeElimination);
+		public Values Immutable => new(PoolSize, MaxLevels, MaxLevelLoss, MaxConsecutiveRejections, PercentRejectedBeforeElimination);
 
 	}
 }

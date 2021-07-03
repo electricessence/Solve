@@ -55,7 +55,7 @@ namespace Solve
 				=> counters.TryGetValue(key, out var value) ? value.Count : 0;
 
 			SuccessFailCount GetSuccessFail(SuccessFailKeys key)
-				=> new SuccessFailCount(GetCount(key.Succeded), GetCount(key.Failed));
+				=> new(GetCount(key.Succeded), GetCount(key.Failed));
 		}
 
 		public ImmutableArray<QueueCount> QueueStates { get; }
@@ -113,6 +113,6 @@ namespace Solve
 			return Get(context);
 		}
 
-		public static GenomeFactoryMetrics Get(MetricsContextValueSource? snapshot) => new GenomeFactoryMetrics(snapshot);
+		public static GenomeFactoryMetrics Get(MetricsContextValueSource? snapshot) => new(snapshot);
 	}
 }

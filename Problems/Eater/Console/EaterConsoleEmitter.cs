@@ -14,7 +14,7 @@ namespace Eater
 	public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 	{
 		static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
-		static readonly EncoderParameters EncParams = new EncoderParameters(1)
+		static readonly EncoderParameters EncParams = new(1)
 		{
 			Param = { [0] = new EncoderParameter(Encoder.Quality, 10L) }
 		};
@@ -36,7 +36,7 @@ namespace Eater
 			var current = new DirectoryInfo(emitter.ProgressionDirectoryPath);
 			var progression = current.Parent;
 
-			emitter.PreviousWinners = !progression.Exists
+			emitter.PreviousWinners = !progression!.Exists
 				? ImmutableArray<string>.Empty
 				: progression
 					.EnumerateDirectories()
@@ -47,7 +47,7 @@ namespace Eater
 						var name = file.Name;
 						var i = name.IndexOf('.');
 						if (i == -1) return string.Empty;
-						return name.Substring(i);
+						return name[i..];
 					})
 					.Select(g => g.OrderBy(file => file.Name).Last())
 					.Select(file =>
@@ -93,7 +93,7 @@ namespace Eater
 		//	=> EmitTopGenomeStatsInternal(p, genome, new Fitness(FullTests.GetOrAdd(genome.Hash, key => Samples.TestAll(key))));
 
 		readonly ConcurrentDictionary<string, ConcurrentQueue<string>> BitmapQueue
-			= new ConcurrentDictionary<string, ConcurrentQueue<string>>();
+			= new();
 
 		protected override void OnEmittingGenomeFitness(IProblem<Genome> p, Genome genome, int poolIndex, Fitness fitness)
 		{

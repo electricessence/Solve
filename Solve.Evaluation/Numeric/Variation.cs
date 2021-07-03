@@ -108,7 +108,7 @@ namespace Solve.Evaluation
 			}
 
 			sourceTree.Recycle();
-			if (!(reduced is Sum<double> sum)) yield break;
+			if (reduced is not Sum<double> sum) yield break;
 
 			sourceTree = Catalog.Factory.Map(reduced);
 

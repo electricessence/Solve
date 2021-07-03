@@ -4,7 +4,7 @@ namespace Solve
 {
 	public class LossTracker
 	{
-		readonly ConcurrentDictionary<int, InterlockedInt> _levelLosses = new ConcurrentDictionary<int, InterlockedInt>();
+		readonly ConcurrentDictionary<int, InterlockedInt> _levelLosses = new();
 
 		public InterlockedInt this[int level] => _levelLosses.GetOrAdd(level, _=> new InterlockedInt());
 

@@ -54,8 +54,8 @@
     <PackageReference Include="Open.Arithmetic" Version="1.5.0" />
     <PackageReference Include="Open.ChannelExtensions" Version="5.0.0" />
     <PackageReference Include="Open.Cloneable" Version="1.1.2" />
-    <PackageReference Include="Open.Collections.Numeric" Version="1.4.0" />
-    <PackageReference Include="Open.Disposable.ObjectPools" Version="2.5.0" />
+    <PackageReference Include="Open.Collections.Numeric" Version="1.5.0" />
+    <PackageReference Include="Open.Disposable.ObjectPools" Version="2.6.0" />
     <PackageReference Include="Open.Lazy.Extensions" Version="1.1.1" />
     <PackageReference Include="Open.Numeric" Version="2.3.0" />
     <PackageReference Include="Open.RandomizationExtensions" Version="2.5.0" />

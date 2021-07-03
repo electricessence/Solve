@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace Solve
 {
-	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 	public struct Metric
 	{
 		public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity, double tolerance = double.NaN)
@@ -15,7 +13,7 @@ namespace Solve
 			if (tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance), tolerance, "Must be zero or greater.");
 			Contract.EndContractBlock();
 			// ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-			string.Format(format, 1d); // validate format...
+			_ = string.Format(format, 1d); // validate format...
 
 			ID = id;
 			Name = name;

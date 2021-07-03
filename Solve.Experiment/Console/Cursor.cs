@@ -6,7 +6,7 @@ namespace Solve.Experiment.Console
 	[DebuggerDisplay("{Left}, {Top}")]
 	public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
 	{
-		public static readonly object Sync = new object();
+		public static readonly object Sync = new();
 
 		Cursor(int left, int top)
 		{
@@ -39,29 +39,22 @@ namespace Solve.Experiment.Console
 			return 0;
 		}
 
-		public bool Equals(Cursor other)
-		{
-			return CompareTo(other) == 0;
-		}
+		public bool Equals(Cursor other) => CompareTo(other) == 0;
 
-		public static bool operator >(Cursor a, Cursor b)
-		{
-			return a.CompareTo(b) == 1;
-		}
+		public static bool operator >(Cursor a, Cursor b) => a.CompareTo(b) == 1;
 
-		public static bool operator <(Cursor a, Cursor b)
-		{
-			return a.CompareTo(b) == -1;
-		}
+		public static bool operator <(Cursor a, Cursor b) => a.CompareTo(b) == -1;
 
-		public static bool operator >=(Cursor a, Cursor b)
-		{
-			return a.CompareTo(b) >= 0;
-		}
+		public static bool operator >=(Cursor a, Cursor b) => a.CompareTo(b) >= 0;
 
-		public static bool operator <=(Cursor a, Cursor b)
-		{
-			return a.CompareTo(b) <= 0;
-		}
+		public static bool operator <=(Cursor a, Cursor b) => a.CompareTo(b) <= 0;
+
+		public override bool Equals(object obj) => obj is Cursor c && Equals(c);
+
+		public override int GetHashCode() => HashCode.Combine(Left, Top);
+
+		public static bool operator ==(Cursor left, Cursor right) => left.Equals(right);
+
+		public static bool operator !=(Cursor left, Cursor right) => !(left == right);
 	}
 }

@@ -107,10 +107,10 @@ namespace Solve
 	public static class SplicedEnumerable
 	{
 		public static SplicedEnumerable<T> Create<T>(IReadOnlyCollection<T> source, int index)
-			=> new SplicedEnumerable<T>(source, index);
+			=> new(source, index);
 
 		public static SplicedEnumerable<T> Create<T>(IEnumerable<T> source, int index)
-			=> new SplicedEnumerable<T>(source.ToImmutableArray(), index);
+			=> new(source.ToImmutableArray(), index);
 
 		public static SplicedEnumerable<T> Create<T>(IReadOnlyCollection<T> head, IReadOnlyCollection<T> tail)
 		{
@@ -122,7 +122,7 @@ namespace Solve
 			=> Create(head.ToImmutableArray(), tail.ToImmutableArray());
 
 		public static SplicedEnumerable<T> SpliceAt<T>(this IReadOnlyCollection<T> source, int index)
-			=> new SplicedEnumerable<T>(source, index);
+			=> new(source, index);
 
 	}
 }

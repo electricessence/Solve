@@ -4,7 +4,7 @@ namespace Eater.Console
 {
 	public class RunnerManager
 	{
-		private readonly object _sync = new object();
+		private readonly object _sync = new();
 		private Runner? _runner;
 
 		public bool IsRunning => _runner != null;
