@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -10,9 +11,9 @@ namespace Solve
 	/// </summary>
 	public struct Selection<T>
 	{
-		public readonly T[] All;
-		public readonly T[] Selected;
-		public readonly T[] Rejected;
+		public readonly ImmutableArray<T> All;
+		public readonly ImmutableArray<T> Selected;
+		public readonly ImmutableArray<T> Rejected;
 
 
 		// ReSharper disable once UnusedParameter.Local
@@ -33,9 +34,9 @@ namespace Solve
 			if (middleIndex == 0) middleIndex = 1;
 			else if (middleIndex == len) middleIndex--;
 
-			var all = new T[len];
-			var selected = new T[middleIndex];
-			var rejected = new T[len - middleIndex];
+			var all = ImmutableArray.CreateBuilder<T>(len);
+			var selected = ImmutableArray.CreateBuilder<T>(middleIndex);
+			var rejected = ImmutableArray.CreateBuilder<T>(len - middleIndex);
 			for (var i = 0; i < len; i++)
 			{
 				var g = contenders[i];
@@ -46,9 +47,9 @@ namespace Solve
 					rejected[i - middleIndex] = g;
 			}
 
-			All = all;
-			Selected = selected;
-			Rejected = rejected;
+			All = all.MoveToImmutable();
+			Selected = selected.MoveToImmutable();
+			Rejected = rejected.MoveToImmutable();
 		}
 
 

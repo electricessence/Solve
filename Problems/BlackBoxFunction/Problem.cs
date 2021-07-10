@@ -23,7 +23,8 @@ namespace BlackBoxFunction
 		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
 		{
 			var len = metrics.Length;
-			var result = new double[metrics.Length];
+			var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
+			result.Count = len;
 			for (var i = 0; i < len; i++)
 			{
 				var metric = metrics[i];
@@ -36,20 +37,20 @@ namespace BlackBoxFunction
 					_ => throw new IndexOutOfRangeException()
 				};
 			}
-			return new Fitness(metrics, result);
+			return new Fitness(metrics, result.MoveToImmutable());
 		}
 
 		protected static readonly ImmutableArray<Metric> Metrics01
 			= ImmutableArray.Create(
+				new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 				new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 				new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
-				new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 				new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
 
 		protected static readonly ImmutableArray<Metric> Metrics02
 			= ImmutableArray.Create(
-				Metrics01[Direction],
 				Metrics01[Correlation],
+				Metrics01[Direction],
 				Metrics01[Divergence],
 				Metrics01[GeneCount]);
 
@@ -131,7 +132,7 @@ namespace BlackBoxFunction
 
 			var dcCorrelation = correct_dc.Correlation(dc);
 
-			var c = correct.Take(SampleSizeInt).Correlation(calc.Take(SampleSizeInt));
+			var c = correct.AsSpan().Slice(0, SampleSizeInt).Correlation(calc.AsSpan().Slice(0, SampleSizeInt));
 			if (c > 1) c = 1; // Must clamp double precision insanity.
 			else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 
@@ -153,7 +154,7 @@ namespace BlackBoxFunction
 			Formula actualFormula,
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100)
-			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01));//, (Metrics02, Fitness02));
+			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 		static IEnumerable<double> DeltasFixed(IEnumerable<double> source)
 			=> Deltas(source).Select(v =>

@@ -45,12 +45,14 @@ namespace BlackBoxFunction
 			var start = Range * Randomizer.Random.NextDouble();
 			var end = Range * Randomizer.Random.NextDouble();
 			var delta = end - start;
+			var last = SampleSize - 1;
 
 			var builder = ImmutableArray.CreateBuilder<double>(SampleSize);
-			builder.Add(start);
-			for(var i = 1; i<SampleSize-1; ++i)
-				builder.Add(start + i * delta / SampleSize);
-			builder.Add(end);
+			builder.Count = SampleSize;
+			builder[0] = start;
+			for(var i = 1; i< last; ++i)
+				builder[i] = start + i * delta / SampleSize;
+			builder[last] = end;
 			return builder.MoveToImmutable();
 		}
 

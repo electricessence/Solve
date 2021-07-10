@@ -8,17 +8,17 @@ namespace Solve
 	public class FitnessInterlocked : Fitness
 	{
 		public FitnessInterlocked(in ImmutableArray<Metric> metrics)
-			: base(metrics)
+			: base(in metrics)
 		{
 		}
 
 		public FitnessInterlocked(in ImmutableArray<Metric> metrics, ProcedureResults results)
-			: base(metrics, results)
+			: base(in metrics, results)
 		{
 		}
 
 		public FitnessInterlocked(in ImmutableArray<Metric> metrics, params double[] values)
-			: base(metrics, new ProcedureResults(values, 1))
+			: base(in metrics, new ProcedureResults(values, 1))
 		{
 
 		}

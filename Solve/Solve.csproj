@@ -51,7 +51,7 @@
 
   <ItemGroup>
     <PackageReference Include="App.Metrics" Version="4.2.0" />
-    <PackageReference Include="Open.Arithmetic" Version="1.5.0" />
+    <PackageReference Include="Open.Arithmetic" Version="1.6.0" />
     <PackageReference Include="Open.ChannelExtensions" Version="5.0.0" />
     <PackageReference Include="Open.Cloneable" Version="1.1.2" />
     <PackageReference Include="Open.Collections.Numeric" Version="1.5.5" />

@@ -29,7 +29,8 @@ namespace Eater
 		static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
 		{
 			var len = metrics.Length;
-			var result = new double[metrics.Length];
+			var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
+			result.Count = len;
 			for (var i = 0; i < len; i++)
 			{
 				var metric = metrics[i];
@@ -42,7 +43,7 @@ namespace Eater
 					_ => throw new IndexOutOfRangeException()
 				};
 			}
-			return new Fitness(metrics, result);
+			return new Fitness(in metrics, result.MoveToImmutable());
 		}
 
 		protected static readonly ImmutableArray<Metric> MetricsPrimary
@@ -78,7 +79,8 @@ namespace Eater
 		static Fitness GetSecondaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
 		{
 			var len = metrics.Length;
-			var result = new double[metrics.Length];
+			var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
+			result.Count = len;
 			for (var i = 0; i < len; i++)
 			{
 				var metric = metrics[i];
@@ -90,7 +92,7 @@ namespace Eater
 					_ => throw new IndexOutOfRangeException()
 				};
 			}
-			return new Fitness(metrics, result);
+			return new Fitness(in metrics, result.MoveToImmutable());
 		}
 
 		protected static Fitness Fitness02(Genome genome, double[] metrics)
