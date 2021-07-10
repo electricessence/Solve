@@ -38,21 +38,19 @@ namespace BlackBoxFunction
 			return new Fitness(metrics, result);
 		}
 
-		protected static readonly ImmutableArray<Metric> Metrics01 = new[]
-		{
-			new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
-			new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
-			new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
-			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}")
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> Metrics01
+			= ImmutableArray.Create(
+				new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
+				new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
+				new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
+				new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
 
-		protected static readonly ImmutableArray<Metric> Metrics02 = new[]
-{
-			Metrics01[Correlation],
-			Metrics01[Direction],
-			Metrics01[Divergence],
-			Metrics01[GeneCount]
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> Metrics02
+			= ImmutableArray.Create(
+				Metrics01[Correlation],
+				Metrics01[Direction],
+				Metrics01[Divergence],
+				Metrics01[GeneCount]);
 
 		protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
 			=> GetPrimaryMetricValues(Metrics01, genome, metrics);
@@ -60,7 +58,7 @@ namespace BlackBoxFunction
 		protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
 			=> GetPrimaryMetricValues(Metrics02, genome, metrics);
 
-		public readonly SampleCache Samples;
+		public readonly SampleCache2 Samples;
 
 		public Problem(Formula actualFormula,
 			ushort sampleSize = 100,
@@ -68,7 +66,7 @@ namespace BlackBoxFunction
 			params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
 			: base(fitnessTranslators, sampleSize, championPoolSize)
 		{
-			Samples = new SampleCache(actualFormula);
+			Samples = new SampleCache2(actualFormula, sampleSize);
 		}
 
 		protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
@@ -86,9 +84,7 @@ namespace BlackBoxFunction
 			for (var i = 0; i < SampleSizeInt; i++) // Parallel here is futile since there are other threads running this for other genomes.
 			{
 				var sample = samples[i];
-				Debug.Assert(sample != null);
-				var s = sample.ParamValues;
-				var correctValue = sample.Correct.Value;
+				var (s, correctValue) = samples[i];
 				correct[i] = correctValue;
 				var result = g.Evaluate(s);
 				// #if DEBUG
@@ -149,9 +145,9 @@ namespace BlackBoxFunction
 
 		public static Problem Create(
 			Formula actualFormula,
-			ushort sampleSize = 40,
+			ushort sampleSize = 100,
 			ushort championPoolSize = 100)
-			=> new Problem(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
 
 		static IEnumerable<double> DeltasFixed(IEnumerable<double> source)
 			=> Deltas(source).Select(v =>

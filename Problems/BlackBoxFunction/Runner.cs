@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace BlackBoxFunction
 {
-	[SuppressMessage("ReSharper", "UnusedMember.Local")]
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Options.")]
 	internal class Runner : RunnerBase<EvalGenome<double>>
 	{
@@ -71,7 +70,7 @@ namespace BlackBoxFunction
 
 			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<EvalGenome<double>>(factory, (200, 60, 2));
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
-			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 100));
+			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 200));
 
 			Init(scheme, emitter, metrics);
 		}

@@ -27,7 +27,7 @@ namespace Solve.ProcessingSchemes
 		}
 
 		// First, and Minimum allow for tapering of pool size as generations progress.
-		public SchemeConfig.Values Config { get; } 
+		public SchemeConfig.Values Config { get; }
 		readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
 
 

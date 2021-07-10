@@ -180,7 +180,7 @@ namespace Solve
 				// See if it's possible to mutate from the provided genomes.
 				if (source != null && source.Count != 0)
 				{
-					if(factory.AttemptNewMutation(source, out potentiallyNew))
+					if (factory.AttemptNewMutation(source, out potentiallyNew))
 					{
 						Metrics.GenerateNew(true);
 						return true;

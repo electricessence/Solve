@@ -47,7 +47,8 @@ namespace Eater.Console
 				{
 					_runner = Runner.Start().runner;
 					return true;
-				} else
+				}
+				else
 				{
 					_runner.Cancel();
 					_runner = null;

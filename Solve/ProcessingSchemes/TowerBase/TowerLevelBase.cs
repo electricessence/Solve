@@ -66,7 +66,7 @@ namespace Solve.ProcessingSchemes
 			var arrayPool = ArrayPool<LevelEntry<TGenome>>.Shared;
 
 			for (var i = 0; i < poolCount; i++)
-			{ 
+			{
 				var temp = arrayPool.Rent(len);
 				result[i] = temp;
 

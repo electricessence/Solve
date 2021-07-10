@@ -3,11 +3,9 @@ using Open.RandomizationExtensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BlackBoxFunction
 {
-	[SuppressMessage("ReSharper", "IteratorNeverReturns")]
 	public sealed class SampleCache
 	{
 		public sealed class Entry
@@ -47,7 +45,7 @@ namespace BlackBoxFunction
 		public IEnumerable<Entry> Generate(long deltaId)
 		{
 			Entry previous = null;
-			foreach(var d in Deltas())
+			foreach (var d in Deltas())
 			{
 				previous = new Entry(Samples(GetDeltas(deltaId))/*.Distinct()*/.Memoize(true), _actualFormula);
 				yield return previous;
@@ -65,12 +63,12 @@ namespace BlackBoxFunction
 		/// </summary>
 		IEnumerable<double> Deltas()
 		{
-			while(true)
+			while (true)
 			{
 				yield return (Randomizer.Random.NextDouble() - 0.5) * Range;
 			}
 		}
-		
+
 		/// <summary>
 		/// The value of the params given the amount of change for each, augmenting by random offset.
 		/// </summary>
@@ -78,9 +76,9 @@ namespace BlackBoxFunction
 		IEnumerable<double> Samples(LazyList<double> deltas)
 		{
 			var range = Range * Range;
-			var halfRange = range  / 2;
+			var halfRange = range / 2;
 			var value = (range - halfRange) * Randomizer.Random.NextDouble();
-			foreach(var delta in deltas)
+			foreach (var delta in deltas)
 			{
 				yield return value;
 				value += delta;

@@ -45,33 +45,30 @@ namespace Eater
 			return new Fitness(metrics, result);
 		}
 
-		protected static readonly ImmutableArray<Metric> MetricsPrimary = new[]
-		{
-			new Metric(FoodFoundRate, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
-			new Metric(AverageEnergy, "Average-Energy", "Average-Energy {0:n3}"),
-			new Metric(AverageWasted, "Average-Wasted", "Average-Wasted {0:n3}"),
-			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}")
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> MetricsPrimary
+			= ImmutableArray.Create(
+				new Metric(FoodFoundRate, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
+				new Metric(AverageEnergy, "Average-Energy", "Average-Energy {0:n3}"),
+				new Metric(AverageWasted, "Average-Wasted", "Average-Wasted {0:n3}"),
+				new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
 
 		protected static Fitness FitnessPrimary(Genome genome, double[] metrics)
 			=> GetPrimaryMetricValues(MetricsPrimary, genome, metrics);
 
-		protected static readonly ImmutableArray<Metric> MetricsSecondary01 = new[]
-		{
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[AverageEnergy],
-			MetricsPrimary[GeneCount]
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> MetricsSecondary01
+			= ImmutableArray.Create(
+				MetricsPrimary[FoodFoundRate],
+				MetricsPrimary[AverageEnergy],
+				MetricsPrimary[GeneCount]);
 
 		protected static Fitness FitnessSecondary01(Genome genome, double[] metrics)
 			=> GetSecondaryMetricValues(MetricsSecondary01, genome, metrics);
 
-		protected static readonly ImmutableArray<Metric> MetricsSecondary02 = new[]
-		{
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[GeneCount],
-			MetricsPrimary[AverageEnergy]
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> MetricsSecondary02
+			= ImmutableArray.Create(
+				MetricsPrimary[FoodFoundRate],
+				MetricsPrimary[GeneCount],
+				MetricsPrimary[AverageEnergy]);
 
 		protected static Fitness FitnessSecondary02(Genome genome, double[] metrics)
 			=> GetSecondaryMetricValues(MetricsSecondary02, genome, metrics);
@@ -102,21 +99,9 @@ namespace Eater
 		protected static Fitness Fitness03(Genome genome, double[] metrics)
 			=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
-		protected static readonly ImmutableArray<Metric> Metrics02 = new[]
-		{
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[AverageWasted],
-			MetricsPrimary[GeneCount],
-			MetricsPrimary[AverageEnergy]
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> Metrics02 = ImmutableArray.Create(MetricsPrimary[FoodFoundRate], MetricsPrimary[AverageWasted], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy]);
 
-		protected static readonly ImmutableArray<Metric> Metrics03 = new[]
-		{
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[GeneCount],
-			MetricsPrimary[AverageEnergy],
-			MetricsPrimary[AverageWasted],
-		}.ToImmutableArray();
+		protected static readonly ImmutableArray<Metric> Metrics03 = ImmutableArray.Create(MetricsPrimary[FoodFoundRate], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy], MetricsPrimary[AverageWasted]);
 
 		protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 		{
