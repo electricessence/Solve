@@ -3,6 +3,7 @@ using Open.Numeric.Precision;
 using Solve;
 using Solve.Evaluation;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -40,15 +41,15 @@ namespace BlackBoxFunction
 
 		protected static readonly ImmutableArray<Metric> Metrics01
 			= ImmutableArray.Create(
-				new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 				new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 				new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
+				new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 				new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
 
 		protected static readonly ImmutableArray<Metric> Metrics02
 			= ImmutableArray.Create(
-				Metrics01[Correlation],
 				Metrics01[Direction],
+				Metrics01[Correlation],
 				Metrics01[Divergence],
 				Metrics01[GeneCount]);
 
@@ -72,9 +73,10 @@ namespace BlackBoxFunction
 		protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
-			var correct = new double[SampleSizeInt];
-			var divergence = new double[SampleSizeInt];
-			var calc = new double[SampleSizeInt];
+			var pool = ArrayPool<double>.Shared;
+			var correct = pool.Rent(SampleSizeInt);
+			var divergence = pool.Rent(SampleSizeInt);
+			var calc = pool.Rent(SampleSizeInt);
 			var NaNcount = 0;
 
 			// #if DEBUG
@@ -124,17 +126,21 @@ namespace BlackBoxFunction
 			}
 
 			// Attempt to detect non-linear relationships...
-			var correct_dc = DeltasFixed(correct);
-			var dc = DeltasFixed(calc);
+			var correct_dc = DeltasFixed(correct.Take(SampleSizeInt));
+			var dc = DeltasFixed(calc.Take(SampleSizeInt));
 
 			var dcCorrelation = correct_dc.Correlation(dc);
 
-			var c = correct.Correlation(calc);
+			var c = correct.Take(SampleSizeInt).Correlation(calc.Take(SampleSizeInt));
 			if (c > 1) c = 1; // Must clamp double precision insanity.
 			else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 
 			//if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
-			var d = divergence.Where(v => !double.IsNaN(v)).Average();
+			var d = divergence.Take(SampleSizeInt).Where(v => !double.IsNaN(v)).Average();
+
+			pool.Return(calc);
+			pool.Return(correct);
+			pool.Return(divergence);
 
 			return new[] {
 				(double.IsNaN(dcCorrelation) || double.IsInfinity(dcCorrelation)) ? -2 : dcCorrelation,
@@ -147,7 +153,7 @@ namespace BlackBoxFunction
 			Formula actualFormula,
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100)
-			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01));//, (Metrics02, Fitness02));
 
 		static IEnumerable<double> DeltasFixed(IEnumerable<double> source)
 			=> Deltas(source).Select(v =>
