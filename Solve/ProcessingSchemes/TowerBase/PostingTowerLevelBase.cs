@@ -2,6 +2,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace Solve.ProcessingSchemes
 			Incomming = Enumerable
 				.Range(0, priorityLevels)
 				.Select(i => new ConcurrentQueue<LevelProgress<TGenome>>())
-				.ToArray();
+				.ToImmutableArray();
 		}
 
 		protected abstract ValueTask PostNextLevelAsync(byte priority, LevelProgress<TGenome> challenger);
@@ -55,7 +56,7 @@ namespace Solve.ProcessingSchemes
 			}
 		}
 
-		protected readonly ConcurrentQueue<LevelProgress<TGenome>>[] Incomming;
+		protected readonly ImmutableArray<ConcurrentQueue<LevelProgress<TGenome>>> Incomming;
 
 		public async ValueTask PostAsync(byte priority, LevelProgress<TGenome> challenger)
 		{
