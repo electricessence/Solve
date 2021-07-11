@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Open.Disposable;
+using System;
 using System.Buffers;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -140,7 +140,8 @@ namespace Solve.ProcessingSchemes
 			var poolCount = Tower.Problem.Pools.Count;
 			Debug.Assert(poolCount != 0);
 			var midPoint = PoolSize / 2;
-			var processed = new HashSet<string>();
+			var hsPool = HashSetPool<string>.Shared;
+			var processed = hsPool.Take();
 
 			var isTop = IsTop;
 			// Remaining top 50% (winners) should go before any losers.
@@ -203,6 +204,7 @@ namespace Solve.ProcessingSchemes
 
 			var arrayPool = ArrayPool<LevelEntry<TGenome>>.Shared;
 			for (var i = 0; i < poolCount; i++) arrayPool.Return(pools[i]);
+			hsPool.Give(processed);
 		}
 	}
 }
