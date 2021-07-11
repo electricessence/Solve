@@ -159,6 +159,8 @@ namespace Solve
 				if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
 					&& Value.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
 					continue;
+				if (double.IsNaN(tolerance)) // not necessary but shows more explicit intent.
+					continue;
 				if (Value < convergence - tolerance)
 					return false;
 			}
