@@ -70,7 +70,7 @@ namespace BlackBoxFunction
 
 			var scheme = new Solve.ProcessingSchemes.Tower.TowerProcessingScheme<EvalGenome<double>>(factory, (200, 60, 2));
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
-			scheme.AddProblem(Problem.Create(SqrtA2B2, 200));
+			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 200));
 
 			Init(scheme, emitter, metrics);
 		}

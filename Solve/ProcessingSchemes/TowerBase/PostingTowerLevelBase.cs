@@ -203,8 +203,6 @@ namespace Solve.ProcessingSchemes
 				}
 			}
 
-			var arrayPool = ArrayPool<LevelEntry<TGenome>>.Shared;
-			for (var i = 0; i < poolCount; i++) arrayPool.Return(pools[i]);
 			hsPool.Give(processed);
 		}
 	}
