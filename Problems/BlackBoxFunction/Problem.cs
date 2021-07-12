@@ -50,6 +50,13 @@ namespace BlackBoxFunction
 		protected static readonly ImmutableArray<Metric> Metrics02
 			= ImmutableArray.Create(
 				Metrics01[Correlation],
+				Metrics01[Divergence],
+				Metrics01[Direction],
+				Metrics01[GeneCount]);
+
+		protected static readonly ImmutableArray<Metric> Metrics03
+			= ImmutableArray.Create(
+				Metrics01[Correlation],
 				Metrics01[Direction],
 				Metrics01[Divergence],
 				Metrics01[GeneCount]);
@@ -59,6 +66,9 @@ namespace BlackBoxFunction
 
 		protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
 			=> GetPrimaryMetricValues(Metrics02, genome, metrics);
+
+		protected static Fitness Fitness03(EvalGenome<double> genome, double[] metrics)
+			=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
 		public readonly SampleCache2 Samples;
 
@@ -154,7 +164,7 @@ namespace BlackBoxFunction
 			Formula actualFormula,
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100)
-			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02));
+			=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02), (Metrics03, Fitness03));
 
 		static IEnumerable<double> DeltasFixed(IEnumerable<double> source)
 			=> Deltas(source).Select(v =>
