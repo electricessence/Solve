@@ -29,7 +29,7 @@ namespace Solve
 		{
 			var counters = context?.Counters.ToImmutableDictionary(c => c.Name, c => c.Value) ?? ImmutableDictionary<string, CounterValue>.Empty;
 			Timestamp = DateTime.Now;
-			var queueStates = new List<QueueCount>();
+			var queueStates = ImmutableArray.CreateBuilder<QueueCount>();
 
 			BreedingStock = AddQueueState(BREEDING_STOCK);
 			InternalQueueCount = AddQueueState(INTERNAL_QUEUE_COUNT);
@@ -42,7 +42,7 @@ namespace Solve
 
 			ExternalProducerQueried = GetCount(EXTERNAL_PRODUCER_QUERIED);
 
-			QueueStates = queueStates.ToImmutableArray();
+			QueueStates = queueStates.MoveToImmutable();
 
 			long AddQueueState(string key)
 			{
