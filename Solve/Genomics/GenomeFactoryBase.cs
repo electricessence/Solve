@@ -46,11 +46,9 @@ namespace Solve
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
-		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry
-			= new();
+		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry	= new();
 
-		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced
-			 = new();
+		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = new();
 
 		//protected readonly ConcurrentQueue<string> RegistryOrder;
 
@@ -145,11 +143,7 @@ namespace Solve
 			=> source.Select(e => Registration(e)).Where(RegisterProduction);
 
 		protected bool AlreadyProduced(string hash)
-		{
-			if (hash == null)
-				throw new ArgumentNullException(nameof(hash));
-			return PreviouslyProduced.Contains(hash);
-		}
+			=> PreviouslyProduced.Contains(hash ?? throw new ArgumentNullException(nameof(hash)));
 
 		protected bool AlreadyProduced(TGenome genome)
 		{
@@ -320,8 +314,7 @@ namespace Solve
 		}
 
 #if DEBUG
-		readonly ConcurrentDictionary<string, TGenome> Released
-			= new();
+		readonly ConcurrentDictionary<string, TGenome> Released	= new();
 #endif
 
 		public TGenome Next()
@@ -366,8 +359,7 @@ namespace Solve
 #endif
 		}
 
-		protected readonly List<PriorityQueue> PriorityQueues
-			= new();
+		protected readonly List<PriorityQueue> PriorityQueues = new();
 
 		protected PriorityQueue GetPriorityQueue(int index)
 		{
@@ -395,8 +387,7 @@ namespace Solve
 		public IGenomeFactoryPriorityQueue<TGenome> this[int index]
 			=> GetPriorityQueue(index);
 
-		readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations
-			= new();
+		readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations = new();
 
 		protected virtual IEnumerable<TGenome>? GetVariationsInternal(TGenome source) => null;
 
@@ -435,8 +426,7 @@ namespace Solve
 			 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
 			 * Returning any valid breeders whom haven't mated enough.
 			 */
-			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock
-				= new();
+			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock	= new();
 
 			public void EnqueueChampion(IEnumerable<TGenome> genomes)
 			{
@@ -730,15 +720,9 @@ namespace Solve
 					EnqueueForMutation(g);
 			}
 
-			protected readonly ConcurrentQueue<TGenome> InternalQueue
-				= new();
-
-			protected readonly ConcurrentQueue<TGenome> AwaitingVariation
-				= new();
-
-			protected readonly ConcurrentQueue<TGenome> AwaitingMutation
-				= new();
-
+			protected readonly ConcurrentQueue<TGenome> InternalQueue = new();
+			protected readonly ConcurrentQueue<TGenome> AwaitingVariation = new();
+			protected readonly ConcurrentQueue<TGenome> AwaitingMutation = new();
 			readonly List<Func<bool>> ProducerTriggers;
 
 			public List<Func<bool>> ExternalProducers { get; } = new List<Func<bool>>();
