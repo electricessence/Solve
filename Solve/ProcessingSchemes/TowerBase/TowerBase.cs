@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace Solve.ProcessingSchemes
 {
-	public abstract class TowerBase<TGenome, TEnvironment> : BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>
+	public abstract class TowerBase<TGenome, TEnvironment>
+		: BroadcasterBase<(TGenome Genome, int PoolIndex, Fitness)>
 		where TGenome : class, IGenome
 		where TEnvironment : EnvironmentBase<TGenome>
 	{

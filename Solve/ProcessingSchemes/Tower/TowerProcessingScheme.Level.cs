@@ -54,7 +54,6 @@ namespace Solve.ProcessingSchemes.Tower
 			{
 				var selection = RankEntries(pool);
 				await ProcessSelection(selection);
-				ArrayPool<LevelEntry<TGenome>[]>.Shared.Return(selection, true);
 			}
 
 			public async ValueTask ProcessPoolAsync(bool thisLevelOnly = false)

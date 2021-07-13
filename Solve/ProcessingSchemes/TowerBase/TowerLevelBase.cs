@@ -63,7 +63,7 @@ namespace Solve.ProcessingSchemes
 		{
 			var len = pool.Count;
 			var poolCount = Tower.Problem.Pools.Count;
-			var result = ArrayPool<LevelEntry<TGenome>[]>.Shared.Rent(poolCount);
+			var result = new LevelEntry<TGenome>[poolCount][];
 
 			for (var i = 0; i < poolCount; i++)
 			{
@@ -72,8 +72,6 @@ namespace Solve.ProcessingSchemes
 
 				pool.CopyTo(temp, 0);
 				var comparer = LevelEntry<TGenome>.GetScoreComparer(i);
-#if DEBUG
-				Debug.Assert(temp.Take(len).All(e => e != null));
 
 				try
 				{
@@ -81,98 +79,12 @@ namespace Solve.ProcessingSchemes
 				}
 				catch (Exception ex)
 				{
-					// Find the problem.
-					var trouble = new List<LevelEntry<TGenome>>();
-					var suspect = new List<LevelEntry<TGenome>>();
-					FindTroubledEntries(0, len);
-					Debug.WriteLine("Found {0} unsortalbe entries.", trouble.Count);
+					Debug.WriteLine("Possible LevelEntry leak.");
 					Debug.WriteLine(ex.ToString());
 					Debugger.Break();
 					throw;
-
-					void FindTroubledEntries(int start, int end)
-					{
-						var distance = end - start;
-						if (distance == 1) trouble.Add(temp[start]);
-						if (distance < 2) return;
-						var half = start + distance / 2;
-						var count = trouble.Count;
-						try
-						{
-							Array.Sort(temp, start, half, comparer);
-						}
-						catch
-						{
-							FindTroubledEntries(start, half);
-						}
-						try
-						{
-							Array.Sort(temp, half, end, comparer);
-						}
-						catch
-						{
-							FindTroubledEntries(half, end);
-						}
-
-						// None added, but clearly a culprit?
-						if (distance == 2 && count == trouble.Count)
-						{
-							suspect.Add(temp[start]);
-							suspect.Add(temp[start + 1]);
-						}
-					}
 				}
-#else
-				Array.Sort(temp, 0, len, comparer);
-#endif
 
-				try
-				{
-					Array.Sort(temp, 0, len, comparer);
-				}
-				catch (Exception ex)
-				{
-					// Find the problem.
-					var trouble = new List<LevelEntry<TGenome>>();
-					var suspect = new List<LevelEntry<TGenome>>();
-					FindTroubledEntries(0, len);
-					Debug.WriteLine("Found {0} unsortalbe entries.", trouble.Count);
-					Debug.WriteLine(ex.ToString());
-					Debugger.Break();
-					throw;
-
-					void FindTroubledEntries(int start, int end)
-					{
-						var distance = end - start;
-						if (distance == 1) trouble.Add(temp[start]);
-						if (distance < 2) return;
-						var half = start + distance / 2;
-						var count = trouble.Count;
-						try
-						{
-							Array.Sort(temp, start, half, comparer);
-						}
-						catch
-						{
-							FindTroubledEntries(start, half);
-						}
-						try
-						{
-							Array.Sort(temp, half, end, comparer);
-						}
-						catch
-						{
-							FindTroubledEntries(half, end);
-						}
-
-						// None added, but clearly a culprit?
-						if(distance==2 && count== trouble.Count)
-						{
-							suspect.Add(temp[start]);
-							suspect.Add(temp[start+1]);
-						}
-					}
-				}
 			}
 
 			return result;
