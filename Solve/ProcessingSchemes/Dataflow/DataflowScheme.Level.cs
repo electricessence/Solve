@@ -52,7 +52,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 				// Step 2: Rank
 				var ranking = new TransformBlock<LevelEntry<TGenome>[], LevelEntry<TGenome>[][]>(
-					e => RankEntries(e),
+					RankEntries,
 					SchedulerOption(2, "Level Ranking", true));
 
 				// Step 3: Selection and Propagation!
@@ -61,7 +61,6 @@ namespace Solve.ProcessingSchemes.Dataflow
 					action: async pools =>
 					{
 						await ProcessSelection(pools);
-						ArrayPool<LevelEntry<TGenome>[]>.Shared.Return(pools, true);
 					});
 
 				// Step 0: Injestion

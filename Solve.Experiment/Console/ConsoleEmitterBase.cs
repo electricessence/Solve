@@ -1,4 +1,5 @@
-﻿using Open.Text;
+﻿using Open.Disposable;
+using Open.Text;
 using Open.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -47,9 +48,12 @@ namespace Solve.Experiment.Console
 		retry:
 			var locked = ThreadSafety.TryLock(SynchronizedConsole.Sync, () =>
 			{
+				using var dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Shared.Rent();
+				var d = dR.Item;
+				var output = StringBuilderPool.Take();
+
 				while (ConsoleQueue.TryDequeue(out var o1))
 				{
-					var d = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Take();
 					{
 						d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
 					}
@@ -59,7 +63,6 @@ namespace Solve.Experiment.Console
 						d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
 					}
 
-					var output = StringBuilderPool.Take();
 					try
 					{
 						foreach (var g in d.OrderBy(kvp => kvp.Key).GroupBy(kvp => kvp.Value.genome))
@@ -81,12 +84,14 @@ namespace Solve.Experiment.Console
 					}
 					finally
 					{
-						StringBuilderPool.Give(output);
-						DictionaryPool.Give(d);
+						d.Clear();
+						output.Clear();
 					}
 
 
 				}
+
+				StringBuilderPool.Give(output);
 			});
 
 			if (locked && !ConsoleQueue.IsEmpty)

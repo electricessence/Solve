@@ -2,6 +2,7 @@
 using Open.Disposable;
 using System;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
 
 namespace Solve
@@ -12,62 +13,30 @@ namespace Solve
 
 	public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
 	{
-		readonly IObservable<T> _subscribable;
-		ReadWriteSynchronizedLinkedList<IObserver<T>> _observers;
+		readonly Subject<T> _subject = new();
 
-		protected override void OnBeforeDispose() => Complete();
+		protected override void OnBeforeDispose()
+			=> Complete();
 
-		protected override void OnDispose() { }
+		protected override void OnDispose()
+			=> _subject.Dispose();
 
-		protected BroadcasterBase()
-		{
-			_observers = new ReadWriteSynchronizedLinkedList<IObserver<T>>();
-			_subscribable = Observable.Create<T>(observer =>
-			{
-				_observers?.Add(observer);
-				return () => _observers?.Remove(observer);
-			});
-			_previous = default!;
-		}
-
-		T _previous;
+		T? _previous = default;
 		internal void Broadcast(T message, bool uniqueOnly = false)
 		{
 			if (message is null) throw new ArgumentNullException(nameof(message));
 			if (uniqueOnly && message.Equals(_previous)) return;
 			_previous = message;
-			var observers = _observers;
-			if (observers == null) return;
-			foreach (var o in observers)
-			{
-				o.OnNext(message);
-			}
-
+			_subject.OnNext(message);
 		}
 
 		protected void Complete()
-		{
-			var observers = Interlocked.Exchange(ref _observers, null!);
-			if (observers == null) return;
-			using (observers)
-			{
-				foreach (var observer in observers)
-					observer.OnCompleted();
-			}
-		}
+			=> _subject.OnCompleted();
 
-		protected void Fault(in Exception exception)
-		{
-			var observers = Interlocked.Exchange(ref _observers, null!);
-			if (observers == null) return;
-			using (observers)
-			{
-				foreach (var observer in observers)
-					observer.OnError(exception);
-			}
-		}
+		protected void Fault(Exception exception)
+			=> _subject.OnError(exception);
 
 		public IDisposable Subscribe(IObserver<T> observer)
-			=> AssertIsAlive(true) ? _subscribable.Subscribe(observer) : null!;
+			=> AssertIsAlive(true) ? _subject.Subscribe(observer) : null!;
 	}
 }

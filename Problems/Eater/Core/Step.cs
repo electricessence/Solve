@@ -1,4 +1,5 @@
-﻿using Solve;
+﻿using Open.Disposable;
+using Solve;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -276,45 +277,37 @@ namespace Eater
 			if (food.X > boundary.Width || food.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(food), food, "Food exceeds grid boundary.");
 
-			var cPool = CollectionPool<Point, HashSet<Point>>.Instance;
-			var wasteTracking = cPool.Take();
-			try
-			{
-				var current = start;
-				var orientation = Orientation.Up;
-				energy = 0;
-				wasted = 0;
+			using var hsR = HashSetPool<Point>.Shared.Rent();
+			var wasteTracking = hsR.Item;
+			var current = start;
+			var orientation = Orientation.Up;
+			energy = 0;
+			wasted = 0;
 
-				foreach (var step in steps)
+			foreach (var step in steps)
+			{
+				energy++;
+
+				switch (step)
 				{
-					energy++;
+					case Step.Forward:
+						current = boundary.Forward(current, orientation);
+						if (!wasteTracking.Add(current)) wasted++;
+						if (current.Equals(food))
+							return true;
+						break;
 
-					switch (step)
-					{
-						case Step.Forward:
-							current = boundary.Forward(current, orientation);
-							if (!wasteTracking.Add(current)) wasted++;
-							if (current.Equals(food))
-								return true;
-							break;
+					case Step.TurnLeft:
+						orientation = orientation.TurnLeft();
+						break;
 
-						case Step.TurnLeft:
-							orientation = orientation.TurnLeft();
-							break;
-
-						case Step.TurnRight:
-							orientation = orientation.TurnRight();
-							break;
-					}
+					case Step.TurnRight:
+						orientation = orientation.TurnRight();
+						break;
 				}
-
-				return false;
-			}
-			finally
-			{
-				cPool.Give(wasteTracking);
 			}
 
+			return false;
 		}
 
 
