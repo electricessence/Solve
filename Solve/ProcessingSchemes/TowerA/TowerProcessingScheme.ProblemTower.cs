@@ -7,7 +7,7 @@ namespace Solve.ProcessingSchemes.Tower
 	// ReSharper disable once PossibleInfiniteInheritance
 	public sealed partial class TowerProcessingScheme<TGenome>
 	{
-		public sealed class ProblemTower : TowerBase<TGenome, TowerProcessingSchemeBase<TGenome>>
+		public sealed class ProblemTower : TowerBase<TGenome, TowerSchemeBase<TGenome>>
 		{
 			readonly Level Root;
 

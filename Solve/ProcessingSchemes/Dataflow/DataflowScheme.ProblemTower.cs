@@ -8,7 +8,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 	// ReSharper disable once PossibleInfiniteInheritance
 	public partial class DataflowScheme<TGenome>
 	{
-		sealed class ProblemTower : TowerBase<TGenome, TowerProcessingSchemeBase<TGenome>>
+		sealed class ProblemTower : TowerBase<TGenome, TowerSchemeBase<TGenome>>
 		{
 			readonly Level Root;
 
@@ -16,7 +16,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 
 			public ProblemTower(
 				IProblem<TGenome> problem,
-				TowerProcessingSchemeBase<TGenome> environment)
+				TowerSchemeBase<TGenome> environment)
 				: base(problem, environment)
 			{
 				Scheduler = environment.Scheduler[0];

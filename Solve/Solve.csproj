@@ -15,20 +15,29 @@
 
   <ItemGroup>
     <Compile Remove="Dataflow\**" />
+    <Compile Remove="ProcessingSchemes\Dataflow\**" />
     <Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
     <Compile Remove="ProcessingSchemes\Kumite\**" />
     <Compile Remove="ProcessingSchemes\Pull\**" />
     <Compile Remove="ProcessingSchemes\Simple\**" />
+    <Compile Remove="ProcessingSchemes\TowerA\**" />
+    <Compile Remove="ProcessingSchemes\TowerBase\**" />
     <EmbeddedResource Remove="Dataflow\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\Dataflow\**" />
     <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
     <EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\TowerA\**" />
+    <EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
     <None Remove="Dataflow\**" />
+    <None Remove="ProcessingSchemes\Dataflow\**" />
     <None Remove="ProcessingSchemes\KingOfTheHill\**" />
     <None Remove="ProcessingSchemes\Kumite\**" />
     <None Remove="ProcessingSchemes\Pull\**" />
     <None Remove="ProcessingSchemes\Simple\**" />
+    <None Remove="ProcessingSchemes\TowerA\**" />
+    <None Remove="ProcessingSchemes\TowerBase\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +48,11 @@
     <Compile Remove="GenomeTestDelegate.cs" />
     <Compile Remove="IProcessingScheme.cs" />
     <Compile Remove="ProblemExtensions.cs" />
+    <Compile Remove="ProcessingSchemes\AsyncFactoryDriver.cs" />
+    <Compile Remove="ProcessingSchemes\FactoryDriver.cs" />
+    <Compile Remove="ProcessingSchemes\IFactoryDriver.cs" />
     <Compile Remove="ProcessingSchemes\IGenomeProcessor.cs" />
+    <Compile Remove="ProcessingSchemes\PushProcessingSchemeBase.cs" />
     <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
     <Compile Remove="ProcessingSchemes\SinglePool.cs" />
     <Compile Remove="ProcessingSchemes\UberPools.cs" />

@@ -1,14 +1,13 @@
 ﻿using Solve.Supporting.TaskScheduling;
 using System;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Solve.ProcessingSchemes.Dataflow
 {
-	// ReSharper disable once PossibleInfiniteInheritance
-	public partial class DataflowScheme<TGenome>
+    // ReSharper disable once PossibleInfiniteInheritance
+    public partial class DataflowScheme<TGenome>
 	{
 		sealed class Level : PostingTowerLevelBase<TGenome, ProblemTower>
 		{

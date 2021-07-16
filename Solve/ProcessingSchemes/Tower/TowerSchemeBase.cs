@@ -8,11 +8,11 @@ using System.Linq;
 namespace Solve.ProcessingSchemes
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public abstract class TowerProcessingSchemeBase<TGenome> : PushProcessingSchemeBase<TGenome>
+	public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		where TGenome : class, IGenome
 	{
 
-		protected TowerProcessingSchemeBase(
+		protected TowerSchemeBase(
 			IGenomeFactory<TGenome> genomeFactory,
 			SchemeConfig config,
 			GenomeProgressionLog? genomeProgressionLog = null)

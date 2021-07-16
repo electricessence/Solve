@@ -6,12 +6,11 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 
 namespace BlackBoxFunction
 {
-	public delegate double Formula(IReadOnlyList<double> p);
+    public delegate double Formula(IReadOnlyList<double> p);
 
 	public class Problem : ProblemBase<EvalGenome<double>>
 	{

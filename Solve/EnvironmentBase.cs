@@ -8,6 +8,7 @@ using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,45 +17,38 @@ namespace Solve
 	// Defines the pipeline?
 	// ReSharper disable once PossibleInfiniteInheritance
 	public abstract class EnvironmentBase<TGenome>
-		: BroadcasterBase<(IProblem<TGenome> Problem, (TGenome Genome, int PoolIndex, Fitness Fitness) Update)>
+		: BroadcasterBase<(IProblem<TGenome> Problem, (TGenome Genome, int PoolIndex, Fitness Fitness) Update)>, IEnvironment<TGenome>
 		where TGenome : class, IGenome
 	{
 		protected internal readonly IGenomeFactory<TGenome> Factory;
 
 		protected readonly List<IProblem<TGenome>> ProblemsInternal;
-		public readonly IReadOnlyList<IProblem<TGenome>> Problems;
+		public IReadOnlyList<IProblem<TGenome>> Problems { get; }
 
 		protected EnvironmentBase(
 			IGenomeFactory<TGenome> genomeFactory,
 			GenomeProgressionLog? genomeProgressionLog = null)
 		{
 			Factory = genomeFactory ?? throw new ArgumentNullException(nameof(genomeFactory));
-			GenomeProgress = genomeProgressionLog;
 			Contract.EndContractBlock();
 
+			GenomeProgress = genomeProgressionLog;
 			ProblemsInternal = new List<IProblem<TGenome>>();
 			Problems = ProblemsInternal.AsReadOnly();
 		}
 
-		public void AddProblem(params IProblem<TGenome>[] problems)
+		
+		public void AddProblem(IProblem<TGenome> problem)
 		{
-			AddProblems(problems);
-		}
-
-		public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
-		{
-			if (problems == null)
-				throw new ArgumentNullException(nameof(problems));
+			if (problem == null)
+				throw new ArgumentNullException(nameof(problem));
 			Contract.EndContractBlock();
 
 			if (_state != 0)
 				throw new InvalidOperationException("Attempting to add a problem when the environment has already started.");
 
-			foreach (var problem in problems)
-				ProblemsInternal.Add(problem);
+			ProblemsInternal.Add(problem);
 		}
-
-		public bool HaveAllProblemsConverged => ProblemsInternal.TrueForAll(p => p.HasConverged);
 
 		protected readonly CancellationTokenSource Canceller = new();
 
@@ -128,6 +122,8 @@ namespace Solve
 			});
 
 #endif
+
+		public bool HaveAllProblemsConverged => Problems.All(p => p.HasConverged);
 	}
 
 

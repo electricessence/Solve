@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Solve.ProcessingSchemes.Dataflow
 {
 	// ReSharper disable once PossibleInfiniteInheritance
-	public partial class DataflowScheme<TGenome> : TowerProcessingSchemeBase<TGenome>
+	public partial class DataflowScheme<TGenome> : TowerSchemeBase<TGenome>
 		where TGenome : class, IGenome
 	{
 		public DataflowScheme(
@@ -48,7 +48,7 @@ namespace Solve.ProcessingSchemes.Dataflow
 #if DEBUG
 			System.Diagnostics.Debug.WriteLineIf(EMIT_GENOMES,
 				$"Posting:\n{GetGenomeInfo(genome)}\n",
-				"TowerProcessingScheme");
+				"DataflowProcessingScheme");
 #endif
 
 			foreach (var t in ActiveTowers!)

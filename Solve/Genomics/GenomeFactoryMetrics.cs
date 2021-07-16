@@ -4,13 +4,12 @@ using App.Metrics.Filtering;
 using App.Metrics.Filters;
 using Solve.Metrics;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
 namespace Solve
 {
-	public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
+    public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 	{
 		public const string Context = "GenomeFactory";
 

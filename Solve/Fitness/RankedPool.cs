@@ -2,6 +2,7 @@
 using Open.Memory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -19,12 +20,11 @@ namespace Solve
 		}
 
 		public readonly ushort PoolSize;
-		readonly ConcurrentQueue<(TGenome Genome, Fitness Fitness)> _pool
-			= new();
+		readonly ConcurrentQueue<(TGenome Genome, Fitness Fitness)> _pool = new();
 
 		public bool IsEmpty => _pool.IsEmpty;
 
-		Lazy<(TGenome Genome, Fitness Fitness)[]>? _ranked;
+		Lazy<ImmutableArray<(TGenome Genome, Fitness Fitness)>>? _ranked;
 
 		public void Add(TGenome genome, Fitness fitness)
 		{
@@ -43,8 +43,9 @@ namespace Solve
 			GetRanked(); // Overflowing?
 		}
 
-		(TGenome Genome, Fitness Fitness)[] GetRanked()
-			=> LazyInitializer.EnsureInitialized(ref _ranked, () => new Lazy<(TGenome Genome, Fitness Fitness)[]>(() =>
+		ImmutableArray<(TGenome Genome, Fitness Fitness)> GetRanked()
+			=> LazyInitializer.EnsureInitialized(ref _ranked,
+				() => new Lazy<ImmutableArray<(TGenome Genome, Fitness Fitness)>>(() =>
 			{
 				var result = _pool
 					// Drain queue (some*)
@@ -67,14 +68,13 @@ namespace Solve
 					.ThenByDescending(e => e.snapshot.Count)
 					// Compile results.
 					.Select(e => e.genomeFitness)
-					.ToArray();
+					.ToImmutableArray();
 
 				// (.Take(PoolSize)) All champions deserve a chance, but we will only retain the ones that can fit in the pool.				
 				foreach (var e in result.Take(PoolSize)) _pool.Enqueue(e);
 				return result;
 			})).Value;
 
-		public ReadOnlySpan<(TGenome Genome, Fitness Fitness)> Ranked
-			=> GetRanked();
+		public ImmutableArray<(TGenome Genome, Fitness Fitness)> Ranked => GetRanked();
 	}
 }

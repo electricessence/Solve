@@ -1,11 +1,10 @@
 ﻿using Open.Disposable;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace Solve
 {
-	public static class StringBuilderPool
+    public static class StringBuilderPool
 	{
 		public static readonly ConcurrentQueueObjectPool<StringBuilder> Instance
 			= new(

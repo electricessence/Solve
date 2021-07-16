@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Solve
@@ -39,6 +40,9 @@ namespace Solve
 
 		bool HasConverged { get; }
 		void Converged();
+
+		public ImmutableArray<Fitness> NewFitness()
+			=> Pools.Select(f => new Fitness(f.Metrics)).ToImmutableArray();
 	}
 
 
