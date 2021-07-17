@@ -17,10 +17,10 @@ namespace Solve
 		public ImmutableArray<Fitness> Fitnesses { get; }
 		public LossTracker Losses { get; }
 
-        protected override void OnDispose()
-        {
+		protected override void OnDispose()
+		{
 			Losses.Dispose();
 
 		}
-    }
+	}
 }

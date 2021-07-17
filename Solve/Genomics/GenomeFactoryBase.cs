@@ -46,7 +46,7 @@ namespace Solve
 
 		// Help to reduce copies.
 		// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
-		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry	= new();
+		protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry = new();
 
 		protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = new();
 
@@ -314,7 +314,7 @@ namespace Solve
 		}
 
 #if DEBUG
-		readonly ConcurrentDictionary<string, TGenome> Released	= new();
+		readonly ConcurrentDictionary<string, TGenome> Released = new();
 #endif
 
 		public TGenome Next()
@@ -426,7 +426,7 @@ namespace Solve
 			 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
 			 * Returning any valid breeders whom haven't mated enough.
 			 */
-			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock	= new();
+			readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock = new();
 
 			public void EnqueueChampion(IEnumerable<TGenome> genomes)
 			{

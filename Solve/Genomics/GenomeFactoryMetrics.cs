@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Solve
 {
-    public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
+	public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 	{
 		public const string Context = "GenomeFactory";
 

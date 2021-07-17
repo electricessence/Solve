@@ -37,7 +37,7 @@ namespace Solve
 			Problems = ProblemsInternal.AsReadOnly();
 		}
 
-		
+
 		public void AddProblem(IProblem<TGenome> problem)
 		{
 			if (problem == null)

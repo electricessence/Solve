@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 
 namespace Solve.ProcessingSchemes
 {
@@ -19,7 +18,7 @@ namespace Solve.ProcessingSchemes
 		InterlockedInt? _losses;
 		public InterlockedInt LossCount => _losses ?? throw new InvalidOperationException("Accessing an uninitialized LevelEntry.");
 
-		private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers	= new();
+		private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers = new();
 		public static IComparer<LevelEntry<TGenome>> GetScoreComparer(int index)
 			=> Comparers.GetOrAdd(index, i => new LevelEntryScoreComparer(i));
 

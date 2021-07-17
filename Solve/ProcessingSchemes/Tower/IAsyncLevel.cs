@@ -2,7 +2,7 @@
 
 namespace Solve.ProcessingSchemes
 {
-    public interface IAsyncLevel<TGenome> : ILevel<TGenome>
+	public interface IAsyncLevel<TGenome> : ILevel<TGenome>
 		where TGenome : class, IGenome
 	{
 		ValueTask PostAsync(LevelProgress<TGenome> contender);

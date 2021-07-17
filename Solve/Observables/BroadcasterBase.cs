@@ -4,7 +4,7 @@ using System.Reactive.Subjects;
 
 namespace Solve
 {
-    public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
+	public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
 	{
 		readonly Subject<T> _subject = new();
 

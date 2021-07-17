@@ -23,12 +23,12 @@ namespace Solve
 			return ++_rejectionCount;
 		}
 
-        protected override void OnDispose()
-        {
+		protected override void OnDispose()
+		{
 			var losses = Interlocked.Exchange(ref _levelLosses, null);
 			if (losses == null) return;
 
 			foreach (var value in losses.Values) InterlockedInt.Recycle(value);
-        }
-    }
+		}
+	}
 }

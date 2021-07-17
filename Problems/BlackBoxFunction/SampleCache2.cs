@@ -1,9 +1,9 @@
-﻿using Open.RandomizationExtensions;
+﻿using Open.Collections;
+using Open.RandomizationExtensions;
 using System;
-using System.Collections.Immutable;
-using System.Collections.Generic;
-using Open.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace BlackBoxFunction
@@ -13,11 +13,11 @@ namespace BlackBoxFunction
 		public sealed class Entry : LazyList<(IReadOnlyList<double> input, double correct)>
 		{
 			public Entry(IEnumerable<LazyList<double>> paramValues, Formula f)
-				:base(GetResults(paramValues,f), true)
+				: base(GetResults(paramValues, f), true)
 			{
 			}
 
-			public static IEnumerable<(IReadOnlyList<double> input, double correct)>GetResults(
+			public static IEnumerable<(IReadOnlyList<double> input, double correct)> GetResults(
 				IEnumerable<LazyList<double>> paramValues, Formula f)
 			{
 				foreach (var pv in paramValues)
@@ -50,7 +50,7 @@ namespace BlackBoxFunction
 			var builder = ImmutableArray.CreateBuilder<double>(SampleSize);
 			builder.Count = SampleSize;
 			builder[0] = start;
-			for(var i = 1; i< last; ++i)
+			for (var i = 1; i < last; ++i)
 				builder[i] = start + i * delta / SampleSize;
 			builder[last] = end;
 			return builder.MoveToImmutable();
@@ -58,7 +58,7 @@ namespace BlackBoxFunction
 
 		public IEnumerable<ImmutableArray<double>> RandomSample()
 		{
-			while(true)	yield return GetRandomLinearInput();
+			while (true) yield return GetRandomLinearInput();
 		}
 
 		LazyList<LazyList<double>> Partition(IEnumerable<ImmutableArray<double>> sample)

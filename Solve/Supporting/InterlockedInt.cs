@@ -50,9 +50,9 @@ namespace Solve
 			return other is InterlockedInt ii && Equals(ii);
 		}
 
-        public override string ToString() => _value.ToString();
+		public override string ToString() => _value.ToString();
 
-        public override int GetHashCode() => _value.GetHashCode();
+		public override int GetHashCode() => _value.GetHashCode();
 
 		public static implicit operator int(InterlockedInt i) => i.Value;
 
