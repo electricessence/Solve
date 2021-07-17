@@ -70,14 +70,14 @@ namespace BlackBoxFunction
 
 			var scheme = new Solve.ProcessingSchemes.TowerScheme<EvalGenome<double>>(factory, (200, 60, 2));
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
-			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 200));
+			scheme.AddProblem(Problem.Create(SqrtA2B2, 200));
 
 			Init(scheme, emitter, metrics);
 		}
 
 		static Task Main()
 		{
-			var runner = new Runner(1);
+			var runner = new Runner(5);
 			runner.Init();
 			var message = string.Format(
 				"Solving Black-Box Problem... (minimum {0:n0} samples before displaying)",

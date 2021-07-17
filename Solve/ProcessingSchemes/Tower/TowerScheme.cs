@@ -46,7 +46,7 @@ namespace Solve.ProcessingSchemes
         protected override async Task StartInternal(CancellationToken token)
         {
             var towers = Problems.Select(p => new ProblemTower(Config, p, Factory)).ToList();
-            //Towers = towers.AsReadOnly();
+            foreach (var tower in towers) tower.Subscribe(Broadcast);
             ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
 
         retry:

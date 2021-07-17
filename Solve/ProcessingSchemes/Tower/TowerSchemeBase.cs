@@ -23,7 +23,7 @@ namespace Solve.ProcessingSchemes
 
 			ReserveFactoryQueue = genomeFactory[2];
 			ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-			this.Subscribe(e => Factory[0].EnqueueChampion(e.Update.Genome));
+			this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome));
 		}
 
 		// First, and Minimum allow for tapering of pool size as generations progress.

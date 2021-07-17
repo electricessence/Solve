@@ -15,7 +15,14 @@ namespace Solve
 		protected override void OnDispose() => _subject.Dispose();
 
 		T? _previous = default;
-		internal void Broadcast(T message, bool uniqueOnly = false)
+		internal void Broadcast(T message)
+		{
+			if (message is null) throw new ArgumentNullException(nameof(message));
+			_previous = message;
+			_subject.OnNext(message);
+		}
+
+		internal void Broadcast(T message, bool uniqueOnly)
 		{
 			if (message is null) throw new ArgumentNullException(nameof(message));
 			if (uniqueOnly && message.Equals(_previous)) return;

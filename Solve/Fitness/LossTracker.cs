@@ -1,12 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿using Open.Disposable;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Solve
 {
-	public class LossTracker
+	public class LossTracker : DisposableBase
 	{
-		readonly ConcurrentDictionary<int, InterlockedInt> _levelLosses = new();
+		ConcurrentDictionary<int, InterlockedInt>? _levelLosses = new();
 
-		public InterlockedInt this[int level] => _levelLosses.GetOrAdd(level, _ => new InterlockedInt());
+		public InterlockedInt this[int level] => _levelLosses!.GetOrAdd(level, _ => new InterlockedInt());
 
 		protected int _lastRejectionLevel = -1;
 		protected int _consecutiveRejection;
@@ -20,5 +22,13 @@ namespace Solve
 			_lastRejectionLevel = level;
 			return ++_rejectionCount;
 		}
-	}
+
+        protected override void OnDispose()
+        {
+			var losses = Interlocked.Exchange(ref _levelLosses, null);
+			if (losses == null) return;
+
+			foreach (var value in losses.Values) InterlockedInt.Recycle(value);
+        }
+    }
 }

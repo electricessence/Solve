@@ -5,7 +5,7 @@ using System.Linq;
 namespace Solve
 {
 	public interface IEnvironment<TGenome>
-		: IObservable<(IProblem<TGenome> Problem, (TGenome Genome, int PoolIndex, Fitness Fitness) Update)>
+		: IObservable<(TGenome Genome, Fitness, IProblem<TGenome> Problem, int PoolIndex)>
 		where TGenome : class, IGenome
 	{
 		public IReadOnlyList<IProblem<TGenome>> Problems { get; }

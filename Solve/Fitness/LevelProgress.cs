@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Open.Disposable;
+using System;
 using System.Collections.Immutable;
 
 namespace Solve
 {
-	public struct LevelProgress<TGenome>
+	public class LevelProgress<TGenome> : DisposableBase
 	{
 		public LevelProgress(TGenome genome, ImmutableArray<Fitness> fitnesses)
 		{
@@ -15,5 +16,11 @@ namespace Solve
 		public TGenome Genome { get; }
 		public ImmutableArray<Fitness> Fitnesses { get; }
 		public LossTracker Losses { get; }
-	}
+
+        protected override void OnDispose()
+        {
+			Losses.Dispose();
+
+		}
+    }
 }

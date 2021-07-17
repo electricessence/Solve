@@ -16,7 +16,7 @@ namespace Solve.ProcessingSchemes
     {
         protected class Level : IAsyncLevel<TGenome>
         {
-            protected bool IsTop { get; }
+            protected bool IsTop => !_nextLevel.IsValueCreated;
             protected readonly bool IsMax;
 
             protected readonly int Index;
@@ -39,7 +39,7 @@ namespace Solve.ProcessingSchemes
             {
                 Debug.Assert(level >= 0);
                 Debug.Assert(tower != null);
-
+                tower.OnLevelCreated(level);
                 var config = tower.Config;
                 Index = level;
                 PoolSize = config.PoolSize.GetPoolSize(level);
@@ -102,19 +102,30 @@ namespace Solve.ProcessingSchemes
                     var temp = pool.ToArray();
                     result[i] = temp;
                     var comparer = LevelEntry<TGenome>.GetScoreComparer(i);
+                    TrySorting(3);
 
-                    try
+                    void TrySorting(int max)
                     {
-                        Array.Sort(temp, 0, len, comparer);
+                        int tries = 0;
+                        while (tries++ < max)
+                        {
+                            try
+                            {
+                                // Verify repeatable issue.
+                                Array.Sort(temp, 0, len, comparer);
+                                return;
+                            }
+                            catch (Exception ex)
+                            {
+                                if (tries == max)
+                                {
+                                    Debug.WriteLine(ex.ToString());
+                                    Debugger.Break();
+                                    throw;
+                                }
+                            }
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Possible LevelEntry leak.");
-                        Debug.WriteLine(ex.ToString());
-                        Debugger.Break();
-                        throw;
-                    }
-
                 }
 
                 return result;
@@ -152,13 +163,13 @@ namespace Solve.ProcessingSchemes
                 {
                     for (byte i = 0; i < result.Length; i++)
                     {
-                        if (result[i].success)
+                        if (result[i].success) // Get the champion for each fitness.
                             ProcessChampion(i, contender);
                     }
                 }
 
-                if (IsMax
-                    || result.Any(r => r.fresh)
+                if (IsMax || IsTop // Let the pools fill up first before fast-tracking new champions.
+                    //|| result.Any(r => r.fresh)
                     || !result.Any(r => r.success))
                 {
                     await Pool.Writer
@@ -188,10 +199,13 @@ namespace Solve.ProcessingSchemes
                 var poolCount = Tower.Problem.Pools.Count;
                 Debug.Assert(poolCount != 0);
                 var midPoint = PoolSize / 2;
+                var lPool = ListPool<LevelEntry<TGenome>>.Shared;
                 var hsPool = HashSetPool<string>.Shared;
                 var processed = hsPool.Take();
+                var toPromote = lPool.Take();
+                var toKill = lPool.Take();
 
-                var isTop = IsTop;
+                //var isTop = IsTop;
                 // Remaining top 50% (winners) should go before any losers.
                 for (var i = 0; i < midPoint; ++i)
                 {
@@ -200,9 +214,7 @@ namespace Solve.ProcessingSchemes
                         var e = pools[p][i];
                         var progress = e.Progress;
                         var hash = progress.Genome.Hash;
-                        if (!processed.Add(hash)) continue;
-                        if (i == 0 && isTop) ProcessChampion(p, progress);
-                        await PromoteAsync(e).ConfigureAwait(false);
+                        if (processed.Add(hash)) toPromote.Add(e);                        
                     }
                 }
 
@@ -226,15 +238,17 @@ namespace Solve.ProcessingSchemes
                         {
                             var lossRecord = progress.Losses;
                             var totalRejections = lossRecord.IncrementRejection(Index);
-                            if (lossRecord.ConcecutiveRejection > maxRejection && 100 * totalRejections > Index * percentRejectionLimit)
+
+                            if (lossRecord.ConcecutiveRejection > maxRejection
+                                && 100 * totalRejections > Index * percentRejectionLimit)
                             {
-                                // Rejected.
-                                LevelEntry<TGenome>.Pool.Give(loser);
+                                // Permanently rejected.
+                                toKill.Add(loser);
                             }
                             else
                             {
                                 // Survived for another try.
-                                await PromoteAsync(loser).ConfigureAwait(false);
+                                toPromote.Add(loser);
                             }
                         }
                         else
@@ -247,6 +261,20 @@ namespace Solve.ProcessingSchemes
                 }
 
                 hsPool.Give(processed);
+                Array.Clear(buffer, retained, buffer.Length - retained);
+
+#if DEBUG
+                Debug.Assert(toPromote.Distinct().Count() == toPromote.Count);
+#endif
+                foreach(var p in toPromote) await PromoteAsync(p).ConfigureAwait(false);
+                lPool.Give(toPromote);
+
+                foreach (var k in toKill)
+                {
+                    k.Progress.Dispose();
+                    LevelEntry<TGenome>.Pool.Give(k);
+                }
+
                 return retained;
             }
         }

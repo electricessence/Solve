@@ -90,7 +90,7 @@ namespace Solve.Experiment.Console
 				.Subscribe(o =>
 					{
 						var problem = o.Problem;
-						Emitter.EmitTopGenomeStats(problem, o.Update);
+						Emitter.EmitTopGenomeStats(o);
 
 						if (!problem.HasConverged && problem.Pools.All(pool => pool.BestFitness.Fitness?.HasConverged(_minConvergenceSamples) ?? false))
 							problem.Converged();

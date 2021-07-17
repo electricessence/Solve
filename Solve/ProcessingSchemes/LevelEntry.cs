@@ -4,21 +4,22 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace Solve.ProcessingSchemes
 {
 	public class LevelEntry<TGenome> : IRecyclable
 	{
-		public LevelProgress<TGenome> Progress { get; private set; }
+		public LevelProgress<TGenome> Progress { get; private set; } = null!;
 
 		public ImmutableArray<double>[] Scores { get; private set; } = default!;
 
 		InterlockedInt? _losses;
 		public InterlockedInt LossCount => _losses ?? throw new InvalidOperationException("Accessing an uninitialized LevelEntry.");
 
-		private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers
-			= new();
+		private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers	= new();
 		public static IComparer<LevelEntry<TGenome>> GetScoreComparer(int index)
 			=> Comparers.GetOrAdd(index, i => new LevelEntryScoreComparer(i));
 
@@ -37,7 +38,7 @@ namespace Solve.ProcessingSchemes
 
 		public void Recycle()
 		{
-			Progress = default;
+			Progress = null!;
 			Scores = null!;
 			_losses = null;
 		}
@@ -48,6 +49,9 @@ namespace Solve.ProcessingSchemes
 			InterlockedInt losses)
 		{
 			var e = Pool.Take();
+#if DEBUG
+			Debug.Assert(e._losses == null);
+#endif
 			e.Progress = progress;
 			e.Scores = scores;
 			e._losses = losses;
@@ -63,7 +67,7 @@ namespace Solve.ProcessingSchemes
 				: Init(in progress, scores.ToArray(), losses);
 
 		public static readonly InterlockedArrayObjectPool<LevelEntry<TGenome>> Pool
-			= InterlockedArrayObjectPool.Create<LevelEntry<TGenome>>();
+			= InterlockedArrayObjectPool.CreateAutoRecycle<LevelEntry<TGenome>>();
 	}
 
 }

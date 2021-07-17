@@ -25,13 +25,12 @@ namespace Solve.Experiment.Console
 
 		protected const string BLANK = "           ";
 
-		readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue
-			= new();
+		readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue = new();
 
-		public void EmitTopGenomeStats(IProblem<TGenome> problem, (TGenome genome, int poolIndex, Fitness fitness) update)
+		public void EmitTopGenomeStats((TGenome Genome, Fitness, IProblem<TGenome> Problem, int PoolIndex) update)
 		{
 			// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
-			var (genome, poolIndex, fitness) = update;
+			var (genome, fitness, problem, poolIndex) = update;
 			var f = fitness.Clone();
 			var pool = problem.Pools[poolIndex];
 			if (f.SampleCount >= SampleMinimum && pool.UpdateBestFitness(genome, f))

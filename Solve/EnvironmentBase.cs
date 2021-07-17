@@ -17,7 +17,7 @@ namespace Solve
 	// Defines the pipeline?
 	// ReSharper disable once PossibleInfiniteInheritance
 	public abstract class EnvironmentBase<TGenome>
-		: BroadcasterBase<(IProblem<TGenome> Problem, (TGenome Genome, int PoolIndex, Fitness Fitness) Update)>, IEnvironment<TGenome>
+		: BroadcasterBase<(TGenome Genome, Fitness, IProblem<TGenome> Problem, int PoolIndex)>, IEnvironment<TGenome>
 		where TGenome : class, IGenome
 	{
 		protected internal readonly IGenomeFactory<TGenome> Factory;

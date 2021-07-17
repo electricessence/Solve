@@ -50,19 +50,16 @@ namespace Solve
 			return other is InterlockedInt ii && Equals(ii);
 		}
 
-		public override string ToString()
-		{
-			return _value.ToString();
-		}
+        public override string ToString() => _value.ToString();
 
-		public override int GetHashCode() => _value.GetHashCode();
+        public override int GetHashCode() => _value.GetHashCode();
 
 		public static implicit operator int(InterlockedInt i) => i.Value;
 
 		public static implicit operator InterlockedInt(int value) => Init(value);
 
-		public static bool operator ==(InterlockedInt a, InterlockedInt b) => a.Equals(b);
-		public static bool operator !=(InterlockedInt a, InterlockedInt b) => !a.Equals(b);
+		public static bool operator ==(InterlockedInt? a, InterlockedInt? b) => a is null ? b is null : a.Equals(b);
+		public static bool operator !=(InterlockedInt? a, InterlockedInt? b) => a is null ? b is not null : !a.Equals(b);
 
 		public static bool operator ==(int a, InterlockedInt b) => b.Equals(a);
 		public static bool operator !=(int a, InterlockedInt b) => !b.Equals(a);

@@ -119,7 +119,7 @@ namespace Eater
 			//Console.WriteLine("Press any key to start.");
 			//Console.ReadLine();
 			//Console.Clear();
-			var runner = new Runner(20);
+			var runner = new Runner(10, 2);
 			//await runner.InitSeedsAsync();
 			runner.InitPreviousWinners();
 
