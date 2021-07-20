@@ -42,7 +42,7 @@ namespace Solve.Evaluation
 				switch (gv)
 				{
 					case Constant<double> c:
-						switch (Randomizer.Random.Next(10))
+						switch (Randomizer.Random.Next(11))
 						{
 							case 0:
 								// This is a bit controversial since it can bloat constant values.
@@ -66,6 +66,10 @@ namespace Solve.Evaluation
 									// should be rare (1/10) chance to increase multiple for non power of exponents.
 									: Catalog.AdjustNodeMultiple(gene, c.Value < 0 ? -1 : +1),
 									"Increase constant");
+
+							case 7:
+								return (Catalog.ApplyClone(gene, newNode => Catalog.GetParameter(genes.GetDescendants().OfType<IParameter>().Distinct().Count())),
+									"Replace constant with parameter");
 
 							default:
 								if (gene.Parent?.Value is Exponent<double>)
