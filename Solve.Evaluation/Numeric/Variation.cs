@@ -14,8 +14,30 @@ namespace Solve.Evaluation
 	{
 		protected override IEnumerable<(IGene Root, string Origin)> GetVariations(IGene source)
 		{
+			var productOfSums = Catalog.Variation.FlattenProductofSums(source);
+
+			if (productOfSums != source)
+			{
+				// Ensure not new instance.
+				Debug.Assert(productOfSums.ToStringRepresentation() != source.ToStringRepresentation());
+				yield return (productOfSums, "Product of Sums");
+			}
+			else
+			{
+				productOfSums = null;
+			}
+
 			if (Catalog.TryGetReduced(source, out var reduced))
+			{
 				yield return (reduced, "Reduction");
+				var reducedProductOfSums = Catalog.Variation.FlattenProductofSums(reduced);
+				if (reducedProductOfSums != reduced && reducedProductOfSums != productOfSums)
+				{
+					// Ensure not new instance.
+					Debug.Assert(reducedProductOfSums.ToStringRepresentation() != reduced.ToStringRepresentation());
+					yield return (reducedProductOfSums, "Reduction product of Sums");
+				}
+			}
 			else
 				reduced = source;
 
