@@ -68,9 +68,9 @@ namespace BlackBoxFunction
 			var factory = new NumericEvalGenomeFactory(metrics.Provider.Counter /*, "((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 			var emitter = new EvalConsoleEmitter(factory, _minSamples);
 
-			var scheme = new Solve.ProcessingSchemes.TowerScheme<EvalGenome<double>>(factory, (200, 60, 2));
+			var scheme = new Solve.ProcessingSchemes.TowerScheme<EvalGenome<double>>(factory, (800, 80, 2));
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<EvalGenome<double>>(factory, (200, 60, 2));
-			scheme.AddProblem(Problem.Create(SqrtA2B2, 200));
+			scheme.AddProblem(Problem.Create(SqrtA2B2A2B1, 200));
 
 			Init(scheme, emitter, metrics);
 		}

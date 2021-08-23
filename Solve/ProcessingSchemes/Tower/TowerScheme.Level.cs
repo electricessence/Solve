@@ -134,6 +134,7 @@ namespace Solve.ProcessingSchemes
 			protected void ProcessChampion(int poolIndex, LevelProgress<TGenome> champ)
 			{
 				Debug.Assert(poolIndex >= 0);
+				if (Index == 0) return; // Ignore champions from first level.
 				Tower.Problem.Pools[poolIndex].Champions?.Add(champ.Genome, champ.Fitnesses[poolIndex]);
 				Tower.Broadcast(champ, poolIndex);
 			}

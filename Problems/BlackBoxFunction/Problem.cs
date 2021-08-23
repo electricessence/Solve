@@ -83,10 +83,10 @@ namespace BlackBoxFunction
 		protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);
-			var pool = ArrayPool<double>.Shared;
-			var correct = pool.Rent(SampleSizeInt);
-			var divergence = pool.Rent(SampleSizeInt);
-			var calc = pool.Rent(SampleSizeInt);
+			var pool = SampleSizeInt > 128 ? ArrayPool<double>.Shared : null;
+			var correct = pool?.Rent(SampleSizeInt) ?? new double[SampleSizeInt];
+			var divergence = pool?.Rent(SampleSizeInt) ?? new double[SampleSizeInt];
+			var calc = pool?.Rent(SampleSizeInt) ?? new double[SampleSizeInt];
 			var NaNcount = 0;
 
 			// #if DEBUG
@@ -148,9 +148,9 @@ namespace BlackBoxFunction
 			//if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
 			var d = divergence.Take(SampleSizeInt).Where(v => !double.IsNaN(v)).Average();
 
-			pool.Return(calc);
-			pool.Return(correct);
-			pool.Return(divergence);
+			pool?.Return(calc);
+			pool?.Return(correct);
+			pool?.Return(divergence);
 
 			return new[] {
 				(double.IsNaN(dcCorrelation) || double.IsInfinity(dcCorrelation)) ? -2 : dcCorrelation,
