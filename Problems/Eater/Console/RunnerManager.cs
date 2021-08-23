@@ -4,8 +4,14 @@ namespace Eater.Console
 {
 	public class RunnerManager
 	{
+		public ushort Size { get; }
 		private readonly object _sync = new();
 		private Runner? _runner;
+
+		public RunnerManager(ushort size)
+		{
+			Size = size;
+		}
 
 		public bool IsRunning => _runner != null;
 
@@ -19,7 +25,7 @@ namespace Eater.Console
 			{
 				var starting = _runner is null;
 				if (starting)
-					_runner = Runner.Start().runner;
+					_runner = Runner.Start(Size).runner;
 				return starting;
 			}
 		}
@@ -45,7 +51,7 @@ namespace Eater.Console
 			{
 				if (_runner is null)
 				{
-					_runner = Runner.Start().runner;
+					_runner = Runner.Start(Size).runner;
 					return true;
 				}
 				else

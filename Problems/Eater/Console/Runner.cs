@@ -1,6 +1,7 @@
 ﻿using App.Metrics;
 using Solve;
 using Solve.Experiment.Console;
+using Solve.ProcessingSchemes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,7 +63,12 @@ namespace Eater
 			var metrics = new MetricsBuilder().Build();
 			var factory = new GenomeFactory(metrics.Provider.Counter, seedGenomes, leftTurnDisabled: leftTurnDisabled);
 			//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<Genome>(metrics, factory, (800, 40, 2));
-			var scheme = new Solve.ProcessingSchemes.TowerScheme<Genome>(factory, (400, 40, 2));
+			var config = new SchemeConfig
+			{
+				MaxLevels = 500,
+				PoolSize = (400, 40, 2),
+			};
+			var scheme = new Solve.ProcessingSchemes.TowerScheme<Genome>(factory, config);
 			// ReSharper disable once RedundantArgumentDefaultValue
 			scheme.AddProblem(Problem.CreateFitnessSecondary(_size));
 			//scheme.AddProblem(EaterProblem.CreateF02(10, 40));
@@ -112,14 +118,19 @@ namespace Eater
 			}
 		}
 
-		static Task Main() => Start().completion;
+		static Task Main(params string[] args)
+		{
+			ushort size = 10;
+			if (args.Length != 0) size = ushort.Parse(args[0]);
+			return Start(size).completion;
+		}
 
-		public static (Runner runner, Task completion) Start()
+		public static (Runner runner, Task completion) Start(ushort size)
 		{
 			//Console.WriteLine("Press any key to start.");
 			//Console.ReadLine();
 			//Console.Clear();
-			var runner = new Runner(10, 2);
+			var runner = new Runner(size, 2);
 			//await runner.InitSeedsAsync();
 			runner.InitPreviousWinners();
 

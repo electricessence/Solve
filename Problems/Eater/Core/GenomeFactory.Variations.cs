@@ -15,8 +15,11 @@ namespace Eater
 
 		public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 		{
+			var len = source.Count;
 			// Try to simply shorten the result first.
-			yield return source.Take(source.Count - 1);
+			yield return source.Take(len - 1); // by 1
+			var half = len / 2;
+			if(half > 2) yield return source.Take(half); // by half
 
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
@@ -67,10 +70,7 @@ namespace Eater
 			// Pattern is doubled.
 			yield return Enumerable.Repeat(source, 2).SelectMany(s => s);
 
-			var len = source.Count;
-			var half = len / 2;
 			if (half <= 2) yield break;
-			yield return source.Take(half);
 			yield return source.Skip(half);
 
 			var third = len / 3;
