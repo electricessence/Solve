@@ -19,7 +19,7 @@ namespace Eater
 			// Try to simply shorten the result first.
 			yield return source.Take(len - 1); // by 1
 			var half = len / 2;
-			if(half > 2) yield return source.Take(half); // by half
+			if (half > 2) yield return source.Take(half); // by half
 
 			var stepCounts = source.ToStepCounts().ToArray();
 			var stepCount = stepCounts.Length;
