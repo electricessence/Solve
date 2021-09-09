@@ -214,7 +214,7 @@ namespace Eater
 		public const char TURN_RIGHT = '>';
 		public const char TURN_LEFT = '<';
 
-		public static readonly IReadOnlyList<Step> ALL = new[] { Step.Forward, Step.TurnRight, Step.TurnLeft }.ToImmutableArray();
+		public static readonly ImmutableArray<Step> ALL = ImmutableArray.Create(Step.Forward, Step.TurnRight, Step.TurnLeft);
 
 		public static char ToChar(this Step step) => step switch
 		{

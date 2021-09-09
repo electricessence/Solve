@@ -50,6 +50,6 @@ namespace Eater
 			}
 		}
 
-		public readonly IReadOnlyList<Step> AvailableSteps;
+		public readonly ImmutableArray<Step> AvailableSteps;
 	}
 }
