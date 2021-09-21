@@ -39,7 +39,7 @@ namespace Solve
 
 
 		public bool Equals(InterlockedInt? other)
-			=> !(other is null) && _value == other._value;
+			=> other is not null && _value == other._value;
 
 		public bool Equals(int value)
 			=> _value == value;
