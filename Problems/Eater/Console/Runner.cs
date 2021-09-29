@@ -1,4 +1,5 @@
 ﻿using App.Metrics;
+using Open.Disposable;
 using Solve;
 using Solve.Experiment.Console;
 using Solve.ProcessingSchemes;
@@ -28,7 +29,7 @@ namespace Eater
 		}
 
 		static string GenerateIdealSeed(ushort size)
-			=> StringBuilderPool.Rent(sb =>
+			=> StringBuilderPool.Shared.RentToString(sb =>
 			{
 				var s = size - 1;
 				sb.Append(s).Append('^');

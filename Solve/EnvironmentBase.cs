@@ -4,6 +4,7 @@
  */
 
 using Open.Collections;
+using Open.Disposable;
 using Solve.Metrics;
 using System;
 using System.Collections.Generic;
@@ -105,7 +106,7 @@ namespace Solve
 
 		// ReSharper disable once UnusedMember.Local
 		protected static string GetGenomeInfo(TGenome genome)
-			=> StringBuilderPool.Rent(sb =>
+			=> StringBuilderPool.Shared.RentToString(sb =>
 			{
 				foreach (var logEntry in genome.Log)
 				{

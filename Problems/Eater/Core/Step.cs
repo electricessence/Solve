@@ -103,7 +103,7 @@ namespace Eater
 		}
 
 		public static string ToGenomeHash(this IEnumerable<Step> steps)
-			=> StringBuilderPool.Rent(sb =>
+			=> StringBuilderPool.Shared.RentToString(sb =>
 			{
 				foreach (var step in steps)
 				{
@@ -112,7 +112,7 @@ namespace Eater
 			});
 
 		public static string ToGenomeHash(this IEnumerable<StepCount> steps)
-			=> StringBuilderPool.Rent(sb =>
+			=> StringBuilderPool.Shared.RentToString(sb =>
 			{
 				foreach (var s in steps)
 				{
@@ -126,21 +126,14 @@ namespace Eater
 		public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
 
 		{
-			var sb = StringBuilderPool.Take();
-			try
+			using var lease = StringBuilderPool.Shared.Rent();
+			var sb = lease.Item;
+			foreach (var s in steps)
 			{
-				foreach (var s in steps)
-				{
-					if (s.Count != 1)
-						sb.Append(s.Count);
-					sb.Append(s.Step.ToChar());
-				}
-				return sb.ToString();
+				if (s.Count is not 1) sb.Append(s.Count);
+				sb.Append(s.Step.ToChar());
 			}
-			finally
-			{
-				StringBuilderPool.Give(sb);
-			}
+			return sb.ToString();
 		}
 
 		public static string ToGenomeHash(this Span<StepCount> steps)
@@ -236,7 +229,7 @@ namespace Eater
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
-			hash = StepReplace.Replace(hash, m => StringBuilderPool.Rent(sb =>
+			hash = StepReplace.Replace(hash, m => StringBuilderPool.Shared.RentToString(sb =>
 			{
 				sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value));
 			}));

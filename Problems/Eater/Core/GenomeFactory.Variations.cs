@@ -1,4 +1,5 @@
 ﻿using Open.Collections;
+using Open.Disposable;
 using Open.Text;
 using Solve;
 using System;
@@ -26,18 +27,17 @@ namespace Eater
 			var stepCount = stepCounts.Length;
 
 			var hash = stepCounts.Steps().ToGenomeHash();
-			var span = hash.AsSpan();
 			var matches = UTurn.Matches(hash);
-			var sb = StringBuilderPool.Take();
+			var sb = StringBuilderPool.Shared.Take();
 			foreach (var match in matches.Cast<Match>())
 			{
 				yield return Steps.FromGenomeHash(sb.Clear()
-					.Append(span.Slice(0, match.Index))
+					.Append(hash.AsSpan(0, match.Index))
 					.Append(match.AsSpan().Trim('^'))
-					.Append(span[(match.Index + match.Length)..])
+					.Append(hash.AsSpan(match.Index + match.Length))
 					.ToString());
 			}
-			StringBuilderPool.Give(sb);
+			StringBuilderPool.Shared.Give(sb);
 
 			yield return source.Reverse();
 

@@ -49,7 +49,8 @@ namespace Solve.Experiment.Console
 			{
 				using var dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Shared.Rent();
 				var d = dR.Item;
-				var output = StringBuilderPool.Take();
+				using var lease = StringBuilderPool.Shared.Rent();
+				var output = lease.Item;
 
 				while (ConsoleQueue.TryDequeue(out var o1))
 				{
@@ -90,7 +91,6 @@ namespace Solve.Experiment.Console
 
 				}
 
-				StringBuilderPool.Give(output);
 			});
 
 			if (locked && !ConsoleQueue.IsEmpty)

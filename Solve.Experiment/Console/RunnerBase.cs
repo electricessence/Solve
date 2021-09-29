@@ -1,5 +1,6 @@
 ﻿using App.Metrics;
 using Open.DateTimeExtensions;
+using Open.Disposable;
 using Open.Threading.Tasks;
 using System;
 using System.Diagnostics;
@@ -147,7 +148,7 @@ namespace Solve.Experiment.Console
 #if DEBUG
 			if (Metrics == null) return;
 			var snapshot = Metrics.Snapshot.Get();
-			Debug.Write(StringBuilderPool.Rent(sb =>
+			Debug.Write(StringBuilderPool.Shared.RentToString(sb =>
 			{
 				sb.AppendLine("\n==============================================================");
 				sb.AppendLine("Timestamp:");
