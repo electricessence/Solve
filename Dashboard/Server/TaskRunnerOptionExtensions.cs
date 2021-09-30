@@ -23,7 +23,7 @@ namespace Solve.Dashboard.Server
 						{
 							await delay;
 						}
-						catch (TaskCanceledException)
+						catch (OperationCanceledException)
 						{
 							Debug.WriteLine("Count down cancelled.");
 						}
@@ -48,7 +48,7 @@ namespace Solve.Dashboard.Server
 							{
 								await delay;
 							}
-							catch (TaskCanceledException)
+							catch (OperationCanceledException)
 							{
 								Debug.WriteLine("Count down cancelled.");
 							}
