@@ -11,10 +11,7 @@ namespace BlackBoxFunction
 		readonly ICatalog<IEvaluate<double>> Catalog;
 
 		public EvalConsoleEmitter(ICatalog<IEvaluate<double>> catalog, uint sampleMinimum = 50)
-			: base(sampleMinimum)
-		{
-			Catalog = catalog;
-		}
+			: base(sampleMinimum) => Catalog = catalog;
 
 		public EvalConsoleEmitter(NumericEvalGenomeFactory factory, uint sampleMinimum = 50)
 			: this(factory.Catalog, sampleMinimum)

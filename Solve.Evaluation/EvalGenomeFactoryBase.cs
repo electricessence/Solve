@@ -91,12 +91,12 @@ namespace Solve.Evaluation
 					var operated = OperatedCatalog.GetOrAdd(++pcOne, pc =>
 					{
 						var e = GenerateOperated(pc)?.GetEnumerator();
-						Debug.Assert(e != null);
+						Debug.Assert(e is not null);
 						return e;
 					});
 					if (operated.ConcurrentTryMoveNext(out genome))
 					{
-						Debug.Assert(genome != null);
+						Debug.Assert(genome is not null);
 						attempts++;
 						if (!AlreadyProduced(genome)) // May be supurfulous.
 							return genome;
@@ -108,7 +108,7 @@ namespace Solve.Evaluation
 					if (functioned.MoveNext())
 					{
 						genome = functioned.Current;
-						Debug.Assert(genome != null);
+						Debug.Assert(genome is not null);
 						attempts++;
 						if (!AlreadyProduced(genome)) // May be supurfulous.
 							return genome;
@@ -123,11 +123,13 @@ namespace Solve.Evaluation
 		}
 
 
-		protected EvalGenome<T> Create(IEvaluate<T> root, (string message, string? data) origin)
-		{
+		protected EvalGenome<T> Create(IEvaluate<T> root, (string? message, string? data) origin)
+		{ 
 #if DEBUG
+			var (message, data) = origin;
+			Debug.Assert(message is not null);
 			var g = new EvalGenome<T>(root);
-			g.AddLogEntry("Origin", origin.message, origin.data);
+			g.AddLogEntry("Origin", message, data);
 			return g;
 #else
 			return new EvalGenome<T>(root);
@@ -137,10 +139,10 @@ namespace Solve.Evaluation
 		[return: NotNullIfNotNull("root")]
 		protected EvalGenome<T>? Registration(IEvaluate<T>? root, (string message, string? data) origin, Action<EvalGenome<T>>? onBeforeAdd = null)
 		{
-			Debug.Assert(root != null);
+			Debug.Assert(root is not null);
 			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 			// ReSharper disable once HeuristicUnreachableCode
-			if (root == null) return null;
+			if (root is null) return null;
 			Register(root.ToStringRepresentation(),
 				() => Create(root, origin), out var target,
 				t =>
@@ -165,7 +167,7 @@ namespace Solve.Evaluation
 
 		protected override IEnumerable<EvalGenome<T>> GetVariationsInternal(EvalGenome<T> source)
 			=> GetVariations(source.Root)
-				.Where(v => v.Root != null)
+				.Where(v => v.Root is not null)
 				.GroupBy(v => v.Root)
 				.Select(g =>
 				{
@@ -182,19 +184,20 @@ namespace Solve.Evaluation
 
 		private const string CROSSOVER_OF = "Crossover of";
 
+		[SuppressMessage("Performance", "HAA0504:Implicit new array creation allocation", Justification = "Return type.")]
 		protected override EvalGenome<T>[] CrossoverInternal(EvalGenome<T> a, EvalGenome<T> b)
 		{
 #if DEBUG
 			// Shouldn't happen.
-			Debug.Assert(a != null);
-			Debug.Assert(b != null);
+			Debug.Assert(a is not null);
+			Debug.Assert(b is not null);
 
 			Debug.Assert(a != b);
 
 			// Avoid inbreeding. :P
 			var aRed = GetReduced(a);
 			var bRed = GetReduced(b);
-			Debug.Assert(aRed == null && bRed == null || aRed != bRed);
+			Debug.Assert(aRed is null && bRed is null || aRed != bRed);
 #endif
 
 			var aRoot = Catalog.Factory.Map(a.Root);

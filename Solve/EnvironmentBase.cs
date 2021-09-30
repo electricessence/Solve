@@ -4,7 +4,6 @@
  */
 
 using Open.Collections;
-using Open.Disposable;
 using Solve.Metrics;
 using System;
 using System.Collections.Generic;
@@ -41,7 +40,7 @@ namespace Solve
 
 		public void AddProblem(IProblem<TGenome> problem)
 		{
-			if (problem == null)
+			if (problem is null)
 				throw new ArgumentNullException(nameof(problem));
 			Contract.EndContractBlock();
 
@@ -72,7 +71,7 @@ namespace Solve
 						goto case -1;
 
 					// ReSharper disable once ConditionIsAlwaysTrueOrFalse
-					if (problems != null) foreach (var problem in problems)
+					if (problems is not null) foreach (var problem in problems)
 							ProblemsInternal.Add(problem);
 
 					if (!ProblemsInternal.HasAny())
@@ -106,7 +105,7 @@ namespace Solve
 
 		// ReSharper disable once UnusedMember.Local
 		protected static string GetGenomeInfo(TGenome genome)
-			=> StringBuilderPool.Shared.RentToString(sb =>
+			=> StringBuilderPool.RentToString(sb =>
 			{
 				foreach (var logEntry in genome.Log)
 				{

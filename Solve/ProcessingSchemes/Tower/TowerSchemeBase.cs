@@ -42,7 +42,7 @@ namespace Solve.ProcessingSchemes
 		bool ProduceFromChampions()
 			=> Problems
 				.SelectMany(p => p.Pools, (p, r) => r.Champions)
-				.Where(c => c != null && !c.IsEmpty)
+				.Where(c => c is not null && !c.IsEmpty)
 				.Select(c =>
 				{
 					var champions = c.Ranked;

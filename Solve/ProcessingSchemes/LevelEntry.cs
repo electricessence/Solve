@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Solve.ProcessingSchemes
@@ -25,10 +24,7 @@ namespace Solve.ProcessingSchemes
 		class LevelEntryScoreComparer : IComparer<LevelEntry<TGenome>>
 		{
 			public readonly int ScoreIndex;
-			public LevelEntryScoreComparer(int scoreIndex)
-			{
-				ScoreIndex = scoreIndex;
-			}
+			public LevelEntryScoreComparer(int scoreIndex) => ScoreIndex = scoreIndex;
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 			public int Compare(LevelEntry<TGenome> x, LevelEntry<TGenome> y)
 				=> CollectionComparer.Double.Descending.Compare(x.Scores[ScoreIndex], y.Scores[ScoreIndex]);
@@ -49,7 +45,7 @@ namespace Solve.ProcessingSchemes
 		{
 			var e = Pool.Take();
 #if DEBUG
-			Debug.Assert(e._losses == null);
+			Debug.Assert(e._losses is null);
 #endif
 			e.Progress = progress;
 			e.Scores = scores;

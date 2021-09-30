@@ -28,13 +28,13 @@ namespace Solve
 
 		public void Add(TGenome genome, Fitness fitness)
 		{
-			if (_pool == null) return;
+			if (_pool is null) return;
 
 			_pool.Enqueue((genome, fitness));
 
 			// Queue has changed.  Flush the last result.
 			var rc = _ranked;
-			if (rc != null) Interlocked.CompareExchange(ref _ranked, null, rc);
+			if (rc is not null) Interlocked.CompareExchange(ref _ranked, null, rc);
 
 			var count = _pool.Count;
 			if (count <= PoolSize * 100) return;

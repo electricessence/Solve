@@ -38,8 +38,8 @@ namespace BlackBoxFunction
 			if (range == 0) throw new ArgumentException("Cannot be zero.", nameof(range));
 			Range = range;
 			_actualFormula = actualFormula;
-			_deltaCache = new ConcurrentDictionary<long, LazyList<double>>();
-			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
+			_deltaCache = new();
+			_sampleCache = new();
 		}
 
 		public IEnumerable<Entry> Generate(long deltaId)

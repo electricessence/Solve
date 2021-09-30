@@ -13,7 +13,7 @@ namespace Solve
 
 		public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 		{
-			if (problems == null)
+			if (problems is null)
 				throw new ArgumentNullException(nameof(problems));
 
 			foreach (var problem in problems)

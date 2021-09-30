@@ -17,7 +17,7 @@ namespace Solve.Experiment.Console
 		// ReSharper disable once MemberCanBeProtected.Global
 		public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
 		{
-			LogFile = logFilePath == null ? null : new AsyncFileWriter(logFilePath, 1000);
+			LogFile = logFilePath is null ? null : new AsyncFileWriter(logFilePath, 1000);
 			SampleMinimum = sampleMinimum;
 		}
 
@@ -47,9 +47,9 @@ namespace Solve.Experiment.Console
 		retry:
 			var locked = ThreadSafety.TryLock(SynchronizedConsole.Sync, () =>
 			{
-				using var dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Shared.Rent();
+				using var dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Rent();
 				var d = dR.Item;
-				using var lease = StringBuilderPool.Shared.Rent();
+				using var lease = StringBuilderPool.Rent();
 				var output = lease.Item;
 
 				while (ConsoleQueue.TryDequeue(out var o1))
@@ -99,13 +99,7 @@ namespace Solve.Experiment.Console
 
 		protected virtual void OnEmittingGenome(
 			TGenome genome,
-			StringBuilder output)
-		{
-			output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);
-			//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;
-			//if (!asReduced.Equals(genome))
-			//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
-		}
+			StringBuilder output) => output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;//if (!asReduced.Equals(genome))//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
 
 
 		// ReSharper disable once UnusedParameter.Global

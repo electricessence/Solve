@@ -24,10 +24,7 @@ namespace Solve.Evaluation
 			: base(metrics, seeds) { }
 
 		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, IEnumerable<string> seeds)
-			: base(metrics)
-		{
-			InjectSeeds(seeds);
-		}
+			: base(metrics) => InjectSeeds(seeds);
 
 		public NumericEvalGenomeFactory(IProvideCounterMetrics metrics, params string[] seeds)
 			: this(metrics, (IEnumerable<string>)seeds)

@@ -34,7 +34,7 @@ namespace Solve
 
 		protected void InjectSeeds(IEnumerable<TGenome>? seeds)
 		{
-			if (seeds == null) return;
+			if (seeds is null) return;
 			var s = seeds as IReadOnlyCollection<TGenome> ?? seeds.ToArray();
 			if (s.Count == 0) return;
 
@@ -72,7 +72,7 @@ namespace Solve
 			{
 				added = true;
 				var genome = factory();
-				Debug.Assert(genome != null);
+				Debug.Assert(genome is not null);
 				Debug.Assert(genome.Hash == hash);
 				onBeforeAdd?.Invoke(genome);
 				// Cannot allow registration of an unfrozen genome because it then can be used by another thread.
@@ -118,20 +118,18 @@ namespace Solve
 			return result;
 		}
 
-		protected TGenome Registration(TGenome genome, (string message, string? data) origin, Action<TGenome>? onBeforeAdd = null)
-		{
+		protected TGenome Registration(TGenome genome, (string message, string? data) origin, Action<TGenome>? onBeforeAdd = null) =>
 #if DEBUG
 			genome.AddLogEntry("Origin", origin.message, origin.data);
 #endif
-			return Registration(genome, onBeforeAdd);
-		}
+			Registration(genome, onBeforeAdd);
 
 		protected TGenome Registration(TGenome genome, string origin, Action<TGenome>? onBeforeAdd = null)
 			=> Registration(genome, (origin, null), onBeforeAdd);
 
 		protected bool RegisterProduction(TGenome genome)
 		{
-			if (genome == null)
+			if (genome is null)
 				throw new ArgumentNullException(nameof(genome));
 			var hash = genome.Hash;
 			if (!Registry.ContainsKey(hash))
@@ -147,7 +145,7 @@ namespace Solve
 
 		protected bool AlreadyProduced(TGenome genome)
 		{
-			if (genome == null)
+			if (genome is null)
 				throw new ArgumentNullException(nameof(genome));
 			return AlreadyProduced(genome.Hash);
 		}
@@ -172,7 +170,7 @@ namespace Solve
 				// Note: for now, we will only mutate by 1.
 
 				// See if it's possible to mutate from the provided genomes.
-				if (source != null && source.Count != 0)
+				if (source is not null && source.Count != 0)
 				{
 					if (factory.AttemptNewMutation(source, out potentiallyNew))
 					{
@@ -187,11 +185,11 @@ namespace Solve
 				//Debug.WriteLine("Potentially New: " + potentiallyNew?.Hash);
 			}
 
-			Debug.WriteLineIf(potentiallyNew == null, "TryGenerateNew: Converged? No solutions? Saturated?");
+			Debug.WriteLineIf(potentiallyNew is null, "TryGenerateNew: Converged? No solutions? Saturated?");
 			// if(genome==null)
 			// 	throw "Failed... Converged? No solutions? Saturated?";
 
-			if (potentiallyNew == null || !RegisterProduction(potentiallyNew))
+			if (potentiallyNew is null || !RegisterProduction(potentiallyNew))
 			{
 				Metrics.GenerateNew(false);
 				return false;
@@ -225,7 +223,7 @@ namespace Solve
 				for (byte t = 0; t < triesPerMutationLevel; t++)
 				{
 					mutation = Mutate(source, m);
-					if (mutation == null || !RegisterProduction(mutation)) continue;
+					if (mutation is null || !RegisterProduction(mutation)) continue;
 					Metrics.Mutation(true);
 					return true;
 				}
@@ -246,7 +244,7 @@ namespace Solve
 			while (mutations != 0)
 			{
 				byte tries = 3;
-				while (tries != 0 && genome == null)
+				while (tries != 0 && genome is null)
 				{
 					var s = source;
 					using (TimeoutHandler.New(3000, ms =>
@@ -256,13 +254,13 @@ namespace Solve
 					{
 						genome = MutateInternal(source);
 						var hash = genome?.Hash;
-						if (hash != null && (hash == source.Hash || hash == original.Hash))
+						if (hash is not null && (hash == source.Hash || hash == original.Hash))
 							genome = null; // Not a mutation. Could happen on repeat mutations.
 					}
 					--tries;
 				}
 				// Reuse the clone as the source 
-				if (genome == null) break; // No single mutation possible? :/
+				if (genome is null) break; // No single mutation possible? :/
 				source = genome;
 				--mutations;
 			}
@@ -291,7 +289,7 @@ namespace Solve
 
 		public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
-			if (a == null || b == null
+			if (a is null || b is null
 				// Avoid inbreeding. :P
 				|| a == b
 				|| a.Hash == b.Hash)
@@ -324,18 +322,18 @@ namespace Solve
 			TGenome next()
 			{
 #endif
-				var q = 0;
-				while (q < PriorityQueues.Count)
-				{
-					if (PriorityQueues[q].TryGetNext(out var genome))
-						return genome;
-					else
-						q++;
-				}
+			var q = 0;
+			while (q < PriorityQueues.Count)
+			{
+				if (PriorityQueues[q].TryGetNext(out var genome))
+					return genome;
+				else
+					q++;
+			}
 #if DEBUG
 				generated = true;
 #endif
-				return ((IGenomeFactory<TGenome>)this).GenerateOne();
+			return ((IGenomeFactory<TGenome>)this).GenerateOne();
 #if DEBUG
 			}
 
@@ -397,7 +395,7 @@ namespace Solve
 				return r;
 
 			var result = GetVariationsInternal(source);
-			return result == null
+			return result is null
 				? null
 				: Variations.GetValue(source,
 					key => result.Distinct(GenomeEqualityComparer<TGenome>.Instance).GetEnumerator());
@@ -443,7 +441,7 @@ namespace Solve
 
 			public void EnqueueForBreeding(IEnumerable<TGenome> genomes)
 			{
-				if (genomes == null) return;
+				if (genomes is null) return;
 				foreach (var g in genomes)
 					EnqueueForBreeding(g);
 			}
@@ -483,7 +481,7 @@ namespace Solve
 			{
 				for (var i = 0; i < maxCount; i++)
 				{
-					if (genome != null)
+					if (genome is not null)
 						Factory.Metrics.BreedingStock.Increment();
 					if (!BreedOne(genome))
 						break;
@@ -518,7 +516,7 @@ namespace Solve
 				// Setup incomming...
 				(TGenome genome, int count) current;
 
-				if (genome != null)
+				if (genome is not null)
 				{
 					current = (genome, 1);
 				}
@@ -576,7 +574,7 @@ namespace Solve
 							// Generate more (and insert at higher priority) to improve the pool.
 							// This can be problematic later on.
 							//var g = ((IGenomeFactory<TGenome>)Factory).GenerateOneFrom(genome, mate.genome);
-							//if (g != null) EnqueueInternal(g);
+							//if (g is not null) EnqueueInternal(g);
 						}
 
 						// Might still need more funtime.
@@ -603,7 +601,7 @@ namespace Solve
 
 			internal bool EnqueueInternal(TGenome genome, bool onlyIfNotRegistered = false)
 			{
-				if (genome != null)
+				if (genome is not null)
 				{
 					if (onlyIfNotRegistered)
 					{
@@ -642,10 +640,10 @@ namespace Solve
 
 			public bool AttemptEnqueueVariation(TGenome genome)
 			{
-				if (genome == null) return false;
+				if (genome is null) return false;
 
 				var variations = Factory.GetVariations(genome);
-				if (variations == null) return false;
+				if (variations is null) return false;
 
 				while (variations.ConcurrentTryMoveNext(out IGenome v))
 				{
@@ -664,7 +662,7 @@ namespace Solve
 
 			public void EnqueueVariations(TGenome genome, int count = int.MaxValue)
 			{
-				if (genome == null) return;
+				if (genome is null) return;
 				var i = 0;
 				while (AttemptEnqueueVariation(genome) && i++ < count) { }
 			}
@@ -674,7 +672,7 @@ namespace Solve
 
 			public void EnqueueForVariation(TGenome genome)
 			{
-				if (genome != null)
+				if (genome is not null)
 				{
 					Factory.Metrics.AwaitingVariation.Increment();
 					AwaitingVariation.Enqueue(genome);
@@ -707,7 +705,7 @@ namespace Solve
 
 			public void EnqueueForMutation(TGenome genome, int count = 1)
 			{
-				if (genome != null)
+				if (genome is not null)
 				{
 					Factory.Metrics.AwaitingMutation.Increment();
 					AwaitingMutation.Enqueue(genome);

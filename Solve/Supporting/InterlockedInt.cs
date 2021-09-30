@@ -19,10 +19,7 @@ namespace Solve
 		public int Decrement()
 			=> Interlocked.Decrement(ref _value);
 
-		public void Recycle()
-		{
-			_value = 0;
-		}
+		public void Recycle() => _value = 0;
 
 		static readonly OptimisticArrayObjectPool<InterlockedInt> Pool
 			= OptimisticArrayObjectPool.CreateAutoRecycle<InterlockedInt>();

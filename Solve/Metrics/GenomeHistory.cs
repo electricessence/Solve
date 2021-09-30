@@ -16,10 +16,7 @@ namespace Solve.Metrics
 
 		public string Hash { get; }
 
-		public void Add(GenomeEvent e)
-		{
-			_events.Add(e.Id, e);
-		}
+		public void Add(GenomeEvent e) => _events.Add(e.Id, e);
 
 		public void Add(GenomeEvent.EventType e, string? data = null) => Add(new GenomeEvent(e, data));
 

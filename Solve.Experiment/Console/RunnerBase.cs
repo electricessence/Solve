@@ -39,7 +39,7 @@ namespace Solve.Experiment.Console
 			ConsoleEmitterBase<TGenome> emitter,
 			IMetricsRoot metrics)
 		{
-			if (Environment != null)
+			if (Environment is not null)
 				throw new InvalidOperationException("Already initialized.");
 
 			Environment = environment ?? throw new ArgumentNullException(nameof(environment));
@@ -146,9 +146,9 @@ namespace Solve.Experiment.Console
 			SystemConsole.WriteLine();
 
 #if DEBUG
-			if (Metrics == null) return;
+			if (Metrics is null) return;
 			var snapshot = Metrics.Snapshot.Get();
-			Debug.Write(StringBuilderPool.Shared.RentToString(sb =>
+			Debug.Write(StringBuilderPool.RentToString(sb =>
 			{
 				sb.AppendLine("\n==============================================================");
 				sb.AppendLine("Timestamp:");
@@ -169,13 +169,6 @@ namespace Solve.Experiment.Console
 		}
 
 
-		protected virtual void OnComplete()
-		{
-			_statusEmitter.Dispose();
-
-			//SystemConsole.WriteLine();
-			//SystemConsole.WriteLine("Press any key to continue.");
-			//SystemConsole.ReadKey();
-		}
+		protected virtual void OnComplete() => _statusEmitter.Dispose();//SystemConsole.WriteLine();//SystemConsole.WriteLine("Press any key to continue.");//SystemConsole.ReadKey();
 	}
 }

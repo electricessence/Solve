@@ -12,15 +12,9 @@ namespace Eater
 	public sealed class Genome
 		: GenomeBase, ICloneable<Genome>, IEnumerable<Step>
 	{
-		public Genome(ImmutableArray<Step> steps)
-		{
-			Freeze(steps);
-		}
+		public Genome(ImmutableArray<Step> steps) => Freeze(steps);
 
-		public Genome(IEnumerable<Step> steps)
-		{
-			Freeze(steps);
-		}
+		public Genome(IEnumerable<Step> steps) => Freeze(steps);
 
 		public Genome(IEnumerable<StepCount> steps) : this(steps.Steps())
 		{
@@ -43,10 +37,7 @@ namespace Eater
 
 		protected override int GetGeneCount() => Genes.Length;
 
-		void Freeze(IEnumerable<Step> steps)
-		{
-			Freeze(steps is ImmutableArray<Step> s ? s : steps.ToImmutableArray());
-		}
+		void Freeze(IEnumerable<Step> steps) => Freeze(steps is ImmutableArray<Step> s ? s : steps.ToImmutableArray());
 
 		void Freeze(ImmutableArray<Step> steps)
 		{

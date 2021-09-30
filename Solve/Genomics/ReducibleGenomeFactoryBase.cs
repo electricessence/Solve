@@ -15,7 +15,7 @@ namespace Solve
 
 		public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 		{
-			if (a == null || b == null
+			if (a is null || b is null
 				// Avoid inbreeding. :P
 				|| a == b
 				|| GetReduced(a)?.Hash == GetReduced(b)?.Hash)
@@ -26,9 +26,9 @@ namespace Solve
 
 		protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 		{
-			if (source == null) yield break;
+			if (source is null) yield break;
 			var reduced = GetReduced(source);
-			if (reduced != null && reduced != source && reduced.Hash != source.Hash)
+			if (reduced is not null && reduced != source && reduced.Hash != source.Hash)
 				yield return reduced;
 		}
 

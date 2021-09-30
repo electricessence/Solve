@@ -1,7 +1,37 @@
 ﻿[*.cs]
 
-# CS0169: The field 'Progression.timer' is never used
-dotnet_diagnostic.CS0169.severity = suggestion
+# CA1707: Identifiers should not contain underscores
+dotnet_diagnostic.CA1707.severity = silent
 
-# CS8765: Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
-dotnet_diagnostic.CS8765.severity = silent
+# CA1710: Identifiers should have correct suffix
+dotnet_diagnostic.CA1710.severity = silent
+
+dotnet_diagnostic.CA1724.severity = silent
+dotnet_diagnostic.CA1716.severity = silent
+
+# CA1062: Validate arguments of public methods
+dotnet_diagnostic.CA1062.severity = silent
+
+# CA1303: Do not pass literals as localized parameters
+dotnet_diagnostic.CA1303.severity = silent
+
+# HAA0502: Explicit new reference type allocation
+dotnet_diagnostic.HAA0502.severity = silent
+
+# HAA0401: Possible allocation of reference type enumerator
+dotnet_diagnostic.HAA0401.severity = silent
+
+# HAA0601: Value type to reference type conversion causing boxing allocation
+dotnet_diagnostic.HAA0601.severity = silent
+
+# HAA0603: Delegate allocation from a method group
+dotnet_diagnostic.HAA0603.severity = silent
+
+# HAA0302: Display class allocation to capture closure
+dotnet_diagnostic.HAA0302.severity = suggestion
+
+# HAA0301: Closure Allocation Source
+dotnet_diagnostic.HAA0301.severity = suggestion
+
+# HAA0303: Lambda or anonymous method in a generic method allocates a delegate instance
+dotnet_diagnostic.HAA0303.severity = suggestion

@@ -15,7 +15,7 @@ namespace Solve
 			Func<T, ImmutableArray<double>> scoreSelector)
 			where T : notnull
 		{
-			if (source == null)
+			if (source is null)
 				throw new ArgumentNullException(nameof(source));
 
 			var d = new Dictionary<T, (T Value, ImmutableArray<double> Score)>(equalityComparer);

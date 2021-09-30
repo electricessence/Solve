@@ -35,8 +35,8 @@ namespace Solve
 			{
 				public GF(TGenome genome, Fitness fitness)
 				{
-					Debug.Assert(genome != null);
-					Debug.Assert(fitness != null);
+					Debug.Assert(genome is not null);
+					Debug.Assert(fitness is not null);
 					Genome = genome;
 					Fitness = fitness;
 				}
@@ -62,7 +62,7 @@ namespace Solve
 
 				GF? contending = null;
 				GF? defending;
-				while ((defending = _bestFitness) == null
+				while ((defending = _bestFitness) is null
 					   || genome.Equals(defending.Genome) && f.SampleCount > defending.Fitness.SampleCount
 					   || f.Results.Average.IsGreaterThan(defending.Fitness.Results.Average))
 				{

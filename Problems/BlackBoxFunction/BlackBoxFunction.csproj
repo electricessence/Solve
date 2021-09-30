@@ -14,6 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Open.Numeric" Version="2.3.1" />
     <PackageReference Include="Open.RandomizationExtensions" Version="2.5.2" />
   </ItemGroup>

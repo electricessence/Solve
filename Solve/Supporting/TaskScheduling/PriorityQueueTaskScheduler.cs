@@ -65,7 +65,7 @@ namespace Solve.Supporting.TaskScheduling
 
 		private bool TryGetNext(out (PriorityQueueTaskScheduler scheduler, Task task) entry)
 		{
-			//Debug.WriteLineIf(Name != null && Name.StartsWith("Level"), $"{Name} ({Id}): TryGetNext(out entry)");
+			//Debug.WriteLineIf(Name is not null && Name.StartsWith("Level"), $"{Name} ({Id}): TryGetNext(out entry)");
 
 			entry = default;
 			if (DisposeCancellation.IsCancellationRequested)
@@ -74,15 +74,15 @@ namespace Solve.Supporting.TaskScheduling
 			if (!InternalQueue.TryDequeue(out var task))
 				return false;
 
-			if (task != null)
+			if (task is not null)
 			{
 				entry = (this, task);
 				return true;
 			}
 
 			var rp = ReversePriority;
-			LinkedListNode<PriorityQueueTaskScheduler>? node = rp ? Children.Last : Children.First;
-			while (node != null)
+			var node = rp ? Children.Last : Children.First;
+			while (node is not null)
 			{
 				if (node.Value.TryGetNext(out entry))
 					return true;
@@ -108,33 +108,33 @@ namespace Solve.Supporting.TaskScheduling
 					throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero");
 				Contract.EndContractBlock();
 
-				LinkedListNode<PriorityQueueTaskScheduler>? node = Children.First;
-				if (node == null)
+				var node = Children.First;
+				if (node is null)
 				{
 					Children.Modify(
-						() => Children.First == null,
+						() => Children.First is null,
 						list => list.AddLast(new PriorityQueueTaskScheduler(this)));
 					node = Children.First;
 				}
 
-				Debug.Assert(node != null);
+				Debug.Assert(node is not null);
 
 				for (var i = 0; i < index; i++)
 				{
-					if (node.Next == null)
+					if (node.Next is null)
 					{
 						var n = node;
 						Children.Modify(
-							() => n.Next == null,
+							() => n.Next is null,
 							list => list.AddLast(new PriorityQueueTaskScheduler(this)));
 					}
 
 					node = node.Next;
 
-					Debug.Assert(node != null);
+					Debug.Assert(node is not null);
 				}
 
-				Debug.Assert(node != null);
+				Debug.Assert(node is not null);
 
 				return node.Value;
 			}
@@ -146,7 +146,7 @@ namespace Solve.Supporting.TaskScheduling
 		/// <inheritdoc />
 		protected override IEnumerable<Task> GetScheduledTasks()
 			=> InternalQueue
-				.Where(e => e != null)
+				.Where(e => e is not null)
 				.ToList()!;
 
 		private void ProcessQueues()
@@ -159,8 +159,8 @@ namespace Solve.Supporting.TaskScheduling
 					while (TryGetNext(out var entry))
 					{
 						var (scheduler, task) = entry;
-						Debug.Assert(scheduler != null);
-						Debug.Assert(task != null);
+						Debug.Assert(scheduler is not null);
+						Debug.Assert(task is not null);
 
 						_ = scheduler.TryExecuteTask(task);
 					}
@@ -194,7 +194,7 @@ namespace Solve.Supporting.TaskScheduling
 			DisposeCancellation.Token.ThrowIfCancellationRequested();
 
 			InternalQueue.Enqueue(task);
-			//Debug.WriteLineIf(Name != null && task != null, $"{Name} ({Id}): QueueTask({task?.Id})");
+			//Debug.WriteLineIf(Name is not null && task is not null, $"{Name} ({Id}): QueueTask({task?.Id})");
 
 			if (_parent is PriorityQueueTaskScheduler p)
 				p.NotifyNewWorkItem();
@@ -216,10 +216,7 @@ namespace Solve.Supporting.TaskScheduling
 			}
 		}
 
-		protected override void OnDispose()
-		{
-			Children.Dispose();
-		}
+		protected override void OnDispose() => Children.Dispose();
 
 
 	}

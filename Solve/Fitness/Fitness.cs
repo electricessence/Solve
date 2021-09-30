@@ -24,14 +24,14 @@ namespace Solve
 
 		public Fitness(in ImmutableArray<Metric> metrics, params double[] values)
 			: this(in metrics,
-				  (values == null || values.Length == 0)
+				  (values is null || values.Length == 0)
 				  ? ProcedureResults.Empty
 				  : new ProcedureResults(values, 1))
 		{ }
 
 		public Fitness(in ImmutableArray<Metric> metrics, in ImmutableArray<double> values)
 			: this(in metrics,
-				  (values == null || values.Length == 0)
+				  values.IsDefaultOrEmpty
 				  ? ProcedureResults.Empty
 				  : new ProcedureResults(values, 1))
 		{ }

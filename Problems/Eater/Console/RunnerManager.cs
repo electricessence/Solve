@@ -8,19 +8,16 @@ namespace Eater.Console
 		private readonly object _sync = new();
 		private Runner? _runner;
 
-		public RunnerManager(ushort size)
-		{
-			Size = size;
-		}
+		public RunnerManager(ushort size) => Size = size;
 
-		public bool IsRunning => _runner != null;
+		public bool IsRunning => _runner is not null;
 
 		public GenomeFactoryMetrics FactoryMetrics
 			=> GenomeFactoryMetrics.Get(_runner?.MetricsSnapshot);
 
 		public bool Start()
 		{
-			if (_runner != null) return false;
+			if (_runner is not null) return false;
 			lock (_sync)
 			{
 				var starting = _runner is null;

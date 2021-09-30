@@ -1,5 +1,4 @@
 ﻿using Open.Disposable;
-using Solve;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -103,7 +102,7 @@ namespace Eater
 		}
 
 		public static string ToGenomeHash(this IEnumerable<Step> steps)
-			=> StringBuilderPool.Shared.RentToString(sb =>
+			=> StringBuilderPool.RentToString(sb =>
 			{
 				foreach (var step in steps)
 				{
@@ -112,7 +111,7 @@ namespace Eater
 			});
 
 		public static string ToGenomeHash(this IEnumerable<StepCount> steps)
-			=> StringBuilderPool.Shared.RentToString(sb =>
+			=> StringBuilderPool.RentToString(sb =>
 			{
 				foreach (var s in steps)
 				{
@@ -126,7 +125,7 @@ namespace Eater
 		public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
 
 		{
-			using var lease = StringBuilderPool.Shared.Rent();
+			using var lease = StringBuilderPool.Rent();
 			var sb = lease.Item;
 			foreach (var s in steps)
 			{
@@ -229,7 +228,7 @@ namespace Eater
 
 		public static IEnumerable<Step> FromGenomeHash(string hash)
 		{
-			hash = StepReplace.Replace(hash, m => StringBuilderPool.Shared.RentToString(sb =>
+			hash = StepReplace.Replace(hash, m => StringBuilderPool.RentToString(sb =>
 			{
 				sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value));
 			}));
@@ -270,7 +269,7 @@ namespace Eater
 			if (food.X > boundary.Width || food.Y > boundary.Height)
 				throw new ArgumentOutOfRangeException(nameof(food), food, "Food exceeds grid boundary.");
 
-			using var hsR = HashSetPool<Point>.Shared.Rent();
+			using var hsR = HashSetPool<Point>.Rent();
 			var wasteTracking = hsR.Item;
 			var current = start;
 			var orientation = Orientation.Up;
@@ -359,7 +358,7 @@ namespace Eater
 		public static IEnumerable<Step> Reduce(this IEnumerable<Step> steps)
 		{
 			var red = ReduceLoop(steps.ToGenomeHash());
-			return red == null ? steps : FromGenomeHash(red);
+			return red is null ? steps : FromGenomeHash(red);
 		}
 
 		static readonly string TURN_LEFT_4 = new(TURN_LEFT, 4);

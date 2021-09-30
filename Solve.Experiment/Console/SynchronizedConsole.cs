@@ -36,7 +36,7 @@ namespace Solve.Experiment.Console
 
 			lock (Sync)
 			{
-				if (message == null)
+				if (message is null)
 				{
 					Write(ref message, action);
 					return;
@@ -45,7 +45,7 @@ namespace Solve.Experiment.Console
 				var start = Cursor.Current;
 				try
 				{
-					if (message != null && start.Equals(message.End))
+					if (message is not null && start.Equals(message.End))
 					{
 						message.Begin.MoveTo();
 						action(start = Cursor.Current);

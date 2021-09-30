@@ -38,7 +38,7 @@ namespace Solve.ProcessingSchemes
 				ProblemTower tower)
 			{
 				Debug.Assert(level >= 0);
-				Debug.Assert(tower != null);
+				Debug.Assert(tower is not null);
 				tower.OnLevelCreated(level);
 				var config = tower.Config;
 				Index = level;
@@ -82,11 +82,11 @@ namespace Solve.ProcessingSchemes
 				ref var fRef = ref registry[fitnessIndex];
 				double[]? defending;
 				double[]? contendingArray = null;
-				while ((defending = fRef) == null || contending.IsGreaterThan(defending.AsSpan()))
+				while ((defending = fRef) is null || contending.IsGreaterThan(defending.AsSpan()))
 				{
 					contendingArray ??= contending.ToArray();
 					if (Interlocked.CompareExchange(ref fRef!, contendingArray, defending) == defending)
-						return (true, defending == null);
+						return (true, defending is null);
 				}
 				return (false, false);
 			}
@@ -106,7 +106,7 @@ namespace Solve.ProcessingSchemes
 
 					void TrySorting(int max)
 					{
-						int tries = 0;
+						var tries = 0;
 						while (tries++ < max)
 						{
 							try

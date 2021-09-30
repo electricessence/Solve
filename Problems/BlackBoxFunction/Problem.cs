@@ -75,11 +75,10 @@ namespace BlackBoxFunction
 			ushort sampleSize = 100,
 			ushort championPoolSize = 100,
 			params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
-			: base(fitnessTranslators, sampleSize, championPoolSize)
-		{
-			Samples = new SampleCache2(actualFormula, sampleSize);
-		}
+			: base(fitnessTranslators, sampleSize, championPoolSize) => Samples = new SampleCache2(actualFormula, sampleSize);
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "HAA0501:Explicit new array type allocation", Justification = "Small array allocation.")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "HAA0504:Implicit new array creation allocation", Justification = "Result enumerable.")]
 		protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 		{
 			var samples = Samples.Get(sampleId);

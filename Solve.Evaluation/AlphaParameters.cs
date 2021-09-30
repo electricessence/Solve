@@ -7,9 +7,6 @@ namespace Solve.Evaluation
 		const string ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 		static readonly char[] VARIABLE_NAMES = ALPHABET.ToCharArray();
 
-		public static string ConvertTo(string source)
-		{
-			return source.Supplant(VARIABLE_NAMES);
-		}
+		public static string ConvertTo(string source) => source.Supplant(VARIABLE_NAMES);
 	}
 }

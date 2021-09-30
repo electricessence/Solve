@@ -162,7 +162,7 @@ namespace Solve.Evaluation
 											//// Function of function? Reduce probability even further. Coin toss.
 											//if (f.GetType() != gene.GetType() || Randomizer.Random.Next(2) == 0)
 											var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
-											Debug.Assert(f != null);
+											Debug.Assert(f is not null);
 											return (f,
 												"Apply function to function");
 										}
@@ -192,7 +192,7 @@ namespace Solve.Evaluation
 										break;
 								}
 
-								if (ng.Root != null)
+								if (ng.Root is not null)
 									return ng;
 							}
 						}
@@ -209,7 +209,7 @@ namespace Solve.Evaluation
 		protected override EvalGenome<double>? MutateInternal(EvalGenome<double> target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
-			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
+			return root is null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
 		}
 	}
 }

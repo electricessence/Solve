@@ -57,10 +57,7 @@ namespace BlackBoxFunction
 
 		readonly ushort _minSamples;
 
-		protected Runner(ushort minSamples, ushort minConvSamples = 10) : base(minSamples > minConvSamples ? minSamples : minConvSamples)
-		{
-			_minSamples = minSamples;
-		}
+		protected Runner(ushort minSamples, ushort minConvSamples = 10) : base(minSamples > minConvSamples ? minSamples : minConvSamples) => _minSamples = minSamples;
 
 		public void Init()
 		{

@@ -11,14 +11,11 @@ namespace Eater
 	public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	{
 		public GenomeFactory(IProvideCounterMetrics metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
-			: base(metrics, seeds)
-		{
-			AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToImmutableArray() : Steps.ALL;
-		}
+			: base(metrics, seeds) => AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToImmutableArray() : Steps.ALL;
 
 		// ReSharper disable once UnusedParameter.Local
 		public GenomeFactory(IProvideCounterMetrics metrics, Genome seed, bool leftTurnDisabled = false)
-			: this(metrics, seed == null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
+			: this(metrics, seed is null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
 		{
 
 		}

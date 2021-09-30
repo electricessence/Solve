@@ -68,7 +68,7 @@ namespace Solve.Evaluation
 					.Where(n => n.IsValidForRemoval())
 					.ToArray();
 
-				if (paramGroups == null || paramGroups.Length < 2)
+				if (paramGroups is null || paramGroups.Length < 2)
 					break;
 
 				foreach (var p in paramGroups)
@@ -142,7 +142,7 @@ namespace Solve.Evaluation
 			}
 
 			var next = Catalog.FixHierarchy(sourceTree).Recycle()!;
-			Debug.Assert(next != null);
+			Debug.Assert(next is not null);
 			sourceTree.Recycle();
 			yield return (Catalog.GetReduced(next), "Constants Stripped");
 

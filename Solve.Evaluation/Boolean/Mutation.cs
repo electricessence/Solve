@@ -50,7 +50,7 @@ namespace Solve.Evaluation
 		protected override EvalGenome<bool>? MutateInternal(EvalGenome<bool> target)
 		{
 			var (root, origin) = MutateUnfrozen(target);
-			return root == null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
+			return root is null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
 		}
 	}
 }

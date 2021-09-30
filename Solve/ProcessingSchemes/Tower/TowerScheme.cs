@@ -34,7 +34,7 @@ namespace Solve.ProcessingSchemes
 			if (genome is null) throw new ArgumentNullException(nameof(genome));
 			Contract.EndContractBlock();
 
-			int count = 0;
+			var count = 0;
 			foreach (var t in ActiveTowers!)
 			{
 				await t.PostAsync(genome).ConfigureAwait(false);
@@ -55,7 +55,7 @@ namespace Solve.ProcessingSchemes
 			if (!token.IsCancellationRequested)
 				genome = Factory.Next();
 
-			if (genome == null) return;
+			if (genome is null) return;
 
 			GenomeProgress?[genome.Hash].Add(GenomeEvent.EventType.Born);
 			if (await PostAsync(genome) == 0) return;

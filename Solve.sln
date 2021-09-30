@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29926.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Problems", "Problems", "{5B3CE6AB-5185-4861-B203-074032156D9D}"
 EndProject
@@ -38,6 +38,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solve.Dashboard.Client", "Dashboard\Client\Solve.Dashboard.Client.csproj", "{DCF9EDFD-B538-4ABE-83BB-552616A4C9C5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solve.Dashboard.Common", "Dashboard\Common\Solve.Dashboard.Common.csproj", "{148B71B1-AA07-4CF0-8790-08C1A8D75336}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4797E537-92E8-42AE-8BB5-83CA94459F6E}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

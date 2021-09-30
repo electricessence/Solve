@@ -26,7 +26,7 @@ namespace Solve
 		protected override void OnDispose()
 		{
 			var losses = Interlocked.Exchange(ref _levelLosses, null);
-			if (losses == null) return;
+			if (losses is null) return;
 
 			foreach (var value in losses.Values) InterlockedInt.Recycle(value);
 		}

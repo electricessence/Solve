@@ -11,7 +11,7 @@ namespace Solve
 		public new IEnumerator<TGenome> GetEnumerator()
 		{
 			TGenome? next;
-			while ((next = Next()) != null)
+			while ((next = Next()) is not null)
 				yield return next;
 		}
 

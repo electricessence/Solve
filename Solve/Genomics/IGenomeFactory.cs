@@ -63,7 +63,7 @@ namespace Solve
 		public IEnumerable<TGenome> GenerateFrom(IReadOnlyList<TGenome> source)
 		{
 			TGenome? one;
-			while ((one = GenerateOneFrom(source)) != null)
+			while ((one = GenerateOneFrom(source)) is not null)
 			{
 				yield return one;
 			}
