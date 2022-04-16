@@ -1,14 +1,13 @@
 ﻿using System.Threading.Tasks;
 
-namespace Solve.ProcessingSchemes
+namespace Solve.ProcessingSchemes;
+
+public interface IAsyncLevel<TGenome> : ILevel<TGenome>
+	where TGenome : class, IGenome
 {
-	public interface IAsyncLevel<TGenome> : ILevel<TGenome>
-		where TGenome : class, IGenome
-	{
-		ValueTask PostAsync(LevelProgress<TGenome> contender);
+	ValueTask PostAsync(LevelProgress<TGenome> contender);
 
-		new IAsyncLevel<TGenome> NextLevel { get; }
+	new IAsyncLevel<TGenome> NextLevel { get; }
 
-		ILevel<TGenome> ILevel<TGenome>.NextLevel => NextLevel;
-	}
+	ILevel<TGenome> ILevel<TGenome>.NextLevel => NextLevel;
 }

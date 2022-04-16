@@ -2,28 +2,27 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace Solve.Metrics
+namespace Solve.Metrics;
+
+public class GenomeProgressionLog
 {
-	public class GenomeProgressionLog
+	readonly ConcurrentHashSet<string> _dead = new();
+	readonly ConcurrentDictionary<string, GenomeHistory> _log = new();
+
+	public GenomeHistory this[string hash] => _log.GetOrAdd(hash, key => new GenomeHistory(key));
+
+	public bool AddDead(string hash) => _dead.Add(hash);
+	public bool IsDead(string hash) => _dead.Contains(hash);
+	public bool IsAlive(string hash) => !_dead.Contains(hash);
+
+	public IEnumerable<GenomeHistory> Alive
 	{
-		readonly ConcurrentHashSet<string> _dead = new();
-		readonly ConcurrentDictionary<string, GenomeHistory> _log = new();
-
-		public GenomeHistory this[string hash] => _log.GetOrAdd(hash, key => new GenomeHistory(key));
-
-		public bool AddDead(string hash) => _dead.Add(hash);
-		public bool IsDead(string hash) => _dead.Contains(hash);
-		public bool IsAlive(string hash) => !_dead.Contains(hash);
-
-		public IEnumerable<GenomeHistory> Alive
+		get
 		{
-			get
+			foreach (var h in _log.Values)
 			{
-				foreach (var h in _log.Values)
-				{
-					if (_dead.Contains(h.Hash)) continue;
-					yield return h;
-				}
+				if (_dead.Contains(h.Hash)) continue;
+				yield return h;
 			}
 		}
 	}

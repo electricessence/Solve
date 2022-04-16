@@ -3,46 +3,45 @@ using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Solve.Supporting.TaskScheduling
+namespace Solve.Supporting.TaskScheduling;
+
+public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 {
-	public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
+	/// <summary>Cancellation token used for disposal.</summary>
+	protected readonly CancellationTokenSource DisposeCancellation = new();
+
+	int _wasDisposed = 0;
+
+	protected virtual void OnDispose() { }
+
+	#region IDisposable Members
+
+	public void Dispose()
 	{
-		/// <summary>Cancellation token used for disposal.</summary>
-		protected readonly CancellationTokenSource DisposeCancellation = new();
+		if (_wasDisposed != 0
+		|| Interlocked.CompareExchange(ref _wasDisposed, 1, 0) != 0)
+			return;
 
-		int _wasDisposed = 0;
+		DisposeCancellation.Cancel();
+		DisposeCancellation.Dispose();
 
-		protected virtual void OnDispose() { }
+		OnDispose();
+	}
 
-		#region IDisposable Members
+	#endregion
 
-		public void Dispose()
-		{
-			if (_wasDisposed != 0
-			|| Interlocked.CompareExchange(ref _wasDisposed, 1, 0) != 0)
-				return;
+	/// <inheritdoc />
+	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+	{
+		if (task is null) throw new ArgumentNullException(nameof(task));
+		Contract.EndContractBlock();
 
-			DisposeCancellation.Cancel();
-			DisposeCancellation.Dispose();
+		if (DisposeCancellation.Token.IsCancellationRequested)
+			return false;
 
-			OnDispose();
-		}
+		if (taskWasPreviouslyQueued && !TryDequeue(task))
+			return false;
 
-		#endregion
-
-		/// <inheritdoc />
-		protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
-		{
-			if (task is null) throw new ArgumentNullException(nameof(task));
-			Contract.EndContractBlock();
-
-			if (DisposeCancellation.Token.IsCancellationRequested)
-				return false;
-
-			if (taskWasPreviouslyQueued && !TryDequeue(task))
-				return false;
-
-			return TryExecuteTask(task);
-		}
+		return TryExecuteTask(task);
 	}
 }

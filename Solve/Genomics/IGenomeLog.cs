@@ -1,6 +1,5 @@
-﻿namespace Solve.Genomics
+﻿namespace Solve.Genomics;
+
+interface IGenomeLog
 {
-	interface IGenomeLog
-	{
-	}
 }

@@ -2,36 +2,35 @@
 using System;
 using System.Collections.Immutable;
 
-namespace Solve
+namespace Solve;
+
+public struct QueueCount
 {
-	public struct QueueCount
+	public QueueCount(string key, long value)
 	{
-		public QueueCount(string key, long value)
-		{
-			Key = key;
-			Value = value;
-		}
-
-		public string Key { get; }
-		public long Value { get; }
+		Key = key;
+		Value = value;
 	}
 
-	public interface IGenomeFactoryMetrics
-	{
-		DateTime Timestamp { get; }
+	public string Key { get; }
+	public long Value { get; }
+}
 
-		long BreedingStock { get; }
-		long InternalQueueCount { get; }
-		long AwaitingVariation { get; }
-		long AwaitingMutation { get; }
+public interface IGenomeFactoryMetrics
+{
+	DateTime Timestamp { get; }
 
-		ImmutableArray<QueueCount> QueueStates { get; }
+	long BreedingStock { get; }
+	long InternalQueueCount { get; }
+	long AwaitingVariation { get; }
+	long AwaitingMutation { get; }
 
-		SuccessFailCount GenerateNew { get; }
-		SuccessFailCount Mutation { get; }
-		SuccessFailCount Crossover { get; }
+	ImmutableArray<QueueCount> QueueStates { get; }
 
-		long ExternalProducerQueried { get; }
+	SuccessFailCount GenerateNew { get; }
+	SuccessFailCount Mutation { get; }
+	SuccessFailCount Crossover { get; }
 
-	}
+	long ExternalProducerQueried { get; }
+
 }

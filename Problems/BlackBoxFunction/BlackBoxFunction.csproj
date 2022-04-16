@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Open.Evaluation\source\Open.Evaluation.csproj" />
     <ProjectReference Include="..\..\Solve.Evaluation\Solve.Evaluation.csproj" />
     <ProjectReference Include="..\..\Solve.Experiment\Solve.Experiment.csproj" />
     <ProjectReference Include="..\..\Solve\Solve.csproj" />

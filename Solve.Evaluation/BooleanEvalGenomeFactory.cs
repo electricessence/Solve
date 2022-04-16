@@ -7,68 +7,66 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Solve.Evaluation
+using EvaluationRegistry = Open.Evaluation.Registry;
+
+namespace Solve.Evaluation;
+
+public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
 {
-	using EvaluationRegistry = Registry;
+	public BooleanEvalGenomeFactory(IProvideCounterMetrics metrics)
+		: base(metrics) { }
 
-	// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-	public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
+	//public BooleanEvalGenomeFactory(params string[] seeds)
+	//{
+	//	InjectSeeds(seeds);
+	//}
+
+	//protected void InjectSeeds(IEnumerable<string> seeds)
+	//	=> InjectSeeds(seeds?.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
+
+	//public BooleanEvalGenomeFactory(params EvalGenome<double>[] seeds) : base(seeds)
+	//{ }
+
+	//public BooleanEvalGenomeFactory(IEnumerable<EvalGenome<double>> seeds) : base(seeds)
+	//{ }
+
+	#region Operated
+	protected override IEnumerable<EvalGenome<bool>> GenerateOperated(ushort paramCount = 2)
 	{
-		public BooleanEvalGenomeFactory(IProvideCounterMetrics metrics)
-			: base(metrics) { }
+		if (paramCount < 2)
+			throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
+				"Must have at least 2 parameter count.");
 
-		//public BooleanEvalGenomeFactory(params string[] seeds)
-		//{
-		//	InjectSeeds(seeds);
-		//}
+		var operators = EvaluationRegistry.Arithmetic.Operators;
 
-		//protected void InjectSeeds(IEnumerable<string> seeds)
-		//	=> InjectSeeds(seeds?.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
-
-		//public BooleanEvalGenomeFactory(params EvalGenome<double>[] seeds) : base(seeds)
-		//{ }
-
-		//public BooleanEvalGenomeFactory(IEnumerable<EvalGenome<double>> seeds) : base(seeds)
-		//{ }
-
-		#region Operated
-		protected override IEnumerable<EvalGenome<bool>> GenerateOperated(ushort paramCount = 2)
-		{
-			if (paramCount < 2)
-				throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
-					"Must have at least 2 parameter count.");
-
-			var operators = EvaluationRegistry.Arithmetic.Operators;
-
-			return UShortRange(0, paramCount)
-				.Combinations(paramCount)
-				.SelectMany(combination =>
-				{
-					var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
-					return operators.Select(op =>
-						Registration(
-							EvaluationRegistry.Boolean.GetOperator(Catalog, op, children),
-							$"EvalGenomeFactory.GenerateOperated({paramCount})"));
-				});
-		}
-		#endregion
-
-		#region Functions
-		protected override IEnumerable<EvalGenome<bool>> GenerateFunctioned(ushort id)
-		{
-			var p = Catalog.GetParameter(id);
-			foreach (var op in EvaluationRegistry.Arithmetic.Functions)
+		return UShortRange(0, paramCount)
+			.Combinations(paramCount)
+			.SelectMany(combination =>
 			{
-				// ReSharper disable once SwitchStatementMissingSomeCases
-				switch (op)
-				{
-					case Not.SYMBOL:
-						yield return Registration(Catalog.Not(p), "GenerateFunctioned > Not");
-						break;
-				}
+				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
+				return operators.Select(op =>
+					Registration(
+						EvaluationRegistry.Boolean.GetOperator(Catalog, op, children),
+						$"EvalGenomeFactory.GenerateOperated({paramCount})"));
+			});
+	}
+	#endregion
+
+	#region Functions
+	protected override IEnumerable<EvalGenome<bool>> GenerateFunctioned(ushort id)
+	{
+		var p = Catalog.GetParameter(id);
+		foreach (var op in EvaluationRegistry.Arithmetic.Functions)
+		{
+			// ReSharper disable once SwitchStatementMissingSomeCases
+			switch (op)
+			{
+				case Not.SYMBOL:
+					yield return Registration(Catalog.Not(p), "GenerateFunctioned > Not");
+					break;
 			}
 		}
-		#endregion
-
 	}
+	#endregion
+
 }

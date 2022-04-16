@@ -3,17 +3,16 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-namespace Solve
+namespace Solve;
+
+public interface IReducible
 {
-	public interface IReducible
-	{
-		object AsReduced(bool ensureClone = false);
+	object AsReduced(bool ensureClone = false);
 
-		bool IsReducible { get; }
-	}
+	bool IsReducible { get; }
+}
 
-	public interface IReducible<out T> : IReducible
-	{
-		new T AsReduced(bool ensureClone = false);
-	}
+public interface IReducible<out T> : IReducible
+{
+	new T AsReduced(bool ensureClone = false);
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -14,7 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Open.Evaluation\source\Open.Evaluation.csproj" />
+    <PackageReference Include="Open.Evaluation" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Solve\Solve.csproj" />
   </ItemGroup>
 

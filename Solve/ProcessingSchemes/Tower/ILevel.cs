@@ -1,8 +1,7 @@
-﻿namespace Solve.ProcessingSchemes
+﻿namespace Solve.ProcessingSchemes;
+
+public interface ILevel<TGenome>
+	where TGenome : class, IGenome
 {
-	public interface ILevel<TGenome>
-		where TGenome : class, IGenome
-	{
-		public ILevel<TGenome> NextLevel { get; }
-	}
+	public ILevel<TGenome> NextLevel { get; }
 }
