@@ -1,85 +1,85 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
-  </PropertyGroup>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Dataflow\**" />
-    <Compile Remove="ProcessingSchemes\Dataflow\**" />
-    <Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
-    <Compile Remove="ProcessingSchemes\Kumite\**" />
-    <Compile Remove="ProcessingSchemes\Pull\**" />
-    <Compile Remove="ProcessingSchemes\Simple\**" />
-    <Compile Remove="ProcessingSchemes\TowerA\**" />
-    <Compile Remove="ProcessingSchemes\TowerBase\**" />
-    <EmbeddedResource Remove="Dataflow\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\Dataflow\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\TowerA\**" />
-    <EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
-    <None Remove="Dataflow\**" />
-    <None Remove="ProcessingSchemes\Dataflow\**" />
-    <None Remove="ProcessingSchemes\KingOfTheHill\**" />
-    <None Remove="ProcessingSchemes\Kumite\**" />
-    <None Remove="ProcessingSchemes\Pull\**" />
-    <None Remove="ProcessingSchemes\Simple\**" />
-    <None Remove="ProcessingSchemes\TowerA\**" />
-    <None Remove="ProcessingSchemes\TowerBase\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Dataflow\**" />
+		<Compile Remove="ProcessingSchemes\Dataflow\**" />
+		<Compile Remove="ProcessingSchemes\KingOfTheHill\**" />
+		<Compile Remove="ProcessingSchemes\Kumite\**" />
+		<Compile Remove="ProcessingSchemes\Pull\**" />
+		<Compile Remove="ProcessingSchemes\Simple\**" />
+		<Compile Remove="ProcessingSchemes\TowerA\**" />
+		<Compile Remove="ProcessingSchemes\TowerBase\**" />
+		<EmbeddedResource Remove="Dataflow\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\Dataflow\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\KingOfTheHill\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\Kumite\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\Pull\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\Simple\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\TowerA\**" />
+		<EmbeddedResource Remove="ProcessingSchemes\TowerBase\**" />
+		<None Remove="Dataflow\**" />
+		<None Remove="ProcessingSchemes\Dataflow\**" />
+		<None Remove="ProcessingSchemes\KingOfTheHill\**" />
+		<None Remove="ProcessingSchemes\Kumite\**" />
+		<None Remove="ProcessingSchemes\Pull\**" />
+		<None Remove="ProcessingSchemes\Simple\**" />
+		<None Remove="ProcessingSchemes\TowerA\**" />
+		<None Remove="ProcessingSchemes\TowerBase\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Fitness\GenomeFitness.cs" />
-    <Compile Remove="Fitness\GenomeFitnessBroadcasterBase.cs" />
-    <Compile Remove="Fitness\LegacyFitness.cs" />
-    <Compile Remove="Fitness\ManagedPool.cs" />
-    <Compile Remove="GenomeTestDelegate.cs" />
-    <Compile Remove="IProcessingScheme.cs" />
-    <Compile Remove="ProblemExtensions.cs" />
-    <Compile Remove="ProcessingSchemes\AsyncFactoryDriver.cs" />
-    <Compile Remove="ProcessingSchemes\FactoryDriver.cs" />
-    <Compile Remove="ProcessingSchemes\IFactoryDriver.cs" />
-    <Compile Remove="ProcessingSchemes\IGenomeProcessor.cs" />
-    <Compile Remove="ProcessingSchemes\PushProcessingSchemeBase.cs" />
-    <Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
-    <Compile Remove="ProcessingSchemes\SinglePool.cs" />
-    <Compile Remove="ProcessingSchemes\UberPools.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Fitness\GenomeFitness.cs" />
+		<Compile Remove="Fitness\GenomeFitnessBroadcasterBase.cs" />
+		<Compile Remove="Fitness\LegacyFitness.cs" />
+		<Compile Remove="Fitness\ManagedPool.cs" />
+		<Compile Remove="GenomeTestDelegate.cs" />
+		<Compile Remove="IProcessingScheme.cs" />
+		<Compile Remove="ProblemExtensions.cs" />
+		<Compile Remove="ProcessingSchemes\AsyncFactoryDriver.cs" />
+		<Compile Remove="ProcessingSchemes\FactoryDriver.cs" />
+		<Compile Remove="ProcessingSchemes\IFactoryDriver.cs" />
+		<Compile Remove="ProcessingSchemes\IGenomeProcessor.cs" />
+		<Compile Remove="ProcessingSchemes\PushProcessingSchemeBase.cs" />
+		<Compile Remove="ProcessingSchemes\PyramidPipeline.cs" />
+		<Compile Remove="ProcessingSchemes\SinglePool.cs" />
+		<Compile Remove="ProcessingSchemes\UberPools.cs" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\.editorconfig" Link=".editorconfig" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="App.Metrics" Version="4.3.0" />
-    <PackageReference Include="Open.Arithmetic" Version="1.6.0" />
-    <PackageReference Include="Open.ChannelExtensions" Version="6.0.2" />
-    <PackageReference Include="Open.Cloneable" Version="1.1.2" />
-    <PackageReference Include="Open.Collections.Numeric" Version="1.5.6" />
-    <PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
-    <PackageReference Include="Open.Lazy.Extensions" Version="1.2.0" />
-    <PackageReference Include="Open.MemoryExtensions" Version="2.8.0" />
-    <PackageReference Include="Open.Numeric" Version="2.3.1" />
-    <PackageReference Include="Open.RandomizationExtensions" Version="2.5.3" />
-    <PackageReference Include="Open.Text" Version="6.2.0" />
-    <PackageReference Include="Open.Threading" Version="2.1.2" />
-    <PackageReference Include="Open.Threading.Tasks" Version="1.2.2" />
-    <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="System.Reactive" Version="5.0.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="App.Metrics" Version="4.3.0" />
+		<PackageReference Include="Open.Arithmetic" Version="1.6.0" />
+		<PackageReference Include="Open.ChannelExtensions" Version="6.0.2" />
+		<PackageReference Include="Open.Cloneable" Version="1.1.2" />
+		<PackageReference Include="Open.Collections.Numeric" Version="1.6.0" />
+		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
+		<PackageReference Include="Open.Lazy.Extensions" Version="1.2.0" />
+		<PackageReference Include="Open.MemoryExtensions" Version="2.8.0" />
+		<PackageReference Include="Open.Numeric" Version="2.3.1" />
+		<PackageReference Include="Open.RandomizationExtensions" Version="2.5.3" />
+		<PackageReference Include="Open.Text" Version="6.2.0" />
+		<PackageReference Include="Open.Threading" Version="2.1.2" />
+		<PackageReference Include="Open.Threading.Tasks" Version="1.2.2" />
+		<PackageReference Include="System.Interactive.Async" Version="6.0.1" />
+		<PackageReference Include="System.Memory" Version="4.5.4" />
+		<PackageReference Include="System.Reactive" Version="5.0.0" />
+		<PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+	</ItemGroup>
 
 </Project>

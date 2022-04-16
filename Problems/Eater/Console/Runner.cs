@@ -37,9 +37,7 @@ class Runner : RunnerBase<Genome>
 				sb.Append('>').Append(s).Append('^');
 
 			for (; s > 0; s--)
-				sb
-				.Append('>').Append(s).Append('^')
-				.Append('>').Append(s).Append('^');
+				sb.Append('>').Append(s).Append('^').Append('>').Append(s).Append('^');
 		});
 
 	public void InitIdealSeed()
@@ -111,7 +109,7 @@ class Runner : RunnerBase<Genome>
 
 		using var reader = File.OpenText(fileName);
 		string? line;
-		while (null != (line = await reader.ReadLineAsync()))
+		while ((line = await reader.ReadLineAsync()) is not null)
 		{
 			if (string.IsNullOrWhiteSpace(line)) continue;
 			yield return line;
@@ -140,5 +138,4 @@ class Runner : RunnerBase<Genome>
 
 		return (runner, runner.Start(message));
 	}
-
 }

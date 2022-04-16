@@ -79,8 +79,10 @@ public static class Pareto
 				if (double.IsNaN(osv)) return true;
 				if (double.IsNaN(s) || s <= osv) return false;
 			}
+
 			return true;
 		}
+
 		return false;
 	}
 }

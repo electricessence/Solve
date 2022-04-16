@@ -7,10 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using EvaluationRegistry = Open.Evaluation.Registry;
+
 namespace Solve.Evaluation;
-
-using EvaluationRegistry = Registry;
-
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public partial class NumericEvalGenomeFactory : EvalGenomeFactoryBase<double>
 {
@@ -34,13 +33,14 @@ public partial class NumericEvalGenomeFactory : EvalGenomeFactoryBase<double>
 	protected void InjectSeeds(IEnumerable<string> seeds)
 		=> InjectSeeds(seeds?.Select(s => Create(Catalog.Parse(s), ("Seed", null))));
 
-
 	#region Operated
 	protected override IEnumerable<EvalGenome<double>> GenerateOperated(ushort paramCount = 2)
 	{
 		if (paramCount < 2)
+		{
 			throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
 				"Must have at least 2 parameter count.");
+		}
 
 		var operators = EvaluationRegistry.Arithmetic.Operators;
 

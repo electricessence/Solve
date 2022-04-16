@@ -34,8 +34,10 @@ public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
 	protected override IEnumerable<EvalGenome<bool>> GenerateOperated(ushort paramCount = 2)
 	{
 		if (paramCount < 2)
+		{
 			throw new ArgumentOutOfRangeException(nameof(paramCount), paramCount,
 				"Must have at least 2 parameter count.");
+		}
 
 		var operators = EvaluationRegistry.Arithmetic.Operators;
 

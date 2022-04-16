@@ -3,7 +3,6 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-
 using Open.RandomizationExtensions;
 using Open.Threading.Tasks;
 using System;
@@ -39,10 +38,8 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 	public TGenome? GenerateOneFrom(IReadOnlyList<TGenome> source)
 	{
 		TGenome? one = null;
-		using (TimeoutHandler.New(9000, ms =>
-		{
-			Console.WriteLine("Warning: {0}.GenerateOneFrom() is taking longer than {1} milliseconds.\n", this, ms);
-		}))
+		using (TimeoutHandler.New(9000,
+			ms => Console.WriteLine("Warning: {0}.GenerateOneFrom() is taking longer than {1} milliseconds.\n", this, ms)))
 		{
 			byte attempts = 0;
 			while (attempts < 2 && !TryGenerateNew(out one, source))
@@ -69,7 +66,6 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 		}
 	}
 
-
 	public bool AttemptNewMutation(
 		IEnumerable<TGenome> source,
 		[NotNullWhen(true)] out TGenome? genome,
@@ -83,11 +79,11 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 			if (AttemptNewMutation(g, out genome, triesPerMutationLevel, maxMutations))
 				return true;
 		}
+
 		Debug.Assert(count != 0, "Should never pass an empty source for mutation.");
 		genome = default!;
 		return false;
 	}
-
 
 	public IEnumerable<TGenome> Mutate(TGenome source)
 	{

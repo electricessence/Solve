@@ -32,5 +32,3 @@ public interface IEnvironment<TGenome>
 
 	bool HaveAllProblemsConverged { get; }
 }
-
-

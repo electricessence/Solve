@@ -35,7 +35,6 @@ public class EvalGenome<T> : GenomeBase, IHaveRoot<IEvaluate<T>>
 #endif
 	}
 
-
 	protected override object CloneInternal() => Clone();
 
 	protected override void OnBeforeFreeze()
@@ -43,7 +42,6 @@ public class EvalGenome<T> : GenomeBase, IHaveRoot<IEvaluate<T>>
 		if (Root is null)
 			throw new InvalidOperationException("Cannot freeze genome without a root.");
 	}
-
 
 	public T Evaluate(IReadOnlyList<T> values)
 		=> Root.Evaluate(values);

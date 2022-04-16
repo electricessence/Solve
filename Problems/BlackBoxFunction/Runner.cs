@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace BlackBoxFunction;
 
-[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Options.")]
+[SuppressMessage("Code Quality", "IDE0051:Remove unused private members")]
+[SuppressMessage("Roslynator", "RCS1213:Remove unused member declaration.")]
 internal class Runner : RunnerBase<EvalGenome<double>>
 {
 	static double AB(IReadOnlyList<double> p)
@@ -81,5 +82,4 @@ internal class Runner : RunnerBase<EvalGenome<double>>
 			runner._minSamples);
 		return runner.Start(message);
 	}
-
 }

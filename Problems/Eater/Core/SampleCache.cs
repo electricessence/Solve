@@ -43,8 +43,10 @@ public sealed class SampleCache
 	public IEnumerable<Point> GenerateXY()
 	{
 		for (var y = 0; y < GridSize; y++)
+		{
 			for (var x = 0; x < GridSize; x++)
 				yield return new Point(x, y);
+		}
 	}
 
 	public IEnumerable<Entry> GenerateOrdered()
@@ -71,10 +73,8 @@ public sealed class SampleCache
 	}
 
 	public IEnumerable<Entry> Get(int id)
-		=> id == -1 ? GenerateOrdered() : _sampleCache.GetOrAdd(id, key => Generate(id).Memoize(true));
+		=> id == -1 ? GenerateOrdered() : _sampleCache.GetOrAdd(id, _ => Generate(id).Memoize(true));
 
 	Point RandomPosition(Random random)
 		=> new(random.Next(GridSize), random.Next(GridSize));
-
-
 }

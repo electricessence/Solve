@@ -8,20 +8,13 @@ namespace Solve;
 public class FitnessInterlocked : Fitness
 {
 	public FitnessInterlocked(in ImmutableArray<Metric> metrics)
-		: base(in metrics)
-	{
-	}
+		: base(in metrics) { }
 
 	public FitnessInterlocked(in ImmutableArray<Metric> metrics, ProcedureResults results)
-		: base(in metrics, results)
-	{
-	}
+		: base(in metrics, results) { }
 
 	public FitnessInterlocked(in ImmutableArray<Metric> metrics, params double[] values)
-		: base(in metrics, new ProcedureResults(values, 1))
-	{
-
-	}
+		: base(in metrics, new ProcedureResults(values, 1)) { }
 
 	public override ProcedureResults Merge(ProcedureResults other)
 	{
@@ -53,5 +46,4 @@ public class FitnessInterlocked : Fitness
 
 	public new FitnessInterlocked Clone()
 		=> new(Metrics, _results);
-
 }

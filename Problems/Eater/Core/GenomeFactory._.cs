@@ -16,7 +16,6 @@ public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 	public GenomeFactory(IProvideCounterMetrics metrics, Genome seed, bool leftTurnDisabled = false)
 		: this(metrics, seed is null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
 	{
-
 	}
 
 	public static IEnumerable<string> Random(int moves, int maxMoveLength, bool leftTurnDisabled = false)

@@ -37,6 +37,7 @@ public partial class GenomeFactory
 				.Append(hash.AsSpan(match.Index + match.Length))
 				.ToString());
 		}
+
 		StringBuilderPool.Shared.Give(sb);
 
 		yield return source.Reverse();
@@ -90,9 +91,10 @@ public partial class GenomeFactory
 		foreach (var match in matches.Cast<Match>())
 		{
 			yield return Steps.FromGenomeHash(
-				hash.Substring(0, match.Index) +
-				match.Value.Replace("^", string.Empty) +
-				hash[(match.Index + match.Length)..]);
+				string.Concat(
+					hash.AsSpan(0, match.Index),
+					match.Value.Replace("^", string.Empty),
+					hash[(match.Index + match.Length)..]));
 		}
 	}
 

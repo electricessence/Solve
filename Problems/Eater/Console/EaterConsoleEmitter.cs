@@ -11,6 +11,7 @@ using System.Linq;
 
 namespace Eater;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
 public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 {
 	static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
@@ -46,8 +47,7 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 				{
 					var name = file.Name;
 					var i = name.IndexOf('.');
-					if (i == -1) return string.Empty;
-					return name[i..];
+					return i == -1 ? string.Empty : name[i..];
 				})
 				.Select(g => g.OrderBy(file => file.Name).Last())
 				.Select(file =>
@@ -110,11 +110,10 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		}
 		catch (IOException)
 		{
-
 		}
 
 		var queue = BitmapQueue
-			.GetOrAdd(suffix, key => new ConcurrentQueue<string>());
+			.GetOrAdd(suffix, _ => new ConcurrentQueue<string>());
 
 		try
 		{
@@ -122,7 +121,6 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		}
 		catch (InvalidOperationException)
 		{
-
 		}
 
 	retry:

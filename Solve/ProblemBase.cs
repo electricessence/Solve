@@ -70,9 +70,9 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 				if (Interlocked.CompareExchange(ref _bestFitness, contending, defending) == defending)
 					return true;
 			}
+
 			return false;
 		}
-
 	}
 
 	// ReSharper disable once StaticMemberInGenericType
@@ -134,5 +134,4 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 		Interlocked.Increment(ref _testCount);
 		return Pools.Select(p => p.Transform(g, metrics));
 	}
-
 }

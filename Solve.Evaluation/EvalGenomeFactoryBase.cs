@@ -68,7 +68,6 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 
 		for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 		{
-
 			// Establish a maximum.
 			var tries = 10;
 			ushort paramCount = 0;
@@ -84,7 +83,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 						return genome;
 				}
 
-				paramCount += 1; // Operators need at least 2 params to start.
+				paramCount++; // Operators need at least 2 params to start.
 
 				// Then try an operator based version.
 				var pcOne = paramCount;
@@ -113,18 +112,14 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 					if (!AlreadyProduced(genome)) // May be supurfulous.
 						return genome;
 				}
-
 			} while (--tries != 0);
-
 		}
 
 		return genome;
-
 	}
 
-
 	protected EvalGenome<T> Create(IEvaluate<T> root, (string? message, string? data) origin)
-	{ 
+	{
 #if DEBUG
 		var (message, data) = origin;
 		Debug.Assert(message is not null);
@@ -162,7 +157,6 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		? Create(reduced, ("Reduction of", source.Hash))
 		: null;
 
-
 	protected abstract IEnumerable<(IEvaluate<T> Root, string Origin)> GetVariations(IEvaluate<T> source);
 
 	protected override IEnumerable<EvalGenome<T>> GetVariationsInternal(EvalGenome<T> source)
@@ -170,21 +164,18 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 			.Where(v => v.Root is not null)
 			.GroupBy(v => v.Root)
 			.Select(g =>
-			{
 #if DEBUG
-				return Create(g.Key,
-					($"GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct().ToArray())}]", source.Hash));
+				Create(g.Key,
+					($"GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct().ToArray())}]", source.Hash))
 #else
-				return Create(g.Key, (null, null));
+				Create(g.Key, (null, null))
 #endif
-			})
+			)
 			.Concat(base.GetVariationsInternal(source)
 					?? Enumerable.Empty<EvalGenome<T>>());
 
-
 	private const string CROSSOVER_OF = "Crossover of";
 
-	[SuppressMessage("Performance", "HAA0504:Implicit new array creation allocation", Justification = "Return type.")]
 	protected override EvalGenome<T>[] CrossoverInternal(EvalGenome<T> a, EvalGenome<T> b)
 	{
 #if DEBUG
@@ -230,14 +221,14 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 				var origin = (CROSSOVER_OF, $"{a.Hash}\n{b.Hash}");
 				return new[]
 				{
-					Registration(Catalog.FixHierarchy(aRoot).Recycle()!, origin),
-					Registration(Catalog.FixHierarchy(bRoot).Recycle()!, origin)
+					Registration(Catalog.FixHierarchy(aRoot).Recycle(), origin)!,
+					Registration(Catalog.FixHierarchy(bRoot).Recycle(), origin)!
 				};
 			}
+
 			aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
 		}
 
 		return Array.Empty<EvalGenome<T>>();
 	}
-
 }

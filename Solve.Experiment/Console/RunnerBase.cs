@@ -85,6 +85,7 @@ public abstract class RunnerBase<TGenome>
 			SystemConsole.WriteLine(info);
 			SystemConsole.WriteLine();
 		}
+
 		SystemConsole.WriteLine("Starting...");
 		SystemConsole.SetCursorPosition(0, SystemConsole.CursorTop - 1);
 
@@ -99,7 +100,6 @@ public abstract class RunnerBase<TGenome>
 
 					if (Environment.HaveAllProblemsConverged)
 						Environment.Cancel();
-
 				},
 				ex => SystemConsole.WriteLine(ex.GetBaseException()),
 				() =>
@@ -119,6 +119,7 @@ public abstract class RunnerBase<TGenome>
 		}
 		catch (OperationCanceledException)
 		{ }
+
 		Environment.Cancel();
 		EmitStatsAction(false);
 		OnComplete();
@@ -127,7 +128,6 @@ public abstract class RunnerBase<TGenome>
 
 	protected virtual void OnInit()
 	{
-
 	}
 
 	public IProvideMetricValues MetricsSnapshot => Metrics.Snapshot;
@@ -143,6 +143,7 @@ public abstract class RunnerBase<TGenome>
 				SystemConsole.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, _stopwatch.ElapsedTicks / tc);
 			}
 		}
+
 		SystemConsole.WriteLine();
 
 #if DEBUG
@@ -159,7 +160,7 @@ public abstract class RunnerBase<TGenome>
 			{
 				foreach (var counter in context.Counters)
 				{
-					sb.AppendLine($"{counter.Name}:");
+					sb.Append(counter.Name).AppendLine(":");
 					sb.Append(counter.Value.Count).AppendLine();
 					sb.AppendLine("--------------------------------------------------------------");
 				}
@@ -167,7 +168,6 @@ public abstract class RunnerBase<TGenome>
 		}));
 #endif
 	}
-
 
 	protected virtual void OnComplete() => _statusEmitter.Dispose();//SystemConsole.WriteLine();//SystemConsole.WriteLine("Press any key to continue.");//SystemConsole.ReadKey();
 }

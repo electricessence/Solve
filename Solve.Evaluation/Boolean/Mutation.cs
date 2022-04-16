@@ -4,13 +4,11 @@ using Open.RandomizationExtensions;
 using System;
 using System.Linq;
 
+using IGene = Open.Evaluation.Core.IEvaluate<bool>;
+
 namespace Solve.Evaluation;
-
-using IGene = IEvaluate<bool>;
-
 public partial class BooleanEvalGenomeFactory
 {
-
 	// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
 	private (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<bool> target)
 	{
@@ -25,7 +23,7 @@ public partial class BooleanEvalGenomeFactory
 
 		var genes = Catalog.Factory.Map(target.Root);
 
-		while (genes.Any())
+		while (genes.Count != 0)
 		{
 			var gene = genes
 				.GetNodes()
@@ -40,11 +38,9 @@ public partial class BooleanEvalGenomeFactory
 				default:
 					break;
 			}
-
 		}
 
 		return (null, null);
-
 	}
 
 	protected override EvalGenome<bool>? MutateInternal(EvalGenome<bool> target)

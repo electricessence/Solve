@@ -42,7 +42,6 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		q.EnqueueForVariation(s);
 	}
 
-
 	// Help to reduce copies.
 	// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 	protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry = new();
@@ -145,11 +144,9 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		=> PreviouslyProduced.Contains(hash ?? throw new ArgumentNullException(nameof(hash)));
 
 	protected bool AlreadyProduced(TGenome genome)
-	{
-		if (genome is null)
-			throw new ArgumentNullException(nameof(genome));
-		return AlreadyProduced(genome.Hash);
-	}
+		=> genome is null
+		? throw new ArgumentNullException(nameof(genome))
+		: AlreadyProduced(genome.Hash);
 
 	//public string[] GetAllPreviousGenomesInOrder()
 	//{
@@ -162,11 +159,9 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 	public bool TryGenerateNew([NotNullWhen(true)] out TGenome? potentiallyNew, IReadOnlyList<TGenome>? source = null)
 	{
-		var factory = ((IGenomeFactory<TGenome>)this);
-		using (TimeoutHandler.New(5000, ms =>
-		{
-			Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms);
-		}))
+		var factory = (IGenomeFactory<TGenome>)this;
+		using (TimeoutHandler.New(5000,
+			ms => Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms)))
 		{
 			// Note: for now, we will only mutate by 1.
 
@@ -178,6 +173,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 					Metrics.GenerateNew(true);
 					return true;
 				}
+
 				Metrics.GenerateNew(false);
 				return false;
 			}
@@ -199,7 +195,6 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		Metrics.GenerateNew(true);
 		return true;
 	}
-
 
 	// Be sure to call Registration within the GenerateOne call.
 	protected abstract TGenome? MutateInternal(TGenome target);
@@ -229,6 +224,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				return true;
 			}
 		}
+
 		Metrics.Mutation(false);
 
 		mutation = default!;
@@ -248,16 +244,15 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			while (tries != 0 && genome is null)
 			{
 				var s = source;
-				using (TimeoutHandler.New(3000, ms =>
-				{
-					Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms);
-				}))
+				using (TimeoutHandler.New(3000,
+					ms => Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms)))
 				{
 					genome = MutateInternal(source);
 					var hash = genome?.Hash;
 					if (hash is not null && (hash == source.Hash || hash == original.Hash))
 						genome = null; // Not a mutation. Could happen on repeat mutations.
 				}
+
 				--tries;
 			}
 			// Reuse the clone as the source 
@@ -265,6 +260,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			source = genome;
 			--mutations;
 		}
+
 		return Registration(genome);
 	}
 
@@ -294,7 +290,9 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			// Avoid inbreeding. :P
 			|| a == b
 			|| a.Hash == b.Hash)
+		{
 			return Array.Empty<TGenome>();
+		}
 
 		var m = maxAttempts;
 		while (m != 0)
@@ -305,6 +303,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				Metrics.Crossover(true);
 				return offspring;
 			}
+
 			--m;
 		}
 
@@ -396,10 +395,9 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			return r;
 
 		var result = GetVariationsInternal(source);
-		return result is null
-			? null
+		return result is null ? null
 			: Variations.GetValue(source,
-				key => result.Distinct(GenomeEqualityComparer<TGenome>.Instance).GetEnumerator());
+				_ => result.Distinct(GenomeEqualityComparer<TGenome>.Instance).GetEnumerator());
 	}
 
 	protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
@@ -420,7 +418,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		}
 		/**
 		 * It's very important to avoid any contention.
-		 * 
+		 *
 		 * In order to do so we use a concurrent queue (fast).
 		 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
 		 * Returning any valid breeders whom haven't mated enough.
@@ -456,6 +454,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			}
 		}
 
+		[SuppressMessage("Roslynator", "RCS1242:Do not pass non-read-only struct by read-only reference.")]
 		protected void EnqueueForBreeding(in (TGenome Genome, int Count) entry, bool incrementMetrics)
 		{
 			var count = entry.Count;
@@ -499,7 +498,6 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			if (mate.count > 0) BreedingStock.Enqueue(mate);
 			mate = (mate.genome, 1);
 			return true;
-
 		}
 
 		bool TryTakeBreederFromNextQueue(out (TGenome genome, int count) mate)
@@ -552,6 +550,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 						current.count--;
 						Factory.Metrics.BreedingStock.Decrement();
 					}
+
 					void decrementMate()
 					{
 						mate.count--;
@@ -625,6 +624,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			{
 				Debug.Fail("A null genome was provided.");
 			}
+
 			return false;
 		}
 
@@ -636,6 +636,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				if (EnqueueInternal(g, onlyIfNotRegistered))
 					added = true;
 			}
+
 			return added;
 		}
 
@@ -658,6 +659,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 					Debug.Fail("Genome variation does not match the source type.");
 				}
 			}
+
 			return false;
 		}
 
@@ -701,6 +703,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 					break;
 				}
 			}
+
 			return i != 0;
 		}
 
@@ -736,6 +739,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				EnqueueForVariation(vGenome);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -750,6 +754,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				if (BreedOne(null))
 					bred = true;
 			}
+
 			return bred;
 		}
 
@@ -763,6 +768,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				EnqueueInternal(mutation);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -795,6 +801,5 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 			return false;
 		}
-
 	}
 }

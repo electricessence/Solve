@@ -18,7 +18,6 @@ public partial class TowerScheme<TGenome>
 
 		protected Level Root { get; }
 
-
 		readonly Subject<int> _levelCreated = new();
 		public IObservable<int> LevelCreated { get; }
 		internal void OnLevelCreated(int level)

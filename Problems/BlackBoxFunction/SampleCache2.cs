@@ -25,7 +25,6 @@ public sealed class SampleCache2
 		}
 	}
 
-
 	public readonly double Range;
 	public readonly int SampleSize;
 	readonly Formula _actualFormula;
@@ -71,5 +70,5 @@ public sealed class SampleCache2
 
 	public Entry GenerateEntry() => new(Partition(RandomSample()), _actualFormula);
 
-	public Entry Get(long id) => _sampleCache.GetOrAdd(id, key => GenerateEntry());
+	public Entry Get(long id) => _sampleCache.GetOrAdd(id, _ => GenerateEntry());
 }

@@ -38,7 +38,6 @@ public abstract class EnvironmentBase<TGenome>
 		Problems = ProblemsInternal.AsReadOnly();
 	}
 
-
 	public void AddProblem(IProblem<TGenome> problem)
 	{
 		if (problem is null)
@@ -71,9 +70,8 @@ public abstract class EnvironmentBase<TGenome>
 				if (Canceller.IsCancellationRequested)
 					goto case -1;
 
-				// ReSharper disable once ConditionIsAlwaysTrueOrFalse
-				if (problems is not null) foreach (var problem in problems)
-						ProblemsInternal.Add(problem);
+				if (problems is not null)
+					ProblemsInternal.AddRange(problems);
 
 				if (!ProblemsInternal.HasAny())
 					throw new InvalidOperationException("Cannot start without any registered 'Problems'");
@@ -82,7 +80,6 @@ public abstract class EnvironmentBase<TGenome>
 
 			case 1:
 				throw new InvalidOperationException("Already started.");
-
 		}
 
 		throw new Exception("Unknown state");

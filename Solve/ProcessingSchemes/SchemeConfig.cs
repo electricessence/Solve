@@ -88,7 +88,6 @@ public class SchemeConfig : ISchemeConfig
 		}
 	}
 
-
 	public PoolSizing PoolSize { get; set; }
 	public ushort MaxLevels { get; set; } = ushort.MaxValue;
 	public ushort MaxLevelLoss { get; set; } = 3;
@@ -108,5 +107,4 @@ public class SchemeConfig : ISchemeConfig
 	};
 
 	public Values Immutable => new(PoolSize, MaxLevels, MaxLevelLoss, MaxConsecutiveRejections, PercentRejectedBeforeElimination);
-
 }

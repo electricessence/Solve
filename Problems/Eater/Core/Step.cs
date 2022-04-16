@@ -31,21 +31,18 @@ public struct StepCount : IEnumerable<Step>
 	}
 
 	public static StepCount operator +(StepCount a, StepCount b)
-	{
-		if (a.Step != b.Step)
-			throw new InvalidOperationException("Attempting to combine two StepCounts with different steps.");
-		return new StepCount(a.Step, a.Count + b.Count);
-	}
+		=> a.Step == b.Step
+			? new StepCount(a.Step, a.Count + b.Count)
+			: throw new InvalidOperationException("Attempting to combine two StepCounts with different steps.");
 
 	public static StepCount operator ++(StepCount a) => new(a.Step, a.Count + 1);
 	public static StepCount operator --(StepCount a) => new(a.Step, a.Count - 1);
 	public static StepCount Forward(int count) => new(Step.Forward, count);
 
 	public override string ToString()
-	{
-		if (Count < 1) throw new InvalidOperationException($"Step count is less than 1. ({Count})");
-		return (Count == 1 ? string.Empty : Count.ToString()) + Step.ToChar();
-	}
+		=> Count < 1
+			? throw new InvalidOperationException($"Step count is less than 1. ({Count})")
+			: (Count == 1 ? string.Empty : Count.ToString()) + Step.ToChar();
 
 	public IEnumerable<Step> AsEnumerable()
 		=> Enumerable.Repeat(Step, Count);
@@ -98,6 +95,7 @@ public static class StepExtensions
 				last = new StepCount(step, 1);
 			}
 		}
+
 		yield return last;
 	}
 
@@ -121,7 +119,6 @@ public static class StepExtensions
 			}
 		});
 
-
 	public static string ToGenomeHash(this ReadOnlySpan<StepCount> steps)
 
 	{
@@ -132,6 +129,7 @@ public static class StepExtensions
 			if (s.Count is not 1) sb.Append(s.Count);
 			sb.Append(s.Step.ToChar());
 		}
+
 		return sb.ToString();
 	}
 
@@ -181,6 +179,7 @@ public static class Steps
 			case Orientation.Left:
 				return new Point(current.X - 1, current.Y);
 		}
+
 		return current;
 	}
 
@@ -199,6 +198,7 @@ public static class Steps
 			case Orientation.Left:
 				return current.X == 0 ? current : new Point(current.X - 1, current.Y);
 		}
+
 		return current;
 	}
 
@@ -228,10 +228,8 @@ public static class Steps
 
 	public static IEnumerable<Step> FromGenomeHash(string hash)
 	{
-		hash = StepReplace.Replace(hash, m => StringBuilderPool.RentToString(sb =>
-		{
-			sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value));
-		}));
+		hash = StepReplace.Replace(hash, m => StringBuilderPool.RentToString(
+			sb => sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value))));
 
 		foreach (var c in hash)
 		{
@@ -249,6 +247,7 @@ public static class Steps
 
 			last = step;
 		}
+
 		return false;
 	}
 
@@ -301,7 +300,6 @@ public static class Steps
 
 		return false;
 	}
-
 
 	public static IEnumerable<Step> TrimTurns(this IEnumerable<Step> steps)
 	{
@@ -391,7 +389,6 @@ public static class Steps
 
 				reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, string.Empty);
 				reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, string.Empty);
-
 			}
 			while (reduced != reducedLoop);
 
@@ -403,13 +400,10 @@ public static class Steps
 
 				reducedLoop = reducedLoop.Replace(TURN_LEFT_RIGHT, string.Empty);
 				reducedLoop = reducedLoop.Replace(TURN_RIGHT_LEFT, string.Empty);
-
 			}
 			while (reduced != reducedLoop);
-
 		}
 		while (reduced != outerReduced);
-
 
 		return reduced != hash ? reduced : null;
 	}
@@ -494,6 +488,7 @@ public static class Steps
 				first = o;
 				last = o;
 			}
+
 			p = last.Value;
 
 			for (var y = Math.Min(p.Y, o.Y); y <= Math.Max(p.Y, o.Y); y++)
@@ -515,6 +510,7 @@ public static class Steps
 					}
 				}
 			}
+
 			last = o;
 		}
 
@@ -559,9 +555,8 @@ public static class Steps
 				bitmap.Fill(Color.White);
 				break;
 			}
-			catch (Exception)
+			catch (Exception) when (i < 10)
 			{
-				if (i > 9) throw;
 			}
 		}
 
@@ -570,13 +565,12 @@ public static class Steps
 		using (var graphic = Graphics.FromImage(bitmap))
 		{
 			var pointFs = points.Select((p, i) => new PointF((p.X + offset.X) * bitScale + bitScale + i, (p.Y + offset.Y) * bitScale + bitScale + i)).ToArray();
-			var first = pointFs.First();
+			var first = pointFs[0];
 			var last = pointFs.Last();
 			var radius = 5 * scale;
 
 			graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
 			graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
-
 
 			var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
 			outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
@@ -591,18 +585,12 @@ public static class Steps
 				var pen = new Pen(color, 4 * scale);
 				pen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
 				graphic.DrawLine(pen, pointFs[i - 1], pointFs[i]);
-
 			}
-
 
 			graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Green), 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
 			graphic.DrawRectangle(new Pen(Color.FromArgb(128, Color.Red), 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
-
 		}
-
 
 		return bitmap;
 	}
-
 }
-

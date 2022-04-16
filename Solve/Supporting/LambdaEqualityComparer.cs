@@ -18,10 +18,8 @@ public static class EqualityComparerUtility
 
 		public override bool Equals(T? x, T? y) => x is null ? y is null : (y is not null && _comparison(x, y));
 		public override int GetHashCode(T obj) => _hashGenerator(obj);
-
 	}
 
 	public static EqualityComparer<T> Create<T>(Func<T, T, bool> comparison, Func<T, int> hashGenerator)
 		=> new Comparer<T>(comparison, hashGenerator);
 }
-

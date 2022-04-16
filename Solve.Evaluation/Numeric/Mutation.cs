@@ -7,15 +7,13 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 
+using IFunction = Open.Evaluation.Core.IFunction<double>;
+using IGene = Open.Evaluation.Core.IEvaluate<double>;
+using IOperator = Open.Evaluation.Core.IOperator<Open.Evaluation.Core.IEvaluate<double>, double>;
+
 namespace Solve.Evaluation;
-
-using IFunction = IFunction<double>;
-using IGene = IEvaluate<double>;
-using IOperator = IOperator<IEvaluate<double>, double>;
-
 public partial class NumericEvalGenomeFactory
 {
-
 	// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
 	private (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<double> target)
 	{
@@ -30,7 +28,7 @@ public partial class NumericEvalGenomeFactory
 
 		var genes = Catalog.Factory.Map(target.Root);
 
-		while (genes.Any())
+		while (genes.Count != 0)
 		{
 			var gene = genes
 				.GetNodes()
@@ -61,33 +59,38 @@ public partial class NumericEvalGenomeFactory
 
 						case 6:
 							var a = Math.Abs(c.Value);
-							return ((a > 0 && a < 1) // Look for fractional exponents and avoid.
-								? Catalog.ApplyClone(gene, newNode => Catalog.GetConstant(c.Value > 0 ? 1 : -1))
+							return ((a is > 0 and < 1) // Look for fractional exponents and avoid.
+								? Catalog.ApplyClone(gene, _ => Catalog.GetConstant(c.Value > 0 ? 1 : -1))
 								// should be rare (1/10) chance to increase multiple for non power of exponents.
 								: Catalog.AdjustNodeMultiple(gene, c.Value < 0 ? -1 : +1),
 								"Increase constant");
 
 						case 7:
-							return (Catalog.ApplyClone(gene, newNode => Catalog.GetParameter(genes.GetDescendants().OfType<IParameter>().Distinct().Count())),
+							return (Catalog.ApplyClone(gene, _ => Catalog.GetParameter(genes.GetDescendants().OfType<IParameter>().Distinct().Count())),
 								"Replace constant with parameter");
 
 						default:
 							if (gene.Parent?.Value is Exponent<double>)
+							{
 								return (Catalog.AdjustNodeMultiple(gene, c.Value > 0 ? -1 : +1),
 									"Decrease constant");
+							}
 
 							if (Catalog.Variation.TryRemoveValid(gene, out var newRoot))
+							{
 								return (newRoot,
 									"Remove constant");
+							}
 
 							break;
 					}
+
 					break;
 
 				case Parameter _:
 					{
 						var options = Enumerable.Range(0, 5).ToList();
-						while (options.Any())
+						while (options.Count != 0)
 						{
 							switch (options.RandomPluck())
 							{
@@ -121,20 +124,23 @@ public partial class NumericEvalGenomeFactory
 								// Remove it!
 								default:
 									if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
+									{
 										return (attempt,
 											"Remove descendant");
-									break;
+									}
 
+									break;
 							}
 						}
 					}
+
 					break;
 
 				default:
 					if (gv is IFunction)
 					{
 						var options = Enumerable.Range(0, 8).ToList();
-						while (options.Any())
+						while (options.Count != 0)
 						{
 							(IGene? Root, string? Origin) ng = default;
 							switch (options.RandomPluck())
@@ -166,12 +172,16 @@ public partial class NumericEvalGenomeFactory
 										return (f,
 											"Apply function to function");
 									}
+
 									break;
 
 								case 4:
 									if (Catalog.Variation.TryRemoveValid(gene, out var n))
+									{
 										ng = (n,
 											"Remove decendant function");
+									}
+
 									break;
 
 								case 5:
@@ -187,8 +197,11 @@ public partial class NumericEvalGenomeFactory
 								case 7:
 									// This has a potential to really bloat the function so allow, but very sparingly.
 									if (Randomizer.Random.Next(0, 3) == 0)
+									{
 										return (Catalog.Mutation.Square(gene),
 											"Square function");
+									}
+
 									break;
 							}
 
@@ -199,11 +212,9 @@ public partial class NumericEvalGenomeFactory
 
 					break;
 			}
-
 		}
 
 		return (null, null);
-
 	}
 
 	protected override EvalGenome<double>? MutateInternal(EvalGenome<double> target)

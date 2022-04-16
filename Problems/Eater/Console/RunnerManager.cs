@@ -39,7 +39,6 @@ public class RunnerManager
 			_runner = null;
 			return true;
 		}
-
 	}
 
 	public bool Toggle()

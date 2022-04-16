@@ -183,7 +183,6 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 						}
 					}
 				}
-
 			}
 		}
 	}
@@ -197,7 +196,9 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 		//Debug.WriteLineIf(Name is not null && task is not null, $"{Name} ({Id}): QueueTask({task?.Id})");
 
 		if (_parent is PriorityQueueTaskScheduler p)
+		{
 			p.NotifyNewWorkItem();
+		}
 		else
 		{
 			if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel)
@@ -217,6 +218,4 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 	}
 
 	protected override void OnDispose() => Children.Dispose();
-
-
 }

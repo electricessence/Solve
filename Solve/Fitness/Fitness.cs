@@ -131,12 +131,18 @@ public class Fitness : IComparable<Fitness>
 	{
 		if (other is null) return +1;
 
-		if (this == other || Results == other.Results || SampleCount == 0 && other.SampleCount == 0)
+		if (this == other
+		|| Results == other.Results
+		|| SampleCount == 0 && other.SampleCount == 0)
+		{
 			return 0;
+		}
+
 		if (Results.Count == 0)
 			return -1;
 		if (other.Results.Count == 0)
 			return +1;
+
 		var v = CollectionComparer.Double.Compare(
 			Results.Average,
 			other.Results.Average);
@@ -153,17 +159,24 @@ public class Fitness : IComparable<Fitness>
 			c = true;
 			var convergence = Metric.MaxValue;
 			var tolerance = Metric.Tolerance;
+
 			if (Value > convergence + double.Epsilon)
 				throw new Exception("Score has exceeded convergence value: " + Value);
+
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
 				&& Value.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
+			{
 				continue;
+			}
+
 			if (double.IsNaN(tolerance)) // not necessary but shows more explicit intent.
 				continue;
+
 			if (Value < convergence - tolerance)
 				return false;
 		}
+
 		return c;
 	}
 

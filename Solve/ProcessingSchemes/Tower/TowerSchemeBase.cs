@@ -11,7 +11,6 @@ namespace Solve.ProcessingSchemes;
 public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 	where TGenome : class, IGenome
 {
-
 	protected TowerSchemeBase(
 		IGenomeFactory<TGenome> genomeFactory,
 		SchemeConfig config,
@@ -30,7 +29,6 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 	public SchemeConfig.Values Config { get; }
 	readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
 
-
 	static readonly EqualityComparer<(TGenome Genome, Fitness Fitness)> EComparer
 		= EqualityComparerUtility.Create<(TGenome Genome, Fitness Fitness)>(
 			(a, b) => a.Genome.Hash == b.Genome.Hash,
@@ -40,9 +38,11 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 		=> gf.Fitness.Results.Average;
 
 	bool ProduceFromChampions()
-		=> Problems
-			.SelectMany(p => p.Pools, (p, r) => r.Champions)
-			.Where(c => c is not null && !c.IsEmpty)
+	{
+		bool any = false;
+		foreach (var _ in Problems
+			.SelectMany(p => p.Pools, (_, r) => r.Champions)
+			.Where(c => c?.IsEmpty == false)
 			.Select(c =>
 			{
 				var champions = c.Ranked;
@@ -68,9 +68,11 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 				//ReserveFactoryQueue.EnqueueForBreeding(champions);
 
 				return true;
+			}))
+		{
+			any = true;
+		}
 
-			})
-			.ToArray()
-			.Any();
-
+		return any;
+	}
 }

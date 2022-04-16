@@ -20,7 +20,9 @@ public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 	{
 		if (_wasDisposed != 0
 		|| Interlocked.CompareExchange(ref _wasDisposed, 1, 0) != 0)
+		{
 			return;
+		}
 
 		DisposeCancellation.Cancel();
 		DisposeCancellation.Dispose();
@@ -36,12 +38,8 @@ public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 		if (task is null) throw new ArgumentNullException(nameof(task));
 		Contract.EndContractBlock();
 
-		if (DisposeCancellation.Token.IsCancellationRequested)
-			return false;
-
-		if (taskWasPreviouslyQueued && !TryDequeue(task))
-			return false;
-
-		return TryExecuteTask(task);
+		return !DisposeCancellation.Token.IsCancellationRequested
+			&& (!taskWasPreviouslyQueued || TryDequeue(task))
+			&& TryExecuteTask(task);
 	}
 }

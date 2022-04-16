@@ -53,7 +53,7 @@ public sealed class SampleCache
 	}
 
 	LazyList<double> GetDeltas(long id)
-		=> _deltaCache.GetOrAdd(id, key => Deltas().Memoize(true));
+		=> _deltaCache.GetOrAdd(id, _ => Deltas().Memoize(true));
 
 	public LazyList<Entry> Get(long id)
 		=> _sampleCache.GetOrAdd(id, key => Generate(key).Memoize(true));
@@ -84,5 +84,4 @@ public sealed class SampleCache
 			value += delta;
 		}
 	}
-
 }

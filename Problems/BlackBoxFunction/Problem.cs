@@ -36,6 +36,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 				_ => throw new IndexOutOfRangeException()
 			};
 		}
+
 		return new Fitness(metrics, result.MoveToImmutable());
 	}
 
@@ -77,8 +78,6 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
 		: base(fitnessTranslators, sampleSize, championPoolSize) => Samples = new SampleCache2(actualFormula, sampleSize);
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "HAA0501:Explicit new array type allocation", Justification = "Small array allocation.")]
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "HAA0504:Implicit new array creation allocation", Justification = "Result enumerable.")]
 	protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 	{
 		var samples = Samples.Get(sampleId);
@@ -165,13 +164,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		=> new(actualFormula, sampleSize, championPoolSize, (Metrics01, Fitness01), (Metrics02, Fitness02), (Metrics03, Fitness03));
 
 	static IEnumerable<double> DeltasFixed(IEnumerable<double> source)
-		=> Deltas(source).Select(v =>
-		{
-			if (v > 0) return +1;
-			if (v < 0) return -1;
-			return v;
-		});
-
+		=> Deltas(source).Select(v => v > 0 ? +1 : v < 0 ? -1 : v);
 
 	static IEnumerable<double> Deltas(IEnumerable<double> source)
 	{
@@ -189,5 +182,3 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		}
 	}
 }
-
-

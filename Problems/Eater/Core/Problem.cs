@@ -40,6 +40,7 @@ public class Problem : ProblemBase<Genome>
 				_ => throw new IndexOutOfRangeException()
 			};
 		}
+
 		return new Fitness(in metrics, result.MoveToImmutable());
 	}
 
@@ -71,8 +72,6 @@ public class Problem : ProblemBase<Genome>
 	protected static Fitness FitnessSecondary02(Genome genome, double[] metrics)
 		=> GetSecondaryMetricValues(MetricsSecondary02, genome, metrics);
 
-
-
 	static Fitness GetSecondaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
 	{
 		var len = metrics.Length;
@@ -89,6 +88,7 @@ public class Problem : ProblemBase<Genome>
 				_ => throw new IndexOutOfRangeException()
 			};
 		}
+
 		return new Fitness(in metrics, result.MoveToImmutable());
 	}
 
@@ -137,7 +137,6 @@ public class Problem : ProblemBase<Genome>
 		};
 	}
 
-
 	public double[] TestAllSamples(Genome g)
 		=> ProcessSampleMetrics(g, -1);
 
@@ -173,6 +172,4 @@ public class Problem : ProblemBase<Genome>
 		ushort sampleSize = 40,
 		ushort championPoolSize = 100)
 		=> new(gridSize, sampleSize, championPoolSize, (MetricsPrimary, FitnessPrimary), (Metrics02, Fitness02), (Metrics03, Fitness03));
-
 }
-

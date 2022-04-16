@@ -21,17 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Cloneable" Version="1.1.2" />
-    <PackageReference Include="Open.DateTime.Extensions" Version="2.0.0" />
-    <PackageReference Include="Open.Threading.Dataflow" Version="2.5.2" />
-    <PackageReference Include="Open.Threading.ReadWrite" Version="1.4.8" />
-    <PackageReference Include="Open.Threading.Tasks" Version="1.2.2" />
+    <PackageReference Include="Open.Threading.Dataflow" Version="2.5.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Solve.Experiment\Solve.Experiment.csproj" />
     <ProjectReference Include="..\..\..\Solve\Solve.csproj" />
-    <ProjectReference Include="..\Core\Eater.Core.csproj" />
+    <ProjectReference Include="..\Core\Eater.Core.csproj">
+      <TreatAsUsed>true</TreatAsUsed>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

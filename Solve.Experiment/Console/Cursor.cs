@@ -31,13 +31,11 @@ public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
 	}
 
 	public int CompareTo(Cursor other)
-	{
-		if (Top < other.Top) return -1;
-		if (Top > other.Top) return +1;
-		if (Left < other.Left) return -1;
-		if (Left > other.Left) return +1;
-		return 0;
-	}
+		=> Top < other.Top ? -1
+		 : Top > other.Top ? +1
+		 : Left < other.Left ? -1
+		 : Left > other.Left ? +1
+		 : 0;
 
 	public bool Equals(Cursor other) => CompareTo(other) == 0;
 

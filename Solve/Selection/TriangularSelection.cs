@@ -27,7 +27,6 @@ public static class Ascending
 		=> source[GetRandomTriangularFavoredIndex(source.Length)];
 }
 
-
 public static class Descending
 {
 	public static int GetRandomTriangularFavoredIndex(int length)
@@ -39,5 +38,3 @@ public static class Descending
 	public static T RandomOne<T>(in ReadOnlySpan<T> source)
 		=> source[GetRandomTriangularFavoredIndex(source.Length)];
 }
-
-

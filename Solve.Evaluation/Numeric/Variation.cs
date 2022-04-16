@@ -6,10 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using IGene = Open.Evaluation.Core.IEvaluate<double>;
+
 namespace Solve.Evaluation;
-
-using IGene = IEvaluate<double>;
-
 public partial class NumericEvalGenomeFactory
 {
 	protected override IEnumerable<(IGene Root, string Origin)> GetVariations(IGene source)
@@ -39,7 +38,9 @@ public partial class NumericEvalGenomeFactory
 			}
 		}
 		else
+		{
 			reduced = source;
+		}
 
 		foreach (var op in Open.Evaluation.Registry.Arithmetic.Functions)
 			yield return (Open.Evaluation.Registry.Arithmetic.GetFunction(Catalog, op, reduced), $"Root function ({op})");
@@ -51,8 +52,10 @@ public partial class NumericEvalGenomeFactory
 		int i;
 		// Remove genes one at a time.
 		for (i = 0; i < count; i++)
+		{
 			if (Catalog.Variation.TryRemoveValid(descendantNodes[i], out var pruned))
 				yield return (pruned, "Remove descendant by index");
+		}
 
 		// Strip down parameter levels to search for significance.
 		var paramRemoved = sourceTree;
@@ -80,14 +83,18 @@ public partial class NumericEvalGenomeFactory
 		}
 
 		for (i = 0; i < count; i++)
+		{
 			yield return (
 				Catalog.MultiplyNode(descendantNodes[i], -1),
 				"Invert descenant sign");
+		}
 
 		for (i = 0; i < count; i++)
+		{
 			yield return (
 				Catalog.AdjustNodeMultiple(descendantNodes[i], -1),
 				"Reduce descendant multiple");
+		}
 
 		for (i = 0; i < count; i++)
 		{
@@ -113,14 +120,18 @@ public partial class NumericEvalGenomeFactory
 		}
 
 		for (i = 0; i < count; i++)
+		{
 			yield return (
 				Catalog.AdjustNodeMultiple(descendantNodes[i], -1),
 				"Decrease descendant multiple");
+		}
 
 		for (i = 0; i < count; i++)
+		{
 			yield return (
 				Catalog.AdjustNodeMultiple(descendantNodes[i], +1),
 				"Increase descendant multiple");
+		}
 
 		for (i = 0; i < count; i++)
 		{
@@ -148,8 +159,5 @@ public partial class NumericEvalGenomeFactory
 
 		if (sum.TryExtractGreatestFactor(Catalog, out var extracted, out _))
 			yield return (extracted, "GCF Extracted Reduction");
-
 	}
-
-
 }

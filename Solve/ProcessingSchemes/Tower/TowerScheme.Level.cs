@@ -85,9 +85,10 @@ public partial class TowerScheme<TGenome>
 			while ((defending = fRef) is null || contending.IsGreaterThan(defending.AsSpan()))
 			{
 				contendingArray ??= contending.ToArray();
-				if (Interlocked.CompareExchange(ref fRef!, contendingArray, defending) == defending)
+				if (Interlocked.CompareExchange(ref fRef, contendingArray, defending) == defending)
 					return (true, defending is null);
 			}
+
 			return (false, false);
 		}
 
@@ -257,7 +258,6 @@ public partial class TowerScheme<TGenome>
 						Debug.Assert(loser.LossCount == lossCount, $"LossCount: {loser.LossCount}, expected {lossCount}.");
 						buffer[retained++] = loser;
 					}
-
 				}
 			}
 

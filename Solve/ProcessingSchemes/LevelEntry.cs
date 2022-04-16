@@ -65,4 +65,3 @@ public class LevelEntry<TGenome> : IRecyclable
 	public static readonly InterlockedArrayObjectPool<LevelEntry<TGenome>> Pool
 		= InterlockedArrayObjectPool.CreateAutoRecycle<LevelEntry<TGenome>>();
 }
-

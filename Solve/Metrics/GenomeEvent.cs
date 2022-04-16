@@ -31,5 +31,4 @@ public class GenomeEvent
 	public EventType Event { get; }
 
 	public string? Data { get; }
-
 }

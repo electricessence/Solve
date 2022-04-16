@@ -16,7 +16,6 @@ public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome<double>>
 	public EvalConsoleEmitter(NumericEvalGenomeFactory factory, uint sampleMinimum = 50)
 		: this(factory.Catalog, sampleMinimum)
 	{
-
 	}
 
 	static readonly Regex SimpleProductsPattern = new(@"(\d+|[a-z]+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
@@ -70,6 +69,5 @@ public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome<double>>
 			var formatted = FormatGenomeString(alpha);
 			return formatted;
 		}
-
 	}
 }

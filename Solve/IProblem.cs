@@ -44,5 +44,3 @@ public interface IProblem<TGenome>
 	public ImmutableArray<Fitness> NewFitness()
 		=> Pools.Select(f => new Fitness(f.Metrics)).ToImmutableArray();
 }
-
-

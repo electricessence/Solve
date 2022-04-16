@@ -15,7 +15,6 @@ public struct Selection<T>
 	public readonly ImmutableArray<T> Selected;
 	public readonly ImmutableArray<T> Rejected;
 
-
 	// ReSharper disable once UnusedParameter.Local
 	public Selection(IEnumerable<T> contenders, double selectionPoint = 0.5) : this(contenders as IReadOnlyList<T> ?? contenders.ToArray(), selectionPoint)
 	{
@@ -23,7 +22,7 @@ public struct Selection<T>
 
 	public Selection(IReadOnlyList<T> contenders, double selectionPoint = 0.5)
 	{
-		if (selectionPoint <= 0 || selectionPoint >= 1)
+		if (selectionPoint is <= 0 or >= 1)
 			throw new ArgumentOutOfRangeException(nameof(selectionPoint), selectionPoint, "Must be greater than zero and less than one.");
 		var len = contenders.Count;
 		if (len < 2) throw new InvalidOperationException("Selection requires at least to contenders.");
@@ -51,6 +50,4 @@ public struct Selection<T>
 		Selected = selected.MoveToImmutable();
 		Rejected = rejected.MoveToImmutable();
 	}
-
-
 }

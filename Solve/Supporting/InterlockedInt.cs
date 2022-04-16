@@ -34,7 +34,6 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 	public static void Recycle(InterlockedInt n)
 		=> Pool.Give(n);
 
-
 	public bool Equals(InterlockedInt? other)
 		=> other is not null && _value == other._value;
 
@@ -42,10 +41,9 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 		=> _value == value;
 
 	public override bool Equals(object? other)
-	{
-		if (other is int i) return Equals(i);
-		return other is InterlockedInt ii && Equals(ii);
-	}
+		=> other is int i
+			? Equals(i)
+			: other is InterlockedInt ii && Equals(ii);
 
 	public override string ToString() => _value.ToString();
 
@@ -55,8 +53,10 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 
 	public static implicit operator InterlockedInt(int value) => Init(value);
 
-	public static bool operator ==(InterlockedInt? a, InterlockedInt? b) => a is null ? b is null : a.Equals(b);
-	public static bool operator !=(InterlockedInt? a, InterlockedInt? b) => a is null ? b is not null : !a.Equals(b);
+	public static bool operator ==(InterlockedInt? a, InterlockedInt? b)
+		=> a is null ? b is null : a.Equals(b);
+	public static bool operator !=(InterlockedInt? a, InterlockedInt? b)
+		=> a is null ? b is not null : !a.Equals(b);
 
 	public static bool operator ==(int a, InterlockedInt b) => b.Equals(a);
 	public static bool operator !=(int a, InterlockedInt b) => !b.Equals(a);

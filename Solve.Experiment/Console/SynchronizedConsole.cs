@@ -8,7 +8,6 @@ public static class SynchronizedConsole
 
 	public static void Write(ref CursorRange message, in Action<Cursor> action)
 	{
-
 		lock (Sync)
 		{
 			var start = Cursor.Current;
@@ -27,13 +26,13 @@ public static class SynchronizedConsole
 				System.Console.ResetColor();
 				throw;
 			}
+
 			message = new CursorRange(start, Cursor.Current);
 		}
 	}
 
 	public static void OverwriteIfSame(ref CursorRange message, in Action<Cursor> action)
 	{
-
 		lock (Sync)
 		{
 			if (message is null)
@@ -53,6 +52,7 @@ public static class SynchronizedConsole
 					{
 						System.Console.WriteLine();
 					}
+
 					while (System.Console.CursorLeft < message.End.Left)
 					{
 						System.Console.Write(' ');
@@ -74,8 +74,8 @@ public static class SynchronizedConsole
 				System.Console.ResetColor();
 				throw;
 			}
-			message = new CursorRange(in start, Cursor.Current);
 
+			message = new CursorRange(in start, Cursor.Current);
 		}
 	}
 
@@ -89,5 +89,4 @@ public static class SynchronizedConsole
 				Write(ref message, action);
 		}
 	}
-
 }

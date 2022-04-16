@@ -51,13 +51,13 @@ public struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 		}
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0046:Convert to conditional expression")]
 	public (IEnumerable<T> head, IEnumerable<T> tail) Segments(int remove = 0)
 	{
 		if (remove == 0) return (_head, _tail);
 		var n = SpliceIndex + remove;
 		if (n <= 0) return (Empty, _tail);
 		if (n >= Count - 1) return (_head, Empty);
-
 		if (remove < 0) return (_head.Take(n), _tail);
 		return (_head, _tail.Skip(remove));
 	}
@@ -122,5 +122,4 @@ public static class SplicedEnumerable
 
 	public static SplicedEnumerable<T> SpliceAt<T>(this IReadOnlyCollection<T> source, int index)
 		=> new(source, index);
-
 }

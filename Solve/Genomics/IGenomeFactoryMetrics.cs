@@ -32,5 +32,4 @@ public interface IGenomeFactoryMetrics
 	SuccessFailCount Crossover { get; }
 
 	long ExternalProducerQueried { get; }
-
 }

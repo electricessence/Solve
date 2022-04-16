@@ -77,20 +77,14 @@ public class ConsoleEmitterBase<TGenome>
 
 					output.AppendLine();
 					SynchronizedConsole.Write(ref LastTopGenomeUpdate,
-						cursor =>
-						{
-							System.Console.Write(output.ToString());
-						});
+						_ => System.Console.Write(output.ToString()));
 				}
 				finally
 				{
 					d.Clear();
 					output.Clear();
 				}
-
-
 			}
-
 		});
 
 		if (locked && !ConsoleQueue.IsEmpty)
@@ -100,7 +94,6 @@ public class ConsoleEmitterBase<TGenome>
 	protected virtual void OnEmittingGenome(
 		TGenome genome,
 		StringBuilder output) => output.Append("Genome:").AppendLine(BLANK).AppendLine(genome.Hash);//var asReduced = genome is IReducibleGenome<TGenome> r ? r.AsReduced() : genome;//if (!asReduced.Equals(genome))//	sb.Append("Reduced:").AppendLine(BLANK).AppendLine(asReduced.Hash);
-
 
 	// ReSharper disable once UnusedParameter.Global
 	// ReSharper disable once VirtualMemberNeverOverridden.Global

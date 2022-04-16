@@ -46,7 +46,4 @@ public partial class GenomeFactory
 				throw new NotSupportedException();
 		}
 	}
-
-
-
 }

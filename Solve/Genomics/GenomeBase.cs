@@ -73,4 +73,3 @@ public abstract class GenomeBase : FreezableBase, IGenome
 #endif
 
 }
-

@@ -40,6 +40,7 @@ public partial class TowerScheme<TGenome> : TowerSchemeBase<TGenome>
 			await t.PostAsync(genome).ConfigureAwait(false);
 			++count;
 		}
+
 		return count;
 	}
 
