@@ -17,13 +17,10 @@ public partial class GenomeFactory
 		var aPoint = rand.Next(aLen - 1) + 1;
 		var bPoint = rand.Next(bLen - 1) + 1;
 
-		var aGenes = a.Genes.ToArray();
-		var bGenes = b.Genes.ToArray();
-
 		return new[]
 		{
-			new Genome(aGenes.Take(aPoint).Concat(bGenes.Skip(bPoint)).TrimTurns()),
-			new Genome(bGenes.Take(bPoint).Concat(aGenes.Skip(aPoint)).TrimTurns()),
+			new Genome(a.Genes.Take(aPoint).Concat(b.Genes.Skip(bPoint)).TrimTurns()),
+			new Genome(b.Genes.Take(bPoint).Concat(a.Genes.Skip(aPoint)).TrimTurns()),
 		};
 	}
 }
