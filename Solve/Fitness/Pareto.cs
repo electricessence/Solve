@@ -57,12 +57,12 @@ public static class Pareto
 		where T : notnull
 		=> FilterInternal(source, equalityComparer, scoreSelector);
 
-	public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
-		in ReadOnlySpan<T> source,
-		IEqualityComparer<T> equalityComparer,
-		Func<T, ImmutableArray<double>> scoreSelector)
-		where T : notnull
-		=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
+	//public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
+	//	in ReadOnlySpan<T> source,
+	//	IEqualityComparer<T> equalityComparer,
+	//	Func<T, ImmutableArray<double>> scoreSelector)
+	//	where T : notnull
+	//	=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
 	static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
 	{

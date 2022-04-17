@@ -166,7 +166,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 			.Select(g =>
 #if DEBUG
 				Create(g.Key,
-					($"GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct().ToArray())}]", source.Hash))
+					($"GetVariations:\n[{string.Join(", ", g.Select(v => v.Origin).Distinct())}]", source.Hash))
 #else
 				Create(g.Key, (null, null))
 #endif

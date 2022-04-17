@@ -96,8 +96,8 @@ public class Fitness : IComparable<Fitness>
 		{
 			var r = _results;
 			return r.Count == 0
-				? Metrics.ToArray().Select(m => (m, double.NaN))
-				: Metrics.ToArray().Select((m, i) => (m, r.Sum[i]));
+				? Metrics.Select(m => (m, double.NaN))
+				: Metrics.Select((m, i) => (m, r.Sum[i]));
 		}
 	}
 
@@ -107,8 +107,8 @@ public class Fitness : IComparable<Fitness>
 		{
 			var r = _results;
 			return r.Count == 0
-				? Metrics.ToArray().Select(m => (m, double.NaN))
-				: Metrics.ToArray().Select((m, i) => (m, r.Average[i]));
+				? Metrics.Select(m => (m, double.NaN))
+				: Metrics.Select((m, i) => (m, r.Average[i]));
 		}
 	}
 

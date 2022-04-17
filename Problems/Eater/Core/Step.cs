@@ -71,8 +71,8 @@ public static class StepExtensions
 
 	public static IEnumerable<StepCount> ToStepCounts(this IEnumerable<Step> steps)
 	{
-		var s = steps as Step[] ?? steps.ToArray();
-		var len = s.Length;
+		var s = steps as IList<Step> ?? steps.ToArray();
+		var len = s.Count;
 		if (len == 0) yield break;
 
 		var last = new StepCount()
