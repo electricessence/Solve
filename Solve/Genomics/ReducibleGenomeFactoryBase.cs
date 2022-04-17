@@ -8,17 +8,19 @@ public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TG
 	where TGenome : class, IGenome
 {
 	protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics)
-		: base(metrics)	{ }
+		: base(metrics) { }
 
 	protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds)
 		: base(metrics, seeds) { }
 
-	public override TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
-		=> a is null || b is null
-			// Avoid inbreeding. :P
-			|| a == b || GetReduced(a)?.Hash == GetReduced(b)?.Hash
-		? Array.Empty<TGenome>()
-		: base.AttemptNewCrossover(a, b, maxAttempts);
+	protected override bool CannotCrossover(TGenome a, TGenome b)
+	{
+		if (base.CannotCrossover(a, b)) return true;
+		var aRed = GetReduced(a)?.Hash;
+		if (aRed is null) return false;
+		var bRed = GetReduced(b)?.Hash;
+		return bRed is not null && aRed == bRed;
+	}
 
 	protected override IEnumerable<TGenome> GetVariationsInternal(TGenome source)
 	{

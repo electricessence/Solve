@@ -153,9 +153,9 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		=> Registration(root, (origin, null), onBeforeAdd);
 
 	protected override EvalGenome<T>? GetReduced(EvalGenome<T> source)
-	=> Catalog.TryGetReduced(source.Root, out var reduced)
-		? Create(reduced, ("Reduction of", source.Hash))
-		: null;
+		=> Catalog.TryGetReduced(source.Root, out var reduced)
+			? Create(reduced, ("Reduction of", source.Hash))
+			: null;
 
 	protected abstract IEnumerable<(IEvaluate<T> Root, string Origin)> GetVariations(IEvaluate<T> source);
 
@@ -188,7 +188,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		// Avoid inbreeding. :P
 		var aRed = GetReduced(a);
 		var bRed = GetReduced(b);
-		Debug.Assert(aRed is null && bRed is null || aRed != bRed);
+		Debug.Assert(aRed is null || bRed is null || aRed != bRed);
 #endif
 
 		var aRoot = Catalog.Factory.Map(a.Root);
@@ -198,7 +198,8 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		var bGeneNodes = bRoot.GetDescendantsOfType().ToArray();
 		var aLen = aGeneNodes.Length;
 		var bLen = bGeneNodes.Length;
-		if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return Array.Empty<EvalGenome<T>>();
+		if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1)
+			return Array.Empty<EvalGenome<T>>();
 
 		// Crossover scheme 1:  Swap a node.
 		while (aGeneNodes.Length != 0)

@@ -271,7 +271,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	{
 		var result = CrossoverInternal(
 			a ?? throw new ArgumentNullException(nameof(a)),
-			b ?? throw new ArgumentNullException(nameof(a))
+			b ?? throw new ArgumentNullException(nameof(b))
 		);
 
 		foreach (var r in result)
@@ -284,15 +284,16 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		return result;
 	}
 
-	public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
-	{
-		if (a is null || b is null
+	protected virtual bool CannotCrossover(TGenome a, TGenome b)
+		=> a is null || b is null
 			// Avoid inbreeding. :P
 			|| a == b
-			|| a.Hash == b.Hash)
-		{
+			|| a.Hash == b.Hash;
+
+	public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
+	{
+		if (CannotCrossover(a, b))
 			return Array.Empty<TGenome>();
-		}
 
 		var m = maxAttempts;
 		while (m != 0)
@@ -322,18 +323,18 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		TGenome next()
 		{
 #endif
-		var q = 0;
-		while (q < PriorityQueues.Count)
-		{
-			if (PriorityQueues[q].TryGetNext(out var genome))
-				return genome;
-			else
-				q++;
-		}
+			var q = 0;
+			while (q < PriorityQueues.Count)
+			{
+				if (PriorityQueues[q].TryGetNext(out var genome))
+					return genome;
+				else
+					q++;
+			}
 #if DEBUG
 			generated = true;
 #endif
-		return ((IGenomeFactory<TGenome>)this).GenerateOne();
+			return ((IGenomeFactory<TGenome>)this).GenerateOne();
 #if DEBUG
 		}
 
