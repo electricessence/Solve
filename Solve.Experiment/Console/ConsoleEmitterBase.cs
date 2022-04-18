@@ -43,12 +43,6 @@ public class ConsoleEmitterBase<TGenome>
 		TryEmitConsole();
 	}
 
-	private static TKey OrderByKey<TKey, TValue>(KeyValuePair<TKey, TValue> kvp)
-		=> kvp.Key;
-	private static TGenome OrderByGenome<TKey>(KeyValuePair<TKey, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> kvp)
-		=> kvp.Value.genome;
-
-
 	protected void TryEmitConsole()
 	{
 	retry:
@@ -73,8 +67,8 @@ public class ConsoleEmitterBase<TGenome>
 				try
 				{
 					foreach (var g in d
-						.OrderBy(OrderByKey)
-						.GroupBy(OrderByGenome))
+						.OrderBy(kvp => kvp.Key)
+						.GroupBy(kvp => kvp.Value.genome))
 					{
 						OnEmittingGenome(g.Key, output);
 						foreach (var entry in g)
