@@ -95,6 +95,9 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 	readonly ConcurrentDictionary<string, ConcurrentQueue<string>> BitmapQueue
 		= new();
 
+	// Avoid extra allocations
+	static readonly Func<string, ConcurrentQueue<string>> ConcurrentQueueFactory = _ => new();
+
 	protected override void OnEmittingGenomeFitness(IProblem<Genome> p, Genome genome, int poolIndex, Fitness fitness)
 	{
 		base.OnEmittingGenomeFitness(p, genome, poolIndex, fitness);
@@ -112,8 +115,7 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		{
 		}
 
-		var queue = BitmapQueue
-			.GetOrAdd(suffix, _ => new ConcurrentQueue<string>());
+		var queue = BitmapQueue.GetOrAdd(suffix, ConcurrentQueueFactory);
 
 		try
 		{

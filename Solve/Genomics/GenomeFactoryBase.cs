@@ -244,8 +244,8 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			while (tries != 0 && genome is null)
 			{
 				var s = source;
-				using (TimeoutHandler.New(3000,
-					ms => Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms)))
+				void onTimeout(double ms) => Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms);
+				using (TimeoutHandler.New(3000,	onTimeout))
 				{
 					genome = MutateInternal(source);
 					var hash = genome?.Hash;
