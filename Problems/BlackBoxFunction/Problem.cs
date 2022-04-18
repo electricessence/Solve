@@ -76,7 +76,8 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		ushort sampleSize = 100,
 		ushort championPoolSize = 100,
 		params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
-		: base(fitnessTranslators, sampleSize, championPoolSize) => Samples = new SampleCache2(actualFormula, sampleSize);
+		: base(fitnessTranslators, sampleSize, championPoolSize)
+		=> Samples = new SampleCache2(actualFormula, sampleSize);
 
 	protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 	{

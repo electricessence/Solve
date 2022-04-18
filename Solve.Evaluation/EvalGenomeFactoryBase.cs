@@ -16,7 +16,7 @@ namespace Solve.Evaluation;
 
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<EvalGenome<T>>
-	where T : IComparable
+	where T : notnull, IComparable<T>, IComparable
 {
 	protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics) : base(metrics)
 	{ }
