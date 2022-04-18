@@ -26,7 +26,12 @@ public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 
 	internal GenomeFactoryMetrics(MetricsContextValueSource? context)
 	{
-		var counters = context?.Counters.ToImmutableDictionary(c => c.Name, c => c.Value) ?? ImmutableDictionary<string, CounterValue>.Empty;
+		static string GetName(CounterValueSource c) => c.Name;
+		static CounterValue GetValue(CounterValueSource c) => c.Value;
+
+		var counters = context?.Counters.ToImmutableDictionary(GetName, GetValue)
+			?? ImmutableDictionary<string, CounterValue>.Empty;
+
 		Timestamp = DateTime.Now;
 		var queueStates = ImmutableArray.CreateBuilder<QueueCount>();
 

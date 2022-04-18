@@ -49,7 +49,7 @@ class Runner : RunnerBase<Genome>
 
 	public void InitPreviousWinners() => Init(_emitter.Value.PreviousWinners);
 	public async ValueTask InitSeedsAsync() => Init(await Seeds().ToArrayAsync());
-	public void Init(params string[] seeds) => Init(seeds ?? Enumerable.Empty<string>());
+	public void Init(string seed, params string[] seeds) => Init(seed is null ? Enumerable.Empty<string>() : seeds.Prepend(seed));
 	public void Init(IEnumerable<string> seeds)
 	{
 		if (_init) throw new InvalidOperationException("Can only initialize once.");

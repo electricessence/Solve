@@ -3,6 +3,8 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -64,6 +66,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="App.Metrics" Version="4.3.0" />
+		<PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0" />
 		<PackageReference Include="Open.Arithmetic" Version="1.6.0" />
 		<PackageReference Include="Open.ChannelExtensions" Version="6.0.2" />
 		<PackageReference Include="Open.Cloneable" Version="1.1.2" />
