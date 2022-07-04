@@ -75,8 +75,8 @@ namespace Solve.ProcessingSchemes
 				=> ProcessSelection(fullBuffer, RankEntries(fullBuffer));
 
 			protected static (bool success, bool isFresh) UpdateFitnessesIfBetter(
-				in Span<double[]> registry,
-				in ReadOnlySpan<double> contending,
+				Span<double[]> registry,
+				ReadOnlySpan<double> contending,
 				int fitnessIndex)
 			{
 				ref var fRef = ref registry[fitnessIndex];

@@ -58,13 +58,13 @@ namespace Solve
 			=> FilterInternal(source, equalityComparer, scoreSelector);
 
 		public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
-			in ReadOnlySpan<T> source,
+			ReadOnlySpan<T> source,
 			IEqualityComparer<T> equalityComparer,
 			Func<T, ImmutableArray<double>> scoreSelector)
 			where T : notnull
 			=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
-		static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
+		static bool IsGreaterThanAll<T>(ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
 		{
 			var len = score.Length;
 			foreach (var (_, Score) in values)

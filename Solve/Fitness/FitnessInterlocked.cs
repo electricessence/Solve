@@ -36,7 +36,7 @@ namespace Solve
 			return sum;
 		}
 
-		public override ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
+		public override ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
 		{
 			ProcedureResults r;
 			ProcedureResults sum;

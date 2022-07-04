@@ -60,7 +60,7 @@ namespace Solve
 			return sum;
 		}
 
-		public virtual ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
+		public virtual ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
 		{
 			var r = _results;
 			var sum = r.Count == 0

@@ -23,7 +23,7 @@ namespace Solve.TriangularSelection
 		public static T RandomOne<T>(IReadOnlyList<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Count)];
 
-		public static T RandomOne<T>(in ReadOnlySpan<T> source)
+		public static T RandomOne<T>(ReadOnlySpan<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Length)];
 	}
 
@@ -36,7 +36,7 @@ namespace Solve.TriangularSelection
 		public static T RandomOne<T>(IReadOnlyList<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Count)];
 
-		public static T RandomOne<T>(in ReadOnlySpan<T> source)
+		public static T RandomOne<T>(ReadOnlySpan<T> source)
 			=> source[GetRandomTriangularFavoredIndex(source.Length)];
 	}
 

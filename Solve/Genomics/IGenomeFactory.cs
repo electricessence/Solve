@@ -98,7 +98,7 @@ namespace Solve
 		}
 
 		// Random matchmaking...  It's possible to include repeats in the source to improve their chances. Possile O(n!) operaion.
-		public TGenome[] AttemptNewCrossover(in ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3)
+		public TGenome[] AttemptNewCrossover(ReadOnlySpan<TGenome> source, byte maxAttemptsPerCombination = 3)
 		{
 			var len = source.Length;
 			if (len == 2 && source[0] != source[1])
