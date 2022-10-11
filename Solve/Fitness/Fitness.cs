@@ -14,7 +14,7 @@ namespace Solve;
 [DebuggerDisplay("{this.ToString()}")]
 public class Fitness : IComparable<Fitness>
 {
-	public Fitness(in ImmutableArray<Metric> metrics, ProcedureResults results)
+	public Fitness(ImmutableArray<Metric> metrics, ProcedureResults results)
 	{
 		var len = results.Sum.Length;
 		Debug.Assert(len == 0 || len == metrics.Length);
@@ -22,15 +22,15 @@ public class Fitness : IComparable<Fitness>
 		_results = results ?? throw new ArgumentNullException(nameof(results));
 	}
 
-	public Fitness(in ImmutableArray<Metric> metrics, params double[] values)
-		: this(in metrics,
+	public Fitness(ImmutableArray<Metric> metrics, params double[] values)
+		: this(metrics,
 			  (values is null || values.Length == 0)
 			  ? ProcedureResults.Empty
-			  : new ProcedureResults(values, 1))
+			  : new ProcedureResults(values.AsSpan(), 1))
 	{ }
 
-	public Fitness(in ImmutableArray<Metric> metrics, in ImmutableArray<double> values)
-		: this(in metrics,
+	public Fitness(ImmutableArray<Metric> metrics, ImmutableArray<double> values)
+		: this(metrics,
 			  values.IsDefaultOrEmpty
 			  ? ProcedureResults.Empty
 			  : new ProcedureResults(values, 1))
@@ -60,17 +60,17 @@ public class Fitness : IComparable<Fitness>
 		return sum;
 	}
 
-	public virtual ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
+	public virtual ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
 	{
 		var r = _results;
 		var sum = r.Count == 0
-			? new ProcedureResults(in other, count)
-			: r.Add(in other, count);
+			? new ProcedureResults(other, count)
+			: r.Add(other, count);
 		_results = sum;
 		return sum;
 	}
 
-	public virtual ProcedureResults Merge(in ImmutableArray<double> other, int count = 1)
+	public virtual ProcedureResults Merge(ImmutableArray<double> other, int count = 1)
 	{
 		var r = _results;
 		var sum = r.Count == 0

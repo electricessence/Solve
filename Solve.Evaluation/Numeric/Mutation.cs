@@ -40,7 +40,7 @@ public partial class NumericEvalGenomeFactory
 			switch (gv)
 			{
 				case Constant<double> c:
-					switch (Randomizer.Random.Next(11))
+					switch (Random.Shared.Next(11))
 					{
 						case 0:
 							// This is a bit controversial since it can bloat constant values.
@@ -115,7 +115,7 @@ public partial class NumericEvalGenomeFactory
 
 								//// Split it...
 								//case 3:
-								//	if (Randomizer.Random.Next(0, 2) == 0)
+								//	if (Random.Shared.Next(0, 2) == 0)
 								//		return (Catalog.Mutation.Square(gene),
 								//			"Square parameter");
 
@@ -162,11 +162,11 @@ public partial class NumericEvalGenomeFactory
 
 								case 3:
 									// Reduce the pollution of functions...
-									if (Randomizer.Random.Next(0, gv is IOperator ? 2 : 4) == 0)
+									if (Random.Shared.Next(0, gv is IOperator ? 2 : 4) == 0)
 									{
 										//var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
 										//// Function of function? Reduce probability even further. Coin toss.
-										//if (f.GetType() != gene.GetType() || Randomizer.Random.Next(2) == 0)
+										//if (f.GetType() != gene.GetType() || Random.Shared.Next(2) == 0)
 										var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
 										Debug.Assert(f is not null);
 										return (f,
@@ -196,7 +196,7 @@ public partial class NumericEvalGenomeFactory
 
 								case 7:
 									// This has a potential to really bloat the function so allow, but very sparingly.
-									if (Randomizer.Random.Next(0, 3) == 0)
+									if (Random.Shared.Next(0, 3) == 0)
 									{
 										return (Catalog.Mutation.Square(gene),
 											"Square function");

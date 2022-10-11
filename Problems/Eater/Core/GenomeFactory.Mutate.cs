@@ -12,7 +12,7 @@ public partial class GenomeFactory
 
 	private IEnumerable<Step> MutateCore(IReadOnlyList<Step> genes)
 	{
-		var rand = Randomizer.Random;
+		var rand = System.Random.Shared;
 		var length = genes.Count;
 		var index = rand.Next(length);
 		var segments = genes.SpliceAt(index);

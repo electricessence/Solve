@@ -19,10 +19,10 @@ public enum Step : byte
 	TurnLeft
 }
 
-public struct StepCount : IEnumerable<Step>
+public readonly struct StepCount : IEnumerable<Step>
 {
-	public Step Step;
-	public int Count;
+	public readonly Step Step;
+	public readonly int Count;
 
 	public StepCount(Step step = Step.Forward, int count = 1)
 	{
@@ -75,28 +75,26 @@ public static class StepExtensions
 		var len = s.Count;
 		if (len == 0) yield break;
 
-		var last = new StepCount()
-		{
-			Step = s[0],
-			Count = 1
-		};
+		var lastStep = s[0];
+		var lastCount = 1;
 
 		for (var i = 1; i < len; i++)
 		{
 			var step = s[i];
-			if (step == last.Step)
+			if (step == lastStep)
 			{
-				last.Count++;
+				lastCount++;
 			}
 			else
 			{
-				yield return last;
+				yield return new StepCount(lastStep, lastCount);
 
-				last = new StepCount(step, 1);
+				lastStep = step;
+				lastCount = 1;
 			}
 		}
 
-		yield return last;
+		yield return new StepCount(lastStep, lastCount);
 	}
 
 	public static string ToGenomeHash(this IEnumerable<Step> steps)

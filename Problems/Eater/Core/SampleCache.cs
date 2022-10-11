@@ -10,7 +10,7 @@ namespace Eater;
 
 public sealed class SampleCache
 {
-	public struct Entry
+	public readonly struct Entry
 	{
 		public readonly Point EaterStart;
 		public readonly Point Food;
@@ -37,7 +37,7 @@ public sealed class SampleCache
 		Boundary = new Size(gridSize, gridSize);
 
 		_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
-		SeedOffset = Randomizer.Random.Next(int.MaxValue / 2); // Get a random seed based on time.
+		SeedOffset = Random.Shared.Next(int.MaxValue / 2); // Get a random seed based on time.
 	}
 
 	public IEnumerable<Point> GenerateXY()

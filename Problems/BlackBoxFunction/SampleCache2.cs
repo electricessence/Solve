@@ -41,8 +41,8 @@ public sealed class SampleCache2
 
 	public ImmutableArray<double> GetRandomLinearInput()
 	{
-		var start = Range * Randomizer.Random.NextDouble();
-		var end = Range * Randomizer.Random.NextDouble();
+		var start = Range * Random.Shared.NextDouble();
+		var end = Range * Random.Shared.NextDouble();
 		var delta = end - start;
 		var last = SampleSize - 1;
 

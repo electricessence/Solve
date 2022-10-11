@@ -10,7 +10,7 @@ using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console;
 
-public abstract class RunnerBase<TGenome>
+public abstract class RunnerBase<TGenome> : DisposableBase
 	where TGenome : class, IGenome
 {
 	IMetricsRoot Metrics;
@@ -132,6 +132,7 @@ public abstract class RunnerBase<TGenome>
 
 	public IProvideMetricValues MetricsSnapshot => Metrics.Snapshot;
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "Not necessary")]
 	protected virtual void EmitStats(Cursor cursor)
 	{
 		SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
@@ -170,4 +171,5 @@ public abstract class RunnerBase<TGenome>
 	}
 
 	protected virtual void OnComplete() => _statusEmitter.Dispose();//SystemConsole.WriteLine();//SystemConsole.WriteLine("Press any key to continue.");//SystemConsole.ReadKey();
+	protected override void OnDispose() => _statusEmitter.Dispose();
 }

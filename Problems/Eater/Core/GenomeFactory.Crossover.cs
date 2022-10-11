@@ -13,7 +13,7 @@ public partial class GenomeFactory
 		var bLen = b.Genes.Length;
 		if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return Array.Empty<Genome>();
 
-		var rand = Randomizer.Random;
+		var rand = System.Random.Shared;
 		var aPoint = rand.Next(aLen - 1) + 1;
 		var bPoint = rand.Next(bLen - 1) + 1;
 

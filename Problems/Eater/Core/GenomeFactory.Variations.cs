@@ -94,7 +94,7 @@ public partial class GenomeFactory
 				string.Concat(
 					hash.AsSpan(0, match.Index),
 					match.Value.Replace("^", string.Empty),
-					hash[(match.Index + match.Length)..]));
+					hash.AsSpan(match.Index + match.Length)));
 		}
 	}
 

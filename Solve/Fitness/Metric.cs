@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 
 namespace Solve;
 
-public struct Metric
+public readonly struct Metric
 {
 	public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity, double tolerance = double.NaN)
 	{

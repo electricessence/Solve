@@ -14,7 +14,7 @@ public static class Ascending
 			throw new ArgumentOutOfRangeException(nameof(length), length, $"Exceeds maximum Int32 value of {Triangular.MaxInt32}.");
 
 		var possibilities = (int)Triangular.Forward(length);
-		var selected = Randomizer.Random.Next(possibilities);
+		var selected = Random.Shared.Next(possibilities);
 		var r = Triangular.Reverse(selected);
 		Debug.Assert(r < length);
 		return r;

@@ -65,7 +65,7 @@ public sealed class SampleCache
 	{
 		while (true)
 		{
-			yield return (Randomizer.Random.NextDouble() - 0.5) * Range;
+			yield return (Random.Shared.NextDouble() - 0.5) * Range;
 		}
 	}
 
@@ -77,7 +77,7 @@ public sealed class SampleCache
 	{
 		var range = Range * Range;
 		var halfRange = range / 2;
-		var value = (range - halfRange) * Randomizer.Random.NextDouble();
+		var value = (range - halfRange) * Random.Shared.NextDouble();
 		foreach (var delta in deltas)
 		{
 			yield return value;

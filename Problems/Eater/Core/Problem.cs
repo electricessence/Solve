@@ -41,7 +41,7 @@ public class Problem : ProblemBase<Genome>
 			};
 		}
 
-		return new Fitness(in metrics, result.MoveToImmutable());
+		return new Fitness(metrics, result.MoveToImmutable());
 	}
 
 	protected static readonly ImmutableArray<Metric> MetricsPrimary
@@ -89,7 +89,7 @@ public class Problem : ProblemBase<Genome>
 			};
 		}
 
-		return new Fitness(in metrics, result.MoveToImmutable());
+		return new Fitness(metrics, result.MoveToImmutable());
 	}
 
 	protected static Fitness Fitness02(Genome genome, double[] metrics)

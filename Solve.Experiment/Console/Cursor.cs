@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace Solve.Experiment.Console;
 
 [DebuggerDisplay("{Left}, {Top}")]
-public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
+public readonly record struct Cursor : IComparable<Cursor>
 {
 	public static readonly object Sync = new();
 
@@ -14,8 +14,8 @@ public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
 		Top = top;
 	}
 
-	public readonly int Left;
-	public readonly int Top;
+	public int Left { get; }
+	public int Top { get; }
 
 	public static Cursor Current
 	{
@@ -37,8 +37,6 @@ public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
 		 : Left > other.Left ? +1
 		 : 0;
 
-	public bool Equals(Cursor other) => CompareTo(other) == 0;
-
 	public static bool operator >(Cursor a, Cursor b) => a.CompareTo(b) == 1;
 
 	public static bool operator <(Cursor a, Cursor b) => a.CompareTo(b) == -1;
@@ -46,12 +44,4 @@ public struct Cursor : IComparable<Cursor>, IEquatable<Cursor>
 	public static bool operator >=(Cursor a, Cursor b) => a.CompareTo(b) >= 0;
 
 	public static bool operator <=(Cursor a, Cursor b) => a.CompareTo(b) <= 0;
-
-	public override bool Equals(object obj) => obj is Cursor c && Equals(c);
-
-	public override int GetHashCode() => HashCode.Combine(Left, Top);
-
-	public static bool operator ==(Cursor left, Cursor right) => left.Equals(right);
-
-	public static bool operator !=(Cursor left, Cursor right) => !(left == right);
 }

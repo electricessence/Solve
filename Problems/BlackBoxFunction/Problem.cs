@@ -140,7 +140,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 
 		var dcCorrelation = correct_dc.Correlation(dc);
 
-		var c = correct.AsSpan().Slice(0, SampleSizeInt).Correlation(calc.AsSpan().Slice(0, SampleSizeInt));
+		var c = correct.AsSpan(0, SampleSizeInt).Correlation(calc.AsSpan(0, SampleSizeInt));
 		if (c > 1) c = 1; // Must clamp double precision insanity.
 		else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 

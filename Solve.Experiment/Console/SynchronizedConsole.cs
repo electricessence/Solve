@@ -44,7 +44,7 @@ public static class SynchronizedConsole
 			var start = Cursor.Current;
 			try
 			{
-				if (message is not null && start.Equals(message.End))
+				if (start.Equals(message.End))
 				{
 					message.Begin.MoveTo();
 					action(start = Cursor.Current);
@@ -75,7 +75,7 @@ public static class SynchronizedConsole
 				throw;
 			}
 
-			message = new CursorRange(in start, Cursor.Current);
+			message = new CursorRange(start, Cursor.Current);
 		}
 	}
 

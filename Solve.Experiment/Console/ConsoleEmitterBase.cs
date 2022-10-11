@@ -12,8 +12,8 @@ namespace Solve.Experiment.Console;
 public class ConsoleEmitterBase<TGenome>
 	where TGenome : class, IGenome
 {
-	public readonly AsyncFileWriter LogFile;
-	public readonly uint SampleMinimum;
+	public AsyncFileWriter LogFile { get; }
+	public uint SampleMinimum { get; }
 
 	// ReSharper disable once MemberCanBeProtected.Global
 	public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
@@ -22,8 +22,8 @@ public class ConsoleEmitterBase<TGenome>
 		SampleMinimum = sampleMinimum;
 	}
 
-	public CursorRange LastTopGenomeUpdate;
-
+	private CursorRange _lastTopGenomeUpdate;
+	public CursorRange LastTopGenomeUpdate => _lastTopGenomeUpdate;
 	protected const string BLANK = "           ";
 
 	readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue = new();
@@ -79,7 +79,7 @@ public class ConsoleEmitterBase<TGenome>
 					}
 
 					output.AppendLine();
-					SynchronizedConsole.Write(ref LastTopGenomeUpdate,
+					SynchronizedConsole.Write(ref _lastTopGenomeUpdate,
 						_ => System.Console.Write(output.ToString()));
 				}
 				finally
@@ -103,6 +103,6 @@ public class ConsoleEmitterBase<TGenome>
 	protected virtual void OnEmittingGenomeFitness(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 		=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.ToStringBuilder(',')},");
 
-	public static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
+	static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
 		=> $"{problem.ID}.{poolIndex}:\t{fitness}";
 }

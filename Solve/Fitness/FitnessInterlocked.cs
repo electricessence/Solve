@@ -7,14 +7,14 @@ namespace Solve;
 
 public class FitnessInterlocked : Fitness
 {
-	public FitnessInterlocked(in ImmutableArray<Metric> metrics)
-		: base(in metrics) { }
+	public FitnessInterlocked(ImmutableArray<Metric> metrics)
+		: base(metrics) { }
 
-	public FitnessInterlocked(in ImmutableArray<Metric> metrics, ProcedureResults results)
-		: base(in metrics, results) { }
+	public FitnessInterlocked(ImmutableArray<Metric> metrics, ProcedureResults results)
+		: base(metrics, results) { }
 
-	public FitnessInterlocked(in ImmutableArray<Metric> metrics, params double[] values)
-		: base(in metrics, new ProcedureResults(values, 1)) { }
+	public FitnessInterlocked(ImmutableArray<Metric> metrics, params double[] values)
+		: base(metrics, new ProcedureResults(values.AsSpan(), 1)) { }
 
 	public override ProcedureResults Merge(ProcedureResults other)
 	{
@@ -29,7 +29,7 @@ public class FitnessInterlocked : Fitness
 		return sum;
 	}
 
-	public override ProcedureResults Merge(in ReadOnlySpan<double> other, int count = 1)
+	public override ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
 	{
 		ProcedureResults r;
 		ProcedureResults sum;
@@ -37,8 +37,8 @@ public class FitnessInterlocked : Fitness
 		{
 			r = _results;
 			sum = r.Count == 0
-				? new ProcedureResults(in other, count)
-				: r.Add(in other, count);
+				? new ProcedureResults(other, count)
+				: r.Add(other, count);
 		}
 		while (r != Interlocked.CompareExchange(ref _results, sum, r));
 		return sum;
