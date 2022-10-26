@@ -15,7 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Open.DateTime.Extensions" Version="1.1.1" />
     <PackageReference Include="Open.Threading.AsyncFileWriter" Version="1.0.1" />
-    <PackageReference Include="System.Drawing.Common" Version="4.5.0" />
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
     <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
   </ItemGroup>
 
