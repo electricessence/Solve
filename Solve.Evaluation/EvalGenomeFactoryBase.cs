@@ -23,6 +23,12 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 
 	public readonly EvaluationCatalog<T> Catalog = new();
 
+	protected override void OnDispose()
+	{
+		base.OnDispose();
+		Catalog.Dispose();
+	}
+
 	#region ParamOnly
 
 	private readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = [];

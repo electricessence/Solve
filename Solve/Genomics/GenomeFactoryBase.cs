@@ -6,6 +6,7 @@
 using App.Metrics.Counter;
 using Open.Collections;
 using Open.Collections.Synchronized;
+using Open.Disposable;
 using Open.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -15,7 +16,7 @@ using System.Runtime.CompilerServices;
 
 namespace Solve;
 
-public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
+public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactory<TGenome>
 	where TGenome : class, IGenome
 {
 	private readonly GenomeFactoryMetrics.Logger Metrics;
@@ -45,6 +46,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = [];
 
 	//protected readonly ConcurrentQueue<string> RegistryOrder;
+
+	protected override void OnDispose()
+	{
+		Registry.Clear();
+		PreviouslyProduced.Clear();
+	}
 
 	protected static void AssertFrozen(TGenome genome)
 	{
@@ -154,7 +161,11 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 	public bool TryGenerateNew([NotNullWhen(true)] out TGenome? potentiallyNew, IReadOnlyList<TGenome>? source = null)
 	{
-		var factory = (IGenomeFactory<TGenome>)this;
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+		IGenomeFactory<TGenome> factory = this;
+#pragma warning restore CA1859 // Use concrete types when possible for improved performance
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 		using (TimeoutHandler.New(5000,
 			ms => Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms)))
 		{

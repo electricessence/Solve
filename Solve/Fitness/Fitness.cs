@@ -187,12 +187,7 @@ public class Fitness : IComparable<Fitness>
 		=> HashCode.Combine(Metrics, _results);
 
 	public static bool operator ==(Fitness left, Fitness right)
-	{
-		if (left is null)
-			return right is null;
-
-		return left.Equals(right);
-	}
+		=> left is null ? right is null : left.Equals(right);
 
 	public static bool operator !=(Fitness left, Fitness right)
 		=> !(left == right);
