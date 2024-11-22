@@ -3,9 +3,6 @@ using Open.Collections;
 using Open.Evaluation;
 using Open.Evaluation.Arithmetic;
 using Open.Evaluation.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 using EvaluationRegistry = Open.Evaluation.Registry;
 
@@ -42,13 +39,13 @@ public partial class NumericEvalGenomeFactory : EvalGenomeFactoryBase<double>
 				"Must have at least 2 parameter count.");
 		}
 
-		var operators = EvaluationRegistry.Arithmetic.Operators;
+		System.Collections.Immutable.ImmutableArray<char> operators = EvaluationRegistry.Arithmetic.Operators;
 
 		return UShortRange(0, paramCount)
 			.Combinations(paramCount)
 			.SelectMany(combination =>
 			{
-				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
+				Parameter[] children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
 				return operators.Select(op =>
 					Registration(
 						EvaluationRegistry.Arithmetic.GetOperator(Catalog, op, children),
@@ -60,10 +57,9 @@ public partial class NumericEvalGenomeFactory : EvalGenomeFactoryBase<double>
 	#region Functions
 	protected override IEnumerable<EvalGenome<double>> GenerateFunctioned(ushort id)
 	{
-		var p = Catalog.GetParameter(id);
-		foreach (var op in EvaluationRegistry.Arithmetic.Functions)
+		Parameter p = Catalog.GetParameter(id);
+		foreach (char op in EvaluationRegistry.Arithmetic.Functions)
 		{
-			// ReSharper disable once SwitchStatementMissingSomeCases
 			switch (op)
 			{
 				case Exponent.SYMBOL:

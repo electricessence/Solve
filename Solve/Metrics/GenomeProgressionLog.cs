@@ -1,13 +1,12 @@
 ﻿using Open.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 
 namespace Solve.Metrics;
 
 public class GenomeProgressionLog
 {
-	readonly ConcurrentHashSet<string> _dead = new();
-	readonly ConcurrentDictionary<string, GenomeHistory> _log = new();
+	private readonly ConcurrentHashSet<string> _dead = [];
+	private readonly ConcurrentDictionary<string, GenomeHistory> _log = new();
 
 	public GenomeHistory this[string hash] => _log.GetOrAdd(hash, key => new GenomeHistory(key));
 
@@ -19,7 +18,7 @@ public class GenomeProgressionLog
 	{
 		get
 		{
-			foreach (var h in _log.Values)
+			foreach (GenomeHistory h in _log.Values)
 			{
 				if (_dead.Contains(h.Hash)) continue;
 				yield return h;

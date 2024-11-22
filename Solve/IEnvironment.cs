@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Solve;
+﻿namespace Solve;
 
 public interface IEnvironment<TGenome>
 	: IObservable<(TGenome Genome, Fitness, IProblem<TGenome> Problem, int PoolIndex)>
@@ -13,10 +10,9 @@ public interface IEnvironment<TGenome>
 
 	public void AddProblems(IEnumerable<IProblem<TGenome>> problems)
 	{
-		if (problems is null)
-			throw new ArgumentNullException(nameof(problems));
+		ArgumentNullException.ThrowIfNull(problems);
 
-		foreach (var problem in problems)
+		foreach (IProblem<TGenome> problem in problems)
 			AddProblem(problem);
 	}
 

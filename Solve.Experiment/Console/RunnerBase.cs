@@ -2,10 +2,7 @@
 using Open.DateTimeExtensions;
 using Open.Disposable;
 using Open.Threading.Tasks;
-using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console;
@@ -13,17 +10,17 @@ namespace Solve.Experiment.Console;
 public abstract class RunnerBase<TGenome> : DisposableBase
 	where TGenome : class, IGenome
 {
-	IMetricsRoot Metrics;
+	private IMetricsRoot Metrics;
 
 	// ReSharper disable once StaticMemberInGenericType
-	static readonly TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
+	private static readonly TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
 
 	// ReSharper disable once NotAccessedField.Local
-	readonly ushort _minConvergenceSamples;
-	readonly Stopwatch _stopwatch;
-	EnvironmentBase<TGenome> Environment;
-	ConsoleEmitterBase<TGenome> Emitter;
-	CursorRange _lastConsoleStats;
+	private readonly ushort _minConvergenceSamples;
+	private readonly Stopwatch _stopwatch;
+	private EnvironmentBase<TGenome> Environment;
+	private ConsoleEmitterBase<TGenome> Emitter;
+	private CursorRange _lastConsoleStats;
 
 	protected RunnerBase(ushort minConvergenceSamples = 20)
 	{
@@ -48,8 +45,9 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 		OnInit();
 	}
 
-	void EmitStatsAction() => EmitStatsAction(true);
-	void EmitStatsAction(in bool restartEmitter)
+	private void EmitStatsAction() => EmitStatsAction(true);
+
+	private void EmitStatsAction(in bool restartEmitter)
 	{
 		//_lastEmit = DateTime.Now;
 		SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
@@ -62,7 +60,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	public void Cancel()
 		=> Environment.Cancel();
 
-	readonly ActionRunner _statusEmitter;
+	private readonly ActionRunner _statusEmitter;
 
 	//DateTime _lastEmit = DateTime.MinValue;
 
@@ -92,7 +90,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 		Environment
 			.Subscribe(o =>
 				{
-					var problem = o.Problem;
+					IProblem<TGenome> problem = o.Problem;
 					Emitter.EmitTopGenomeStats(o);
 
 					if (!problem.HasConverged && problem.Pools.All(pool => pool.BestFitness.Fitness?.HasConverged(_minConvergenceSamples) ?? false))
@@ -109,9 +107,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 				});
 
 		_stopwatch.Start();
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-		_statusEmitter.Defer(StatusDelay).ConfigureAwait(false);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+		_statusEmitter.Defer(StatusDelay);
 
 		try
 		{
@@ -132,13 +128,12 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 
 	public IProvideMetricValues MetricsSnapshot => Metrics.Snapshot;
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "Not necessary")]
 	protected virtual void EmitStats(Cursor cursor)
 	{
 		SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
-		foreach (var p in Environment.Problems)
+		foreach (IProblem<TGenome> p in Environment.Problems)
 		{
-			var tc = p.TestCount;
+			long tc = p.TestCount;
 			if (tc != 0)
 			{
 				SystemConsole.WriteLine("{0}:\t{1:n0} tests, {2:n0} ticks average                        ", p.ID, tc, _stopwatch.ElapsedTicks / tc);
@@ -149,7 +144,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 
 #if DEBUG
 		if (Metrics is null) return;
-		var snapshot = Metrics.Snapshot.Get();
+		MetricsDataValueSource snapshot = Metrics.Snapshot.Get();
 		Debug.Write(StringBuilderPool.RentToString(sb =>
 		{
 			sb.AppendLine("\n==============================================================");
@@ -157,9 +152,9 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 			sb.Append(snapshot.Timestamp).AppendLine();
 			sb.AppendLine("--------------------------------------------------------------");
 
-			foreach (var context in snapshot.Contexts)
+			foreach (MetricsContextValueSource? context in snapshot.Contexts)
 			{
-				foreach (var counter in context.Counters)
+				foreach (App.Metrics.Counter.CounterValueSource? counter in context.Counters)
 				{
 					sb.Append(counter.Name).AppendLine(":");
 					sb.Append(counter.Value.Count).AppendLine();

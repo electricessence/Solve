@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading;
-
-namespace Solve;
+﻿namespace Solve;
 
 public abstract class FreezableBase : IFreezable
 {
-	int _frozenState;
+	private int _frozenState;
 	public bool IsFrozen => _frozenState == 1;
 
 	// It's concevable that mutliple threads could 're-attempt' to freeze a object 'in the wild'.

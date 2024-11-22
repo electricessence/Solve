@@ -1,39 +1,28 @@
 ﻿using Open.Disposable;
 using Open.Text;
 using Open.Threading;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Solve.Experiment.Console;
 
-public class ConsoleEmitterBase<TGenome>
+public class ConsoleEmitterBase<TGenome>(uint sampleMinimum = 50, string? logFilePath = null)
 	where TGenome : class, IGenome
 {
-	public AsyncFileWriter LogFile { get; }
-	public uint SampleMinimum { get; }
-
-	// ReSharper disable once MemberCanBeProtected.Global
-	public ConsoleEmitterBase(uint sampleMinimum = 50, string logFilePath = null)
-	{
-		LogFile = logFilePath is null ? null : new AsyncFileWriter(logFilePath, 1000);
-		SampleMinimum = sampleMinimum;
-	}
+	public AsyncFileWriter? LogFile { get; } = logFilePath is null ? null : new AsyncFileWriter(logFilePath, 1000);
+	public uint SampleMinimum { get; } = sampleMinimum;
 
 	private CursorRange _lastTopGenomeUpdate;
 	public CursorRange LastTopGenomeUpdate => _lastTopGenomeUpdate;
 	protected const string BLANK = "           ";
-
-	readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue = new();
+	private readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue = new();
 
 	public void EmitTopGenomeStats((TGenome Genome, Fitness, IProblem<TGenome> Problem, int PoolIndex) update)
 	{
 		// Note: it's possible to see levels (sample count) 'skipped' as some genomes are pushed to the top before being selected.
-		var (genome, fitness, problem, poolIndex) = update;
-		var f = fitness.Clone();
-		var pool = problem.Pools[poolIndex];
+		(TGenome genome, Fitness fitness, IProblem<TGenome> problem, int poolIndex) = update;
+		Fitness f = fitness.Clone();
+		IProblemPool<TGenome> pool = problem.Pools[poolIndex];
 		if (f.SampleCount >= SampleMinimum && pool.UpdateBestFitness(genome, f))
 		{
 			ConsoleQueue.Enqueue((problem, genome, poolIndex, f));
@@ -46,34 +35,34 @@ public class ConsoleEmitterBase<TGenome>
 	protected void TryEmitConsole()
 	{
 	retry:
-		var locked = ThreadSafety.TryLock(SynchronizedConsole.Sync, () =>
+		bool locked = ThreadSafety.TryLock(SynchronizedConsole.Sync, () =>
 		{
-			using var dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Rent();
-			var d = dR.Item;
-			using var lease = StringBuilderPool.Rent();
-			var output = lease.Item;
+			using RecycleHelper<Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>> dR = DictionaryPool<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>.Rent();
+			Dictionary<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> d = dR.Item;
+			using RecycleHelper<StringBuilder> lease = StringBuilderPool.Rent();
+			StringBuilder output = lease.Item;
 
-			while (ConsoleQueue.TryDequeue(out var o1))
+			while (ConsoleQueue.TryDequeue(out (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness) o1))
 			{
 				{
 					d[$"{o1.problem.ID}.{o1.poolIndex}"] = o1;
 				}
 
-				while (ConsoleQueue.TryDequeue(out var o2))
+				while (ConsoleQueue.TryDequeue(out (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness) o2))
 				{
 					d[$"{o2.problem.ID}.{o2.poolIndex}"] = o2;
 				}
 
 				try
 				{
-					foreach (var g in d
+					foreach (IGrouping<TGenome, KeyValuePair<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)>> g in d
 						.OrderBy(kvp => kvp.Key)
 						.GroupBy(kvp => kvp.Value.genome))
 					{
 						OnEmittingGenome(g.Key, output);
-						foreach (var entry in g)
+						foreach (KeyValuePair<string, (IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> entry in g)
 						{
-							var (problem, _, poolIndex, fitness) = entry.Value;
+							(IProblem<TGenome> problem, TGenome _, int poolIndex, Fitness fitness) = entry.Value;
 							output.AppendLine(FitnessScoreWithLabels(problem, poolIndex, fitness));
 						}
 					}
@@ -103,6 +92,6 @@ public class ConsoleEmitterBase<TGenome>
 	protected virtual void OnEmittingGenomeFitness(IProblem<TGenome> p, TGenome genome, int poolIndex, Fitness fitness)
 		=> LogFile?.AddLine($"{DateTime.Now},{p.ID}.{poolIndex},{p.TestCount},{fitness.Results.Average.ToStringBuilder(',')},");
 
-	static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
+	private static string FitnessScoreWithLabels(IProblem<TGenome> problem, int poolIndex, Fitness fitness)
 		=> $"{problem.ID}.{poolIndex}:\t{fitness}";
 }

@@ -1,12 +1,7 @@
 ﻿using Open.Memory;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve;
 
@@ -31,7 +26,7 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 		public RankedPool<TGenome> Champions { get; }
 
-		class GF
+		private class GF
 		{
 			public GF(TGenome genome, Fitness fitness)
 			{
@@ -49,16 +44,16 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 				=> (gf is null ? default! : gf.Genome, gf?.Fitness);
 		}
 
-		GF? _bestFitness;
+		private GF? _bestFitness;
 		public (TGenome Genome, Fitness? Fitness) BestFitness => _bestFitness;
 
 		public bool UpdateBestFitness(TGenome genome, Fitness fitness)
 		{
 			if (genome is null) throw new ArgumentNullException(nameof(genome));
-			if (fitness is null) throw new ArgumentNullException(nameof(fitness));
+			ArgumentNullException.ThrowIfNull(fitness);
 			Contract.EndContractBlock();
 
-			var f = fitness.Clone();
+			Fitness f = fitness.Clone();
 
 			GF? contending = null;
 			GF? defending;
@@ -76,12 +71,12 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 	}
 
 	// ReSharper disable once StaticMemberInGenericType
-	static int ProblemCount;
+	private static int ProblemCount;
 	public int ID { get; } = Interlocked.Increment(ref ProblemCount);
 
 	public IReadOnlyList<IProblemPool<TGenome>> Pools { get; }
 
-	long _testCount;
+	private long _testCount;
 	public long TestCount => _testCount;
 
 	// ReSharper disable once MemberCanBeProtected.Global
@@ -101,7 +96,7 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 		SampleSize = sampleSize;
 		SampleSizeInt = sampleSize;
-		var c = championPoolSize;
+		ushort c = championPoolSize;
 		Pools = fitnessTransators?.Select(t => new Pool(c, t.Metrics, t.Transform)).ToList().AsReadOnly()
 			?? throw new ArgumentNullException(nameof(fitnessTransators));
 	}
@@ -116,7 +111,7 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 	public IEnumerable<Fitness> ProcessSample(TGenome g, long sampleId)
 	{
-		var metrics = ProcessSampleMetrics(g, sampleId);
+		double[] metrics = ProcessSampleMetrics(g, sampleId);
 		Interlocked.Increment(ref _testCount);
 		return Pools.Select(p => p.Transform(g, metrics));
 	}
@@ -130,7 +125,7 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 	public async ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 	{
-		var metrics = await ProcessSampleMetricsAsync(g, sampleId).ConfigureAwait(false);
+		double[] metrics = await ProcessSampleMetricsAsync(g, sampleId).ConfigureAwait(false);
 		Interlocked.Increment(ref _testCount);
 		return Pools.Select(p => p.Transform(g, metrics));
 	}

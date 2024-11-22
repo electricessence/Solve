@@ -1,10 +1,5 @@
 ﻿using Solve.Metrics;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes;
 
@@ -27,15 +22,15 @@ public partial class TowerScheme<TGenome> : TowerSchemeBase<TGenome>
 	{
 	}
 
-	IEnumerable<ProblemTower>? ActiveTowers;
+	private IEnumerable<ProblemTower>? ActiveTowers;
 
 	protected async ValueTask<int> PostAsync(TGenome genome)
 	{
-		if (genome is null) throw new ArgumentNullException(nameof(genome));
+		ArgumentNullException.ThrowIfNull(genome);
 		Contract.EndContractBlock();
 
-		var count = 0;
-		foreach (var t in ActiveTowers!)
+		int count = 0;
+		foreach (ProblemTower t in ActiveTowers!)
 		{
 			await t.PostAsync(genome).ConfigureAwait(false);
 			++count;
@@ -47,7 +42,7 @@ public partial class TowerScheme<TGenome> : TowerSchemeBase<TGenome>
 	protected override async Task StartInternal(CancellationToken token)
 	{
 		var towers = Problems.Select(p => new ProblemTower(Config, p, Factory)).ToList();
-		foreach (var tower in towers) tower.Subscribe(Broadcast);
+		foreach (ProblemTower? tower in towers) tower.Subscribe(Broadcast);
 		ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
 
 	retry:
@@ -59,7 +54,7 @@ public partial class TowerScheme<TGenome> : TowerSchemeBase<TGenome>
 		if (genome is null) return;
 
 		GenomeProgress?[genome.Hash].Add(GenomeEvent.EventType.Born);
-		if (await PostAsync(genome) == 0) return;
+		if (await PostAsync(genome).ConfigureAwait(false) == 0) return;
 
 		goto retry;
 	}

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 
 namespace Solve.Metrics;
 
 public class GenomeHistory : IEnumerable<GenomeEvent>
 {
-	readonly SortedDictionary<long, GenomeEvent> _events = new();
+	private readonly SortedDictionary<long, GenomeEvent> _events = [];
 
 	public GenomeHistory(string hash)
 	{

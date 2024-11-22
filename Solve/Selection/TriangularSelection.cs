@@ -1,7 +1,4 @@
 ﻿using Open.Arithmetic;
-using Open.RandomizationExtensions;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Solve.TriangularSelection;
@@ -13,9 +10,9 @@ public static class Ascending
 		if (length > Triangular.MaxInt32)
 			throw new ArgumentOutOfRangeException(nameof(length), length, $"Exceeds maximum Int32 value of {Triangular.MaxInt32}.");
 
-		var possibilities = (int)Triangular.Forward(length);
-		var selected = Random.Shared.Next(possibilities);
-		var r = Triangular.Reverse(selected);
+		int possibilities = (int)Triangular.Forward(length);
+		int selected = Random.Shared.Next(possibilities);
+		int r = Triangular.Reverse(selected);
 		Debug.Assert(r < length);
 		return r;
 	}

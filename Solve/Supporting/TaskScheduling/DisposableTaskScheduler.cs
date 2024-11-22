@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.Contracts;
 
 namespace Solve.Supporting.TaskScheduling;
 
@@ -9,8 +6,7 @@ public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 {
 	/// <summary>Cancellation token used for disposal.</summary>
 	protected readonly CancellationTokenSource DisposeCancellation = new();
-
-	int _wasDisposed = 0;
+	private int _wasDisposed;
 
 	protected virtual void OnDispose() { }
 
@@ -35,7 +31,7 @@ public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 	/// <inheritdoc />
 	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
 	{
-		if (task is null) throw new ArgumentNullException(nameof(task));
+		ArgumentNullException.ThrowIfNull(task);
 		Contract.EndContractBlock();
 
 		return !DisposeCancellation.Token.IsCancellationRequested

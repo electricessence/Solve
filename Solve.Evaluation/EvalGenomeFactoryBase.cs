@@ -5,12 +5,9 @@ using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.RandomizationExtensions;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace Solve.Evaluation;
 
@@ -28,7 +25,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 
 	#region ParamOnly
 
-	readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = new();
+	private readonly LockSynchronizedHashSet<int> ParamsOnlyAttempted = [];
 
 	protected EvalGenome<T> GenerateParamOnly(ushort id)
 		=> Registration(Catalog.GetParameter(id), "GenerateParamOnly");
@@ -39,12 +36,12 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 
 	protected static IEnumerable<ushort> UShortRange(ushort start, ushort max)
 	{
-		var s = start;
+		ushort s = start;
 		while (s < max)
 			yield return s++;
 	}
 
-	readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> OperatedCatalog =
+	private readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> OperatedCatalog =
 		new();
 
 	protected abstract IEnumerable<EvalGenome<T>> GenerateOperated(ushort paramCount = 2);
@@ -53,7 +50,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 
 	#region Functions
 
-	readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> FunctionedCatalog =
+	private readonly ConcurrentDictionary<ushort, IEnumerator<EvalGenome<T>>> FunctionedCatalog =
 		new();
 
 	protected abstract IEnumerable<EvalGenome<T>> GenerateFunctioned(ushort id);
@@ -63,13 +60,13 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 	protected override EvalGenome<T>? GenerateOneInternal()
 	{
 		// ReSharper disable once NotAccessedVariable
-		var attempts = 0; // For debugging.
+		int attempts = 0; // For debugging.
 		EvalGenome<T>? genome = null;
 
 		for (byte m = 1; m < 26; m++) // The 26 effectively represents the max parameter depth.
 		{
 			// Establish a maximum.
-			var tries = 10;
+			int tries = 10;
 			ushort paramCount = 0;
 
 			do
@@ -86,10 +83,10 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 				paramCount++; // Operators need at least 2 params to start.
 
 				// Then try an operator based version.
-				var pcOne = paramCount;
-				var operated = OperatedCatalog.GetOrAdd(++pcOne, pc =>
+				ushort pcOne = paramCount;
+				IEnumerator<EvalGenome<T>> operated = OperatedCatalog.GetOrAdd(++pcOne, pc =>
 				{
-					var e = GenerateOperated(pc)?.GetEnumerator();
+					IEnumerator<EvalGenome<T>>? e = GenerateOperated(pc)?.GetEnumerator();
 					Debug.Assert(e is not null);
 					return e;
 				});
@@ -102,7 +99,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 				}
 
 				pcOne = paramCount;
-				var functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
+				IEnumerator<EvalGenome<T>> functioned = FunctionedCatalog.GetOrAdd(--pcOne, pc => GenerateFunctioned(pc).GetEnumerator());
 				// ReSharper disable once InvertIf
 				if (functioned.MoveNext())
 				{
@@ -121,7 +118,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 	protected EvalGenome<T> Create(IEvaluate<T> root, (string? message, string? data) origin)
 	{
 #if DEBUG
-		var (message, data) = origin;
+		(string? message, string? data) = origin;
 		Debug.Assert(message is not null);
 		var g = new EvalGenome<T>(root);
 		g.AddLogEntry("Origin", message, data);
@@ -131,15 +128,18 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 #endif
 	}
 
-	[return: NotNullIfNotNull("root")]
+	[return: NotNullIfNotNull(nameof(root))]
 	protected EvalGenome<T>? Registration(IEvaluate<T>? root, (string message, string? data) origin, Action<EvalGenome<T>>? onBeforeAdd = null)
 	{
 		Debug.Assert(root is not null);
-		// ReSharper disable once ConditionIsAlwaysTrueOrFalse
-		// ReSharper disable once HeuristicUnreachableCode
+
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1508 // Avoid dead conditional code
 		if (root is null) return null;
+#pragma warning restore CA1508 // Avoid dead conditional code
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 		Register(root.ToStringRepresentation(),
-			() => Create(root, origin), out var target,
+			() => Create(root, origin), out EvalGenome<T>? target,
 			t =>
 			{
 				onBeforeAdd?.Invoke(t);
@@ -153,7 +153,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		=> Registration(root, (origin, null), onBeforeAdd);
 
 	protected override EvalGenome<T>? GetReduced(EvalGenome<T> source)
-		=> Catalog.TryGetReduced(source.Root, out var reduced)
+		=> Catalog.TryGetReduced(source.Root, out IEvaluate<T>? reduced)
 			? Create(reduced, ("Reduction of", source.Hash))
 			: null;
 
@@ -172,7 +172,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 #endif
 			)
 			.Concat(base.GetVariationsInternal(source)
-					?? Enumerable.Empty<EvalGenome<T>>());
+					?? []);
 
 	private const string CROSSOVER_OF = "Crossover of";
 
@@ -186,50 +186,50 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		Debug.Assert(a != b);
 
 		// Avoid inbreeding. :P
-		var aRed = GetReduced(a);
-		var bRed = GetReduced(b);
+		EvalGenome<T>? aRed = GetReduced(a);
+		EvalGenome<T>? bRed = GetReduced(b);
 		Debug.Assert(aRed is null || bRed is null || aRed != bRed);
 #endif
 
-		var aRoot = Catalog.Factory.Map(a.Root);
-		var bRoot = Catalog.Factory.Map(b.Root);
+		Node<IEvaluate<T>> aRoot = Catalog.Factory.Map(a.Root);
+		Node<IEvaluate<T>> bRoot = Catalog.Factory.Map(b.Root);
 		// Descendants only?  Swapping a root node is equivalent to swapping the entire genome.
-		var aGeneNodes = aRoot.GetDescendantsOfType().ToArray();
-		var bGeneNodes = bRoot.GetDescendantsOfType().ToArray();
-		var aLen = aGeneNodes.Length;
-		var bLen = bGeneNodes.Length;
+		Node<IEvaluate<T>>[] aGeneNodes = aRoot.GetDescendantsOfType().ToArray();
+		Node<IEvaluate<T>>[] bGeneNodes = bRoot.GetDescendantsOfType().ToArray();
+		int aLen = aGeneNodes.Length;
+		int bLen = bGeneNodes.Length;
 		if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1)
-			return Array.Empty<EvalGenome<T>>();
+			return [];
 
 		// Crossover scheme 1:  Swap a node.
 		while (aGeneNodes.Length != 0)
 		{
-			var ag = aGeneNodes.RandomSelectOne();
-			var agS = ag.Value!.ToStringRepresentation();
-			var others = bGeneNodes.Where(g => g.Value!.ToStringRepresentation() != agS).ToArray();
+			Node<IEvaluate<T>> ag = aGeneNodes.RandomSelectOne();
+			string agS = ag.Value!.ToStringRepresentation();
+			Node<IEvaluate<T>>[] others = bGeneNodes.Where(g => g.Value!.ToStringRepresentation() != agS).ToArray();
 			if (others.Length != 0)
 			{
 				// Do the swap...
-				var bg = others.RandomSelectOne();
-				var bgParent = bg.Parent!;
+				Node<IEvaluate<T>> bg = others.RandomSelectOne();
+				Node<IEvaluate<T>> bgParent = bg.Parent!;
 
-				var placeholder = Catalog.Factory.GetBlankNode();
+				Node<IEvaluate<T>> placeholder = Catalog.Factory.GetBlankNode();
 				bgParent.Replace(bg, placeholder);
 				ag.Parent!.Replace(ag, bg);
 				bgParent.Replace(placeholder, ag);
 				placeholder.Recycle();
 
-				var origin = (CROSSOVER_OF, $"{a.Hash}\n{b.Hash}");
-				return new[]
-				{
+				(string CROSSOVER_OF, string) origin = (CROSSOVER_OF, $"{a.Hash}\n{b.Hash}");
+				return
+				[
 					Registration(Catalog.FixHierarchy(aRoot).Recycle(), origin)!,
 					Registration(Catalog.FixHierarchy(bRoot).Recycle(), origin)!
-				};
+				];
 			}
 
 			aGeneNodes = aGeneNodes.Where(g => g != ag).ToArray();
 		}
 
-		return Array.Empty<EvalGenome<T>>();
+		return [];
 	}
 }

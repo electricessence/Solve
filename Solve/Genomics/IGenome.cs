@@ -3,9 +3,7 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using System;
 #if DEBUG
-using System.Collections.Generic;
 #endif
 
 namespace Solve;

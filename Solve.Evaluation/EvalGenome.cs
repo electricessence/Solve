@@ -1,16 +1,11 @@
 ﻿using Open.Evaluation.Core;
 using Open.Hierarchy;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Solve.Evaluation;
 
-public class EvalGenome<T> : GenomeBase, IHaveRoot<IEvaluate<T>>
+public class EvalGenome<T>(IEvaluate<T> root) : GenomeBase, IHaveRoot<IEvaluate<T>>
 {
-	public EvalGenome(IEvaluate<T> root) => Root = root;
-
-	public IEvaluate<T> Root { get; private set; }
+	public IEvaluate<T> Root { get; private set; } = root;
 	object IHaveRoot.Root => Root;
 
 	public bool SetRoot(IEvaluate<T> root)

@@ -1,11 +1,8 @@
 ﻿using Open.Disposable;
 using Open.Memory;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Solve.ProcessingSchemes;
 
@@ -13,19 +10,18 @@ public class LevelEntry<TGenome> : IRecyclable
 {
 	public LevelProgress<TGenome> Progress { get; private set; } = null!;
 
-	public ImmutableArray<double>[] Scores { get; private set; } = default!;
+	public IReadOnlyList<ImmutableArray<double>> Scores { get; private set; } = default!;
 
-	InterlockedInt? _losses;
+	private InterlockedInt? _losses;
 	public InterlockedInt LossCount => _losses ?? throw new InvalidOperationException("Accessing an uninitialized LevelEntry.");
 
 	private static readonly ConcurrentDictionary<int, IComparer<LevelEntry<TGenome>>> Comparers = new();
 	public static IComparer<LevelEntry<TGenome>> GetScoreComparer(int index)
 		=> Comparers.GetOrAdd(index, i => new LevelEntryScoreComparer(i));
 
-	class LevelEntryScoreComparer : IComparer<LevelEntry<TGenome>>
+	private sealed class LevelEntryScoreComparer(int scoreIndex) : IComparer<LevelEntry<TGenome>>
 	{
-		public readonly int ScoreIndex;
-		public LevelEntryScoreComparer(int scoreIndex) => ScoreIndex = scoreIndex;
+		public readonly int ScoreIndex = scoreIndex;
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 		public int Compare(LevelEntry<TGenome> x, LevelEntry<TGenome> y)
 			=> CollectionComparer.Double.Descending.Compare(x.Scores[ScoreIndex], y.Scores[ScoreIndex]);
@@ -44,7 +40,7 @@ public class LevelEntry<TGenome> : IRecyclable
 		in ImmutableArray<double>[] scores,
 		InterlockedInt losses)
 	{
-		var e = Pool.Take();
+		LevelEntry<TGenome> e = Pool.Take();
 #if DEBUG
 		Debug.Assert(e._losses is null);
 #endif

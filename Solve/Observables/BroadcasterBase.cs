@@ -1,12 +1,11 @@
 ﻿using Open.Disposable;
-using System;
 using System.Reactive.Subjects;
 
 namespace Solve;
 
 public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
 {
-	readonly Subject<T> _subject = new();
+	private readonly Subject<T> _subject = new();
 
 	protected bool HasObservers => _subject.HasObservers;
 
@@ -14,7 +13,7 @@ public abstract class BroadcasterBase<T> : DisposableBase, IObservable<T>
 
 	protected override void OnDispose() => _subject.Dispose();
 
-	T? _previous = default;
+	private T? _previous;
 	internal void Broadcast(T message)
 	{
 		if (message is null) throw new ArgumentNullException(nameof(message));

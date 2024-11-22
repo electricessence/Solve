@@ -2,12 +2,9 @@
 using Open.Numeric;
 using Open.Numeric.Precision;
 using Open.Text;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 
 namespace Solve;
 
@@ -16,7 +13,7 @@ public class Fitness : IComparable<Fitness>
 {
 	public Fitness(ImmutableArray<Metric> metrics, ProcedureResults results)
 	{
-		var len = results.Sum.Length;
+		int len = results.Sum.Length;
 		Debug.Assert(len == 0 || len == metrics.Length);
 		Metrics = metrics;
 		_results = results ?? throw new ArgumentNullException(nameof(results));
@@ -44,7 +41,7 @@ public class Fitness : IComparable<Fitness>
 		get => _results;
 		set
 		{
-			var r = value ?? throw new ArgumentNullException(nameof(value));
+			ProcedureResults r = value ?? throw new ArgumentNullException(nameof(value));
 			Debug.Assert(value.Sum.Length == Metrics.Length);
 			_results = r;
 		}
@@ -54,16 +51,16 @@ public class Fitness : IComparable<Fitness>
 
 	public virtual ProcedureResults Merge(ProcedureResults other)
 	{
-		var r = _results;
-		var sum = r.Count == 0 ? other : (r + other);
+		ProcedureResults r = _results;
+		ProcedureResults sum = r.Count == 0 ? other : (r + other);
 		_results = sum;
 		return sum;
 	}
 
 	public virtual ProcedureResults Merge(ReadOnlySpan<double> other, int count = 1)
 	{
-		var r = _results;
-		var sum = r.Count == 0
+		ProcedureResults r = _results;
+		ProcedureResults sum = r.Count == 0
 			? new ProcedureResults(other, count)
 			: r.Add(other, count);
 		_results = sum;
@@ -72,9 +69,9 @@ public class Fitness : IComparable<Fitness>
 
 	public virtual ProcedureResults Merge(ImmutableArray<double> other, int count = 1)
 	{
-		var r = _results;
-		var sum = r.Count == 0
-			? new ProcedureResults(in other, count)
+		ProcedureResults r = _results;
+		ProcedureResults sum = r.Count == 0
+			? new ProcedureResults(other, count)
 			: r.Add(other, count);
 		_results = sum;
 		return sum;
@@ -82,8 +79,8 @@ public class Fitness : IComparable<Fitness>
 
 	public virtual ProcedureResults Merge(IReadOnlyList<double> other, int count = 1)
 	{
-		var r = _results;
-		var sum = r.Count == 0
+		ProcedureResults r = _results;
+		ProcedureResults sum = r.Count == 0
 			? new ProcedureResults(other, count)
 			: r.Add(other, count);
 		_results = sum;
@@ -94,7 +91,7 @@ public class Fitness : IComparable<Fitness>
 	{
 		get
 		{
-			var r = _results;
+			ProcedureResults r = _results;
 			return r.Count == 0
 				? Metrics.Select(m => (m, double.NaN))
 				: Metrics.Select((m, i) => (m, r.Sum[i]));
@@ -105,7 +102,7 @@ public class Fitness : IComparable<Fitness>
 	{
 		get
 		{
-			var r = _results;
+			ProcedureResults r = _results;
 			return r.Count == 0
 				? Metrics.Select(m => (m, double.NaN))
 				: Metrics.Select((m, i) => (m, r.Average[i]));
@@ -114,7 +111,7 @@ public class Fitness : IComparable<Fitness>
 
 	public override string ToString()
 	{
-		var c = _results?.Count ?? 0;
+		int c = _results?.Count ?? 0;
 		if (c == 0) return base.ToString()!;
 		var sb = MetricAverages.Select(mv => string.Format(mv.Metric.Format, mv.Value)).ToStringBuilder(", ");
 		if (c == 1)
@@ -143,7 +140,7 @@ public class Fitness : IComparable<Fitness>
 		if (other.Results.Count == 0)
 			return +1;
 
-		var v = CollectionComparer.Double.Compare(
+		int v = CollectionComparer.Double.Compare(
 			Results.Average,
 			other.Results.Average);
 
@@ -153,12 +150,12 @@ public class Fitness : IComparable<Fitness>
 	public bool HasConverged(uint minSamples = 100)
 	{
 		if (minSamples > SampleCount) return false;
-		var c = false;
-		foreach (var (Metric, Value) in MetricAverages.Where(m => m.Metric.Convergence))
+		bool c = false;
+		foreach ((Metric Metric, double Value) in MetricAverages.Where(m => m.Metric.Convergence))
 		{
 			c = true;
-			var convergence = Metric.MaxValue;
-			var tolerance = Metric.Tolerance;
+			double convergence = Metric.MaxValue;
+			double tolerance = Metric.Tolerance;
 
 			if (Value > convergence + double.Epsilon)
 				throw new Exception($"Score has exceeded convergence value: {Value}");

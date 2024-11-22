@@ -1,10 +1,9 @@
 ﻿using Solve.Metrics;
-using System;
 using System.Collections.Immutable;
 
 namespace Solve;
 
-public struct QueueCount
+public readonly record struct QueueCount
 {
 	public QueueCount(string key, long value)
 	{

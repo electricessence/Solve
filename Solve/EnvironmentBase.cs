@@ -6,12 +6,8 @@
 using Open.Collections;
 using Open.Disposable;
 using Solve.Metrics;
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve;
 
@@ -34,14 +30,13 @@ public abstract class EnvironmentBase<TGenome>
 		Contract.EndContractBlock();
 
 		GenomeProgress = genomeProgressionLog;
-		ProblemsInternal = new List<IProblem<TGenome>>();
+		ProblemsInternal = [];
 		Problems = ProblemsInternal.AsReadOnly();
 	}
 
 	public void AddProblem(IProblem<TGenome> problem)
 	{
-		if (problem is null)
-			throw new ArgumentNullException(nameof(problem));
+		ArgumentNullException.ThrowIfNull(problem);
 		Contract.EndContractBlock();
 
 		if (_state != 0)
@@ -56,7 +51,7 @@ public abstract class EnvironmentBase<TGenome>
 
 	protected GenomeProgressionLog? GenomeProgress { get; }
 
-	int _state;
+	private int _state;
 
 	public Task Start(params IProblem<TGenome>[] problems)
 	{
@@ -80,9 +75,10 @@ public abstract class EnvironmentBase<TGenome>
 
 			case 1:
 				throw new InvalidOperationException("Already started.");
-		}
 
-		throw new Exception("Unknown state");
+			default:
+				throw new UnreachableException("Unknown state");
+		}
 	}
 
 	protected abstract Task StartInternal(CancellationToken token);
@@ -105,13 +101,13 @@ public abstract class EnvironmentBase<TGenome>
 	protected static string GetGenomeInfo(TGenome genome)
 		=> StringBuilderPool.RentToString(sb =>
 		{
-			foreach (var logEntry in genome.Log)
+			foreach (IGenomeLogEntry logEntry in genome.Log)
 			{
 				sb.Append(logEntry.Category)
 					.Append(" > ")
 					.Append(logEntry.Message);
 
-				var data = logEntry.Data;
+				string? data = logEntry.Data;
 				if (!string.IsNullOrWhiteSpace(data))
 					sb.Append(':').AppendLine().Append(data);
 

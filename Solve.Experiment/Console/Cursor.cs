@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Solve.Experiment.Console;
 
@@ -8,7 +7,7 @@ public readonly record struct Cursor : IComparable<Cursor>
 {
 	public static readonly object Sync = new();
 
-	Cursor(int left, int top)
+	private Cursor(int left, int top)
 	{
 		Left = left;
 		Top = top;

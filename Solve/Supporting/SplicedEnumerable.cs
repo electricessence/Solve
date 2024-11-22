@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace Solve;
 
-public struct SplicedEnumerable<T> : IReadOnlyCollection<T>
+public readonly record struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 {
 	private readonly IEnumerable<T> _head;
 	private readonly IEnumerable<T> _tail;
 	public int SpliceIndex { get; }
 	public int Count { get; }
 
-	private static readonly IEnumerable<T> Empty = Enumerable.Empty<T>();
+	private static readonly IEnumerable<T> Empty = [];
 
 	internal SplicedEnumerable(IEnumerable<T> head, IEnumerable<T> tail, int index, int length)
 	{
@@ -55,7 +52,7 @@ public struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 	public (IEnumerable<T> head, IEnumerable<T> tail) Segments(int remove = 0)
 	{
 		if (remove == 0) return (_head, _tail);
-		var n = SpliceIndex + remove;
+		int n = SpliceIndex + remove;
 		if (n <= 0) return (Empty, _tail);
 		if (n >= Count - 1) return (_head, Empty);
 		if (remove < 0) return (_head.Take(n), _tail);
@@ -68,19 +65,19 @@ public struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 
 		if (count > 0)
 		{
-			var tailLen = Math.Max(0, Count - SpliceIndex - count);
-			var tail = tailLen > 0 ? _tail.Skip(tailLen) : Empty;
+			int tailLen = Math.Max(0, Count - SpliceIndex - count);
+			IEnumerable<T> tail = tailLen > 0 ? _tail.Skip(tailLen) : Empty;
 			return new SplicedEnumerable<T>(_head, tail, SpliceIndex, SpliceIndex + tailLen);
 		}
 
-		var headLen = Math.Max(0, SpliceIndex + count);
-		var head = headLen > 0 ? _head.Take(headLen) : Empty;
+		int headLen = Math.Max(0, SpliceIndex + count);
+		IEnumerable<T> head = headLen > 0 ? _head.Take(headLen) : Empty;
 		return new SplicedEnumerable<T>(head, _tail, headLen, Count - SpliceIndex + headLen);
 	}
 
 	public SplicedEnumerable<T> InsertSegment(IReadOnlyCollection<T> e, bool shiftIndex = false)
 	{
-		var len = e.Count;
+		int len = e.Count;
 		return new SplicedEnumerable<T>(
 			shiftIndex ? _head.Concat(e) : _head,
 			shiftIndex ? _tail : _tail.Concat(e),
@@ -113,7 +110,7 @@ public static class SplicedEnumerable
 
 	public static SplicedEnumerable<T> Create<T>(IReadOnlyCollection<T> head, IReadOnlyCollection<T> tail)
 	{
-		var index = head.Count;
+		int index = head.Count;
 		return new SplicedEnumerable<T>(head, tail, index, index + tail.Count);
 	}
 

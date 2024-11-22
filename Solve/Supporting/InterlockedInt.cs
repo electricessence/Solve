@@ -1,12 +1,11 @@
 ﻿using Open.Disposable;
-using System;
-using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace Solve;
 
-public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecyclable
+public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecyclable, IComparable<InterlockedInt>, IComparable<int>
 {
-	int _value;
+	private int _value;
 	public int Value
 	{
 		get => _value;
@@ -21,12 +20,12 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 
 	public void Recycle() => _value = 0;
 
-	static readonly OptimisticArrayObjectPool<InterlockedInt> Pool
+	private static readonly OptimisticArrayObjectPool<InterlockedInt> Pool
 		= OptimisticArrayObjectPool.CreateAutoRecycle<InterlockedInt>();
 
 	public static InterlockedInt Init(int value = 0)
 	{
-		var n = Pool.Take();
+		InterlockedInt n = Pool.Take();
 		n.Value = value;
 		return n;
 	}
@@ -48,6 +47,30 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 	public override string ToString() => _value.ToString();
 
 	public override int GetHashCode() => _value.GetHashCode();
+
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+	public int CompareTo(InterlockedInt other)
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+	{
+		ArgumentNullException.ThrowIfNull(other);
+		if (_value > other._value) return 1;
+		if (_value < other._value) return -1;
+		// Equal.
+		return 0;
+	}
+
+	public int CompareTo(int other)
+	{
+		if (_value > other) return 1;
+		if (_value < other) return -1;
+		// Equal.
+		return 0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int ToInt32() => _value;
+
+	public static InterlockedInt FromInt32(int value) => Init(value);
 
 	public static implicit operator int(InterlockedInt i) => i.Value;
 

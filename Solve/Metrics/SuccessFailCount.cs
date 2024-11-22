@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Solve.Metrics;
+﻿namespace Solve.Metrics;
 
 public struct SuccessFailCount
 {

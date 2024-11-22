@@ -1,25 +1,21 @@
 ﻿using Open.Memory;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Solve;
 
 public static class Pareto
 {
-	static List<(T Value, ImmutableArray<double> Score)> FilterInternal<T>(
+	private static List<(T Value, ImmutableArray<double> Score)> FilterInternal<T>(
 		IEnumerable<T> source,
 		IEqualityComparer<T> equalityComparer,
 		Func<T, ImmutableArray<double>> scoreSelector)
 		where T : notnull
 	{
-		if (source is null)
-			throw new ArgumentNullException(nameof(source));
+		ArgumentNullException.ThrowIfNull(source);
 
 		var d = new Dictionary<T, (T Value, ImmutableArray<double> Score)>(equalityComparer);
-		foreach (var (Value, Score) in source
+		foreach ((T Value, ImmutableArray<double> Score) in source
 			.Select(s => (Value: s, Score: scoreSelector(s)))
 			.OrderBy(s => s.Score, CollectionComparer.Double.Descending)) // Enforce distinct by ordering.
 		{
@@ -33,9 +29,9 @@ public static class Pareto
 		do
 		{
 			found = false;
-			var values = d.Values;
+			Dictionary<T, (T Value, ImmutableArray<double> Score)>.ValueCollection values = d.Values;
 			p = values.ToList();  // p is the return
-			foreach (var (Value, Score) in p)
+			foreach ((T Value, ImmutableArray<double> Score) in p)
 			{
 				if (IsGreaterThanAll(Score.AsSpan(), values))
 				{
@@ -64,17 +60,17 @@ public static class Pareto
 	//	where T : notnull
 	//	=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
-	static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
+	private static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
 	{
-		var len = score.Length;
-		foreach (var (_, Score) in values)
+		int len = score.Length;
+		foreach ((T _, ImmutableArray<double> Score) in values)
 		{
 			Debug.Assert(Score.Length == len);
-			var os = Score.AsSpan();
-			for (var i = 0; i < len; i++)
+			ReadOnlySpan<double> os = Score.AsSpan();
+			for (int i = 0; i < len; i++)
 			{
-				ref readonly var s = ref score[i];
-				ref readonly var osv = ref os[i];
+				ref readonly double s = ref score[i];
+				ref readonly double osv = ref os[i];
 				if (double.IsNaN(s) && double.IsNaN(osv)) continue;
 				if (double.IsNaN(osv)) return true;
 				if (double.IsNaN(s) || s <= osv) return false;

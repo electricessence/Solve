@@ -1,12 +1,7 @@
 ﻿using Open.Collections.Synchronized;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Solve.Supporting.TaskScheduling;
 
@@ -21,8 +16,7 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 		int maxConcurrencyLevel = 0)
 	{
 		_parent = parent ?? throw new ArgumentNullException(nameof(parent));
-		if (maxConcurrencyLevel < 0)
-			throw new ArgumentOutOfRangeException(nameof(maxConcurrencyLevel));
+		ArgumentOutOfRangeException.ThrowIfNegative(maxConcurrencyLevel);
 		Contract.EndContractBlock();
 
 		// Make sure whatever value we pick is not greater than the degree of parallelism allowed by the underlying scheduler.
@@ -71,7 +65,7 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 		if (DisposeCancellation.IsCancellationRequested)
 			return false;
 
-		if (!InternalQueue.TryDequeue(out var task))
+		if (!InternalQueue.TryDequeue(out Task? task))
 			return false;
 
 		if (task is not null)
@@ -80,8 +74,8 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 			return true;
 		}
 
-		var rp = ReversePriority;
-		var node = rp ? Children.Last : Children.First;
+		bool rp = ReversePriority;
+		LinkedListNode<PriorityQueueTaskScheduler>? node = rp ? Children.Last : Children.First;
 		while (node is not null)
 		{
 			if (node.Value.TryGetNext(out entry))
@@ -94,9 +88,9 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 	}
 
 	private readonly ReadWriteSynchronizedLinkedList<PriorityQueueTaskScheduler> Children
-		= new();
+		= [];
 
-	void NotifyNewWorkItem()
+	private void NotifyNewWorkItem()
 		// ReSharper disable once AssignNullToNotNullAttribute
 		=> QueueTask(null);
 
@@ -108,7 +102,7 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 				throw new ArgumentOutOfRangeException(nameof(index), index, "Must be at least zero");
 			Contract.EndContractBlock();
 
-			var node = Children.First;
+			LinkedListNode<PriorityQueueTaskScheduler>? node = Children.First;
 			if (node is null)
 			{
 				Children.Modify(
@@ -119,11 +113,11 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 
 			Debug.Assert(node is not null);
 
-			for (var i = 0; i < index; i++)
+			for (int i = 0; i < index; i++)
 			{
 				if (node.Next is null)
 				{
-					var n = node;
+					LinkedListNode<PriorityQueueTaskScheduler> n = node;
 					Children.Modify(
 						() => n.Next is null,
 						list => list.AddLast(new PriorityQueueTaskScheduler(this)));
@@ -133,8 +127,6 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 
 				Debug.Assert(node is not null);
 			}
-
-			Debug.Assert(node is not null);
 
 			return node.Value;
 		}
@@ -151,14 +143,14 @@ public sealed class PriorityQueueTaskScheduler : DisposableTaskScheduler
 
 	private void ProcessQueues()
 	{
-		var continueProcessing = true;
+		bool continueProcessing = true;
 		while (continueProcessing && !DisposeCancellation.IsCancellationRequested)
 		{
 			try
 			{
-				while (TryGetNext(out var entry))
+				while (TryGetNext(out (PriorityQueueTaskScheduler scheduler, Task task) entry))
 				{
-					var (scheduler, task) = entry;
+					(PriorityQueueTaskScheduler scheduler, Task task) = entry;
 					Debug.Assert(scheduler is not null);
 					Debug.Assert(task is not null);
 

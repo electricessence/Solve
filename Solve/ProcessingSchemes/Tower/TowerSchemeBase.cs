@@ -1,9 +1,6 @@
 ﻿using Solve.Metrics;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
-using System.Linq;
 
 namespace Solve.ProcessingSchemes;
 
@@ -27,37 +24,37 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 
 	// First, and Minimum allow for tapering of pool size as generations progress.
 	public SchemeConfig.Values Config { get; }
-	readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
 
-	static readonly EqualityComparer<(TGenome Genome, Fitness Fitness)> EComparer
+	private readonly IGenomeFactoryPriorityQueue<TGenome> ReserveFactoryQueue;
+	private static readonly EqualityComparer<(TGenome Genome, Fitness Fitness)> EComparer
 		= EqualityComparerUtility.Create<(TGenome Genome, Fitness Fitness)>(
 			(a, b) => a.Genome.Hash == b.Genome.Hash,
-			a => a.Genome.Hash.GetHashCode());
+			a => a.Genome.Hash.GetHashCode(StringComparison.Ordinal));
 
-	static ImmutableArray<double> ScoreSelector((TGenome Genome, Fitness Fitness) gf)
+	private static ImmutableArray<double> ScoreSelector((TGenome Genome, Fitness Fitness) gf)
 		=> gf.Fitness.Results.Average;
 
-	bool ProduceFromChampions()
+	private bool ProduceFromChampions()
 	{
 		bool any = false;
-		foreach (var _ in Problems
+		foreach (bool _ in Problems
 			.SelectMany(p => p.Pools, (_, r) => r.Champions)
 			.Where(c => c?.IsEmpty == false)
 			.Select(c =>
 			{
-				var champions = c.Ranked;
-				var len = champions.Length;
+				ImmutableArray<(TGenome Genome, Fitness Fitness)> champions = c.Ranked;
+				int len = champions.Length;
 				if (len <= 0) return false;
 
-				var top = champions[0].Genome;
+				TGenome top = champions[0].Genome;
 				ReserveFactoryQueue.EnqueueForMutation(top);
 				ReserveFactoryQueue.EnqueueForBreeding(top);
 
-				var next = TriangularSelection.Descending.RandomOne(champions).Genome;
+				TGenome next = TriangularSelection.Descending.RandomOne(champions).Genome;
 				ReserveFactoryQueue.EnqueueForMutation(next);
 				ReserveFactoryQueue.EnqueueForBreeding(next);
 
-				foreach (var g in Pareto
+				foreach (TGenome? g in Pareto
 					.Filter(champions, EComparer, ScoreSelector)
 					.Select(gf => gf.Value.Genome))
 				{

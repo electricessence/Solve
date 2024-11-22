@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes;
 
@@ -18,7 +16,7 @@ public partial class TowerScheme<TGenome>
 
 		protected Level Root { get; }
 
-		readonly Subject<int> _levelCreated = new();
+		private readonly Subject<int> _levelCreated = new();
 		public IObservable<int> LevelCreated { get; }
 		internal void OnLevelCreated(int level)
 		{
@@ -51,7 +49,7 @@ public partial class TowerScheme<TGenome>
 
 		public ValueTask PostAsync(TGenome next)
 		{
-			if (next is null) throw new ArgumentNullException(nameof(next));
+			ArgumentNullException.ThrowIfNull(next);
 			Contract.EndContractBlock();
 
 			return Root.PostAsync(new LevelProgress<TGenome>(next, ((ITower<TGenome>)this).NewFitness()));

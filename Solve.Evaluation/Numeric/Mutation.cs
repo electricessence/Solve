@@ -3,9 +3,7 @@ using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.RandomizationExtensions;
-using System;
 using System.Diagnostics;
-using System.Linq;
 
 using IFunction = Open.Evaluation.Core.IFunction<double>;
 using IGene = Open.Evaluation.Core.IEvaluate<double>;
@@ -26,17 +24,17 @@ public partial class NumericEvalGenomeFactory
 		 * 6) Removing a function.
 		 */
 
-		var genes = Catalog.Factory.Map(target.Root);
+		Node<IGene> genes = Catalog.Factory.Map(target.Root);
 
 		while (genes.Count != 0)
 		{
-			var gene = genes
+			Node<IGene> gene = genes
 				.GetNodes()
 				.ToArray()
 				.RandomSelectOne() as Node<IGene>
 				?? throw new InvalidCastException("Expected a Node<IGene>.");
 
-			var gv = gene.Value;
+			IGene gv = gene.Value;
 			switch (gv)
 			{
 				case Constant<double> c:
@@ -58,7 +56,7 @@ public partial class NumericEvalGenomeFactory
 							goto default;
 
 						case 6:
-							var a = Math.Abs(c.Value);
+							double a = Math.Abs(c.Value);
 							return ((a is > 0 and < 1) // Look for fractional exponents and avoid.
 								? Catalog.ApplyClone(gene, _ => Catalog.GetConstant(c.Value > 0 ? 1 : -1))
 								// should be rare (1/10) chance to increase multiple for non power of exponents.
@@ -76,7 +74,7 @@ public partial class NumericEvalGenomeFactory
 									"Decrease constant");
 							}
 
-							if (Catalog.Variation.TryRemoveValid(gene, out var newRoot))
+							if (Catalog.Variation.TryRemoveValid(gene, out IGene? newRoot))
 							{
 								return (newRoot,
 									"Remove constant");
@@ -87,54 +85,54 @@ public partial class NumericEvalGenomeFactory
 
 					break;
 
-				case Parameter _:
+				case Parameter:
+				{
+					var options = Enumerable.Range(0, 5).ToList();
+					while (options.Count != 0)
 					{
-						var options = Enumerable.Range(0, 5).ToList();
-						while (options.Count != 0)
+						switch (options.RandomPluck())
 						{
-							switch (options.RandomPluck())
-							{
-								case 0:
-									return (Catalog.Mutation.MutateSign(gene, 1),
-											"Mutate sign");
+							case 0:
+								return (Catalog.Mutation.MutateSign(gene, 1),
+										"Mutate sign");
 
-								// Simply change parameters
-								case 1:
-									return (Catalog.Mutation.MutateParameter(gene),
-											"Mutate parameter");
+							// Simply change parameters
+							case 1:
+								return (Catalog.Mutation.MutateParameter(gene),
+										"Mutate parameter");
 
-								// Apply a function
-								case 2:
-									return (Catalog.Variation.ApplyRandomFunction(gene),
-										"Apply random function to paramter");
+							// Apply a function
+							case 2:
+								return (Catalog.Variation.ApplyRandomFunction(gene),
+									"Apply random function to paramter");
 
-								// Favor squaring...
-								case 3:
-									return (Catalog.Mutation.Square(gene),
-										"Apply random function to paramter");
+							// Favor squaring...
+							case 3:
+								return (Catalog.Mutation.Square(gene),
+									"Apply random function to paramter");
 
-								//// Split it...
-								//case 3:
-								//	if (Random.Shared.Next(0, 2) == 0)
-								//		return (Catalog.Mutation.Square(gene),
-								//			"Square parameter");
+							//// Split it...
+							//case 3:
+							//	if (Random.Shared.Next(0, 2) == 0)
+							//		return (Catalog.Mutation.Square(gene),
+							//			"Square parameter");
 
-								//	break;
+							//	break;
 
-								// Remove it!
-								default:
-									if (Catalog.Variation.TryRemoveValid(gene, out var attempt))
-									{
-										return (attempt,
-											"Remove descendant");
-									}
+							// Remove it!
+							default:
+								if (Catalog.Variation.TryRemoveValid(gene, out IGene? attempt))
+								{
+									return (attempt,
+										"Remove descendant");
+								}
 
-									break;
-							}
+								break;
 						}
 					}
 
 					break;
+				}
 
 				default:
 					if (gv is IFunction)
@@ -167,7 +165,7 @@ public partial class NumericEvalGenomeFactory
 										//var f = Open.Evaluation.Registry.Arithmetic.Functions.RandomSelectOne();
 										//// Function of function? Reduce probability even further. Coin toss.
 										//if (f.GetType() != gene.GetType() || Random.Shared.Next(2) == 0)
-										var f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
+										IGene? f = Open.Evaluation.Registry.Arithmetic.GetRandomFunction(Catalog, gv);
 										Debug.Assert(f is not null);
 										return (f,
 											"Apply function to function");
@@ -176,7 +174,7 @@ public partial class NumericEvalGenomeFactory
 									break;
 
 								case 4:
-									if (Catalog.Variation.TryRemoveValid(gene, out var n))
+									if (Catalog.Variation.TryRemoveValid(gene, out IGene? n))
 									{
 										ng = (n,
 											"Remove decendant function");
@@ -219,7 +217,7 @@ public partial class NumericEvalGenomeFactory
 
 	protected override EvalGenome<double>? MutateInternal(EvalGenome<double> target)
 	{
-		var (root, origin) = MutateUnfrozen(target);
+		(IGene? root, string? origin) = MutateUnfrozen(target);
 		return root is null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
 	}
 }

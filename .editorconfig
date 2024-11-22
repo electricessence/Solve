@@ -54,6 +54,20 @@ csharp_indent_labels = one_less_than_current
 
 # RCS1123: Add parentheses when necessary.
 dotnet_diagnostic.RCS1123.severity = silent
+csharp_style_prefer_method_group_conversion = true:silent
+csharp_style_prefer_top_level_statements = true:suggestion
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_prefer_system_threading_lock = true:suggestion
+csharp_indent_case_contents_when_block = false
+
+# IDE0010: Add missing cases
+dotnet_diagnostic.IDE0010.severity = silent
+
+# CA5394: Do not use insecure randomness
+dotnet_diagnostic.CA5394.severity = silent
+
+# CA1305: Specify IFormatProvider
+dotnet_diagnostic.CA1305.severity = silent
 
 [*.{cs,vb}]
 #### Naming styles ####
@@ -122,3 +136,10 @@ dotnet_style_parentheses_in_arithmetic_binary_operators = never_if_unnecessary:s
 dotnet_style_parentheses_in_other_binary_operators = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
+indent_style = tab
+
+# IDE0305: Simplify collection initialization
+dotnet_diagnostic.IDE0305.severity = silent
+
+# IDE0130: Namespace does not match folder structure
+dotnet_diagnostic.IDE0130.severity = silent

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Solve.Experiment.Console;
+﻿namespace Solve.Experiment.Console;
 
 public static class SynchronizedConsole
 {
@@ -10,7 +8,7 @@ public static class SynchronizedConsole
 	{
 		lock (Sync)
 		{
-			var start = Cursor.Current;
+			Cursor start = Cursor.Current;
 			try
 			{
 				action(start);
@@ -41,7 +39,7 @@ public static class SynchronizedConsole
 				return;
 			}
 
-			var start = Cursor.Current;
+			Cursor start = Cursor.Current;
 			try
 			{
 				if (start.Equals(message.End))

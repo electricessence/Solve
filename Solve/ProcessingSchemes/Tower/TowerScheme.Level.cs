@@ -1,14 +1,9 @@
 ﻿using Open.ChannelExtensions;
 using Open.Disposable;
 using Open.Memory;
-using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace Solve.ProcessingSchemes;
 
@@ -22,7 +17,7 @@ public partial class TowerScheme<TGenome>
 		protected readonly int Index;
 		protected readonly ushort PoolSize;
 		protected readonly ProblemTower Tower;
-		readonly Lazy<IAsyncLevel<TGenome>> _nextLevel;
+		private readonly Lazy<IAsyncLevel<TGenome>> _nextLevel;
 		public IAsyncLevel<TGenome> NextLevel => _nextLevel.Value;
 
 		protected readonly Memory<double[]> BestLevelFitness;
@@ -40,18 +35,18 @@ public partial class TowerScheme<TGenome>
 			Debug.Assert(level >= 0);
 			Debug.Assert(tower is not null);
 			tower.OnLevelCreated(level);
-			var config = tower.Config;
+			SchemeConfig.Values config = tower.Config;
 			Index = level;
 			PoolSize = config.PoolSize.GetPoolSize(level);
 			Tower = tower;
 
-			var max = config.MaxLevels;
+			ushort max = config.MaxLevels;
 			if (level > max) throw new ArgumentOutOfRangeException(nameof(level), level, $"Must be below maximum of {max}.");
 			IsMax = level + 1 == config.MaxLevels;
 
 			_nextLevel = new(CreateNextLevel);
 
-			var poolCount = tower.Problem.Pools.Count;
+			int poolCount = tower.Problem.Pools.Count;
 			BestLevelFitness = new double[poolCount][];
 			BestProgressiveFitness = new double[poolCount][];
 
@@ -62,12 +57,12 @@ public partial class TowerScheme<TGenome>
 				AllowSynchronousContinuations = true
 			});
 
-			var index = 0;
+			int index = 0;
 			var buffer = new LevelEntry<TGenome>[PoolSize];
 			_ = Pool.Reader.ReadAllAsync(async e =>
 			{
 				buffer[index++] = e;
-				if (index == PoolSize) index = await ProcessReceived(buffer);
+				if (index == PoolSize) index = await ProcessReceived(buffer).ConfigureAwait(false);
 			}).AsTask();
 		}
 
@@ -79,7 +74,7 @@ public partial class TowerScheme<TGenome>
 			in ReadOnlySpan<double> contending,
 			int fitnessIndex)
 		{
-			ref var fRef = ref registry[fitnessIndex];
+			ref double[] fRef = ref registry[fitnessIndex];
 			double[]? defending;
 			double[]? contendingArray = null;
 			while ((defending = fRef) is null || contending.IsGreaterThan(defending.AsSpan()))
@@ -94,20 +89,20 @@ public partial class TowerScheme<TGenome>
 
 		protected LevelEntry<TGenome>[][] RankEntries(IReadOnlyCollection<LevelEntry<TGenome>> pool)
 		{
-			var len = pool.Count;
-			var poolCount = Tower.Problem.Pools.Count;
+			int len = pool.Count;
+			int poolCount = Tower.Problem.Pools.Count;
 			var result = new LevelEntry<TGenome>[poolCount][];
 
-			for (var i = 0; i < poolCount; i++)
+			for (int i = 0; i < poolCount; i++)
 			{
-				var temp = pool.ToArray();
+				LevelEntry<TGenome>[] temp = pool.ToArray();
 				result[i] = temp;
-				var comparer = LevelEntry<TGenome>.GetScoreComparer(i);
+				IComparer<LevelEntry<TGenome>> comparer = LevelEntry<TGenome>.GetScoreComparer(i);
 				TrySorting(3);
 
 				void TrySorting(int max)
 				{
-					var tries = 0;
+					int tries = 0;
 					while (tries++ < max)
 					{
 						try
@@ -142,15 +137,15 @@ public partial class TowerScheme<TGenome>
 
 		public virtual async ValueTask PostAsync(LevelProgress<TGenome> contender)
 		{
-			var result = (await Tower.Problem.ProcessSampleAsync(contender.Genome, Index).ConfigureAwait(false))
+			(System.Collections.Immutable.ImmutableArray<double> levelFitness, bool success, bool fresh)[] result = (await Tower.Problem.ProcessSampleAsync(contender.Genome, Index).ConfigureAwait(false))
 				.Select((fitness, i) =>
 				{
-					var levelFitness = fitness.Results.Sum;
-					var (levelWinner, isFirstofLevel) = UpdateFitnessesIfBetter(BestLevelFitness.Span, levelFitness.AsSpan(), i);
+					System.Collections.Immutable.ImmutableArray<double> levelFitness = fitness.Results.Sum;
+					(bool levelWinner, bool isFirstofLevel) = UpdateFitnessesIfBetter(BestLevelFitness.Span, levelFitness.AsSpan(), i);
 
-					var fitnessRecord = contender.Fitnesses[i];
-					var fitnessRecordNew = fitnessRecord.Merge(levelFitness).Average.AsSpan();
-					var (progressiveWinner, isFirstofProgressive) = UpdateFitnessesIfBetter(BestProgressiveFitness.Span, fitnessRecordNew, i);
+					Fitness fitnessRecord = contender.Fitnesses[i];
+					ReadOnlySpan<double> fitnessRecordNew = fitnessRecord.Merge(levelFitness).Average.AsSpan();
+					(bool progressiveWinner, bool isFirstofProgressive) = UpdateFitnessesIfBetter(BestProgressiveFitness.Span, fitnessRecordNew, i);
 
 					Debug.Assert(fitnessRecord.MetricAverages.All(ma => ma.Value <= ma.Metric.MaxValue));
 
@@ -191,55 +186,55 @@ public partial class TowerScheme<TGenome>
 
 		protected ValueTask PromoteAsync(LevelEntry<TGenome> champion)
 		{
-			var progress = champion.Progress;
+			LevelProgress<TGenome> progress = champion.Progress;
 			LevelEntry<TGenome>.Pool.Give(champion);
 			return NextLevel.PostAsync(progress);
 		}
 
 		protected async ValueTask<int> ProcessSelection(LevelEntry<TGenome>[] buffer, LevelEntry<TGenome>[][] pools)
 		{
-			var poolCount = Tower.Problem.Pools.Count;
+			int poolCount = Tower.Problem.Pools.Count;
 			Debug.Assert(poolCount != 0);
-			var midPoint = PoolSize / 2;
-			var lPool = ListPool<LevelEntry<TGenome>>.Shared;
-			var hsPool = HashSetPool<string>.Shared;
-			var processed = hsPool.Take();
-			var toPromote = lPool.Take();
-			var toKill = lPool.Take();
+			int midPoint = PoolSize / 2;
+			SharedPool<List<LevelEntry<TGenome>>> lPool = ListPool<LevelEntry<TGenome>>.Shared;
+			SharedPool<HashSet<string>> hsPool = HashSetPool<string>.Shared;
+			HashSet<string> processed = hsPool.Take();
+			List<LevelEntry<TGenome>> toPromote = lPool.Take();
+			List<LevelEntry<TGenome>> toKill = lPool.Take();
 
 			//var isTop = IsTop;
 			// Remaining top 50% (winners) should go before any losers.
-			for (var i = 0; i < midPoint; ++i)
+			for (int i = 0; i < midPoint; ++i)
 			{
-				for (var p = 0; p < poolCount; ++p)
+				for (int p = 0; p < poolCount; ++p)
 				{
-					var e = pools[p][i];
-					var progress = e.Progress;
-					var hash = progress.Genome.Hash;
+					LevelEntry<TGenome> e = pools[p][i];
+					LevelProgress<TGenome> progress = e.Progress;
+					string hash = progress.Genome.Hash;
 					if (processed.Add(hash)) toPromote.Add(e);
 				}
 			}
 
 			// Distribute losers either back into the pool, pass them to the next level, or let them disapear (rejected).
-			var config = Tower.Config;
-			var maxLoses = config.MaxLevelLoss;
-			var maxRejection = config.MaxConsecutiveRejections;
-			var percentRejectionLimit = config.PercentRejectedBeforeElimination;
-			var retained = 0;
-			for (var i = midPoint; i < PoolSize; ++i)
+			SchemeConfig.Values config = Tower.Config;
+			ushort maxLoses = config.MaxLevelLoss;
+			ushort maxRejection = config.MaxConsecutiveRejections;
+			ushort percentRejectionLimit = config.PercentRejectedBeforeElimination;
+			int retained = 0;
+			for (int i = midPoint; i < PoolSize; ++i)
 			{
-				for (var p = 0; p < poolCount; ++p)
+				for (int p = 0; p < poolCount; ++p)
 				{
-					var loser = pools[p][i];
-					var progress = loser.Progress;
-					var hash = progress.Genome.Hash;
+					LevelEntry<TGenome> loser = pools[p][i];
+					LevelProgress<TGenome> progress = loser.Progress;
+					string hash = progress.Genome.Hash;
 					if (!processed.Add(hash)) continue;
 
-					var lossCount = loser.LossCount.Increment();
+					int lossCount = loser.LossCount.Increment();
 					if (lossCount > maxLoses)
 					{
-						var lossRecord = progress.Losses;
-						var totalRejections = lossRecord.IncrementRejection(Index);
+						LossTracker lossRecord = progress.Losses;
+						int totalRejections = lossRecord.IncrementRejection(Index);
 
 						if (lossRecord.ConcecutiveRejection > maxRejection
 							&& 100 * totalRejections > Index * percentRejectionLimit)
@@ -267,10 +262,10 @@ public partial class TowerScheme<TGenome>
 #if DEBUG
 			Debug.Assert(toPromote.Distinct().Count() == toPromote.Count);
 #endif
-			foreach (var p in toPromote) await PromoteAsync(p).ConfigureAwait(false);
+			foreach (LevelEntry<TGenome> p in toPromote) await PromoteAsync(p).ConfigureAwait(false);
 			lPool.Give(toPromote);
 
-			foreach (var k in toKill)
+			foreach (LevelEntry<TGenome> k in toKill)
 			{
 				k.Progress.Dispose();
 				LevelEntry<TGenome>.Pool.Give(k);

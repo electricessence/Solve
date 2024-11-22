@@ -1,12 +1,11 @@
 ﻿using Open.Disposable;
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace Solve;
 
 public class LossTracker : DisposableBase
 {
-	ConcurrentDictionary<int, InterlockedInt>? _levelLosses = new();
+	private ConcurrentDictionary<int, InterlockedInt>? _levelLosses = new();
 
 	public InterlockedInt this[int level] => _levelLosses!.GetOrAdd(level, _ => new InterlockedInt());
 
@@ -25,9 +24,9 @@ public class LossTracker : DisposableBase
 
 	protected override void OnDispose()
 	{
-		var losses = Interlocked.Exchange(ref _levelLosses, null);
+		ConcurrentDictionary<int, InterlockedInt>? losses = Interlocked.Exchange(ref _levelLosses, null);
 		if (losses is null) return;
 
-		foreach (var value in losses.Values) InterlockedInt.Recycle(value);
+		foreach (InterlockedInt? value in losses.Values) InterlockedInt.Recycle(value);
 	}
 }

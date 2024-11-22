@@ -3,37 +3,32 @@ using App.Metrics.Counter;
 using App.Metrics.Filtering;
 using App.Metrics.Filters;
 using Solve.Metrics;
-using System;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace Solve;
 
 public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 {
 	public const string Context = "GenomeFactory";
-
-	const string BREEDING_STOCK = "Breeding Stock";
-	const string INTERNAL_QUEUE_COUNT = "InternalQueue Count";
-	const string AWAITING_VARIATION = "Awaiting Variation";
-	const string AWAITING_MUTATION = "Awaiting Mutation";
-
-	static readonly SuccessFailKeys GENERATE_NEW = "Generate New";
-	static readonly SuccessFailKeys MUTATION = "Mutation";
-	static readonly SuccessFailKeys CROSSOVER = "Crossover";
-
-	const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
+	private const string BREEDING_STOCK = "Breeding Stock";
+	private const string INTERNAL_QUEUE_COUNT = "InternalQueue Count";
+	private const string AWAITING_VARIATION = "Awaiting Variation";
+	private const string AWAITING_MUTATION = "Awaiting Mutation";
+	private static readonly SuccessFailKeys GENERATE_NEW = "Generate New";
+	private static readonly SuccessFailKeys MUTATION = "Mutation";
+	private static readonly SuccessFailKeys CROSSOVER = "Crossover";
+	private const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
 
 	internal GenomeFactoryMetrics(MetricsContextValueSource? context)
 	{
 		static string GetName(CounterValueSource c) => c.Name;
 		static CounterValue GetValue(CounterValueSource c) => c.Value;
 
-		var counters = context?.Counters.ToImmutableDictionary(GetName, GetValue)
+		ImmutableDictionary<string, CounterValue> counters = context?.Counters.ToImmutableDictionary(GetName, GetValue)
 			?? ImmutableDictionary<string, CounterValue>.Empty;
 
 		Timestamp = DateTime.Now;
-		var queueStates = ImmutableArray.CreateBuilder<QueueCount>();
+		ImmutableArray<QueueCount>.Builder queueStates = ImmutableArray.CreateBuilder<QueueCount>();
 
 		BreedingStock = AddQueueState(BREEDING_STOCK);
 		InternalQueueCount = AddQueueState(INTERNAL_QUEUE_COUNT);
@@ -50,13 +45,13 @@ public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 
 		long AddQueueState(string key)
 		{
-			var value = GetCount(key);
+			long value = GetCount(key);
 			queueStates.Add(new QueueCount(key, value));
 			return value;
 		}
 
 		long GetCount(string key)
-			=> counters.TryGetValue(key, out var value) ? value.Count : 0;
+			=> counters.TryGetValue(key, out CounterValue value) ? value.Count : 0;
 
 		SuccessFailCount GetSuccessFail(SuccessFailKeys key)
 			=> new(GetCount(key.Succeded), GetCount(key.Failed));
@@ -84,7 +79,7 @@ public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 
 	internal class Logger : CounterCollection
 	{
-		const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
+		private const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
 
 		internal Logger(IProvideCounterMetrics metrics)
 			: base(metrics, GenomeFactoryMetrics.Context)
@@ -109,11 +104,11 @@ public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 			=> this[EXTERNAL_PRODUCER_QUERIED].Increment();
 	}
 
-	static readonly IFilterMetrics MetricsFilter = new MetricsFilter().WhereContext(Context);
+	private static readonly IFilterMetrics MetricsFilter = new MetricsFilter().WhereContext(Context);
 
 	public static GenomeFactoryMetrics Get(IProvideMetricValues? snapshot)
 	{
-		var context = snapshot?.Get(MetricsFilter).Contexts.FirstOrDefault();
+		MetricsContextValueSource? context = snapshot?.Get(MetricsFilter).Contexts.FirstOrDefault();
 		return Get(context);
 	}
 

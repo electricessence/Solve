@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 
 namespace Solve.ProcessingSchemes;
 
@@ -16,7 +15,7 @@ public interface ISchemeConfig
 
 public class SchemeConfig : ISchemeConfig
 {
-	public struct Values : ISchemeConfig
+	public readonly record struct Values : ISchemeConfig
 	{
 		public Values(PoolSizing poolSize, ushort maxLevels, ushort maxLevelLoss, ushort maxConsecutiveRejections, ushort percentRejectedBeforeElimination)
 		{
@@ -36,7 +35,7 @@ public class SchemeConfig : ISchemeConfig
 		public Values Immutable => this;
 	}
 
-	public struct PoolSizing
+	public readonly record struct PoolSizing
 	{
 		private const string MUST_BE_MULTIPLE_OF_2 = "Must be a mutliple of 2.";
 
@@ -81,19 +80,19 @@ public class SchemeConfig : ISchemeConfig
 
 		public ushort GetPoolSize(int level)
 		{
-			var (First, Minimum, Step) = this;
-			var maxDelta = First - Minimum;
-			var decrement = level * Step;
+			(ushort First, ushort Minimum, ushort Step) = this;
+			int maxDelta = First - Minimum;
+			int decrement = level * Step;
 			return decrement > maxDelta ? Minimum : (ushort)(First - decrement);
 		}
 	}
 
-	public PoolSizing PoolSize { get; set; }
-	public ushort MaxLevels { get; set; } = ushort.MaxValue;
-	public ushort MaxLevelLoss { get; set; } = 3;
-	public ushort MaxConsecutiveRejections { get; set; } = 10;
+	public PoolSizing PoolSize { get; init; }
+	public ushort MaxLevels { get; init; } = ushort.MaxValue;
+	public ushort MaxLevelLoss { get; init; } = 3;
+	public ushort MaxConsecutiveRejections { get; init; } = 10;
 
-	public ushort PercentRejectedBeforeElimination { get; set; } = 70;
+	public ushort PercentRejectedBeforeElimination { get; init; } = 70;
 
 	public static implicit operator Values(SchemeConfig config) => config.Immutable;
 

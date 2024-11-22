@@ -7,22 +7,18 @@ using App.Metrics.Counter;
 using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Threading.Tasks;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace Solve;
 
 public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	where TGenome : class, IGenome
 {
-	readonly GenomeFactoryMetrics.Logger Metrics;
+	private readonly GenomeFactoryMetrics.Logger Metrics;
 
 	protected GenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds = null)
 	{
@@ -34,10 +30,10 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	protected void InjectSeeds(IEnumerable<TGenome>? seeds)
 	{
 		if (seeds is null) return;
-		var s = seeds as IReadOnlyCollection<TGenome> ?? seeds.ToArray();
+		IReadOnlyCollection<TGenome> s = seeds as IReadOnlyCollection<TGenome> ?? seeds.ToArray();
 		if (s.Count == 0) return;
 
-		var q = GetPriorityQueue(0);
+		PriorityQueue q = GetPriorityQueue(0);
 		q.EnqueueInternal(s, true);
 		q.EnqueueForVariation(s);
 	}
@@ -46,13 +42,13 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	// Use a Lazy to enforce one time only execution since ConcurrentDictionary is optimistic.
 	protected readonly ConcurrentDictionary<string, Lazy<TGenome>> Registry = new();
 
-	protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = new();
+	protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = [];
 
 	//protected readonly ConcurrentQueue<string> RegistryOrder;
 
 	protected static void AssertFrozen(TGenome genome)
 	{
-		if (genome is null) throw new ArgumentNullException(nameof(genome));
+		ArgumentNullException.ThrowIfNull(genome);
 		Contract.EndContractBlock();
 
 		if (!genome.IsFrozen)
@@ -61,15 +57,15 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 	protected bool Register(string genomeHash, Func<TGenome> factory, out TGenome actual, Action<TGenome>? onBeforeAdd = null)
 	{
-		if (genomeHash is null) throw new ArgumentNullException(nameof(genomeHash));
-		if (factory is null) throw new ArgumentNullException(nameof(factory));
+		ArgumentNullException.ThrowIfNull(genomeHash);
+		ArgumentNullException.ThrowIfNull(factory);
 		Contract.EndContractBlock();
 
-		var added = false;
+		bool added = false;
 		actual = Registry.GetOrAdd(genomeHash, hash => Lazy.Create(() =>
 		{
 			added = true;
-			var genome = factory();
+			TGenome? genome = factory();
 			Debug.Assert(genome is not null);
 			Debug.Assert(genome.Hash == hash);
 			onBeforeAdd?.Invoke(genome);
@@ -85,10 +81,10 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	// ReSharper disable once UnusedMethodReturnValue.Global
 	protected bool Register(TGenome genome, out TGenome actual, Action<TGenome>? onBeforeAdd = null)
 	{
-		if (genome is null) throw new ArgumentNullException(nameof(genome));
+		ArgumentNullException.ThrowIfNull(genome);
 		Contract.EndContractBlock();
 
-		var added = false;
+		bool added = false;
 		actual = Registry.GetOrAdd(genome.Hash, hash => Lazy.Create(() =>
 		{
 			added = true;
@@ -103,12 +99,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		return added;
 	}
 
-	[return: NotNullIfNotNull("genome")]
+	[return: NotNullIfNotNull(nameof(genome))]
 	protected TGenome? Registration(TGenome? genome, Action<TGenome>? onBeforeAdd = null)
 	{
 		if (genome is null) return null;
 		Debug.Assert(genome.Hash.Length != 0, "Genome cannot have empty hash.");
-		_ = Register(genome, out var result, t =>
+		_ = Register(genome, out TGenome? result, t =>
 		{
 			onBeforeAdd?.Invoke(t);
 			t.Freeze();
@@ -129,9 +125,8 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 	protected bool RegisterProduction(TGenome genome)
 	{
-		if (genome is null)
-			throw new ArgumentNullException(nameof(genome));
-		var hash = genome.Hash;
+		ArgumentNullException.ThrowIfNull(genome);
+		string hash = genome.Hash;
 		return Registry.ContainsKey(hash)
 			? PreviouslyProduced.Add(genome.Hash)
 			: throw new InvalidOperationException("Registering for production before genome was in global registry.");
@@ -205,7 +200,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		byte triesPerMutationLevel = 2,
 		byte maxMutations = 3)
 	{
-		if (source is null) throw new ArgumentNullException(nameof(source));
+		ArgumentNullException.ThrowIfNull(source);
 		Debug.Assert(source.Hash.Length != 0);
 		if (source.Hash.Length == 0)
 		{
@@ -236,19 +231,19 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		if (mutations == 0) throw new ArgumentOutOfRangeException(nameof(mutations));
 		Contract.EndContractBlock();
 
-		var original = source;
+		TGenome original = source;
 		TGenome? genome = null;
 		while (mutations != 0)
 		{
 			byte tries = 3;
 			while (tries != 0 && genome is null)
 			{
-				var s = source;
+				TGenome s = source;
 				void onTimeout(double ms) => Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms);
-				using (TimeoutHandler.New(3000,	onTimeout))
+				using (TimeoutHandler.New(3000, onTimeout))
 				{
 					genome = MutateInternal(source);
-					var hash = genome?.Hash;
+					string? hash = genome?.Hash;
 					if (hash is not null && (hash == source.Hash || hash == original.Hash))
 						genome = null; // Not a mutation. Could happen on repeat mutations.
 				}
@@ -269,12 +264,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	// ReSharper disable once ReturnTypeCanBeEnumerable.Global
 	protected TGenome[] Crossover(TGenome a, TGenome b)
 	{
-		var result = CrossoverInternal(
+		TGenome[] result = CrossoverInternal(
 			a ?? throw new ArgumentNullException(nameof(a)),
 			b ?? throw new ArgumentNullException(nameof(b))
 		);
 
-		foreach (var r in result)
+		foreach (TGenome r in result)
 		{
 			if (r.Hash.Length == 0)
 				throw new InvalidOperationException("Cannot process a genome with an empty hash.");
@@ -293,12 +288,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	public virtual TGenome[] AttemptNewCrossover(TGenome a, TGenome b, byte maxAttempts = 3)
 	{
 		if (CannotCrossover(a, b))
-			return Array.Empty<TGenome>();
+			return [];
 
-		var m = maxAttempts;
+		byte m = maxAttempts;
 		while (m != 0)
 		{
-			var offspring = Crossover(a, b).Where(RegisterProduction).ToArray();
+			TGenome[] offspring = Crossover(a, b).Where(RegisterProduction).ToArray();
 			if (offspring.Length != 0)
 			{
 				Metrics.Crossover(true);
@@ -309,24 +304,24 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		}
 
 		Metrics.Crossover(false);
-		return Array.Empty<TGenome>();
+		return [];
 	}
 
 #if DEBUG
-	readonly ConcurrentDictionary<string, TGenome> Released = new();
+	private readonly ConcurrentDictionary<string, TGenome> Released = new();
 #endif
 
 	public TGenome Next()
 	{
 #if DEBUG
-		var generated = false;
+		bool generated = false;
 		TGenome next()
 		{
 #endif
-			var q = 0;
+			int q = 0;
 			while (q < PriorityQueues.Count)
 			{
-				if (PriorityQueues[q].TryGetNext(out var genome))
+				if (PriorityQueues[q].TryGetNext(out TGenome? genome))
 					return genome;
 				else
 					q++;
@@ -338,13 +333,13 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 #if DEBUG
 		}
 
-		var n = next();
-		var h = n.Hash;
-		var added = Released.TryAdd(h, n);
+		TGenome n = next();
+		string h = n.Hash;
+		bool added = Released.TryAdd(h, n);
 		if (added)
 			return n;
 
-		var actual = Released[h];
+		TGenome actual = Released[h];
 		if (actual == n)
 		{
 			Debug.Assert(added, "This factory is releasing the same genome twice. Generated: " + generated, n.StackTrace);
@@ -358,7 +353,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 #endif
 	}
 
-	protected readonly List<PriorityQueue> PriorityQueues = new();
+	protected readonly List<PriorityQueue> PriorityQueues = [];
 
 	protected PriorityQueue GetPriorityQueue(int index)
 	{
@@ -386,16 +381,16 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 	public IGenomeFactoryPriorityQueue<TGenome> this[int index]
 		=> GetPriorityQueue(index);
 
-	readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations = new();
+	private readonly ConditionalWeakTable<TGenome, IEnumerator<TGenome>> Variations = [];
 
 	protected virtual IEnumerable<TGenome>? GetVariationsInternal(TGenome source) => null;
 
 	public IEnumerator<TGenome>? GetVariations(TGenome source)
 	{
-		if (Variations.TryGetValue(source, out var r))
+		if (Variations.TryGetValue(source, out IEnumerator<TGenome>? r))
 			return r;
 
-		var result = GetVariationsInternal(source);
+		IEnumerable<TGenome>? result = GetVariationsInternal(source);
 		return result is null ? null
 			: Variations.GetValue(source,
 				_ => result.Distinct(GenomeEqualityComparer<TGenome>.Instance).GetEnumerator());
@@ -403,20 +398,21 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 	protected class PriorityQueue : IGenomeFactoryPriorityQueue<TGenome>
 	{
-		readonly int Index;
-		readonly GenomeFactoryBase<TGenome> Factory;
+		private readonly int Index;
+		private readonly GenomeFactoryBase<TGenome> Factory;
 
 		public PriorityQueue(int index, GenomeFactoryBase<TGenome> factory)
 		{
 			Index = index;
 			Factory = factory ?? throw new ArgumentNullException(nameof(factory));
-			ProducerTriggers = new List<Func<bool>>()
-			{
+			ProducerTriggers =
+			[
 				ProcessVariation,
 				ProcessBreeder,
 				ProcessMutation
-			};
+			];
 		}
+
 		/**
 		 * It's very important to avoid any contention.
 		 *
@@ -424,11 +420,11 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		 * Duplicates can occur, but if they are duplicated, we consolodate those duplicates until a valid mate is found, or not.
 		 * Returning any valid breeders whom haven't mated enough.
 		 */
-		readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock = new();
+		private readonly ConcurrentQueue<(TGenome Genome, int Count)> BreedingStock = new();
 
 		public void EnqueueChampion(IEnumerable<TGenome> genomes)
 		{
-			foreach (var genome in genomes)
+			foreach (TGenome genome in genomes)
 				EnqueueChampion(genome);
 		}
 
@@ -442,7 +438,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		public void EnqueueForBreeding(IEnumerable<TGenome> genomes)
 		{
 			if (genomes is null) return;
-			foreach (var g in genomes)
+			foreach (TGenome g in genomes)
 				EnqueueForBreeding(g);
 		}
 
@@ -458,7 +454,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		[SuppressMessage("Roslynator", "RCS1242:Do not pass non-read-only struct by read-only reference.")]
 		protected void EnqueueForBreeding(in (TGenome Genome, int Count) entry, bool incrementMetrics)
 		{
-			var count = entry.Count;
+			int count = entry.Count;
 			if (count > 0)
 			{
 				if (incrementMetrics) Factory.Metrics.BreedingStock.Increment(count);
@@ -474,13 +470,13 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 		public void Breed(IEnumerable<TGenome> genomes)
 		{
-			foreach (var g in genomes)
+			foreach (TGenome g in genomes)
 				Breed(g);
 		}
 
 		public void Breed(TGenome? genome = null, int maxCount = 1)
 		{
-			for (var i = 0; i < maxCount; i++)
+			for (int i = 0; i < maxCount; i++)
 			{
 				if (genome is not null)
 					Factory.Metrics.BreedingStock.Increment();
@@ -501,9 +497,9 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			return true;
 		}
 
-		bool TryTakeBreederFromNextQueue(out (TGenome genome, int count) mate)
+		private bool TryTakeBreederFromNextQueue(out (TGenome genome, int count) mate)
 		{
-			var nextIndex = Index + 1;
+			int nextIndex = Index + 1;
 			if (Factory.PriorityQueues.Count > nextIndex)
 				return Factory.PriorityQueues[nextIndex].TryTakeBreeder(out mate);
 
@@ -530,12 +526,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 				return false;
 			}
 
-			var remaining = BreedingStock.Count;
-			var bred = false;
+			int remaining = BreedingStock.Count;
+			bool bred = false;
 			// Start dequeueing possbile mates, where any of them could be a requeue of current.
-			while (TryTakeBreeder(out var mate))
+			while (TryTakeBreeder(out (TGenome genome, int count) mate))
 			{
-				var mateGenome = mate.genome;
+				TGenome mateGenome = mate.genome;
 				if (mateGenome == genome || mateGenome.Hash == genome.Hash)
 				{
 					//if (!EnqueueMutation(genome))
@@ -631,8 +627,8 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 		internal bool EnqueueInternal(IEnumerable<TGenome> genomes, bool onlyIfNotRegistered = false)
 		{
-			var added = false;
-			foreach (var g in genomes)
+			bool added = false;
+			foreach (TGenome g in genomes)
 			{
 				if (EnqueueInternal(g, onlyIfNotRegistered))
 					added = true;
@@ -645,7 +641,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		{
 			if (genome is null) return false;
 
-			var variations = Factory.GetVariations(genome);
+			IEnumerator<TGenome>? variations = Factory.GetVariations(genome);
 			if (variations is null) return false;
 
 			while (variations.ConcurrentTryMoveNext(out IGenome v))
@@ -667,7 +663,7 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 		public void EnqueueVariations(TGenome genome, int count = int.MaxValue)
 		{
 			if (genome is null) return;
-			var i = 0;
+			int i = 0;
 			while (AttemptEnqueueVariation(genome) && i++ < count) { }
 		}
 
@@ -685,17 +681,17 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 		public void EnqueueForVariation(IEnumerable<TGenome> genomes)
 		{
-			foreach (var g in genomes)
+			foreach (TGenome g in genomes)
 				EnqueueForVariation(g);
 		}
 
 		public bool Mutate(TGenome genome, int maxCount = 1)
 		{
 			if (maxCount < 1) return false;
-			var i = 0;
+			int i = 0;
 			for (; i < maxCount; i++)
 			{
-				if (Factory.AttemptNewMutation(genome, out var mutation))
+				if (Factory.AttemptNewMutation(genome, out TGenome? mutation))
 				{
 					EnqueueInternal(mutation);
 				}
@@ -719,20 +715,20 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 
 		public void EnqueueForMutation(IEnumerable<TGenome> genomes)
 		{
-			foreach (var g in genomes)
+			foreach (TGenome g in genomes)
 				EnqueueForMutation(g);
 		}
 
 		protected readonly ConcurrentQueue<TGenome> InternalQueue = new();
 		protected readonly ConcurrentQueue<TGenome> AwaitingVariation = new();
 		protected readonly ConcurrentQueue<TGenome> AwaitingMutation = new();
-		readonly List<Func<bool>> ProducerTriggers;
+		private readonly List<Func<bool>> ProducerTriggers;
 
-		public List<Func<bool>> ExternalProducers { get; } = new List<Func<bool>>();
+		public List<Func<bool>> ExternalProducers { get; } = [];
 
-		bool ProcessVariation()
+		private bool ProcessVariation()
 		{
-			while (AwaitingVariation.TryDequeue(out var vGenome))
+			while (AwaitingVariation.TryDequeue(out TGenome? vGenome))
 			{
 				Factory.Metrics.AwaitingVariation.Decrement();
 				if (!AttemptEnqueueVariation(vGenome)) continue;
@@ -744,13 +740,13 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			return false;
 		}
 
-		bool ProcessBreeder()
+		private bool ProcessBreeder()
 		{
-			var count = BreedingStock.Count;
-			var c = count / 1000 + 1;
+			int count = BreedingStock.Count;
+			int c = count / 1000 + 1;
 			c *= Math.Min(count, c * c /*square it*/);
-			var bred = false;
-			for (var i = 0; i < c; i++)
+			bool bred = false;
+			for (int i = 0; i < c; i++)
 			{
 				if (BreedOne(null))
 					bred = true;
@@ -759,12 +755,12 @@ public abstract class GenomeFactoryBase<TGenome> : IGenomeFactory<TGenome>
 			return bred;
 		}
 
-		bool ProcessMutation()
+		private bool ProcessMutation()
 		{
-			while (AwaitingMutation.TryDequeue(out var mGenome))
+			while (AwaitingMutation.TryDequeue(out TGenome? mGenome))
 			{
 				Factory.Metrics.AwaitingMutation.Decrement();
-				if (!Factory.AttemptNewMutation(mGenome, out var mutation))
+				if (!Factory.AttemptNewMutation(mGenome, out TGenome? mutation))
 					continue;
 				EnqueueInternal(mutation);
 				return true;

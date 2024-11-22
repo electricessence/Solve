@@ -1,7 +1,5 @@
 ﻿using Open.Numeric;
-using System;
 using System.Collections.Immutable;
-using System.Threading;
 
 namespace Solve;
 

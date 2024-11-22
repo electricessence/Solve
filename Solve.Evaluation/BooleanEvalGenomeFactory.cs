@@ -1,21 +1,14 @@
 ﻿using App.Metrics.Counter;
 using Open.Collections;
-using Open.Evaluation;
 using Open.Evaluation.Boolean;
 using Open.Evaluation.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 using EvaluationRegistry = Open.Evaluation.Registry;
 
 namespace Solve.Evaluation;
 
-public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
+public partial class BooleanEvalGenomeFactory(IProvideCounterMetrics metrics) : EvalGenomeFactoryBase<bool>(metrics)
 {
-	public BooleanEvalGenomeFactory(IProvideCounterMetrics metrics)
-		: base(metrics) { }
-
 	//public BooleanEvalGenomeFactory(params string[] seeds)
 	//{
 	//	InjectSeeds(seeds);
@@ -39,13 +32,13 @@ public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
 				"Must have at least 2 parameter count.");
 		}
 
-		var operators = EvaluationRegistry.Arithmetic.Operators;
+		System.Collections.Immutable.ImmutableArray<char> operators = EvaluationRegistry.Arithmetic.Operators;
 
 		return UShortRange(0, paramCount)
 			.Combinations(paramCount)
 			.SelectMany(combination =>
 			{
-				var children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
+				Parameter<bool>[] children = combination.Select(p => Catalog.GetParameter(p)).ToArray();
 				return operators.Select(op =>
 					Registration(
 						EvaluationRegistry.Boolean.GetOperator(Catalog, op, children),
@@ -57,8 +50,8 @@ public partial class BooleanEvalGenomeFactory : EvalGenomeFactoryBase<bool>
 	#region Functions
 	protected override IEnumerable<EvalGenome<bool>> GenerateFunctioned(ushort id)
 	{
-		var p = Catalog.GetParameter(id);
-		foreach (var op in EvaluationRegistry.Arithmetic.Functions)
+		Parameter<bool> p = Catalog.GetParameter(id);
+		foreach (char op in EvaluationRegistry.Arithmetic.Functions)
 		{
 			// ReSharper disable once SwitchStatementMissingSomeCases
 			switch (op)

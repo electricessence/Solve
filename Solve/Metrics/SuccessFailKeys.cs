@@ -1,8 +1,6 @@
-﻿using System;
+﻿namespace Solve.Metrics;
 
-namespace Solve.Metrics;
-
-public struct SuccessFailKeys
+public readonly record struct SuccessFailKeys
 {
 	public SuccessFailKeys(string prefix)
 	{

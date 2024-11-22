@@ -1,19 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisLevel>latest</AnalysisLevel>
 		<AnalysisMode>All</AnalysisMode>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<LangVersion>latest</LangVersion>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -68,18 +61,18 @@
 	<ItemGroup>
 		<PackageReference Include="App.Metrics" Version="4.3.0" />
 		<PackageReference Include="Open.Arithmetic" Version="2.0.0" />
-		<PackageReference Include="Open.ChannelExtensions" Version="6.2.2" />
+		<PackageReference Include="Open.ChannelExtensions" Version="9.0.0" />
 		<PackageReference Include="Open.Collections.Numeric" Version="1.7.0" />
 		<PackageReference Include="Open.Cloneable" Version="1.1.2" />
-		<PackageReference Include="Open.Lazy.Extensions" Version="1.2.0" />
+		<PackageReference Include="Open.Lazy.Extensions" Version="1.4.1" />
 		<PackageReference Include="Open.MemoryExtensions" Version="2.8.0" />
 		<PackageReference Include="Open.Numeric" Version="2.4.2" />
 		<PackageReference Include="Open.RandomizationExtensions" Version="2.5.3" />
-		<PackageReference Include="Open.Text" Version="6.3.0" />
-		<PackageReference Include="Open.Threading" Version="2.2.1" />
+		<PackageReference Include="Open.Text" Version="9.0.0" />
+		<PackageReference Include="Open.Threading" Version="3.0.4" />
 		<PackageReference Include="System.Interactive.Async" Version="6.0.1" />
-		<PackageReference Include="System.Reactive" Version="5.0.0" />
-		<PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+		<PackageReference Include="System.Reactive" Version="6.0.1" />
+		<PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
 	</ItemGroup>
 
 </Project>

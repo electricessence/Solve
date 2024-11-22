@@ -1,8 +1,5 @@
-﻿using Open.Evaluation.Core;
-using Open.Hierarchy;
+﻿using Open.Hierarchy;
 using Open.RandomizationExtensions;
-using System;
-using System.Linq;
 
 using IGene = Open.Evaluation.Core.IEvaluate<bool>;
 
@@ -21,17 +18,17 @@ public partial class BooleanEvalGenomeFactory
 		 * 6) Removing a function.
 		 */
 
-		var genes = Catalog.Factory.Map(target.Root);
+		Node<IGene> genes = Catalog.Factory.Map(target.Root);
 
 		while (genes.Count != 0)
 		{
-			var gene = genes
+			Node<IGene> gene = genes
 				.GetNodes()
 				.ToArray()
 				.RandomSelectOne() as Node<IGene>
 				?? throw new InvalidCastException("Expected a Node<IGene>.");
 
-			var gv = gene.Value;
+			IGene gv = gene.Value;
 			switch (gv)
 			{
 				// ReSharper disable once RedundantEmptySwitchSection
@@ -45,7 +42,7 @@ public partial class BooleanEvalGenomeFactory
 
 	protected override EvalGenome<bool>? MutateInternal(EvalGenome<bool> target)
 	{
-		var (root, origin) = MutateUnfrozen(target);
+		(IGene? root, string? origin) = MutateUnfrozen(target);
 		return root is null ? null : Registration(root, ($"Mutation > {origin}", target.Hash));
 	}
 }

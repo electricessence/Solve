@@ -1,24 +1,16 @@
 ﻿using App.Metrics.Counter;
-using System;
 using System.Collections.Concurrent;
 
 namespace Solve.Metrics;
 
-public class CounterCollection
+public class CounterCollection(IProvideCounterMetrics metrics, string context)
 {
-	private readonly IProvideCounterMetrics Metrics;
-	private readonly ConcurrentDictionary<string, ICounter> Counters;
+	private readonly IProvideCounterMetrics Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+	private readonly ConcurrentDictionary<string, ICounter> Counters = new();
 
-	public string Context { get; }
+	public string Context { get; } = context ?? throw new ArgumentNullException(nameof(context));
 
-	public CounterCollection(IProvideCounterMetrics metrics, string context)
-	{
-		Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-		Context = context ?? throw new ArgumentNullException(nameof(context));
-		Counters = new ConcurrentDictionary<string, ICounter>();
-	}
-
-	ICounter CreateCounter(string name) => Metrics.Instance(new CounterOptions { Name = name, Context = Context });
+	private ICounter CreateCounter(string name) => Metrics.Instance(new CounterOptions { Name = name, Context = Context });
 
 	public ICounter this[string name] => Counters.GetOrAdd(name, CreateCounter);
 }

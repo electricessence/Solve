@@ -1,15 +1,14 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 
 namespace Solve;
 
-public readonly struct Metric
+public readonly record struct Metric
 {
 	public Metric(ushort id, string name, string format, double maxValue = double.PositiveInfinity, double tolerance = double.NaN)
 	{
 		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(name));
 		if (string.IsNullOrWhiteSpace(format)) throw new ArgumentException("Cannot be null, empty or whitespace.", nameof(format));
-		if (!format.Contains("{0")) throw new ArgumentException("Invalid format string.");
+		if (!format.Contains("{0", StringComparison.Ordinal)) throw new ArgumentException("Invalid format string.");
 		if (tolerance < 0) throw new ArgumentOutOfRangeException(nameof(tolerance), tolerance, "Must be zero or greater.");
 		Contract.EndContractBlock();
 		// ReSharper disable once ReturnValueOfPureMethodIsNotUsed
