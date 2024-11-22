@@ -12,8 +12,8 @@ public class ConsoleEmitterBase<TGenome>(uint sampleMinimum = 50, string? logFil
 	public AsyncFileWriter? LogFile { get; } = logFilePath is null ? null : new AsyncFileWriter(logFilePath, 1000);
 	public uint SampleMinimum { get; } = sampleMinimum;
 
-	private CursorRange _lastTopGenomeUpdate;
-	public CursorRange LastTopGenomeUpdate => _lastTopGenomeUpdate;
+	private CursorRange? _lastTopGenomeUpdate;
+	public CursorRange? LastTopGenomeUpdate => _lastTopGenomeUpdate;
 	protected const string BLANK = "           ";
 	private readonly ConcurrentQueue<(IProblem<TGenome> problem, TGenome genome, int poolIndex, Fitness fitness)> ConsoleQueue = new();
 

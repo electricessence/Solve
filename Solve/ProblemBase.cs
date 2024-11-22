@@ -26,7 +26,7 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 		public RankedPool<TGenome> Champions { get; }
 
-		private class GF
+		private sealed class GF
 		{
 			public GF(TGenome genome, Fitness fitness)
 			{

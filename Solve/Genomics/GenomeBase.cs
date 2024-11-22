@@ -1,13 +1,17 @@
-﻿/*!
- * @author electricessence / https://github.com/electricessence/
- * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
- */
+﻿using System.Diagnostics.CodeAnalysis;
+/*!
+* @author electricessence / https://github.com/electricessence/
+* Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
+*/
 
 #if DEBUG
 #endif
 
 namespace Solve;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+[SuppressMessage("Naming", "CA1721:Property names should not match get methods")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 public abstract class GenomeBase : FreezableBase, IGenome
 {
 	protected GenomeBase()
@@ -19,6 +23,7 @@ public abstract class GenomeBase : FreezableBase, IGenome
 	protected abstract string GetHash();
 
 	private readonly Lazy<string> _hash;
+
 	public string Hash => IsFrozen ? _hash.Value : GetHash();
 
 	protected abstract object CloneInternal();

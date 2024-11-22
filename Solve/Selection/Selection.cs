@@ -6,7 +6,7 @@ namespace Solve;
 /// <summary>
 /// Provides a means for selecting and rejecting entries by chosing a mid point in thier population assuming that the selected ones are first and the rejected ones are last.
 /// </summary>
-public readonly struct Selection<T>
+public readonly record struct Selection<T>
 {
 	public readonly ImmutableArray<T> All;
 	public readonly ImmutableArray<T> Selected;

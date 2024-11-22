@@ -20,7 +20,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	private readonly Stopwatch _stopwatch;
 	private EnvironmentBase<TGenome> Environment;
 	private ConsoleEmitterBase<TGenome> Emitter;
-	private CursorRange _lastConsoleStats;
+	private CursorRange? _lastConsoleStats;
 
 	protected RunnerBase(ushort minConvergenceSamples = 20)
 	{
@@ -107,7 +107,7 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 				});
 
 		_stopwatch.Start();
-		_statusEmitter.Defer(StatusDelay);
+		_ = _statusEmitter.Defer(StatusDelay);
 
 		try
 		{

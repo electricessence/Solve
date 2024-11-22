@@ -4,7 +4,7 @@ public static class SynchronizedConsole
 {
 	public static object Sync => Cursor.Sync;
 
-	public static void Write(ref CursorRange message, in Action<Cursor> action)
+	public static void Write(ref CursorRange? message, in Action<Cursor> action)
 	{
 		lock (Sync)
 		{
@@ -29,7 +29,7 @@ public static class SynchronizedConsole
 		}
 	}
 
-	public static void OverwriteIfSame(ref CursorRange message, in Action<Cursor> action)
+	public static void OverwriteIfSame(ref CursorRange? message, in Action<Cursor> action)
 	{
 		lock (Sync)
 		{
@@ -77,7 +77,7 @@ public static class SynchronizedConsole
 		}
 	}
 
-	public static void OverwriteIfSame(ref CursorRange message, Func<bool> condition, in Action<Cursor> action)
+	public static void OverwriteIfSame(ref CursorRange? message, Func<bool> condition, in Action<Cursor> action)
 	{
 		lock (Sync)
 		{

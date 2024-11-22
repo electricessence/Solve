@@ -7,7 +7,7 @@ using System.Collections.Immutable;
 
 namespace Solve;
 
-public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
+public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 {
 	public const string Context = "GenomeFactory";
 	private const string BREEDING_STOCK = "Breeding Stock";
@@ -77,7 +77,7 @@ public struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 
 	public long ExternalProducerQueried { get; }
 
-	internal class Logger : CounterCollection
+	internal sealed class Logger : CounterCollection
 	{
 		private const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
 

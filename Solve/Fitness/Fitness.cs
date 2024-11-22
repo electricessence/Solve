@@ -158,7 +158,7 @@ public class Fitness : IComparable<Fitness>
 			double tolerance = Metric.Tolerance;
 
 			if (Value > convergence + double.Epsilon)
-				throw new Exception($"Score has exceeded convergence value: {Value}");
+				throw new InvalidOperationException($"Score has exceeded convergence value: {Value}");
 
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
@@ -179,4 +179,33 @@ public class Fitness : IComparable<Fitness>
 
 	public bool IsSuperiorTo(Fitness other)
 		=> CompareTo(other) > 0;
+
+	public override bool Equals(object? obj)
+		=> ReferenceEquals(this, obj);
+
+	public override int GetHashCode()
+		=> HashCode.Combine(Metrics, _results);
+
+	public static bool operator ==(Fitness left, Fitness right)
+	{
+		if (left is null)
+			return right is null;
+
+		return left.Equals(right);
+	}
+
+	public static bool operator !=(Fitness left, Fitness right)
+		=> !(left == right);
+
+	public static bool operator <(Fitness left, Fitness right)
+		=> left is null ? right is not null : left.CompareTo(right) < 0;
+
+	public static bool operator <=(Fitness left, Fitness right)
+		=> left is null || left.CompareTo(right) <= 0;
+
+	public static bool operator >(Fitness left, Fitness right)
+		=> left?.CompareTo(right) > 0;
+
+	public static bool operator >=(Fitness left, Fitness right)
+		=> left is null ? right is null : left.CompareTo(right) >= 0;
 }

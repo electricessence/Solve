@@ -1,6 +1,6 @@
 ﻿namespace Solve.Metrics;
 
-public struct SuccessFailCount
+public readonly record struct SuccessFailCount
 {
 	private const string MustBeAtLeastZero = "Must be at least zero.";
 
