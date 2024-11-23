@@ -5,52 +5,50 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
-namespace Multiplexer
+namespace Multiplexer;
+
+[SuppressMessage("ReSharper", "IteratorNeverReturns")]
+public sealed class SampleCache
 {
-	[SuppressMessage("ReSharper", "IteratorNeverReturns")]
-	public sealed class SampleCache
+	public sealed class Entry
 	{
-		public sealed class Entry
+		public readonly IReadOnlyList<double> ParamValues;
+		public readonly Lazy<double> Correct;
+
+		public Entry(IReadOnlyList<double> paramValues, Formula f)
 		{
-			public readonly IReadOnlyList<double> ParamValues;
-			public readonly Lazy<double> Correct;
-
-			public Entry(IReadOnlyList<double> paramValues, Formula f)
-			{
-				ParamValues = paramValues;
-				Correct = Lazy.Create(() => f(ParamValues));
-			}
+			ParamValues = paramValues;
+			Correct = Lazy.Create(() => f(ParamValues));
 		}
+	}
 
-		readonly Formula _actualFormula;
-		readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
+	readonly Formula _actualFormula;
+	readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
 
-		public readonly double Range;
+	public readonly double Range;
 
-		public SampleCache(Formula actualFormula, double range = 100)
+	public SampleCache(Formula actualFormula, double range = 100)
+	{
+		Range = range;
+		_actualFormula = actualFormula;
+		_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
+	}
+
+	public IEnumerable<Entry> Generate()
+	{
+		while (true)
+			yield return new Entry(Samples()/*.Distinct()*/.Memoize(true), _actualFormula);
+	}
+
+	public LazyList<Entry> Get(long id)
+		=> _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
+
+	IEnumerable<double> Samples()
+	{
+		var offset = RandomUtilities.Random.Next(1000) - Range / 2;
+		while (true)
 		{
-			Range = range;
-			_actualFormula = actualFormula;
-			_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
+			yield return RandomUtilities.Random.NextDouble() * Range + offset;
 		}
-
-		public IEnumerable<Entry> Generate()
-		{
-			while (true)
-				yield return new Entry(Samples()/*.Distinct()*/.Memoize(true), _actualFormula);
-		}
-
-		public LazyList<Entry> Get(long id)
-			=> _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
-
-		IEnumerable<double> Samples()
-		{
-			var offset = RandomUtilities.Random.Next(1000) - Range / 2;
-			while (true)
-			{
-				yield return RandomUtilities.Random.NextDouble() * Range + offset;
-			}
-		}
-
 	}
 }

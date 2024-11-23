@@ -2,6 +2,9 @@
 
 namespace Solve.Supporting.TaskScheduling;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1063:Implement IDisposable Correctly", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 public abstract class DisposableTaskScheduler : TaskScheduler, IDisposable
 {
 	/// <summary>Cancellation token used for disposal.</summary>

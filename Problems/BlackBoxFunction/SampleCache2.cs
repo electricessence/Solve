@@ -1,6 +1,6 @@
 ﻿using Open.Collections;
-using Open.RandomizationExtensions;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,12 +10,14 @@ namespace BlackBoxFunction;
 
 public sealed class SampleCache2
 {
-	public sealed class Entry : LazyList<(IReadOnlyList<double> input, double correct)>
+	public sealed class Entry(IEnumerable<LazyList<double>> paramValues, Formula f)
+		: IReadOnlyList<(IReadOnlyList<double> input, double correct)>
 	{
-		public Entry(IEnumerable<LazyList<double>> paramValues, Formula f)
-			: base(GetResults(paramValues, f), true)
-		{
-		}
+		public (IReadOnlyList<double> input, double correct) this[int index] => Values[index];
+
+		public LazyList<(IReadOnlyList<double> input, double correct)> Values { get; } = new(GetResults(paramValues, f), true);
+
+		public int Count => Values.Count;
 
 		public static IEnumerable<(IReadOnlyList<double> input, double correct)> GetResults(
 			IEnumerable<LazyList<double>> paramValues, Formula f)
@@ -23,6 +25,9 @@ public sealed class SampleCache2
 			foreach (var pv in paramValues)
 				yield return (pv, f(pv));
 		}
+
+		public IEnumerator<(IReadOnlyList<double> input, double correct)> GetEnumerator() => Values.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)Values).GetEnumerator();
 	}
 
 	public readonly double Range;

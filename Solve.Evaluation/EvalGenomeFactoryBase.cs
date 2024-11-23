@@ -121,6 +121,7 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		return genome;
 	}
 
+	[SuppressMessage("Roslynator", "RCS1163:Unused parameter")]
 	protected EvalGenome<T> Create(IEvaluate<T> root, (string? message, string? data) origin)
 	{
 #if DEBUG

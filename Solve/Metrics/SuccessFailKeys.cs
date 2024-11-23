@@ -19,6 +19,9 @@ public readonly record struct SuccessFailKeys
 	public string Switch(bool success)
 		=> success ? Succeded : Failed;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 	public static implicit operator SuccessFailKeys(string prefix)
 		=> new(prefix);
 }

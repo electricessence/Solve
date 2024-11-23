@@ -3,6 +3,7 @@ using Open.DateTimeExtensions;
 using Open.Disposable;
 using Open.Threading.Tasks;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using SystemConsole = System.Console;
 
 namespace Solve.Experiment.Console;
@@ -10,7 +11,7 @@ namespace Solve.Experiment.Console;
 public abstract class RunnerBase<TGenome> : DisposableBase
 	where TGenome : class, IGenome
 {
-	private IMetricsRoot Metrics;
+	private IMetricsRoot? Metrics;
 
 	// ReSharper disable once StaticMemberInGenericType
 	private static readonly TimeSpan StatusDelay = TimeSpan.FromSeconds(5);
@@ -18,8 +19,8 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	// ReSharper disable once NotAccessedField.Local
 	private readonly ushort _minConvergenceSamples;
 	private readonly Stopwatch _stopwatch;
-	private EnvironmentBase<TGenome> Environment;
-	private ConsoleEmitterBase<TGenome> Emitter;
+	private EnvironmentBase<TGenome>? Environment;
+	private ConsoleEmitterBase<TGenome>? Emitter;
 	private CursorRange? _lastConsoleStats;
 
 	protected RunnerBase(ushort minConvergenceSamples = 20)
@@ -58,7 +59,10 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	}
 
 	public void Cancel()
-		=> Environment.Cancel();
+	{
+		Debug.Assert(Environment is not null);
+		Environment.Cancel();
+	}
 
 	private readonly ActionRunner _statusEmitter;
 
@@ -76,6 +80,11 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	// ReSharper disable once MemberCanBeProtected.Global
 	public async Task Start(string info)
 	{
+		if (Environment is null) throw new InvalidOperationException("Not initialized. No Environment.");
+		if (Emitter is null) throw new InvalidOperationException("Not initialized. No Emitter.");
+		if (Metrics is null) throw new InvalidOperationException("Not initialized. No Metrics.");
+		Contract.EndContractBlock();
+
 		SystemConsole.ResetColor();
 		SystemConsole.Clear();
 		if (!string.IsNullOrWhiteSpace(info))
@@ -89,22 +98,22 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 
 		Environment
 			.Subscribe(o =>
-				{
-					IProblem<TGenome> problem = o.Problem;
-					Emitter.EmitTopGenomeStats(o);
+			{
+				IProblem<TGenome> problem = o.Problem;
+				Emitter.EmitTopGenomeStats(o);
 
-					if (!problem.HasConverged && problem.Pools.All(pool => pool.BestFitness.Fitness?.HasConverged(_minConvergenceSamples) ?? false))
-						problem.Converged();
+				if (!problem.HasConverged && problem.Pools.All(pool => pool.BestFitness.Fitness?.HasConverged(_minConvergenceSamples) ?? false))
+					problem.Converged();
 
-					if (Environment.HaveAllProblemsConverged)
-						Environment.Cancel();
-				},
-				ex => SystemConsole.WriteLine(ex.GetBaseException()),
-				() =>
-				{
+				if (Environment.HaveAllProblemsConverged)
 					Environment.Cancel();
-					SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
-				});
+			},
+			ex => SystemConsole.WriteLine(ex.GetBaseException()),
+			() =>
+			{
+				Environment.Cancel();
+				SynchronizedConsole.OverwriteIfSame(ref _lastConsoleStats, EmitStats);
+			});
 
 		_stopwatch.Start();
 		_ = _statusEmitter.Defer(StatusDelay);
@@ -126,11 +135,19 @@ public abstract class RunnerBase<TGenome> : DisposableBase
 	{
 	}
 
-	public IProvideMetricValues MetricsSnapshot => Metrics.Snapshot;
+	public IProvideMetricValues MetricsSnapshot
+	{
+		get
+		{
+			Debug.Assert(Metrics is not null);
+			return Metrics.Snapshot;
+		}
+	}
 
 	protected virtual void EmitStats(Cursor cursor)
 	{
 		SystemConsole.WriteLine("{0} total time                    ", _stopwatch.Elapsed.ToStringVerbose());
+		Debug.Assert(Environment is not null);
 		foreach (IProblem<TGenome> p in Environment.Problems)
 		{
 			long tc = p.TestCount;

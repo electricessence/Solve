@@ -5,8 +5,6 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisLevel>latest</AnalysisLevel>
-		<AnalysisMode>All</AnalysisMode>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -62,8 +60,8 @@
 		<PackageReference Include="App.Metrics" Version="4.3.0" />
 		<PackageReference Include="Open.Arithmetic" Version="2.0.0" />
 		<PackageReference Include="Open.ChannelExtensions" Version="9.0.0" />
-		<PackageReference Include="Open.Collections.Numeric" Version="2.0.0" />
 		<PackageReference Include="Open.Cloneable" Version="1.1.2" />
+		<PackageReference Include="Open.Collections.Numeric" Version="2.0.2" />
 		<PackageReference Include="Open.Lazy.Extensions" Version="1.4.1" />
 		<PackageReference Include="Open.MemoryExtensions" Version="2.8.0" />
 		<PackageReference Include="Open.RandomizationExtensions" Version="2.5.3" />

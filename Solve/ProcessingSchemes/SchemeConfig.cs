@@ -13,6 +13,10 @@ public interface ISchemeConfig
 	SchemeConfig.Values Immutable { get; }
 }
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 public class SchemeConfig : ISchemeConfig
 {
 	public readonly record struct Values : ISchemeConfig

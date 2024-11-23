@@ -47,6 +47,9 @@ public partial class TowerScheme<TGenome>
 		public void Broadcast(LevelProgress<TGenome> progress, int poolIndex)
 			=> Broadcast((progress.Genome, progress.Fitnesses[poolIndex], Problem, poolIndex));
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 		public ValueTask PostAsync(TGenome next)
 		{
 			ArgumentNullException.ThrowIfNull(next);

@@ -120,6 +120,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 		return result;
 	}
 
+	[SuppressMessage("Roslynator", "RCS1163:Unused parameter")]
 	protected TGenome Registration(TGenome genome, (string message, string? data) origin, Action<TGenome>? onBeforeAdd = null)
 	{
 #if DEBUG
@@ -365,7 +366,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 #endif
 	}
 
-	protected readonly List<PriorityQueue> PriorityQueues = [];
+	protected readonly Collection<PriorityQueue> PriorityQueues = [];
 
 	protected PriorityQueue GetPriorityQueue(int index)
 	{

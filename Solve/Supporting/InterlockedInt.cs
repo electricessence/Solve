@@ -39,6 +39,9 @@ public class InterlockedInt : IEquatable<InterlockedInt>, IEquatable<int>, IRecy
 	public bool Equals(int value)
 		=> _value == value;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1725:Parameter names should match base declaration", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 	public override bool Equals(object? other)
 		=> other is int i
 			? Equals(i)

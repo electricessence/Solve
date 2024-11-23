@@ -1,5 +1,6 @@
 ﻿using Open.Memory;
 using Open.Numeric;
+using Open.Numeric.Precision;
 using Open.Text;
 using System.Collections.Immutable;
 using System.Diagnostics;

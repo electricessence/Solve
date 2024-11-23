@@ -12,14 +12,17 @@ namespace BlackBoxFunction;
 
 public delegate double Formula(IReadOnlyList<double> p);
 
-public class Problem : ProblemBase<EvalGenome<double>>
+public class Problem(Formula actualFormula,
+	ushort sampleSize = 100,
+	ushort championPoolSize = 100,
+	params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators) : ProblemBase<EvalGenome<double>>(fitnessTranslators, sampleSize, championPoolSize)
 {
 	const int Direction = 0;
 	const int Correlation = 1;
 	const int Divergence = 2;
 	const int GeneCount = 3;
 
-	static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
+	static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, EvalGenome<double> genome, double[] values)
 	{
 		var len = metrics.Length;
 		var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
@@ -41,25 +44,18 @@ public class Problem : ProblemBase<EvalGenome<double>>
 	}
 
 	protected static readonly ImmutableArray<Metric> Metrics01
-		= ImmutableArray.Create(
+		= [
 			new Metric(Direction, "Direction", "Direction {0:p1}", 1, double.Epsilon),
 			new Metric(Correlation, "Correlation", "Correlation {0:p10}", 1, double.Epsilon),
 			new Metric(Divergence, "Divergence", "Divergence {0:n1}", 0, 0.0000000000001),
-			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
+			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"),
+		];
 
 	protected static readonly ImmutableArray<Metric> Metrics02
-		= ImmutableArray.Create(
-			Metrics01[Correlation],
-			Metrics01[Divergence],
-			Metrics01[Direction],
-			Metrics01[GeneCount]);
+		= [Metrics01[Correlation], Metrics01[Divergence], Metrics01[Direction], Metrics01[GeneCount]];
 
 	protected static readonly ImmutableArray<Metric> Metrics03
-		= ImmutableArray.Create(
-			Metrics01[Correlation],
-			Metrics01[Direction],
-			Metrics01[Divergence],
-			Metrics01[GeneCount]);
+		= [Metrics01[Correlation], Metrics01[Direction], Metrics01[Divergence], Metrics01[GeneCount]];
 
 	protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
 		=> GetPrimaryMetricValues(Metrics01, genome, metrics);
@@ -70,14 +66,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 	protected static Fitness Fitness03(EvalGenome<double> genome, double[] metrics)
 		=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
-	public readonly SampleCache2 Samples;
-
-	public Problem(Formula actualFormula,
-		ushort sampleSize = 100,
-		ushort championPoolSize = 100,
-		params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators)
-		: base(fitnessTranslators, sampleSize, championPoolSize)
-		=> Samples = new SampleCache2(actualFormula, sampleSize);
+	public readonly SampleCache2 Samples = new(actualFormula, sampleSize);
 
 	protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
 	{
@@ -123,7 +112,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		if (NaNcount != 0)
 		{
 			// We do not yet handle NaN values gracefully yet so avoid correlation.
-			return new[] {
+			return [
 				NaNcount == SampleSizeInt // All NaN basically = fail.  Don't waste time trying to correlate.
 					? double.NegativeInfinity
 					: -2,
@@ -131,7 +120,7 @@ public class Problem : ProblemBase<EvalGenome<double>>
 					? double.NegativeInfinity
 					: -2,
 				double.PositiveInfinity
-			};
+			];
 		}
 
 		// Attempt to detect non-linear relationships...
@@ -151,11 +140,11 @@ public class Problem : ProblemBase<EvalGenome<double>>
 		pool?.Return(correct);
 		pool?.Return(divergence);
 
-		return new[] {
+		return [
 			(double.IsNaN(dcCorrelation) || double.IsInfinity(dcCorrelation)) ? -2 : dcCorrelation,
 			(double.IsNaN(c) || double.IsInfinity(c)) ? -2 : c,
 			(double.IsNaN(d) || double.IsInfinity(d)) ? double.PositiveInfinity : d
-		};
+		];
 	}
 
 	public static Problem Create(

@@ -29,7 +29,16 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 
 	#region Default Implmentations
 	public TGenome GenerateOne()
-		=> GenerateOneFrom(null!) ?? throw new Exception("Unable to generate new genome.");
+		=> GenerateOneFrom(null!) ?? throw new GenomeException("Unable to generate new genome.");
+
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+	[SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "<Pending>")]
+	[SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>")]
+	[SuppressMessage("Roslynator", "RCS1194:Implement exception constructors", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
+	public class GenomeException(string message) : Exception(message)
+	{
+	}
 
 	// These will return null if the attempt fails.
 	public TGenome? GenerateOneFrom(IReadOnlyList<TGenome> source)

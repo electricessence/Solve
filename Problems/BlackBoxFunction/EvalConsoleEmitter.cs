@@ -6,20 +6,18 @@ using System.Text.RegularExpressions;
 
 namespace BlackBoxFunction;
 
-public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome<double>>
+public partial class EvalConsoleEmitter(ICatalog<IEvaluate<double>> catalog, uint sampleMinimum = 50)
+	: ConsoleEmitterBase<EvalGenome<double>>(sampleMinimum)
 {
-	readonly ICatalog<IEvaluate<double>> Catalog;
-
-	public EvalConsoleEmitter(ICatalog<IEvaluate<double>> catalog, uint sampleMinimum = 50)
-		: base(sampleMinimum) => Catalog = catalog;
+	readonly ICatalog<IEvaluate<double>> Catalog = catalog;
 
 	public EvalConsoleEmitter(NumericEvalGenomeFactory factory, uint sampleMinimum = 50)
 		: this(factory.Catalog, sampleMinimum)
 	{
 	}
 
-	static readonly Regex SimpleProductsPattern = new(@"(\d+|[a-z]+)(\s\*\s[a-z]+)+", RegexOptions.Compiled);
-	static readonly Regex StripParensPattern = new(@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled);
+	static readonly Regex SimpleProductsPattern = SimpleProductsRegex();
+	static readonly Regex StripParensPattern = StripParensRegex();
 	//static readonly Regex SuperScriptDigitPattern = new Regex(@"\^[0-9\.]+", RegexOptions.Compiled);
 	//static readonly Regex CombineMultiplePattern = new Regex(@"(\d+\s\*\s)[a-z]+", RegexOptions.Compiled);
 	//static readonly Regex DivisionPattern = new Regex(@"\((\w+)\^-(\d+)\)", RegexOptions.Compiled);
@@ -66,8 +64,13 @@ public class EvalConsoleEmitter : ConsoleEmitterBase<EvalGenome<double>>
 		{
 			var hash = root.ToStringRepresentation();
 			var alpha = AlphaParameters.ConvertTo(hash);
-			var formatted = FormatGenomeString(alpha);
-			return formatted;
+			return FormatGenomeString(alpha);
 		}
 	}
+
+	[GeneratedRegex(@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled)]
+	private static partial Regex StripParensRegex();
+
+	[GeneratedRegex(@"(\d+|[a-z]+)(\s\*\s[a-z]+)+", RegexOptions.Compiled)]
+	private static partial Regex SimpleProductsRegex();
 }

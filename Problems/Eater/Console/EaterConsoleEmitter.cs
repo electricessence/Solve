@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -16,7 +17,14 @@ namespace Eater;
 #pragma warning restore IDE0079 // Remove unnecessary suppression
 public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 {
-	static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
+	// Fix for https://github.com/dotnet/winforms/issues/12494
+	static ImageCodecInfo GetJpgEncoding()
+	{
+		_ = Pens.Black;
+		return ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
+	}
+
+	static readonly ImageCodecInfo JpgEncoder = GetJpgEncoding();
 	static readonly EncoderParameters EncParams = new(1)
 	{
 		Param = { [0] = new EncoderParameter(Encoder.Quality, 10L) }
