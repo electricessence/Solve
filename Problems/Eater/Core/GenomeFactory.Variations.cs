@@ -12,21 +12,21 @@ namespace Eater;
 
 public partial class GenomeFactory
 {
-	static readonly Regex UTurn = new(@"\^([<>])\1\^", RegexOptions.Compiled);
-	static readonly Regex Loop = new(@"(\^[<>])\1{2}\^", RegexOptions.Compiled);
+	static readonly Regex UTurn = UTurnPattern();
+	static readonly Regex Loop = LoopPattern();
 
 	public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
 	{
-		var len = source.Count;
+		int len = source.Count;
 		// Try to simply shorten the result first.
 		yield return source.Take(len - 1); // by 1
-		var half = len / 2;
+		int half = len / 2;
 		if (half > 2) yield return source.Take(half); // by half
 
 		var stepCounts = source.ToStepCounts().ToArray();
-		var stepCount = stepCounts.Length;
+		int stepCount = stepCounts.Length;
 
-		var hash = stepCounts.Steps().ToGenomeHash();
+		string hash = stepCounts.Steps().ToGenomeHash();
 		var matches = UTurn.Matches(hash);
 		var sb = StringBuilderPool.Shared.Take();
 		foreach (var match in matches.Cast<Match>())
@@ -42,7 +42,7 @@ public partial class GenomeFactory
 
 		yield return source.Reverse();
 
-		foreach (var i in Enumerable.Range(0, stepCount).Shuffle())
+		foreach (int i in Enumerable.Range(0, stepCount).Shuffle())
 		{
 			var segments = SplicedEnumerable.Create(stepCounts.Take(i).Steps(), stepCounts.Skip(i + 1).Steps());
 			var step = stepCounts[i];
@@ -79,7 +79,7 @@ public partial class GenomeFactory
 		if (half <= 2) yield break;
 		yield return source.Skip(half);
 
-		var third = len / 3;
+		int third = len / 3;
 		if (third <= 2) yield break;
 		yield return source.Take(third);
 		yield return source.Skip(third).Take(third);
@@ -100,6 +100,12 @@ public partial class GenomeFactory
 
 	protected override IEnumerable<Genome> GetVariationsInternal(Genome source)
 		=> GetVariations(source.Genes.ToArray())
-			.Concat(base.GetVariationsInternal(source) ?? Enumerable.Empty<Genome>())
+			.Concat(base.GetVariationsInternal(source) ?? [])
 			.Select(steps => new Genome(steps.TrimTurns()));
+
+	[GeneratedRegex(@"\^([<>])\1\^", RegexOptions.Compiled)]
+	private static partial Regex UTurnPattern();
+
+	[GeneratedRegex(@"(\^[<>])\1{2}\^", RegexOptions.Compiled)]
+	private static partial Regex LoopPattern();
 }

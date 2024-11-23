@@ -19,16 +19,11 @@ public enum Step : byte
 	TurnLeft
 }
 
-public readonly struct StepCount : IEnumerable<Step>
+public readonly struct StepCount(Step step = Step.Forward, int count = 1)
+	: IEnumerable<Step>
 {
-	public readonly Step Step;
-	public readonly int Count;
-
-	public StepCount(Step step = Step.Forward, int count = 1)
-	{
-		Step = step;
-		Count = count;
-	}
+	public readonly Step Step = step;
+	public readonly int Count = count;
 
 	public static StepCount operator +(StepCount a, StepCount b)
 		=> a.Step == b.Step
@@ -72,13 +67,13 @@ public static class StepExtensions
 	public static IEnumerable<StepCount> ToStepCounts(this IEnumerable<Step> steps)
 	{
 		var s = steps as IList<Step> ?? steps.ToArray();
-		var len = s.Count;
+		int len = s.Count;
 		if (len == 0) yield break;
 
 		var lastStep = s[0];
-		var lastCount = 1;
+		int lastCount = 1;
 
-		for (var i = 1; i < len; i++)
+		for (int i = 1; i < len; i++)
 		{
 			var step = s[i];
 			if (step == lastStep)
@@ -135,7 +130,7 @@ public static class StepExtensions
 		=> ToGenomeHash((ReadOnlySpan<StepCount>)steps);
 }
 
-public static class Steps
+public static partial class Steps
 {
 	public static Orientation TurnLeft(this Orientation orientation) => orientation switch
 	{
@@ -167,10 +162,10 @@ public static class Steps
 		switch (orientation)
 		{
 			case Orientation.Up:
-				var v = current.Y + 1;
+				int v = current.Y + 1;
 				return new Point(current.X, v);
 			case Orientation.Right:
-				var r = current.X + 1;
+				int r = current.X + 1;
 				return new Point(r, current.Y);
 			case Orientation.Down:
 				return new Point(current.X, current.Y - 1);
@@ -186,10 +181,10 @@ public static class Steps
 		switch (orientation)
 		{
 			case Orientation.Up:
-				var v = current.Y + 1;
+				int v = current.Y + 1;
 				return v == boundary.Height ? current : new Point(current.X, v);
 			case Orientation.Right:
-				var r = current.X + 1;
+				int r = current.X + 1;
 				return r == boundary.Width ? current : new Point(r, current.Y);
 			case Orientation.Down:
 				return current.Y == 0 ? current : new Point(current.X, current.Y - 1);
@@ -204,7 +199,7 @@ public static class Steps
 	public const char TURN_RIGHT = '>';
 	public const char TURN_LEFT = '<';
 
-	public static readonly ImmutableArray<Step> ALL = ImmutableArray.Create(Step.Forward, Step.TurnRight, Step.TurnLeft);
+	public static readonly ImmutableArray<Step> ALL = [Step.Forward, Step.TurnRight, Step.TurnLeft];
 
 	public static char ToChar(this Step step) => step switch
 	{
@@ -222,14 +217,14 @@ public static class Steps
 		_ => throw new ArgumentException("Invalid value.", nameof(step)),
 	};
 
-	static readonly Regex StepReplace = new(@"(\d+)([<>^])", RegexOptions.Compiled);
+	static readonly Regex StepReplace = StepReplacePattern();
 
 	public static IEnumerable<Step> FromGenomeHash(string hash)
 	{
 		hash = StepReplace.Replace(hash, m => StringBuilderPool.RentToString(
 			sb => sb.Append(m.Groups[2].Value[0], int.Parse(m.Groups[1].Value))));
 
-		foreach (var c in hash)
+		foreach (char c in hash)
 		{
 			yield return FromChar(c);
 		}
@@ -303,7 +298,7 @@ public static class Steps
 	{
 		if (steps is ICollection<Step> c)
 		{
-			var count = c.Count;
+			int count = c.Count;
 			if (count == 0 || steps is IList<Step> list && list[0] == Step.Forward && list[count - 1] == Step.Forward)
 				return steps;
 		}
@@ -313,7 +308,7 @@ public static class Steps
 		IEnumerable<Step> Enumerate()
 		{
 			var turnQueue = new Queue<Step>();
-			var start = true;
+			bool start = true;
 			foreach (var step in steps)
 			{
 				if (start)
@@ -344,7 +339,7 @@ public static class Steps
 
 	public static bool TryReduce(this IEnumerable<Step> steps, [NotNullWhen(true)] out IEnumerable<Step> reduced)
 	{
-		var red = ReduceLoop(steps.ToGenomeHash());
+		string? red = ReduceLoop(steps.ToGenomeHash());
 		reduced = steps;
 		if (red is null) return false;
 		reduced = FromGenomeHash(red);
@@ -353,7 +348,7 @@ public static class Steps
 
 	public static IEnumerable<Step> Reduce(this IEnumerable<Step> steps)
 	{
-		var red = ReduceLoop(steps.ToGenomeHash());
+		string? red = ReduceLoop(steps.ToGenomeHash());
 		return red is null ? steps : FromGenomeHash(red);
 	}
 
@@ -371,13 +366,13 @@ public static class Steps
 	static string? ReduceLoop(string hash)
 	{
 		string outerReduced;
-		var reduced = hash;
+		string reduced = hash;
 
 		do
 		{
 			outerReduced = reduced;
 			reduced = ENDING_TURNS_REGEX.Replace(reduced, string.Empty); // Turns at the end are superfluous.
-			var reducedLoop = reduced;
+			string reducedLoop = reduced;
 
 			do
 			{
@@ -410,7 +405,7 @@ public static class Steps
 	{
 		var current = new Point(0, 0);
 		var orientation = Orientation.Up;
-		var moved = false;
+		bool moved = false;
 
 		foreach (var step in steps)
 		{
@@ -453,33 +448,33 @@ public static class Steps
 	{
 		if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
 		var points = steps.Draw().InvertY().ToArray();
-		var length = points.Length;
+		int length = points.Length;
 		const double maxPenBrightness = 160d;
-		var colorStep = maxPenBrightness / length;
+		double colorStep = maxPenBrightness / length;
 
-		var pointsX = points.Select(p => p.X).ToArray();
-		var pointsY = points.Select(p => p.Y).ToArray();
+		int[] pointsX = points.Select(p => p.X).ToArray();
+		int[] pointsY = points.Select(p => p.Y).ToArray();
 		var min = new Point(pointsX.Min(), pointsY.Min());
 		var max = new Point(pointsX.Max(), pointsY.Max());
 		var boundary = new Point(max.X - min.X, max.Y - min.Y);
 
 		// Help center it...
-		var square = Math.Max(boundary.X, boundary.Y);
-		var dXY = boundary.X - boundary.Y;
-		var dX = dXY < 0 ? (square - boundary.X) / 2 : 0;
-		var dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
+		int square = Math.Max(boundary.X, boundary.Y);
+		int dXY = boundary.X - boundary.Y;
+		int dX = dXY < 0 ? (square - boundary.X) / 2 : 0;
+		int dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
 		var offset = new Point(-min.X + dX, -min.Y + dY);
 
-		var squareSize = square * bitScale + 2 * bitScale;
+		int squareSize = square * bitScale + 2 * bitScale;
 		var bitmap = new Bitmap(squareSize, squareSize);
 		bitmap.Fill(Color.White);
 		Point? first = null;
 		Point? last = null;
-		for (var i = 0; i < length; i++)
+		for (int i = 0; i < length; i++)
 		{
 			var p = points[i];
 			var o = new Point((p.X + offset.X) * bitScale + bitScale, (p.Y + offset.Y) * bitScale + bitScale);
-			var brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
+			int brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
 			var color = Color.FromArgb(brightness, brightness, brightness);
 			if (!last.HasValue)
 			{
@@ -489,9 +484,9 @@ public static class Steps
 
 			p = last.Value;
 
-			for (var y = Math.Min(p.Y, o.Y); y <= Math.Max(p.Y, o.Y); y++)
+			for (int y = Math.Min(p.Y, o.Y); y <= Math.Max(p.Y, o.Y); y++)
 			{
-				for (var x = Math.Min(p.X, o.X); x <= Math.Max(p.X, o.X); x++)
+				for (int x = Math.Min(p.X, o.X); x <= Math.Max(p.X, o.X); x++)
 				{
 					Debug.Assert(x >= 0);
 					Debug.Assert(y >= 0);
@@ -522,30 +517,30 @@ public static class Steps
 
 	public static Bitmap Render2(this IEnumerable<Step> steps, ushort scaleMultiple = 1)
 	{
-		var scale = 4 * scaleMultiple;
-		var bitScale = 16 * scale;
-		if (bitScale < 1) throw new ArgumentOutOfRangeException(nameof(bitScale), bitScale, "Must be at least 1.");
+		if (scaleMultiple < 1) throw new ArgumentOutOfRangeException(nameof(scaleMultiple), scaleMultiple, "Must be at least 1.");
+		int scale = 4 * scaleMultiple;
+		int bitScale = 16 * scale;
 		var points = steps.Draw(true).InvertY().ToArray();
-		var length = points.Length;
+		int length = points.Length;
 		const double maxPenBrightness = 160d;
-		var colorStep = maxPenBrightness / length;
+		double colorStep = maxPenBrightness / length;
 
-		var pointsX = points.Select(p => p.X).ToArray();
-		var pointsY = points.Select(p => p.Y).ToArray();
+		int[] pointsX = points.Select(p => p.X).ToArray();
+		int[] pointsY = points.Select(p => p.Y).ToArray();
 		var min = new Point(pointsX.Min(), pointsY.Min());
 		var max = new Point(pointsX.Max(), pointsY.Max());
 		var boundary = new Point(max.X - min.X, max.Y - min.Y);
 
 		// Help center it...
-		var square = Math.Max(boundary.X, boundary.Y);
-		var dXY = boundary.X - boundary.Y;
-		var dX = dXY < 0 ? (square - boundary.X) / 2 : 0;
-		var dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
+		int square = Math.Max(boundary.X, boundary.Y);
+		int dXY = boundary.X - boundary.Y;
+		int dX = dXY < 0 ? (square - boundary.X) / 2 : 0;
+		int dY = dXY > 0 ? (square - boundary.Y) / 2 : 0;
 		var offset = new Point(-min.X + dX, -min.Y + dY);
 
-		var squareSize = square * bitScale + 2 * bitScale + points.Length;
+		int squareSize = square * bitScale + 2 * bitScale + points.Length;
 		Bitmap bitmap;
-		for (var i = 0; ; i++)
+		for (int i = 0; ; i++)
 		{
 			try
 			{
@@ -564,21 +559,21 @@ public static class Steps
 		{
 			var pointFs = points.Select((p, i) => new PointF((p.X + offset.X) * bitScale + bitScale + i, (p.Y + offset.Y) * bitScale + bitScale + i)).ToArray();
 			var first = pointFs[0];
-			var last = pointFs.Last();
-			var radius = 5 * scale;
+			var last = pointFs[^1];
+			int radius = 5 * scale;
 
 			graphic.DrawRectangle(new Pen(Color.Green, 3 * scale), first.X - radius, first.Y - radius, radius * 2, radius * 2);
 			graphic.DrawRectangle(new Pen(Color.Red, 3 * scale), last.X - radius, last.Y - radius, radius * 2, radius * 2);
 
 			var outlinePen = new Pen(Color.FromArgb(100, Color.White), 8 * scale);
 			outlinePen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
-			for (var i = 0; i < length; i++)
+			for (int i = 0; i < length; i++)
 			{
 				if (i < length - 1)
 					graphic.DrawLine(outlinePen, pointFs[i], pointFs[i + 1]);
 
 				if (i <= 0) continue;
-				var brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
+				int brightness = Convert.ToInt32(maxPenBrightness - i * colorStep);
 				var color = Color.FromArgb(brightness, brightness, brightness);
 				var pen = new Pen(color, 4 * scale);
 				pen.SetLineCap(LineCap.Round, LineCap.Round, DashCap.Round);
@@ -591,4 +586,7 @@ public static class Steps
 
 		return bitmap;
 	}
+
+	[GeneratedRegex(@"(\d+)([<>^])", RegexOptions.Compiled)]
+	private static partial Regex StepReplacePattern();
 }

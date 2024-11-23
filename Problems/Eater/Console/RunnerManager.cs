@@ -2,13 +2,11 @@
 
 namespace Eater.Console;
 
-public class RunnerManager
+public class RunnerManager(ushort size)
 {
-	public ushort Size { get; }
-	private readonly object _sync = new();
+	public ushort Size { get; } = size;
+	private readonly System.Threading.Lock _sync = new();
 	private Runner? _runner;
-
-	public RunnerManager(ushort size) => Size = size;
 
 	public bool IsRunning => _runner is not null;
 
@@ -20,7 +18,7 @@ public class RunnerManager
 		if (_runner is not null) return false;
 		lock (_sync)
 		{
-			var starting = _runner is null;
+			bool starting = _runner is null;
 			if (starting)
 				_runner = Runner.Start(Size).runner;
 			return starting;

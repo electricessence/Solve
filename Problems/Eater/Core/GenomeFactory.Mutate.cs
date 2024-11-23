@@ -13,8 +13,8 @@ public partial class GenomeFactory
 	private IEnumerable<Step> MutateCore(IReadOnlyList<Step> genes)
 	{
 		var rand = System.Random.Shared;
-		var length = genes.Count;
-		var index = rand.Next(length);
+		int length = genes.Count;
+		int index = rand.Next(length);
 		var segments = genes.SpliceAt(index);
 		var value = genes[index];
 
@@ -23,7 +23,7 @@ public partial class GenomeFactory
 			// Remove
 			case 0:
 				// 1, 2, or 3?
-				var r = rand.Next(Math.Min(3, segments.Count / 6)) + 1;
+				int r = rand.Next(Math.Min(3, segments.Count / 6)) + 1;
 				return segments.Remove(r);
 
 			// Move

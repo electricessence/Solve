@@ -1,5 +1,4 @@
-﻿using Open.Numeric;
-using Solve;
+﻿using Solve;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -23,12 +22,12 @@ public class Problem : ProblemBase<Genome>
 	const int AverageWasted = 2;
 	const int GeneCount = 3;
 
-	static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, IGenome genome, double[] values)
+	static Fitness GetPrimaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
 	{
-		var len = metrics.Length;
+		int len = metrics.Length;
 		var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
 		result.Count = len;
-		for (var i = 0; i < len; i++)
+		for (int i = 0; i < len; i++)
 		{
 			var metric = metrics[i];
 			result[i] = metric.ID switch
@@ -45,39 +44,34 @@ public class Problem : ProblemBase<Genome>
 	}
 
 	protected static readonly ImmutableArray<Metric> MetricsPrimary
-		= ImmutableArray.Create(
+		= [
 			new Metric(FoodFoundRate, "Food-Found-Rate", "Food-Found-Rate {0:p}", 1),
 			new Metric(AverageEnergy, "Average-Energy", "Average-Energy {0:n3}"),
 			new Metric(AverageWasted, "Average-Wasted", "Average-Wasted {0:n3}"),
-			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"));
+			new Metric(GeneCount, "Gene-Count", "Gene-Count {0:n0}"),
+		];
 
 	protected static Fitness FitnessPrimary(Genome genome, double[] metrics)
 		=> GetPrimaryMetricValues(MetricsPrimary, genome, metrics);
 
 	protected static readonly ImmutableArray<Metric> MetricsSecondary01
-		= ImmutableArray.Create(
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[AverageEnergy],
-			MetricsPrimary[GeneCount]);
+		= [MetricsPrimary[FoodFoundRate], MetricsPrimary[AverageEnergy], MetricsPrimary[GeneCount]];
 
 	protected static Fitness FitnessSecondary01(Genome genome, double[] metrics)
 		=> GetSecondaryMetricValues(MetricsSecondary01, genome, metrics);
 
 	protected static readonly ImmutableArray<Metric> MetricsSecondary02
-		= ImmutableArray.Create(
-			MetricsPrimary[FoodFoundRate],
-			MetricsPrimary[GeneCount],
-			MetricsPrimary[AverageEnergy]);
+		= [MetricsPrimary[FoodFoundRate], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy]];
 
 	protected static Fitness FitnessSecondary02(Genome genome, double[] metrics)
 		=> GetSecondaryMetricValues(MetricsSecondary02, genome, metrics);
 
 	static Fitness GetSecondaryMetricValues(ImmutableArray<Metric> metrics, Genome genome, double[] values)
 	{
-		var len = metrics.Length;
+		int len = metrics.Length;
 		var result = ImmutableArray.CreateBuilder<double>(metrics.Length);
 		result.Count = len;
-		for (var i = 0; i < len; i++)
+		for (int i = 0; i < len; i++)
 		{
 			var metric = metrics[i];
 			result[i] = metric.ID switch
@@ -98,9 +92,9 @@ public class Problem : ProblemBase<Genome>
 	protected static Fitness Fitness03(Genome genome, double[] metrics)
 		=> GetPrimaryMetricValues(Metrics03, genome, metrics);
 
-	protected static readonly ImmutableArray<Metric> Metrics02 = ImmutableArray.Create(MetricsPrimary[FoodFoundRate], MetricsPrimary[AverageWasted], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy]);
+	protected static readonly ImmutableArray<Metric> Metrics02 = [MetricsPrimary[FoodFoundRate], MetricsPrimary[AverageWasted], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy]];
 
-	protected static readonly ImmutableArray<Metric> Metrics03 = ImmutableArray.Create(MetricsPrimary[FoodFoundRate], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy], MetricsPrimary[AverageWasted]);
+	protected static readonly ImmutableArray<Metric> Metrics03 = [MetricsPrimary[FoodFoundRate], MetricsPrimary[GeneCount], MetricsPrimary[AverageEnergy], MetricsPrimary[AverageWasted]];
 
 	protected override double[] ProcessSampleMetrics(Genome g, long sampleId)
 	{
@@ -111,11 +105,11 @@ public class Problem : ProblemBase<Genome>
 		double energy = 0;
 		double wasted = 0;
 
-		var count = 0;
+		int count = 0;
 		foreach (var s in samples)
 		{
 			count++;
-			var success = g.Try(boundary, s.EaterStart, s.Food, out var e, out var w);
+			bool success = g.Try(boundary, s.EaterStart, s.Food, out int e, out int w);
 			if (success) found++;
 
 			Debug.Assert(!g.TryReduce(out var red) || success == red.Try(boundary, s.EaterStart, s.Food),
@@ -128,20 +122,17 @@ public class Problem : ProblemBase<Genome>
 		Debug.Assert(g.Hash.Length != 0 || found == 0,
 			"An empty has should yield no results.");
 
-		var averageEnergy = energy / count;
-		var averageWasted = wasted / count;
-		return new[] {
+		double averageEnergy = energy / count;
+		double averageWasted = wasted / count;
+		return [
 			found / count,
 			averageEnergy,
 			averageWasted
-		};
+		];
 	}
 
 	public double[] TestAllSamples(Genome g)
 		=> ProcessSampleMetrics(g, -1);
-
-	public ProcedureResult[] TestAll(Genome genome)
-		=> TestAll(genome.Hash);
 
 	public static Problem CreateFitnessPrimary(
 		ushort gridSize = 10,

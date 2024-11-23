@@ -11,7 +11,9 @@ using System.Linq;
 
 namespace Eater;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 {
 	static readonly ImageCodecInfo JpgEncoder = ImageCodecInfo.GetImageEncoders().Single(e => e.MimeType == "image/jpeg");
@@ -37,16 +39,15 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		var current = new DirectoryInfo(emitter.ProgressionDirectoryPath);
 		var progression = current.Parent;
 
-		emitter.PreviousWinners = !progression!.Exists
-			? ImmutableArray<string>.Empty
+		emitter.PreviousWinners = !progression!.Exists ? []
 			: progression
 				.EnumerateDirectories()
 				.OrderBy(d => d.Name).LastOrDefault()?
 				.EnumerateFiles("*.txt")
 				.GroupBy(file =>
 				{
-					var name = file.Name;
-					var i = name.IndexOf('.');
+					string name = file.Name;
+					int i = name.IndexOf('.');
 					return i == -1 ? string.Empty : name[i..];
 				})
 				.Select(g => g.OrderBy(file => file.Name).Last())
@@ -56,7 +57,7 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 					return reader.ReadToEnd().Trim();
 				})
 				.ToImmutableArray()
-				?? ImmutableArray<string>.Empty;
+				?? [];
 
 		current.Create();
 		return emitter;
@@ -64,7 +65,7 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 
 	public string SaveGenomeImage(Genome genome, string fileName)
 	{
-		var rendered = Path.Combine(ProgressionDirectoryPath, $"{fileName}.jpg");
+		string rendered = Path.Combine(ProgressionDirectoryPath, $"{fileName}.jpg");
 		using (var bitmap = genome.Genes.ToArray().Render2())
 			bitmap.Save(rendered, JpgEncoder, EncParams);
 
@@ -105,8 +106,8 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		// Each winner needs a record and can only be guaranteed timely if this handler does it synchronously.
 		// Step 1: render each 
 
-		var suffix = $"{p.ID}.{poolIndex}";
-		var fileName = $"{DateTime.Now.Ticks}.{suffix}";
+		string suffix = $"{p.ID}.{poolIndex}";
+		string fileName = $"{DateTime.Now.Ticks}.{suffix}";
 		try
 		{
 			File.WriteAllText(Path.Combine(ProgressionDirectoryPath, $"{fileName}.txt"), genome.Hash);
@@ -126,22 +127,22 @@ public class EaterConsoleEmitter : ConsoleEmitterBase<Genome>
 		}
 
 	retry:
-		var locked = ThreadSafety.TryLock(queue, () =>
+		bool locked = ThreadSafety.TryLock(queue, () =>
 		{
-			while (queue.TryDequeue(out var lastRendered))
+			while (queue.TryDequeue(out string? lastRendered))
 			{
 				// drain the queue.
-				while (queue.TryDequeue(out var g))
+				while (queue.TryDequeue(out string? g))
 					lastRendered = g;
 
-				var latestFileName = Path.Combine(ProgressionRootPath, $"LatestWinner.{suffix}.jpg");
+				string latestFileName = Path.Combine(ProgressionRootPath, $"LatestWinner.{suffix}.jpg");
 				try
 				{
 					File.Copy(lastRendered, Path.Combine(Environment.CurrentDirectory, latestFileName), true);
 				}
 				catch (IOException ex)
 				{
-					Debug.WriteLine($"Could not update {latestFileName}:\n" + ex.ToString());
+					Debug.WriteLine("Could not update {0}:\n", ex);
 				}
 			}
 		});

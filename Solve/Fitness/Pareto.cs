@@ -1,4 +1,6 @@
-﻿using Open.Memory;
+﻿using Open.Collections;
+using Open.Memory;
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -6,7 +8,7 @@ namespace Solve;
 
 public static class Pareto
 {
-	private static List<(T Value, ImmutableArray<double> Score)> FilterInternal<T>(
+	private static ArrayPoolSegment<(T Value, ImmutableArray<double> Score)> FilterInternal<T>(
 		IEnumerable<T> source,
 		IEqualityComparer<T> equalityComparer,
 		Func<T, ImmutableArray<double>> scoreSelector)
@@ -24,29 +26,46 @@ public static class Pareto
 		}
 
 		bool found;
-		List<(T Value, ImmutableArray<double> Score)> p;
+		ArrayPool<(T Value, ImmutableArray<double> Score)> pool
+			= ArrayPool<(T Value, ImmutableArray<double> Score)>.Shared;
+		(T Value, ImmutableArray<double> Score)[] p
+			= pool.Rent(d.Count);
 
-		do
+		try
 		{
-			found = false;
-			Dictionary<T, (T Value, ImmutableArray<double> Score)>.ValueCollection values = d.Values;
-			p = values.ToList();  // p is the return
-			foreach ((T Value, ImmutableArray<double> Score) in p)
+			ReadOnlySpan<(T Value, ImmutableArray<double> Score)> pSpan
+				= p.AsSpan();
+			Dictionary<T, (T Value, ImmutableArray<double> Score)>.ValueCollection values
+				= d.Values;
+
+			do
 			{
-				if (IsGreaterThanAll(Score.AsSpan(), values))
+				found = false;
+				values.CopyTo(p, 0); // p is the return
+				pSpan = pSpan[..values.Count];
+				foreach ((T value, ImmutableArray<double> score) in pSpan)
 				{
-					found = true;
-					d.Remove(Value);
+					if (IsGreaterThanAll(score.AsSpan(), values))
+					{
+						found = true;
+						d.Remove(value);
+					}
 				}
 			}
-		}
-		while (found);
+			while (found);
 
-		d.Clear();
-		return p;
+			d.Clear();
+			var segment = new ArraySegment<(T Value, ImmutableArray<double> Score)>(p, 0, pSpan.Length);
+			return new ArrayPoolSegment<(T Value, ImmutableArray<double> Score)>(segment, pool);
+		}
+		catch
+		{
+			pool.Return(p);
+			throw;
+		}
 	}
 
-	public static List<(T Value, ImmutableArray<double> Score)> Filter<T>(
+	public static ArrayPoolSegment<(T Value, ImmutableArray<double> Score)> Filter<T>(
 		IEnumerable<T> source,
 		IEqualityComparer<T> equalityComparer,
 		Func<T, ImmutableArray<double>> scoreSelector)

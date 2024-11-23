@@ -9,6 +9,7 @@ using Open.Collections.Synchronized;
 using Open.Disposable;
 using Open.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
@@ -735,7 +736,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 		protected readonly ConcurrentQueue<TGenome> AwaitingMutation = new();
 		private readonly List<Func<bool>> ProducerTriggers;
 
-		public List<Func<bool>> ExternalProducers { get; } = [];
+		public Collection<Func<bool>> ExternalProducers { get; } = [];
 
 		private bool ProcessVariation()
 		{

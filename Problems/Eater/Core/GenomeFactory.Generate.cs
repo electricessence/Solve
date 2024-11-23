@@ -1,5 +1,4 @@
-﻿using Open.RandomizationExtensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Eater;
 
@@ -16,7 +15,7 @@ public partial class GenomeFactory
 	{
 		lock (_lastGenerated)
 		{
-			var count = GeneratedCount;
+			int count = GeneratedCount;
 			if (count == 0)
 			{
 				_lastGenerated.AddLast(Step.Forward);

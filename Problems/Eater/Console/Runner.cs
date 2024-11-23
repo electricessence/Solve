@@ -30,10 +30,10 @@ class Runner : RunnerBase<Genome>
 	static string GenerateIdealSeed(ushort size)
 		=> StringBuilderPool.RentToString(sb =>
 		{
-			var s = size - 1;
+			int s = size - 1;
 			sb.Append(s).Append('^');
 
-			for (var i = 0; i < 2; i++)
+			for (int i = 0; i < 2; i++)
 				sb.Append('>').Append(s).Append('^');
 
 			for (; s > 0; s--)
@@ -42,14 +42,18 @@ class Runner : RunnerBase<Genome>
 
 	public void InitIdealSeed()
 	{
-		var ideal = GenerateIdealSeed(_size);
-		_emitter.Value.SaveGenomeImage(ideal, "IdealSeed");
+		string ideal = GenerateIdealSeed(_size);
+		_emitter.Value.SaveGenomeImage(Genome.Parse(ideal), "IdealSeed");
 		Init(ideal);
 	}
 
 	public void InitPreviousWinners() => Init(_emitter.Value.PreviousWinners);
+
 	public async ValueTask InitSeedsAsync() => Init(await Seeds().ToArrayAsync());
-	public void Init(string seed, params string[] seeds) => Init(seed is null ? Enumerable.Empty<string>() : seeds.Prepend(seed));
+
+	public void Init(string seed, params string[] seeds)
+		=> Init(seed is null ? [] : seeds.Prepend(seed));
+
 	public void Init(IEnumerable<string> seeds)
 	{
 		if (_init) throw new InvalidOperationException("Can only initialize once.");
@@ -132,7 +136,7 @@ class Runner : RunnerBase<Genome>
 		//await runner.InitSeedsAsync();
 		runner.InitPreviousWinners();
 
-		var message = string.Format(
+		string message = string.Format(
 			"Solving Eater Problem... (minimum {0:n0} samples before displaying)",
 			runner._emitter.Value.SampleMinimum);
 

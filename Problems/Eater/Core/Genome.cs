@@ -52,7 +52,9 @@ public sealed class Genome
 	IEnumerator IEnumerable.GetEnumerator()
 		=> Genes.AsEnumerable().GetEnumerator();
 
-	public static implicit operator Genome(string steps) => new(steps);
+	public static Genome Parse(string steps)
+		=> new(steps);
+
 	public static implicit operator Genome(Step[] steps) => new(steps);
 	public static implicit operator Genome(StepCount[] steps) => new(steps);
 	public static implicit operator ImmutableArray<Step>(Genome genome) => genome.Genes;

@@ -6,6 +6,7 @@
 using Open.Collections;
 using Open.Disposable;
 using Solve.Metrics;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 
@@ -19,7 +20,7 @@ public abstract class EnvironmentBase<TGenome>
 {
 	protected internal readonly IGenomeFactory<TGenome> Factory;
 
-	protected readonly List<IProblem<TGenome>> ProblemsInternal;
+	protected readonly Collection<IProblem<TGenome>> ProblemsInternal;
 	public IReadOnlyList<IProblem<TGenome>> Problems { get; }
 
 	protected EnvironmentBase(

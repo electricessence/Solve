@@ -3,6 +3,7 @@ using App.Metrics.Counter;
 using App.Metrics.Filtering;
 using App.Metrics.Filters;
 using Solve.Metrics;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 
 namespace Solve;
@@ -24,8 +25,9 @@ public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 		static string GetName(CounterValueSource c) => c.Name;
 		static CounterValue GetValue(CounterValueSource c) => c.Value;
 
-		ImmutableDictionary<string, CounterValue> counters = context?.Counters.ToImmutableDictionary(GetName, GetValue)
-			?? ImmutableDictionary<string, CounterValue>.Empty;
+		FrozenDictionary<string, CounterValue> counters
+			= context?.Counters.ToFrozenDictionary(GetName, GetValue)
+			?? FrozenDictionary<string, CounterValue>.Empty;
 
 		Timestamp = DateTime.Now;
 		ImmutableArray<QueueCount>.Builder queueStates = ImmutableArray.CreateBuilder<QueueCount>();

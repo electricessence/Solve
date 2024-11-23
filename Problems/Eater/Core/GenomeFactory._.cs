@@ -7,26 +7,25 @@ using System.Linq;
 
 namespace Eater;
 
-public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
+public partial class GenomeFactory(
+	IProvideCounterMetrics metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
+	: Solve.ReducibleGenomeFactoryBase<Genome>(metrics, seeds)
 {
-	public GenomeFactory(IProvideCounterMetrics metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
-		: base(metrics, seeds) => AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToImmutableArray() : Steps.ALL;
-
 	// ReSharper disable once UnusedParameter.Local
 	public GenomeFactory(IProvideCounterMetrics metrics, Genome seed, bool leftTurnDisabled = false)
-		: this(metrics, seed is null ? default(IEnumerable<Genome>) : new[] { seed }, leftTurnDisabled)
+		: this(metrics, seed is null ? default : [seed], leftTurnDisabled)
 	{
 	}
 
 	public static IEnumerable<string> Random(int moves, int maxMoveLength, bool leftTurnDisabled = false)
 	{
-		var size = moves * 2 - 1;
+		int size = moves * 2 - 1;
 		var steps = new StepCount[size];
 		var random = new Random();
 
 		while (true)
 		{
-			for (var i = 0; i < size; i++)
+			for (int i = 0; i < size; i++)
 			{
 				steps[i] = (i % 2) switch
 				{
@@ -40,10 +39,10 @@ public partial class GenomeFactory : Solve.ReducibleGenomeFactoryBase<Genome>
 			Debug.Assert(steps[0].Step == Step.Forward);
 			Debug.Assert(steps[size - 1].Step == Step.Forward);
 
-			var hash = steps.AsSpan().ToGenomeHash();
+			string hash = steps.AsSpan().ToGenomeHash();
 			yield return hash;
 		}
 	}
 
-	public readonly ImmutableArray<Step> AvailableSteps;
+	public readonly ImmutableArray<Step> AvailableSteps = leftTurnDisabled ? Steps.ALL.Where(s => s != Step.TurnLeft).ToImmutableArray() : Steps.ALL;
 }

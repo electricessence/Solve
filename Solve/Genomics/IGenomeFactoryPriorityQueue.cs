@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Solve;
 
@@ -27,5 +28,5 @@ public interface IGenomeFactoryPriorityQueue<TGenome>
 
 	bool TryGetNext([NotNullWhen(true)] out TGenome? genome);
 
-	List<Func<bool>> ExternalProducers { get; }
+	Collection<Func<bool>> ExternalProducers { get; }
 }

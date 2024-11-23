@@ -54,11 +54,12 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 				ReserveFactoryQueue.EnqueueForMutation(next);
 				ReserveFactoryQueue.EnqueueForBreeding(next);
 
-				foreach (TGenome? g in Pareto
-					.Filter(champions, EComparer, ScoreSelector)
-					.Select(gf => gf.Value.Genome))
+				using Open.Collections.ArrayPoolSegment<((TGenome Genome, Fitness Fitness) Value, ImmutableArray<double> Score)> p
+					= Pareto.Filter(champions, EComparer, ScoreSelector);
+
+				foreach (((TGenome Genome, Fitness Fitness) value, _) in p.Segment)
 				{
-					ReserveFactoryQueue.EnqueueForBreeding(g);
+					ReserveFactoryQueue.EnqueueForBreeding(value.Genome);
 				}
 
 				//ReserveFactoryQueue.EnqueueForMutation(champions);

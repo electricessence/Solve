@@ -1,5 +1,4 @@
 ﻿using Open.Collections;
-using Open.RandomizationExtensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,16 +9,10 @@ namespace Eater;
 
 public sealed class SampleCache
 {
-	public readonly struct Entry
+	public readonly struct Entry(Point eaterStart, Point food)
 	{
-		public readonly Point EaterStart;
-		public readonly Point Food;
-
-		public Entry(Point eaterStart, Point food)
-		{
-			EaterStart = eaterStart;
-			Food = food;
-		}
+		public readonly Point EaterStart = eaterStart;
+		public readonly Point Food = food;
 	}
 
 	readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
@@ -42,9 +35,9 @@ public sealed class SampleCache
 
 	public IEnumerable<Point> GenerateXY()
 	{
-		for (var y = 0; y < GridSize; y++)
+		for (int y = 0; y < GridSize; y++)
 		{
-			for (var x = 0; x < GridSize; x++)
+			for (int x = 0; x < GridSize; x++)
 				yield return new Point(x, y);
 		}
 	}
