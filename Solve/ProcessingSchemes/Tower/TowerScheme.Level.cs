@@ -34,15 +34,18 @@ public partial class TowerScheme<TGenome>
 		{
 			Debug.Assert(level >= 0);
 			Debug.Assert(tower is not null);
-			tower.OnLevelCreated(level);
 			SchemeConfig.Values config = tower.Config;
+
+			// Validate BEFORE any side effects: no level index at or beyond
+			// MaxLevels may ever exist (the last valid level is terminal).
+			ushort max = config.MaxLevels;
+			if (level >= max) throw new ArgumentOutOfRangeException(nameof(level), level, $"Must be below maximum of {max}.");
+
+			tower.OnLevelCreated(level);
 			Index = level;
 			PoolSize = config.PoolSize.GetPoolSize(level);
 			Tower = tower;
-
-			ushort max = config.MaxLevels;
-			if (level > max) throw new ArgumentOutOfRangeException(nameof(level), level, $"Must be below maximum of {max}.");
-			IsMax = level + 1 == config.MaxLevels;
+			IsMax = level + 1 >= config.MaxLevels;
 
 			_nextLevel = new(CreateNextLevel);
 
@@ -54,7 +57,9 @@ public partial class TowerScheme<TGenome>
 			{
 				SingleReader = true,
 				SingleWriter = false,
-				AllowSynchronousContinuations = true
+				// Synchronous continuations fuse reader/writer work onto one stack
+				// across levels, degrading thread-pool fairness under load.
+				AllowSynchronousContinuations = false
 			});
 
 			int index = 0;
@@ -63,7 +68,13 @@ public partial class TowerScheme<TGenome>
 			{
 				buffer[index++] = e;
 				if (index == PoolSize) index = await ProcessReceived(buffer).ConfigureAwait(false);
-			}).AsTask();
+			})
+			.AsTask()
+			.ContinueWith(
+				t => Tower.OnLevelFault(Index, t.Exception!.GetBaseException()),
+				CancellationToken.None,
+				TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+				TaskScheduler.Default);
 		}
 
 		protected virtual ValueTask<int> ProcessReceived(LevelEntry<TGenome>[] fullBuffer)
@@ -98,30 +109,9 @@ public partial class TowerScheme<TGenome>
 				LevelEntry<TGenome>[] temp = pool.ToArray();
 				result[i] = temp;
 				IComparer<LevelEntry<TGenome>> comparer = LevelEntry<TGenome>.GetScoreComparer(i);
-				TrySorting(3);
-
-				void TrySorting(int max)
-				{
-					int tries = 0;
-					while (tries++ < max)
-					{
-						try
-						{
-							// Verify repeatable issue.
-							Array.Sort(temp, 0, len, comparer);
-							return;
-						}
-						catch (Exception ex)
-						{
-							if (tries == max)
-							{
-								Debug.WriteLine(ex.ToString());
-								Debugger.Break();
-								throw;
-							}
-						}
-					}
-				}
+				// The comparer is a self-contained total order; any exception here is a
+				// real defect and must propagate to the level fault path.
+				Array.Sort(temp, 0, len, comparer);
 			}
 
 			return result;
@@ -186,6 +176,7 @@ public partial class TowerScheme<TGenome>
 
 		protected ValueTask PromoteAsync(LevelEntry<TGenome> champion)
 		{
+			Debug.Assert(!IsMax, "Terminal levels must not promote.");
 			LevelProgress<TGenome> progress = champion.Progress;
 			LevelEntry<TGenome>.Pool.Give(champion);
 			return NextLevel.PostAsync(progress);
@@ -262,7 +253,24 @@ public partial class TowerScheme<TGenome>
 #if DEBUG
 			Debug.Assert(toPromote.Distinct().Count() == toPromote.Count);
 #endif
-			foreach (LevelEntry<TGenome> p in toPromote) await PromoteAsync(p).ConfigureAwait(false);
+			if (IsMax)
+			{
+				// Terminal level: there is no next level to promote into. Champion
+				// results were already recorded at post time (IsTop path), so feed
+				// the genomes back into breeding and release the entries — promoting
+				// here would construct a level past the cap and dam the tower.
+				foreach (LevelEntry<TGenome> p in toPromote)
+				{
+					Tower.Factory[0].EnqueueChampion(p.Progress.Genome);
+					p.Progress.Dispose();
+					LevelEntry<TGenome>.Pool.Give(p);
+				}
+			}
+			else
+			{
+				foreach (LevelEntry<TGenome> p in toPromote) await PromoteAsync(p).ConfigureAwait(false);
+			}
+
 			lPool.Give(toPromote);
 
 			foreach (LevelEntry<TGenome> k in toKill)

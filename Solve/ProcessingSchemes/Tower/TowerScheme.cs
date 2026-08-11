@@ -42,7 +42,9 @@ public partial class TowerScheme<TGenome> : TowerSchemeBase<TGenome>
 	protected override async Task StartInternal(CancellationToken token)
 	{
 		var towers = Problems.Select(p => new ProblemTower(Config, p, Factory)).ToList();
-		foreach (ProblemTower? tower in towers) tower.Subscribe(Broadcast);
+		// Subscribe onError as well: a tower fault (e.g. a failed level) must propagate
+		// to scheme observers instead of dying as an unobserved exception.
+		foreach (ProblemTower? tower in towers) tower.Subscribe(Broadcast, Fault);
 		ActiveTowers = towers.Where(t => !t.Problem.HasConverged);
 
 	retry:

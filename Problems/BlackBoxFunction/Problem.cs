@@ -128,9 +128,15 @@ public class Problem(Formula actualFormula,
 		var dc = DeltasFixed(calc.Take(SampleSizeInt));
 
 		var dcCorrelation = correct_dc.Correlation(dc);
+		// Must clamp double precision insanity; an unclamped correlation above a metric's
+		// MaxValue otherwise poisons convergence checks downstream.
+		if (dcCorrelation > 1) dcCorrelation = 1;
+		else if (dcCorrelation < -1) dcCorrelation = -1;
+		else if (dcCorrelation.IsPreciseEqual(1)) dcCorrelation = 1;
 
 		var c = correct.AsSpan(0, SampleSizeInt).Correlation(calc.AsSpan(0, SampleSizeInt));
 		if (c > 1) c = 1; // Must clamp double precision insanity.
+		else if (c < -1) c = -1;
 		else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 
 		//if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.

@@ -47,6 +47,17 @@ public partial class TowerScheme<TGenome>
 		public void Broadcast(LevelProgress<TGenome> progress, int poolIndex)
 			=> Broadcast((progress.Genome, progress.Fitnesses[poolIndex], Problem, poolIndex));
 
+		/// <summary>
+		/// Surfaces a level's processing failure instead of letting the level die silently
+		/// (which would stall the tower with no signal). Faults the broadcast so observers
+		/// receive OnError.
+		/// </summary>
+		internal void OnLevelFault(int level, Exception exception)
+		{
+			Console.Error.WriteLine("Level {0}.{1} processing fault: {2}", Problem.ID, level, exception);
+			Fault(exception);
+		}
+
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
 #pragma warning restore IDE0079 // Remove unnecessary suppression

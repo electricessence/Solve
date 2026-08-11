@@ -577,9 +577,11 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 					}
 					else
 					{
-						// Breeding failures almost always happen early on when genomes are short in length and have already been introduced.
-						if (genome.GeneCount < 4) decrementCurrent();
-						if (mate.genome.GeneCount < 4) decrementMate();
+						// Always decay on failure so persistently-failing entries drain
+						// from the stock instead of accumulating without bound. (Failures
+						// dominate late in a run when most offspring are duplicates.)
+						decrementCurrent();
+						decrementMate();
 
 						// Generate more (and insert at higher priority) to improve the pool.
 						// This can be problematic later on.
@@ -756,8 +758,9 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 		private bool ProcessBreeder()
 		{
 			int count = BreedingStock.Count;
-			int c = count / 1000 + 1;
-			c *= Math.Min(count, c * c /*square it*/);
+			// Cap work per call: the previous formula was cubic in stock size and
+			// could stall Next() for minutes once breeding success collapsed.
+			int c = Math.Min(count, 64);
 			bool bred = false;
 			for (int i = 0; i < c; i++)
 			{

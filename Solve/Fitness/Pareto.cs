@@ -25,7 +25,6 @@ public static class Pareto
 				d.Add(Value, (Value, Score));
 		}
 
-		bool found;
 		ArrayPool<(T Value, ImmutableArray<double> Score)> pool
 			= ArrayPool<(T Value, ImmutableArray<double> Score)>.Shared;
 		(T Value, ImmutableArray<double> Score)[] p
@@ -33,29 +32,33 @@ public static class Pareto
 
 		try
 		{
-			ReadOnlySpan<(T Value, ImmutableArray<double> Score)> pSpan
-				= p.AsSpan();
-			Dictionary<T, (T Value, ImmutableArray<double> Score)>.ValueCollection values
-				= d.Values;
+			int count = d.Count;
+			d.Values.CopyTo(p, 0);
+			d.Clear();
 
-			do
+			// Keep the non-dominated set: X survives unless some other element dominates it.
+			var dominated = new bool[count];
+			for (int i = 0; i < count; i++)
 			{
-				found = false;
-				values.CopyTo(p, 0); // p is the return
-				pSpan = pSpan[..values.Count];
-				foreach ((T value, ImmutableArray<double> score) in pSpan)
+				ReadOnlySpan<double> x = p[i].Score.AsSpan();
+				for (int j = 0; j < count; j++)
 				{
-					if (IsGreaterThanAll(score.AsSpan(), values))
+					if (j == i || dominated[j]) continue;
+					if (Dominates(p[j].Score.AsSpan(), x))
 					{
-						found = true;
-						d.Remove(value);
+						dominated[i] = true;
+						break;
 					}
 				}
 			}
-			while (found);
 
-			d.Clear();
-			var segment = new ArraySegment<(T Value, ImmutableArray<double> Score)>(p, 0, pSpan.Length);
+			int kept = 0;
+			for (int i = 0; i < count; i++)
+			{
+				if (!dominated[i]) p[kept++] = p[i];
+			}
+
+			var segment = new ArraySegment<(T Value, ImmutableArray<double> Score)>(p, 0, kept);
 			return new ArrayPoolSegment<(T Value, ImmutableArray<double> Score)>(segment, pool);
 		}
 		catch
@@ -79,25 +82,29 @@ public static class Pareto
 	//	where T : notnull
 	//	=> FilterInternal(source.ToArray(), equalityComparer, scoreSelector);
 
-	private static bool IsGreaterThanAll<T>(in ReadOnlySpan<double> score, IEnumerable<(T Value, ImmutableArray<double> Score)> values)
+	/// <summary>
+	/// True if <paramref name="a"/> Pareto-dominates <paramref name="b"/> (maximization):
+	/// at least as good in every dimension and strictly better in at least one.
+	/// NaN ranks below any non-NaN value; NaN versus NaN is equal.
+	/// </summary>
+	private static bool Dominates(in ReadOnlySpan<double> a, in ReadOnlySpan<double> b)
 	{
-		int len = score.Length;
-		foreach ((T _, ImmutableArray<double> Score) in values)
+		int len = a.Length;
+		Debug.Assert(len == b.Length);
+		bool strict = false;
+		for (int i = 0; i < len; i++)
 		{
-			Debug.Assert(Score.Length == len);
-			ReadOnlySpan<double> os = Score.AsSpan();
-			for (int i = 0; i < len; i++)
-			{
-				ref readonly double s = ref score[i];
-				ref readonly double osv = ref os[i];
-				if (double.IsNaN(s) && double.IsNaN(osv)) continue;
-				if (double.IsNaN(osv)) return true;
-				if (double.IsNaN(s) || s <= osv) return false;
-			}
-
-			return true;
+			ref readonly double av = ref a[i];
+			ref readonly double bv = ref b[i];
+			bool aNaN = double.IsNaN(av);
+			bool bNaN = double.IsNaN(bv);
+			if (aNaN && bNaN) continue;
+			if (aNaN) return false;
+			if (bNaN) { strict = true; continue; }
+			if (av < bv) return false;
+			if (av > bv) strict = true;
 		}
 
-		return false;
+		return strict;
 	}
 }

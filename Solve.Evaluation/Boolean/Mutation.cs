@@ -1,15 +1,12 @@
-﻿using Open.Hierarchy;
-using Open.RandomizationExtensions;
-
 using IGene = Open.Evaluation.Core.IEvaluate<bool>;
 
 namespace Solve.Evaluation;
 public partial class BooleanEvalGenomeFactory
 {
 	// Keep in mind that Mutation is more about structure than 'variations' of multiples and constants.
-	private (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<bool> target)
+	private static (IGene? Root, string? Origin) MutateUnfrozen(EvalGenome<bool> target)
 	{
-		/* Possible mutations:
+		/* Possible mutations (not yet implemented):
 		 * 1) Adding a parameter node to an operation.
 		 * 2) Apply a function to node.
 		 * 3) Adding an operator and a parameter node.
@@ -18,25 +15,10 @@ public partial class BooleanEvalGenomeFactory
 		 * 6) Removing a function.
 		 */
 
-		Node<IGene> genes = Catalog.Factory.Map(target.Root);
-
-		while (genes.Count != 0)
-		{
-			Node<IGene> gene = genes
-				.GetNodes()
-				.ToArray()
-				.RandomSelectOne() as Node<IGene>
-				?? throw new InvalidCastException("Expected a Node<IGene>.");
-
-			IGene gv = gene.Value;
-			switch (gv)
-			{
-				// ReSharper disable once RedundantEmptySwitchSection
-				default:
-					break;
-			}
-		}
-
+		// TODO: Boolean structural mutations are not yet implemented.
+		// Returning null signals "no mutation available"; callers
+		// (GenomeFactoryBase.Mutate / AttemptNewMutation) handle it gracefully.
+		_ = target;
 		return (null, null);
 	}
 

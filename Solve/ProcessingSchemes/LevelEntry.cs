@@ -1,5 +1,4 @@
 ﻿using Open.Disposable;
-using Open.Memory;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -22,10 +21,28 @@ public class LevelEntry<TGenome> : IRecyclable
 	private sealed class LevelEntryScoreComparer(int scoreIndex) : IComparer<LevelEntry<TGenome>>
 	{
 		public readonly int ScoreIndex = scoreIndex;
-#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
-		public int Compare(LevelEntry<TGenome> x, LevelEntry<TGenome> y)
-			=> CollectionComparer.Double.Descending.Compare(x.Scores[ScoreIndex], y.Scores[ScoreIndex]);
-#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+
+		// Element-wise descending with double.CompareTo semantics: a self-contained
+		// total order (NaN ranks below all values, so NaN-bearing scores sort last)
+		// regardless of external comparer implementations.
+		public int Compare(LevelEntry<TGenome>? x, LevelEntry<TGenome>? y)
+		{
+			if (ReferenceEquals(x, y)) return 0;
+			if (x is null) return 1;
+			if (y is null) return -1;
+
+			ImmutableArray<double> a = x.Scores[ScoreIndex];
+			ImmutableArray<double> b = y.Scores[ScoreIndex];
+			Debug.Assert(a.Length == b.Length);
+			int len = Math.Min(a.Length, b.Length);
+			for (int i = 0; i < len; i++)
+			{
+				int c = b[i].CompareTo(a[i]);
+				if (c != 0) return c;
+			}
+
+			return b.Length.CompareTo(a.Length);
+		}
 	}
 
 	public void Recycle()

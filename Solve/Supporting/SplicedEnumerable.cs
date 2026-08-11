@@ -3,6 +3,14 @@ using System.Collections.Immutable;
 
 namespace Solve;
 
+/// <summary>
+/// A sequence split at <see cref="SpliceIndex"/> for insert/remove operations.
+/// Invariants: <c>_tail</c> always begins with the element at <see cref="SpliceIndex"/>
+/// (when the sequence is non-empty), and enumeration yields exactly <see cref="Count"/> items.
+/// Results of <see cref="Remove(int)"/> must be re-spliced (<see cref="SplicedEnumerable.SpliceAt{T}"/>)
+/// before further Remove operations: when a Remove empties the tail, the resulting SpliceIndex
+/// is clamped into the head and a chained Remove would operate at the wrong position.
+/// </summary>
 public readonly record struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 {
 	private readonly IEnumerable<T> _head;
@@ -29,17 +37,9 @@ public readonly record struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 		SpliceIndex = index < 0 ? 0 : Math.Min(index, Count - 1);
 		if (SpliceIndex > 0)
 		{
-			if (SpliceIndex < Count - 1)
-			{
-				// In bounds..
-				_head = source.Take(index);
-				_tail = source.Skip(index);
-			}
-			else
-			{
-				_head = source;
-				_tail = Empty;
-			}
+			// The element at SpliceIndex must always begin the tail.
+			_head = source.Take(SpliceIndex);
+			_tail = source.Skip(SpliceIndex);
 		}
 		else
 		{
@@ -54,7 +54,7 @@ public readonly record struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 		if (remove == 0) return (_head, _tail);
 		int n = SpliceIndex + remove;
 		if (n <= 0) return (Empty, _tail);
-		if (n >= Count - 1) return (_head, Empty);
+		if (n >= Count) return (_head, Empty);
 		if (remove < 0) return (_head.Take(n), _tail);
 		return (_head, _tail.Skip(remove));
 	}
@@ -65,8 +65,9 @@ public readonly record struct SplicedEnumerable<T> : IReadOnlyCollection<T>
 
 		if (count > 0)
 		{
+			// Removing forward: skip the removed elements, keeping the remainder of the tail.
 			int tailLen = Math.Max(0, Count - SpliceIndex - count);
-			IEnumerable<T> tail = tailLen > 0 ? _tail.Skip(tailLen) : Empty;
+			IEnumerable<T> tail = tailLen > 0 ? _tail.Skip(count) : Empty;
 			return new SplicedEnumerable<T>(_head, tail, SpliceIndex, SpliceIndex + tailLen);
 		}
 

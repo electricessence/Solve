@@ -32,7 +32,7 @@ public partial class BooleanEvalGenomeFactory(IProvideCounterMetrics metrics) : 
 				"Must have at least 2 parameter count.");
 		}
 
-		System.Collections.Immutable.ImmutableArray<char> operators = EvaluationRegistry.Arithmetic.Operators;
+		System.Collections.Immutable.ImmutableArray<char> operators = EvaluationRegistry.Boolean.Operators;
 
 		return UShortRange(0, paramCount)
 			.Combinations(paramCount)
@@ -51,16 +51,8 @@ public partial class BooleanEvalGenomeFactory(IProvideCounterMetrics metrics) : 
 	protected override IEnumerable<EvalGenome<bool>> GenerateFunctioned(ushort id)
 	{
 		Parameter<bool> p = Catalog.GetParameter(id);
-		foreach (char op in EvaluationRegistry.Arithmetic.Functions)
-		{
-			// ReSharper disable once SwitchStatementMissingSomeCases
-			switch (op)
-			{
-				case Not.SYMBOL:
-					yield return Registration(Catalog.Not(p), "GenerateFunctioned > Not");
-					break;
-			}
-		}
+		// Not is the only unary boolean function; Conditional ('?') requires multiple children.
+		yield return Registration(Catalog.Not(p), "GenerateFunctioned > Not");
 	}
 	#endregion
 

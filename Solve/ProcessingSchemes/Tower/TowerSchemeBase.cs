@@ -19,7 +19,12 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 
 		ReserveFactoryQueue = genomeFactory[2];
 		ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-		this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome));
+		// The explicit no-op onError is load-bearing: the single-Action Subscribe
+		// overload defaults onError to Rx's rethrow stub, and Subject.OnError fans
+		// out in subscription order with no per-observer catch — this subscription
+		// is observer #0, so a rethrow here would abort fault delivery to every
+		// later (external) observer.
+		this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome), _ => { });
 	}
 
 	// First, and Minimum allow for tapering of pool size as generations progress.

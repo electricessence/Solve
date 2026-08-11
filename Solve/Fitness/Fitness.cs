@@ -158,7 +158,11 @@ public class Fitness : IComparable<Fitness>
 			double tolerance = Metric.Tolerance;
 
 			if (Value > convergence + double.Epsilon)
-				throw new InvalidOperationException($"Score has exceeded convergence value: {Value}");
+			{
+				// A value at/above the metric's maximum cannot improve further — treat as
+				// converged. (Transform floating-point overshoot must not crash a run.)
+				continue;
+			}
 
 			// ReSharper disable once CompareOfFloatsByEqualityOperator
 			if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
