@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Open.Threading.Dataflow" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
