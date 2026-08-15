@@ -27,6 +27,28 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 
 	IGenomeFactoryPriorityQueue<TGenome> this[int index] { get; }
 
+	/// <summary>
+	/// The randomness source this factory uses for every stochastic decision, including the
+	/// default <see cref="AttemptNewCrossover(in ReadOnlySpan{TGenome}, byte)"/> matchmaking
+	/// below. Implementations should default to <see cref="System.Random.Shared"/> when no
+	/// seed/source was supplied at construction (see
+	/// <see cref="GenomeFactoryBase{TGenome}.RandomSource"/> for the thread-safety strategy used
+	/// by the concrete base class).
+	/// </summary>
+	Random RandomSource { get; }
+
+	/// <summary>
+	/// Injectable sink for this factory's non-fatal warnings -- generation/mutation
+	/// operations that are taking longer than their expected budget (see
+	/// <see cref="GenerateOneFrom(IReadOnlyList{TGenome})"/> below and
+	/// <see cref="GenomeFactoryBase{TGenome}.TryGenerateNew"/>/<c>Mutate</c>). Lets headless
+	/// hosts (tests, the benchmark harness) keep these off the console while an interactive
+	/// host can route them wherever it likes. Implementations should default to
+	/// <see cref="System.Diagnostics.Debug.WriteLine(string)"/> when nothing else is injected
+	/// (see <see cref="GenomeFactoryBase{TGenome}.LogWarning"/>).
+	/// </summary>
+	Action<string> LogWarning { get; }
+
 	#region Default Implmentations
 	public TGenome GenerateOne()
 		=> GenerateOneFrom(null!) ?? throw new GenomeException("Unable to generate new genome.");
@@ -45,7 +67,7 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 	{
 		TGenome? one = null;
 		using (TimeoutHandler.New(9000,
-			ms => Console.WriteLine("Warning: {0}.GenerateOneFrom() is taking longer than {1} milliseconds.\n", this, ms)))
+			ms => LogWarning($"Warning: {this}.GenerateOneFrom() is taking longer than {ms} milliseconds.\n")))
 		{
 			byte attempts = 0;
 			while (attempts < 2 && !TryGenerateNew(out one, source))
@@ -54,7 +76,7 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 
 		if (one is null)
 		{
-			Console.WriteLine("GenomeFactory failed GenerateOneFrom()");
+			LogWarning("GenomeFactory failed GenerateOneFrom()");
 		}
 
 		return one;
@@ -113,7 +135,7 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 		do
 		{
 			// Take one.
-			TGenome a = s0.RandomSelectOne();
+			TGenome a = s0.RandomSelectOne(RandomSource);
 			// Get all others (in orignal order/duplicates).
 			TGenome[] s1 = s0.Where(g => g != a).ToArray();
 
@@ -121,7 +143,7 @@ public interface IGenomeFactory<TGenome> : IGenomeSource<TGenome>
 			while (s1.Length != 0)
 			{
 				isFirst = false;
-				TGenome b = s1.RandomSelectOne();
+				TGenome b = s1.RandomSelectOne(RandomSource);
 				TGenome[] offspring = AttemptNewCrossover(a, b, maxAttemptsPerCombination);
 				if (offspring.Length != 0) return offspring;
 				// Reduce the possibilites.

@@ -1,5 +1,5 @@
-using App.Metrics;
 using Eater;
+using Solve.Metrics;
 using System.Drawing;
 using System.Text;
 
@@ -47,8 +47,8 @@ public class EaterTests
 	[Fact]
 	public void GeneratedGenomesAreBounded()
 	{
-		var metrics = new MetricsBuilder().Build();
-		var factory = new GenomeFactory(metrics.Provider.Counter, seeds: null, leftTurnDisabled: true);
+		var metrics = new CounterRegistry();
+		var factory = new GenomeFactory(metrics, seeds: null, leftTurnDisabled: true);
 
 		var hashes = new HashSet<string>();
 		int produced = 0;
@@ -71,8 +71,8 @@ public class EaterTests
 	[Fact]
 	public void MutationsProduceValidGenomes()
 	{
-		var metrics = new MetricsBuilder().Build();
-		var factory = new GenomeFactory(metrics.Provider.Counter, seeds: null, leftTurnDisabled: true);
+		var metrics = new CounterRegistry();
+		var factory = new GenomeFactory(metrics, seeds: null, leftTurnDisabled: true);
 
 		// Decent-sized random sources: tiny genomes can legitimately mutate to nothing.
 		Genome[] sources = [.. GenomeFactory.Random(10, 20, leftTurnDisabled: true)

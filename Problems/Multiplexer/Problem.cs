@@ -1,4 +1,4 @@
-﻿using Open.Arithmetic;
+using Open.Arithmetic;
 using Open.Numeric.Precision;
 using Solve;
 using Solve.Evaluation;
@@ -10,12 +10,12 @@ using System.Linq;
 
 namespace Multiplexer;
 
-public delegate double Formula(IReadOnlyList<double> p);
+public delegate bool Formula(IReadOnlyList<bool> p);
 
 public class Problem(Formula actualFormula,
 	ushort sampleSize = 100,
 	ushort championPoolSize = 100,
-	params (ImmutableArray<Metric> Metrics, Func<EvalGenome<double>, double[], Fitness> Transform)[] fitnessTranslators) : ProblemBase<EvalGenome<double>>(fitnessTranslators, sampleSize, championPoolSize)
+	params (ImmutableArray<Metric> Metrics, Func<EvalGenome<bool>, double[], Fitness> Transform)[] fitnessTranslators) : ProblemBase<EvalGenome<bool>>(fitnessTranslators, sampleSize, championPoolSize)
 {
 	protected static readonly ImmutableArray<Metric> Metrics01 = [
 		new Metric(0, "Direction", "Direction {0:p1}", 1, double.Epsilon),
@@ -31,68 +31,34 @@ public class Problem(Formula actualFormula,
 		Metrics01[3]
 	];
 
-	protected static Fitness Fitness01(EvalGenome<double> genome, double[] metrics)
+	protected static Fitness Fitness01(EvalGenome<bool> genome, double[] metrics)
 		=> new(Metrics01, metrics[0], metrics[1], -metrics[2], -genome.GeneCount);
 
-	protected static Fitness Fitness02(EvalGenome<double> genome, double[] metrics)
+	protected static Fitness Fitness02(EvalGenome<bool> genome, double[] metrics)
 		=> new(Metrics02, metrics[0], -metrics[2], metrics[1], -genome.GeneCount);
 
 	public readonly SampleCache Samples = new(actualFormula);
 
-	protected override double[] ProcessSampleMetrics(EvalGenome<double> g, long sampleId)
+	protected override double[] ProcessSampleMetrics(EvalGenome<bool> g, long sampleId)
 	{
 		var samples = Samples.Get(sampleId);
 		var correct = new double[SampleSizeInt];
 		var divergence = new double[SampleSizeInt];
 		var calc = new double[SampleSizeInt];
-		var NaNcount = 0;
-
-		// #if DEBUG
-		// 			var gRed = g.AsReduced();
-		// #endif
 
 		for (var i = 0; i < SampleSizeInt; i++) // Parallel here if futile since there are other threads running this for other genomes.
 		{
 			var sample = samples[i];
 			Debug.Assert(sample != null);
 			var s = sample.ParamValues;
-			var correctValue = sample.Correct.Value;
+			// Booleans are total (never NaN/undefined), so unlike the numeric
+			// BlackBoxFunction sibling there's no NaN-detection branch needed here --
+			// map true/false to 1/0 and reuse the same correlation-based fitness shape.
+			var correctValue = sample.Correct.Value ? 1d : 0d;
 			correct[i] = correctValue;
-			var result = g.Evaluate(s);
-			// #if DEBUG
-			// 				if (gRed != g)
-			// 				{
-			// 					var rr = useAsync ? await gRed.EvaluateAsync(s) : gRed.Evaluate(s);
-			// 					if (!g.Genes.OfType<ParameterGene>().Any(gg => gg.ID > 1) // For debugging/testing IDs greater than 1 are invalid so ignore.
-			// 						&& !result.IsRelativeNearEqual(rr, 7))
-			// 					{
-			// 						var message = String.Format(
-			// 							"Reduction calculation doesn't match!!! {0} => {1}\n\tSample: {2}\n\tresult: {3} != {4}",
-			// 							g, gRed, s.JoinToString(", "), result, rr);
-			// 						if (!result.IsNaN())
-			// 							Debug.WriteLine(message);
-			// 						else
-			// 							Debug.WriteLine(message);
-			// 					}
-			// 				}
-			// #endif
-			if (!double.IsNaN(correctValue) && double.IsNaN(result)) NaNcount++;
+			var result = g.Evaluate(s) ? 1d : 0d;
 			calc[i] = result;
 			divergence[i] = Math.Abs(result - correctValue) * 10; // Averages can get too small.
-		}
-
-		if (NaNcount != 0)
-		{
-			// We do not yet handle NaN values gracefully yet so avoid correlation.
-			return [
-				NaNcount == SampleSizeInt // All NaN basically = fail.  Don't waste time trying to correlate.
-					? double.NegativeInfinity
-					: -2,
-				NaNcount == SampleSizeInt // All NaN basically = fail.  Don't waste time trying to correlate.
-					? double.NegativeInfinity
-					: -2,
-				double.PositiveInfinity
-			];
 		}
 
 		// Attempt to detect non-linear relationships...
@@ -105,8 +71,7 @@ public class Problem(Formula actualFormula,
 		if (c > 1) c = 1; // Must clamp double precision insanity.
 		else if (c.IsPreciseEqual(1)) c = 1; // Compensate for epsilon.
 
-		//if (c > 1) c = 3 - 2 * c; // Correlation compensation for double precision insanity.
-		var d = divergence.Where(v => !double.IsNaN(v)).Average();
+		var d = divergence.Average();
 
 		return [
 			(double.IsNaN(dcCorrelation) || double.IsInfinity(dcCorrelation)) ? -2 : dcCorrelation,

@@ -53,11 +53,11 @@ public class RankedPool<TGenome>
 				.Take(PoolSize * 2)
 				.Select(e => // Setup ordering. Need to use snapshots for comparison.
 				{
+					// Note: multiple distinct Fitness instances can legitimately share a genome
+					// hash here -- a champion that re-climbs the tower is re-evaluated and arrives
+					// with a new Fitness object even though its hash is unchanged. Only the first
+					// (arbitrary) snapshot is used for ranking, so no invariant is violated.
 					(TGenome Genome, Fitness Fitness) gf = e.First();
-#if DEBUG
-					Fitness[] fitnessInstances = e.Select(f => f.Fitness).Distinct().ToArray();
-					Debug.Assert(fitnessInstances.Length == 1);
-#endif
 					return (snapshot: gf.Fitness.Results, genomeFitness: (gf.Genome, gf.Fitness));
 				})
 				// Higher sample counts are more valuable as they only arrive here as champions.

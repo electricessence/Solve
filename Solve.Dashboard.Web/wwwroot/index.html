@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solve Dashboard</title>
+<style>
+	:root {
+		--bg: #11161c;
+		--panel: #171e26;
+		--panel-border: #2a3542;
+		--text: #e6edf3;
+		--text-dim: #93a2b3;
+		--text-faint: #5c6b7a;
+		--accent: #4fc3f7;
+		--good: #6fd08c;
+		--warn: #f0b25a;
+		--bad: #f0705a;
+		--mono: "Consolas", "SFMono-Regular", "Menlo", "Cascadia Mono", monospace;
+		--sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+	}
+
+	* { box-sizing: border-box; }
+
+	html, body {
+		margin: 0;
+		padding: 0;
+		background: var(--bg);
+		color: var(--text);
+		font-family: var(--sans);
+		font-size: 14px;
+	}
+
+	body {
+		padding: 16px 20px 40px;
+	}
+
+	h1 {
+		font-size: 18px;
+		font-weight: 600;
+		margin: 0 0 2px;
+	}
+
+	.subtitle {
+		color: var(--text-dim);
+		font-size: 12px;
+		margin: 0 0 16px;
+	}
+
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: 10px;
+		margin-bottom: 18px;
+	}
+
+	.card {
+		background: var(--panel);
+		border: 1px solid var(--panel-border);
+		border-radius: 8px;
+		padding: 10px 12px;
+	}
+
+	.card .label {
+		color: var(--text-dim);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		margin-bottom: 4px;
+	}
+
+	.card .value {
+		font-size: 20px;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.card .sub {
+		color: var(--text-faint);
+		font-size: 11px;
+		margin-top: 2px;
+	}
+
+	.card.state-running .value { color: var(--good); }
+	.card.state-ended .value { color: var(--text-dim); }
+	.card.state-fault .value { color: var(--bad); }
+
+	.dot {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		margin-right: 6px;
+		background: var(--text-faint);
+	}
+	.dot.live { background: var(--good); box-shadow: 0 0 6px var(--good); }
+	.dot.reconnecting { background: var(--warn); }
+	.dot.closed { background: var(--text-faint); }
+
+	.panels {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 14px;
+		margin-bottom: 14px;
+	}
+
+	@media (max-width: 900px) {
+		.panels { grid-template-columns: 1fr; }
+	}
+
+	.panel {
+		background: var(--panel);
+		border: 1px solid var(--panel-border);
+		border-radius: 8px;
+		padding: 12px 14px;
+	}
+
+	.panel h2 {
+		font-size: 13px;
+		font-weight: 600;
+		margin: 0 0 8px;
+		color: var(--text-dim);
+	}
+
+	.panel.full { grid-column: 1 / -1; }
+
+	svg.chart {
+		width: 100%;
+		height: 220px;
+		display: block;
+	}
+
+	svg.chart text {
+		fill: var(--text-faint);
+		font-size: 10px;
+		font-family: var(--mono);
+	}
+
+	svg.chart .gridline {
+		stroke: var(--panel-border);
+		stroke-width: 1;
+	}
+
+	svg.chart .empty-note {
+		fill: var(--text-faint);
+		font-size: 12px;
+		font-family: var(--sans);
+	}
+
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 6px;
+		font-size: 11px;
+		color: var(--text-dim);
+	}
+
+	.legend .swatch {
+		display: inline-block;
+		width: 9px;
+		height: 9px;
+		border-radius: 2px;
+		margin-right: 4px;
+		vertical-align: middle;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 12px;
+	}
+
+	th, td {
+		text-align: left;
+		padding: 5px 8px;
+		border-bottom: 1px solid var(--panel-border);
+		white-space: nowrap;
+	}
+
+	th {
+		color: var(--text-dim);
+		font-weight: 600;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	td.hash, td.fitness {
+		font-family: var(--mono);
+		color: var(--text-dim);
+		max-width: 320px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	td.num {
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.empty-row td {
+		color: var(--text-faint);
+		font-style: italic;
+	}
+
+	.fault-log {
+		margin-top: 6px;
+		max-height: 110px;
+		overflow-y: auto;
+		font-family: var(--mono);
+		font-size: 11px;
+	}
+
+	.fault-log .fault-line {
+		padding: 3px 0;
+		border-bottom: 1px solid var(--panel-border);
+		color: var(--bad);
+	}
+
+	.fault-log .fault-line .source {
+		color: var(--text-faint);
+	}
+
+	.saturation-bar {
+		height: 6px;
+		border-radius: 3px;
+		background: var(--panel-border);
+		overflow: hidden;
+		margin-top: 6px;
+	}
+
+	.saturation-bar .fill {
+		height: 100%;
+		background: var(--accent);
+		width: 0%;
+	}
+
+	.muted {
+		color: var(--text-faint);
+		font-size: 11px;
+	}
+
+	button {
+		background: var(--panel);
+		color: var(--text);
+		border: 1px solid var(--panel-border);
+		border-radius: 6px;
+		padding: 3px 10px;
+		font-size: 11px;
+		cursor: pointer;
+	}
+
+	button:hover { border-color: var(--accent); }
+
+	.top-bar {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 8px 16px;
+	}
+
+	.conn-status {
+		font-size: 12px;
+		color: var(--text-dim);
+	}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+	<div>
+		<h1>Solve &mdash; Live Run Dashboard</h1>
+		<p class="subtitle">Streaming from <code>/events</code> &middot; snapshot from <code>/api/summary</code></p>
+	</div>
+	<div class="conn-status">
+		<span id="conn-dot" class="dot"></span><span id="conn-text">connecting&hellip;</span>
+		<button id="reconnect-btn" style="display:none; margin-left:8px;">Reconnect</button>
+	</div>
+</div>
+
+<div class="cards">
+	<div class="card"><div class="label">Elapsed</div><div class="value" id="card-elapsed">&mdash;</div></div>
+	<div class="card"><div class="label">Total tests</div><div class="value" id="card-tests">&mdash;</div></div>
+	<div class="card"><div class="label">Tests / sec</div><div class="value" id="card-rate">&mdash;</div></div>
+	<div class="card"><div class="label">Champions</div><div class="value" id="card-champions">&mdash;</div></div>
+	<div class="card"><div class="label">Levels</div><div class="value" id="card-levels">&mdash;</div></div>
+	<div class="card" id="card-faults-wrap"><div class="label">Faults</div><div class="value" id="card-faults">0</div></div>
+	<div class="card state-running" id="card-state-wrap"><div class="label">Run state</div><div class="value" id="card-state">running</div></div>
+</div>
+
+<div class="panels">
+	<div class="panel">
+		<h2>Throughput (tests / sec)</h2>
+		<svg class="chart" id="chart-throughput"></svg>
+	</div>
+	<div class="panel">
+		<h2>Champion gene count (log scale, best-so-far per pool)</h2>
+		<svg class="chart" id="chart-genes"></svg>
+		<div class="legend" id="legend-genes"></div>
+	</div>
+</div>
+
+<div class="panels">
+	<div class="panel full">
+		<h2>Per-pool best champion</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Problem</th>
+					<th>Pool</th>
+					<th>Hash</th>
+					<th class="num">Genes</th>
+					<th class="num">Samples</th>
+					<th>Fitness (avg)</th>
+					<th class="num">Elapsed</th>
+				</tr>
+			</thead>
+			<tbody id="pool-table-body">
+				<tr class="empty-row"><td colspan="7">Waiting for champion data&hellip;</td></tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<div class="panels">
+	<div class="panel">
+		<h2>Novelty saturation</h2>
+		<div id="saturation-text" class="muted">Not reported by this run.</div>
+		<div class="saturation-bar"><div class="fill" id="saturation-fill"></div></div>
+	</div>
+	<div class="panel">
+		<h2>Faults</h2>
+		<div id="fault-log" class="fault-log"><div class="muted">No faults observed.</div></div>
+	</div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================================================
+ * Pure helpers -- no DOM access, no shared mutable state. Kept free-standing (rather than
+ * closures) so each one can be read and reasoned about in isolation; a Node/JS test runner was
+ * not available in the environment this page was built in, so these were exercised by tracing
+ * representative inputs by hand and by driving the whole page against a live benchmark run
+ * (see the task's completion notes) rather than via an automated unit-test harness.
+ * ==========================================================================================*/
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Bounded-memory streaming downsample: a series array is allowed to grow to at most
+// MAX_SERIES_POINTS * 2 points. Once it would exceed that, every other point is dropped
+// (always keeping the most recent point), halving the resolution of everything gathered so
+// far while leaving new points to arrive at full resolution. Applied repeatedly, this keeps
+// memory bounded to O(MAX_SERIES_POINTS) regardless of how many thousands of source events a
+// 20-30 minute run produces, at the cost of coarsening older history -- an acceptable tradeoff
+// for a live trend chart, where recent shape matters most.
+const MAX_SERIES_POINTS = 400;
+
+function decimatePush(arr, point) {
+	arr.push(point);
+	if (arr.length > MAX_SERIES_POINTS * 2) {
+		const halved = [];
+		for (let i = 0; i < arr.length; i += 2) halved.push(arr[i]);
+		const last = arr[arr.length - 1];
+		if (halved[halved.length - 1] !== last) halved.push(last);
+		arr.length = 0;
+		for (const p of halved) arr.push(p);
+	}
+	return arr;
+}
+
+function poolKey(problemId, poolIndex) {
+	return problemId + ":" + poolIndex;
+}
+
+function formatElapsed(totalSeconds) {
+	if (totalSeconds === null || totalSeconds === undefined || !isFinite(totalSeconds) || totalSeconds < 0) {
+		return "—";
+	}
+	const s = Math.floor(totalSeconds % 60);
+	const m = Math.floor(totalSeconds / 60) % 60;
+	const h = Math.floor(totalSeconds / 3600);
+	const pad = n => String(n).padStart(2, "0");
+	return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+function formatCompactNumber(n) {
+	if (n === null || n === undefined || !isFinite(n)) return "—";
+	const abs = Math.abs(n);
+	if (abs >= 1e9) return (n / 1e9).toFixed(2) + "B";
+	if (abs >= 1e6) return (n / 1e6).toFixed(2) + "M";
+	if (abs >= 1e3) return (n / 1e3).toFixed(1) + "k";
+	return String(Math.round(n * 100) / 100);
+}
+
+function scaleLinear(value, domainMin, domainMax, rangeMin, rangeMax) {
+	if (domainMax === domainMin) return (rangeMin + rangeMax) / 2;
+	const t = (value - domainMin) / (domainMax - domainMin);
+	return rangeMin + t * (rangeMax - rangeMin);
+}
+
+function scaleLog(value, domainMin, domainMax, rangeMin, rangeMax) {
+	const lo = Math.log10(Math.max(domainMin, 1e-9));
+	let hi = Math.log10(Math.max(domainMax, 1e-9));
+	if (hi <= lo) hi = lo + 1;
+	const v = Math.log10(Math.max(value, 1e-9));
+	const t = (v - lo) / (hi - lo);
+	return rangeMin + t * (rangeMax - rangeMin);
+}
+
+// Sum of testCount across every {problemId, testCount} entry of a status event's testCounts array.
+function sumTestCounts(testCounts) {
+	let total = 0;
+	for (const entry of testCounts) total += entry.testCount;
+	return total;
+}
+
+/* ============================================================================================
+ * Application state. Everything here is rebuilt from scratch on every SSE `open` (initial
+ * connect, or any reconnect) -- see resetSeriesState() and connect() below. Because the server
+ * tailer (Solve.Dashboard.Web/Telemetry/EventFileTailer.cs) gives each new /events connection
+ * its own independent replay-then-follow view starting from the top of the file, a reconnect
+ * always resends the full history. Rebuilding from an empty slate on `open` -- rather than
+ * appending onto whatever was already accumulated -- is what keeps that replay from duplicating
+ * chart points (acceptance criterion 5): state is only ever appended to within one connection's
+ * lifetime, never carried across a reconnect.
+ * ==========================================================================================*/
+
+const state = {
+	throughput: [],           // [{x: elapsedSeconds, y: testsPerSecond}]
+	lastStatusForRate: null,  // {elapsed, total} baseline for the next throughput point
+	geneSeries: new Map(),    // poolKey -> {problemId, poolIndex, color, points: [{x,y}]}
+	poolOrder: [],            // poolKeys in first-seen order, for stable legend/color assignment
+	levelsByProblem: new Map(),
+	championCount: 0,
+	totalTests: 0,
+	faultCount: 0,
+	faults: [],                // most recent faults, newest first (capped)
+	saturation: null,          // last-seen novelty saturation ratio, if the stream ever carries one
+	lastElapsed: 0,
+	runEnded: null,            // {elapsed, reason, totalTests}
+};
+
+const PALETTE = ["#4fc3f7", "#ff8a65", "#aed581", "#ba68c8", "#ffd54f", "#4db6ac", "#f06292", "#9575cd"];
+
+function colorForPool(key) {
+	let idx = state.poolOrder.indexOf(key);
+	if (idx === -1) {
+		state.poolOrder.push(key);
+		idx = state.poolOrder.length - 1;
+	}
+	return PALETTE[idx % PALETTE.length];
+}
+
+function resetSeriesState() {
+	state.throughput = [];
+	state.lastStatusForRate = null;
+	state.geneSeries = new Map();
+	state.poolOrder = [];
+	state.levelsByProblem = new Map();
+	state.championCount = 0;
+	state.totalTests = 0;
+	state.faultCount = 0;
+	state.faults = [];
+	state.saturation = null;
+	state.lastElapsed = 0;
+	state.runEnded = null;
+}
+
+/* ============================================================================================
+ * Event processing -- one call per parsed JSONL line, in the order the server sends them.
+ * Field names are read by NAME only (never by array position): the 15-0033 completion notes
+ * flag that the schema doc's own examples show a different field order than the writer's actual
+ * serialized output, so position-based parsing would be fragile.
+ * ==========================================================================================*/
+
+function processEvent(evt) {
+	if (typeof evt.elapsed === "number") state.lastElapsed = evt.elapsed;
+
+	switch (evt.type) {
+		case "run_started":
+			// Nothing charted directly; run_started's elapsed/problemCount seed lastElapsed above.
+			break;
+
+		case "level_created": {
+			const prev = state.levelsByProblem.get(evt.problemId) ?? -1;
+			if (evt.level > prev) state.levelsByProblem.set(evt.problemId, evt.level);
+			break;
+		}
+
+		case "champion": {
+			const key = poolKey(evt.problemId, evt.poolIndex);
+			let series = state.geneSeries.get(key);
+			if (!series) {
+				series = { problemId: evt.problemId, poolIndex: evt.poolIndex, color: colorForPool(key), points: [] };
+				state.geneSeries.set(key, series);
+			}
+			decimatePush(series.points, { x: evt.elapsed, y: evt.geneCount });
+			series.latest = evt; // full event, used by the per-pool table
+			break;
+		}
+
+		case "status": {
+			const total = sumTestCounts(evt.testCounts);
+			state.totalTests = total;
+			state.championCount = evt.championCount;
+
+			// Forward-compatible novelty-saturation pickup: not part of the documented schema
+			// today (see RunEventLog.schema.md), so this only ever activates if a future status
+			// event starts carrying one of these fields. Absent that, the panel stays in its
+			// "not reported by this run" state -- no fabricated data.
+			if (typeof evt.noveltySaturation === "number") state.saturation = evt.noveltySaturation;
+			else if (typeof evt.saturation === "number") state.saturation = evt.saturation;
+
+			if (state.lastStatusForRate) {
+				const dt = evt.elapsed - state.lastStatusForRate.elapsed;
+				const dTests = total - state.lastStatusForRate.total;
+				if (dt > 0) decimatePush(state.throughput, { x: evt.elapsed, y: Math.max(0, dTests / dt) });
+			} else {
+				// Seed the very first rate point against the run's t=0 baseline so the chart has
+				// something to draw before a second status sample arrives.
+				if (evt.elapsed > 0) decimatePush(state.throughput, { x: evt.elapsed, y: total / evt.elapsed });
+			}
+			state.lastStatusForRate = { elapsed: evt.elapsed, total };
+			break;
+		}
+
+		case "fault": {
+			state.faultCount++;
+			state.faults.unshift({ elapsed: evt.elapsed, message: evt.message, source: evt.source ?? null });
+			if (state.faults.length > 8) state.faults.length = 8;
+			break;
+		}
+
+		case "run_ended":
+			state.runEnded = { elapsed: evt.elapsed, reason: evt.reason, totalTests: evt.totalTests };
+			state.totalTests = evt.totalTests;
+			break;
+
+		default:
+			// Unknown / future event type -- ignored gracefully (acceptance criterion 2).
+			break;
+	}
+}
+
+/* ============================================================================================
+ * Rendering. Throttled to a fixed tick rather than re-rendering on every SSE message: during
+ * history replay of a long run, messages can arrive in a tight burst (thousands of lines in
+ * well under a second), and rebuilding SVG/table DOM per-message would be wasted work. All the
+ * event handler does is fold the message into `state`; a timer flushes state to the DOM.
+ * ==========================================================================================*/
+
+function renderChart(svg, seriesList, opts) {
+	const W = svg.clientWidth || 600;
+	const H = svg.clientHeight || 220;
+	const margin = { left: 52, right: 14, top: 12, bottom: 24 };
+	const plotW = Math.max(10, W - margin.left - margin.right);
+	const plotH = Math.max(10, H - margin.top - margin.bottom);
+
+	while (svg.firstChild) svg.removeChild(svg.firstChild);
+	svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+	svg.setAttribute("preserveAspectRatio", "none");
+
+	const allPoints = [];
+	for (const s of seriesList) for (const p of s.points) allPoints.push(p);
+
+	if (allPoints.length === 0) {
+		const text = document.createElementNS(SVG_NS, "text");
+		text.setAttribute("x", String(W / 2));
+		text.setAttribute("y", String(H / 2));
+		text.setAttribute("text-anchor", "middle");
+		text.setAttribute("class", "empty-note");
+		text.textContent = "Waiting for data…";
+		svg.appendChild(text);
+		return;
+	}
+
+	let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+	for (const p of allPoints) {
+		if (p.x < xMin) xMin = p.x;
+		if (p.x > xMax) xMax = p.x;
+		if (p.y < yMin) yMin = p.y;
+		if (p.y > yMax) yMax = p.y;
+	}
+	if (xMax === xMin) xMax = xMin + 1;
+	if (opts.yScale === "log") {
+		yMin = Math.max(1, yMin);
+		if (yMax <= yMin) yMax = yMin + 1;
+	} else {
+		if (yMax === yMin) { yMax += 1; }
+		const pad = (yMax - yMin) * 0.12;
+		yMax += pad;
+		yMin = Math.max(0, yMin - pad);
+	}
+
+	const xPix = v => margin.left + scaleLinear(v, xMin, xMax, 0, plotW);
+	const yPix = v => margin.top + plotH - (opts.yScale === "log"
+		? scaleLog(v, yMin, yMax, 0, plotH)
+		: scaleLinear(v, yMin, yMax, 0, plotH));
+
+	// Horizontal gridlines + y-axis labels (4 bands).
+	const bands = 4;
+	for (let i = 0; i <= bands; i++) {
+		const frac = i / bands;
+		const yVal = opts.yScale === "log"
+			? Math.pow(10, Math.log10(yMin) + frac * (Math.log10(yMax) - Math.log10(yMin)))
+			: yMin + frac * (yMax - yMin);
+		const y = margin.top + plotH - frac * plotH;
+
+		const line = document.createElementNS(SVG_NS, "line");
+		line.setAttribute("x1", String(margin.left));
+		line.setAttribute("x2", String(W - margin.right));
+		line.setAttribute("y1", String(y));
+		line.setAttribute("y2", String(y));
+		line.setAttribute("class", "gridline");
+		svg.appendChild(line);
+
+		const label = document.createElementNS(SVG_NS, "text");
+		label.setAttribute("x", String(margin.left - 6));
+		label.setAttribute("y", String(y + 3));
+		label.setAttribute("text-anchor", "end");
+		label.textContent = opts.yFormat ? opts.yFormat(yVal) : formatCompactNumber(yVal);
+		svg.appendChild(label);
+	}
+
+	// X-axis labels (start / mid / end elapsed).
+	for (const frac of [0, 0.5, 1]) {
+		const xVal = xMin + frac * (xMax - xMin);
+		const label = document.createElementNS(SVG_NS, "text");
+		label.setAttribute("x", String(xPix(xVal)));
+		label.setAttribute("y", String(H - 6));
+		label.setAttribute("text-anchor", frac === 0 ? "start" : frac === 1 ? "end" : "middle");
+		label.textContent = formatElapsed(xVal);
+		svg.appendChild(label);
+	}
+
+	for (const s of seriesList) {
+		if (s.points.length === 0) continue;
+		const pointsAttr = s.points.map(p => `${xPix(p.x)},${yPix(p.y)}`).join(" ");
+		const poly = document.createElementNS(SVG_NS, "polyline");
+		poly.setAttribute("points", pointsAttr);
+		poly.setAttribute("fill", "none");
+		poly.setAttribute("stroke", s.color);
+		poly.setAttribute("stroke-width", "1.6");
+		poly.setAttribute("stroke-linejoin", "round");
+		svg.appendChild(poly);
+	}
+}
+
+function renderThroughput() {
+	renderChart(
+		document.getElementById("chart-throughput"),
+		[{ color: "#4fc3f7", points: state.throughput }],
+		{ yScale: "linear", yFormat: v => formatCompactNumber(v) });
+}
+
+function renderGeneChart() {
+	const seriesList = [...state.geneSeries.values()];
+	renderChart(
+		document.getElementById("chart-genes"),
+		seriesList,
+		{ yScale: "log", yFormat: v => formatCompactNumber(Math.round(v)) });
+
+	const legend = document.getElementById("legend-genes");
+	legend.textContent = "";
+	for (const s of seriesList) {
+		const item = document.createElement("span");
+		const swatch = document.createElement("span");
+		swatch.className = "swatch";
+		swatch.style.background = s.color;
+		item.appendChild(swatch);
+		item.appendChild(document.createTextNode(`P${s.problemId}·Pool${s.poolIndex}`));
+		legend.appendChild(item);
+	}
+	if (seriesList.length === 0) legend.textContent = "";
+}
+
+function renderPoolTable() {
+	const body = document.getElementById("pool-table-body");
+	body.textContent = "";
+	const rows = [...state.geneSeries.values()].filter(s => s.latest)
+		.sort((a, b) => a.problemId - b.problemId || a.poolIndex - b.poolIndex);
+
+	if (rows.length === 0) {
+		const tr = document.createElement("tr");
+		tr.className = "empty-row";
+		const td = document.createElement("td");
+		td.colSpan = 7;
+		td.textContent = "Waiting for champion data…";
+		tr.appendChild(td);
+		body.appendChild(tr);
+		return;
+	}
+
+	for (const s of rows) {
+		const c = s.latest;
+		const tr = document.createElement("tr");
+
+		const cell = (text, cls) => {
+			const td = document.createElement("td");
+			if (cls) td.className = cls;
+			td.textContent = text; // textContent -- never innerHTML -- so literal '<'/'>' in genome
+			                        // hashes (see RunEventLog.schema.md) render as plain text, not markup.
+			tr.appendChild(td);
+		};
+
+		cell(String(c.problemId));
+		cell(String(c.poolIndex));
+		cell(c.genomeHash.length > 28 ? c.genomeHash.slice(0, 28) + "…" : c.genomeHash, "hash");
+		cell(String(c.geneCount), "num");
+		cell(String(c.sampleCount), "num");
+		cell(c.fitnessAverages.map(f => `${f.metric}=${Math.round(f.value * 1000) / 1000}`).join(", "), "fitness");
+		cell(formatElapsed(c.elapsed), "num");
+
+		body.appendChild(tr);
+	}
+}
+
+function renderHeaderCards() {
+	document.getElementById("card-elapsed").textContent = formatElapsed(state.lastElapsed);
+	document.getElementById("card-tests").textContent = formatCompactNumber(state.totalTests);
+	const lastRate = state.throughput.length > 0 ? state.throughput[state.throughput.length - 1].y : null;
+	document.getElementById("card-rate").textContent = lastRate === null ? "—" : formatCompactNumber(lastRate);
+	document.getElementById("card-champions").textContent = formatCompactNumber(state.championCount);
+
+	const levelParts = [...state.levelsByProblem.entries()].sort((a, b) => a[0] - b[0])
+		.map(([problemId, level]) => state.levelsByProblem.size > 1 ? `P${problemId}:${level}` : String(level));
+	document.getElementById("card-levels").textContent = levelParts.length > 0 ? levelParts.join(", ") : "—";
+
+	document.getElementById("card-faults").textContent = String(state.faultCount);
+	const faultsCard = document.getElementById("card-faults-wrap");
+	faultsCard.classList.toggle("state-fault", state.faultCount > 0);
+
+	const stateCard = document.getElementById("card-state-wrap");
+	const stateValue = document.getElementById("card-state");
+	if (state.runEnded) {
+		stateValue.textContent = `ended – ${state.runEnded.reason}`;
+		stateCard.classList.remove("state-running");
+		stateCard.classList.add("state-ended");
+	} else {
+		stateValue.textContent = "running";
+		stateCard.classList.add("state-running");
+		stateCard.classList.remove("state-ended");
+	}
+
+	const satText = document.getElementById("saturation-text");
+	const satFill = document.getElementById("saturation-fill");
+	if (state.saturation === null) {
+		satText.textContent = "Not reported by this run.";
+		satFill.style.width = "0%";
+	} else {
+		const pct = Math.max(0, Math.min(1, state.saturation)) * 100;
+		satText.textContent = `${pct.toFixed(1)}%`;
+		satFill.style.width = pct.toFixed(1) + "%";
+	}
+
+	const faultLog = document.getElementById("fault-log");
+	faultLog.textContent = "";
+	if (state.faults.length === 0) {
+		const div = document.createElement("div");
+		div.className = "muted";
+		div.textContent = "No faults observed.";
+		faultLog.appendChild(div);
+	} else {
+		for (const f of state.faults) {
+			const line = document.createElement("div");
+			line.className = "fault-line";
+			line.textContent = `[${formatElapsed(f.elapsed)}] `;
+			const src = document.createElement("span");
+			src.className = "source";
+			src.textContent = f.source ? `(${f.source}) ` : "";
+			line.appendChild(src);
+			line.appendChild(document.createTextNode(f.message));
+			faultLog.appendChild(line);
+		}
+	}
+}
+
+function renderAll() {
+	renderHeaderCards();
+	renderThroughput();
+	renderGeneChart();
+	renderPoolTable();
+}
+
+let renderPending = false;
+function scheduleRender() {
+	if (renderPending) return;
+	renderPending = true;
+	setTimeout(() => { renderPending = false; renderAll(); }, 250);
+}
+
+/* ============================================================================================
+ * SSE wiring. Every `open` (first connect, and every automatic reconnect the browser's
+ * EventSource performs after a dropped connection) resets state and reprocesses the full replay
+ * the server sends -- see resetSeriesState() above for why that is what keeps a reconnect from
+ * duplicating chart points.
+ * ==========================================================================================*/
+
+let source = null;
+
+function setConnStatus(kind, text) {
+	const dot = document.getElementById("conn-dot");
+	dot.className = "dot " + kind;
+	document.getElementById("conn-text").textContent = text;
+	document.getElementById("reconnect-btn").style.display = kind === "closed" ? "inline-block" : "none";
+}
+
+function connect() {
+	if (source) { try { source.close(); } catch { /* already closed */ } }
+	resetSeriesState();
+	renderAll();
+	setConnStatus("reconnecting", "connecting…");
+
+	source = new EventSource("/events");
+
+	source.onopen = () => {
+		setConnStatus("live", "live");
+	};
+
+	source.onmessage = ev => {
+		let parsed;
+		try {
+			parsed = JSON.parse(ev.data);
+		} catch {
+			return; // malformed line -- ignore, do not tear down the connection.
+		}
+		try {
+			processEvent(parsed);
+		} catch {
+			// A single malformed/unexpectedly-shaped event must never break the live stream.
+		}
+		scheduleRender();
+
+		if (parsed && parsed.type === "run_ended") {
+			// The stream itself may stay open server-side (the tailer keeps polling for file
+			// growth indefinitely), but run_ended is written exactly once and is terminal for a
+			// given RunEventLog instance -- close from the client side so the UI's own "stream
+			// closed" state (acceptance criterion 4) reflects reality instead of sitting in a
+			// "live" state that will never receive another meaningful event.
+			source.close();
+			setConnStatus("closed", "closed (run ended)");
+		}
+	};
+
+	source.onerror = () => {
+		if (source.readyState === EventSource.CLOSED) {
+			setConnStatus("closed", "disconnected");
+		} else {
+			setConnStatus("reconnecting", "reconnecting…");
+		}
+	};
+}
+
+document.getElementById("reconnect-btn").addEventListener("click", connect);
+
+/* ============================================================================================
+ * /api/summary polling. Snapshot, not a stream -- every poll simply overwrites the previous
+ * values (no accumulation), so there is no reconnect/dedup concern here. Used only for the
+ * per-pool best-champion table and as a cross-check backstop for the header cards; the charts
+ * (which need history, not a snapshot) are driven entirely by the SSE stream above. Polling
+ * continues even while the run has ended, since it is cheap and harmless.
+ * ==========================================================================================*/
+
+async function pollSummary() {
+	try {
+		const res = await fetch("/api/summary", { cache: "no-store" });
+		if (!res.ok) return;
+		const summary = await res.json();
+
+		// Cross-check / backstop only: if the SSE stream has not yet delivered as much as the
+		// summary reflects (e.g. immediately after page load, before replay catches up), adopt
+		// the summary's totals so the header cards do not lag behind reality.
+		if (summary.latestStatus && summary.latestStatus.elapsed >= state.lastElapsed) {
+			state.totalTests = Math.max(state.totalTests, sumTestCounts(summary.latestStatus.testCounts));
+			state.championCount = Math.max(state.championCount, summary.latestStatus.championCount);
+		}
+		if (summary.runEnded && !state.runEnded) {
+			state.runEnded = summary.runEnded;
+			state.totalTests = summary.runEnded.totalTests;
+		}
+		scheduleRender();
+	} catch {
+		// Summary endpoint unreachable -- the SSE stream remains the primary data source, so this
+		// is non-fatal; just try again on the next tick.
+	}
+}
+
+/* ============================================================================================
+ * Bootstrap.
+ * ==========================================================================================*/
+
+renderAll();
+connect();
+pollSummary();
+setInterval(pollSummary, 2000);
+window.addEventListener("resize", () => scheduleRender());
+
+</script>
+</body>
+</html>

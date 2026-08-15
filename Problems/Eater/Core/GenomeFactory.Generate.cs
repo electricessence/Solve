@@ -23,7 +23,7 @@ public partial class GenomeFactory
 		int moves = Math.Min(n, 60);
 		int size = moves * 2 - 1;
 		bool leftDisabled = !AvailableSteps.Contains(Step.TurnLeft);
-		var random = System.Random.Shared;
+		Random random = RandomSource; // 10-0002: injected (seedable) source instead of the previous unseedable ambient default.
 		var steps = new StepCount[size];
 		for (int i = 0; i < size; i++)
 		{

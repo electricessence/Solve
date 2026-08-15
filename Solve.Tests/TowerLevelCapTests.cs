@@ -1,5 +1,5 @@
-using App.Metrics;
 using Eater;
+using Solve.Metrics;
 using Solve.ProcessingSchemes;
 using System.Collections.Immutable;
 
@@ -8,7 +8,7 @@ namespace Solve.Tests;
 public class TowerLevelCapTests
 {
 	private static GenomeFactory CreateFactory()
-		=> new(new MetricsBuilder().Build().Provider.Counter, seeds: null, leftTurnDisabled: true);
+		=> new(new CounterRegistry(), seeds: null, leftTurnDisabled: true);
 
 	[Fact]
 	public async Task TerminalLevelDoesNotPromoteOrThrow()

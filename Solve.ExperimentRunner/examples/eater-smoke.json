@@ -1,0 +1,15 @@
+{
+	"name": "eater-smoke",
+	"problem": {
+		"id": "eater",
+		"gridSize": 6
+	},
+	"poolSize": {
+		"first": 100,
+		"minimum": 20,
+		"step": 2
+	},
+	"maxLevels": 40,
+	"durationMinutes": 1,
+	"outputDirectory": "out/eater-smoke"
+}

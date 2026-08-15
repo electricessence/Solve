@@ -1,10 +1,10 @@
-﻿using App.Metrics.Counter;
-using Open.Collections;
+﻿using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Evaluation.Catalogs;
 using Open.Evaluation.Core;
 using Open.Hierarchy;
 using Open.RandomizationExtensions;
+using Solve.Metrics;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -15,11 +15,19 @@ namespace Solve.Evaluation;
 public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<EvalGenome<T>>
 	where T : notnull, IComparable<T>, IComparable
 {
-	protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics) : base(metrics)
-	{ }
+	// 10-0002: optional randomSource, appended so existing (unseeded) callers are unaffected.
+	// ReducibleGenomeFactoryBase's own constructors don't forward a Random through to
+	// GenomeFactoryBase, so -- same as Eater's GenomeFactory -- we apply it here via the
+	// protected RandomSource setter rather than threading it through `base(...)`.
+	protected EvalGenomeFactoryBase(CounterRegistry metrics, Random? randomSource = null) : base(metrics)
+	{
+		if (randomSource is not null) RandomSource = randomSource;
+	}
 
-	protected EvalGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<EvalGenome<T>>? seeds) : base(metrics, seeds)
-	{ }
+	protected EvalGenomeFactoryBase(CounterRegistry metrics, IEnumerable<EvalGenome<T>>? seeds, Random? randomSource = null) : base(metrics, seeds)
+	{
+		if (randomSource is not null) RandomSource = randomSource;
+	}
 
 	public readonly EvaluationCatalog<T> Catalog = new();
 
@@ -211,13 +219,15 @@ public abstract class EvalGenomeFactoryBase<T> : ReducibleGenomeFactoryBase<Eval
 		// Crossover scheme 1:  Swap a node.
 		while (aGeneNodes.Length != 0)
 		{
-			Node<IEvaluate<T>> ag = aGeneNodes.RandomSelectOne();
+			// 10-0002: route through the injected (seedable) RandomSource instead of the
+			// ambient default the parameterless RandomSelectOne() would otherwise draw from.
+			Node<IEvaluate<T>> ag = aGeneNodes.RandomSelectOne(RandomSource);
 			string agS = ag.Value!.ToStringRepresentation();
 			Node<IEvaluate<T>>[] others = bGeneNodes.Where(g => g.Value!.ToStringRepresentation() != agS).ToArray();
 			if (others.Length != 0)
 			{
 				// Do the swap...
-				Node<IEvaluate<T>> bg = others.RandomSelectOne();
+				Node<IEvaluate<T>> bg = others.RandomSelectOne(RandomSource);
 				Node<IEvaluate<T>> bgParent = bg.Parent!;
 
 				Node<IEvaluate<T>> placeholder = Catalog.Factory.GetBlankNode();

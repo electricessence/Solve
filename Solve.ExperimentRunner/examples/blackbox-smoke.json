@@ -1,0 +1,16 @@
+{
+	"name": "blackbox-smoke",
+	"problem": {
+		"id": "blackbox",
+		"formula": "AB",
+		"sampleSize": 50
+	},
+	"poolSize": {
+		"first": 100,
+		"minimum": 20,
+		"step": 2
+	},
+	"maxLevels": 40,
+	"durationMinutes": 1,
+	"outputDirectory": "out/blackbox-smoke"
+}

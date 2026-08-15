@@ -11,7 +11,7 @@ public partial class GenomeFactory
 		int bLen = b.Genes.Length;
 		if (aLen == 0 || bLen == 0 || aLen == 1 && bLen == 1) return [];
 
-		Random rand = System.Random.Shared;
+		Random rand = RandomSource; // 10-0002: injected (seedable) source instead of the previous unseedable ambient default.
 		int aPoint = rand.Next(aLen - 1) + 1;
 		int bPoint = rand.Next(bLen - 1) + 1;
 

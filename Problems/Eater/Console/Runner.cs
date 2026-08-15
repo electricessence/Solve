@@ -1,6 +1,6 @@
-﻿using App.Metrics;
-using Open.Disposable;
+﻿using Open.Disposable;
 using Solve.Experiment.Console;
+using Solve.Metrics;
 using Solve.ProcessingSchemes;
 using System;
 using System.Collections.Generic;
@@ -62,8 +62,8 @@ class Runner : RunnerBase<Genome>
 		var seedGenomes = seeds
 			.Concat(GenomeFactory.Random(100, _size * 2, leftTurnDisabled).Take(1000).AsParallel())
 			.Distinct().Select(s => new Genome(s));
-		var metrics = new MetricsBuilder().Build();
-		var factory = new GenomeFactory(metrics.Provider.Counter, seedGenomes, leftTurnDisabled: leftTurnDisabled);
+		var metrics = new CounterRegistry();
+		var factory = new GenomeFactory(metrics, seedGenomes, leftTurnDisabled: leftTurnDisabled);
 		//var scheme = new Solve.ProcessingSchemes.Dataflow.DataflowScheme<Genome>(metrics, factory, (800, 40, 2));
 		var config = new SchemeConfig
 		{

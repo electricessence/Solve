@@ -1,14 +1,14 @@
-﻿using App.Metrics.Counter;
+﻿using Solve.Metrics;
 
 namespace Solve;
 
 public abstract class ReducibleGenomeFactoryBase<TGenome> : GenomeFactoryBase<TGenome>
 	where TGenome : class, IGenome
 {
-	protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics)
+	protected ReducibleGenomeFactoryBase(CounterRegistry metrics)
 		: base(metrics) { }
 
-	protected ReducibleGenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds)
+	protected ReducibleGenomeFactoryBase(CounterRegistry metrics, IEnumerable<TGenome>? seeds)
 		: base(metrics, seeds) { }
 
 	protected override bool CannotCrossover(TGenome a, TGenome b)

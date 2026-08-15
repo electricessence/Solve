@@ -5,11 +5,23 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Core\Eater.Core.csproj" />
 		<ProjectReference Include="..\..\..\Solve\Solve.csproj" />
 	</ItemGroup>
+
+	<!-- ===== BEGIN opt-in OpenTelemetry exporter (task 15-0030) =====
+	     Exporter/OTel package references live ONLY here; Solve core defines instruments only
+	     (System.Diagnostics.Metrics, no exporter dependency). Console exporter is the OTLP
+	     stand-in used whenever no collector endpoint is configured; see Program.cs. -->
+	<ItemGroup>
+		<PackageReference Include="OpenTelemetry" Version="1.17.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.17.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+	</ItemGroup>
+	<!-- ===== END opt-in OpenTelemetry exporter ===== -->
 
 </Project>

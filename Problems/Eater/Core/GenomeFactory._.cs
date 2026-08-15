@@ -1,4 +1,4 @@
-﻿using App.Metrics.Counter;
+﻿using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -8,13 +8,26 @@ using System.Linq;
 namespace Eater;
 
 public partial class GenomeFactory(
-	IProvideCounterMetrics metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
+	CounterRegistry metrics, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
 	: Solve.ReducibleGenomeFactoryBase<Genome>(metrics, seeds)
 {
 	// ReSharper disable once UnusedParameter.Local
-	public GenomeFactory(IProvideCounterMetrics metrics, Genome seed, bool leftTurnDisabled = false)
+	public GenomeFactory(CounterRegistry metrics, Genome seed, bool leftTurnDisabled = false)
 		: this(metrics, seed is null ? default : [seed], leftTurnDisabled)
 	{
+	}
+
+	/// <summary>
+	/// Constructs a factory with an explicit randomness source (see
+	/// <see cref="Solve.GenomeFactoryBase{TGenome}.RandomSource"/>). Two factories built with
+	/// equally-seeded <see cref="Random"/> instances (e.g. <c>new Random(42)</c> for both) will
+	/// generate a bit-identical sequence of genome hashes when driven single-threaded/in a fixed
+	/// call order -- this is the reproducibility entry point added by task 10-0002.
+	/// </summary>
+	public GenomeFactory(CounterRegistry metrics, Random randomSource, IEnumerable<Genome>? seeds = null, bool leftTurnDisabled = false)
+		: this(metrics, seeds, leftTurnDisabled)
+	{
+		RandomSource = randomSource ?? throw new ArgumentNullException(nameof(randomSource));
 	}
 
 	public static IEnumerable<string> Random(int moves, int maxMoveLength, bool leftTurnDisabled = false)

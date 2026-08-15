@@ -8,9 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+		<PackageReference Include="Spectre.Console.Testing" Version="0.57.2" />
 		<PackageReference Include="xunit" Version="2.9.3" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+		<PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
@@ -19,7 +20,12 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Solve\Solve.csproj" />
 		<ProjectReference Include="..\Solve.Evaluation\Solve.Evaluation.csproj" />
+		<ProjectReference Include="..\Solve.Experiment\Solve.Experiment.csproj" />
 		<ProjectReference Include="..\Problems\Eater\Core\Eater.Core.csproj" />
+		<ProjectReference Include="..\Problems\Eater\Console\Eater.Console.csproj" />
+		<ProjectReference Include="..\Problems\BlackBoxFunction\BlackBoxFunction.csproj" />
+		<ProjectReference Include="..\Solve.ExperimentRunner\Solve.ExperimentRunner.csproj" />
+		<ProjectReference Include="..\Solve.Dashboard.Web\Solve.Dashboard.Web.csproj" />
 	</ItemGroup>
 
 </Project>

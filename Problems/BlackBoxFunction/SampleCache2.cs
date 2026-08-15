@@ -44,25 +44,48 @@ public sealed class SampleCache2
 		_actualFormula = actualFormula;
 	}
 
-	public ImmutableArray<double> GetRandomLinearInput()
+	/// <summary>
+	/// Produces a stable (process-independent) 32-bit seed from a level id and a parameter
+	/// dimension index. Deliberately avoids <see cref="HashCode.Combine{T1, T2}"/>, whose
+	/// per-process randomized seed would make sampling non-reproducible across runs; this uses
+	/// a fixed avalanche mix (the MurmurHash3 fmix64 finalizer) instead, so the same (id,
+	/// dimension) pair always yields the same seed everywhere.
+	/// </summary>
+	static int MixSeed(long id, int dimension)
 	{
-		var start = Range * Random.Shared.NextDouble();
-		var end = Range * Random.Shared.NextDouble();
-		var delta = end - start;
-		var last = SampleSize - 1;
+		unchecked
+		{
+			var h = (ulong)id * 0x9E3779B97F4A7C15UL ^ (uint)dimension;
+			h ^= h >> 33;
+			h *= 0xff51afd7ed558ccdUL;
+			h ^= h >> 33;
+			h *= 0xc4ceb9fe1a85ec53UL;
+			h ^= h >> 33;
+			return (int)h;
+		}
+	}
+
+	/// <summary>
+	/// Generates the <see cref="SampleSize"/> values for a single input dimension of a level,
+	/// as independent pseudo-random draws spanning [-<see cref="Range"/>, <see cref="Range"/>).
+	/// Deterministic per (<paramref name="id"/>, <paramref name="dimension"/>): every sample is
+	/// drawn independently, so samples within a level are not collinear in parameter space.
+	/// </summary>
+	public ImmutableArray<double> GetRandomVector(long id, int dimension)
+	{
+		var rng = new Random(MixSeed(id, dimension));
 
 		var builder = ImmutableArray.CreateBuilder<double>(SampleSize);
 		builder.Count = SampleSize;
-		builder[0] = start;
-		for (var i = 1; i < last; ++i)
-			builder[i] = start + i * delta / SampleSize;
-		builder[last] = end;
+		for (var i = 0; i < SampleSize; ++i)
+			builder[i] = Range * (rng.NextDouble() * 2 - 1); // Uniform in [-Range, Range).
 		return builder.MoveToImmutable();
 	}
 
-	public IEnumerable<ImmutableArray<double>> RandomSample()
+	public IEnumerable<ImmutableArray<double>> RandomSample(long id)
 	{
-		while (true) yield return GetRandomLinearInput();
+		for (var dimension = 0; ; ++dimension)
+			yield return GetRandomVector(id, dimension);
 	}
 
 	LazyList<LazyList<double>> Partition(IEnumerable<ImmutableArray<double>> sample)
@@ -73,7 +96,7 @@ public sealed class SampleCache2
 			.Memoize(true);
 	}
 
-	public Entry GenerateEntry() => new(Partition(RandomSample()), _actualFormula);
+	public Entry GenerateEntry(long id) => new(Partition(RandomSample(id)), _actualFormula);
 
-	public Entry Get(long id) => _sampleCache.GetOrAdd(id, _ => GenerateEntry());
+	public Entry Get(long id) => _sampleCache.GetOrAdd(id, GenerateEntry);
 }

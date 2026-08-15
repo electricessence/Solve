@@ -1,4 +1,5 @@
 ﻿using Open.Memory;
+using Solve.Telemetry;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -111,22 +112,57 @@ public abstract class ProblemBase<TGenome> : IProblem<TGenome>
 
 	public IEnumerable<Fitness> ProcessSample(TGenome g, long sampleId)
 	{
+		// 15-0030: solve.evaluations / solve.evaluation.duration, timed around the actual
+		// evaluation call -- the same call this method's Interlocked.Increment(ref _testCount)
+		// below already counts -- via Stopwatch.GetTimestamp()/GetElapsedTime rather than a
+		// heap-allocated Stopwatch instance.
+		long start = Stopwatch.GetTimestamp();
 		double[] metrics = ProcessSampleMetrics(g, sampleId);
+		EngineInstruments.RecordEvaluation(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
 		Interlocked.Increment(ref _testCount);
 		return Pools.Select(p => p.Transform(g, metrics));
 	}
 
 	// ReSharper disable once VirtualMemberNeverOverridden.Global
-	protected virtual async ValueTask<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
-	{
-		await Task.Yield();
-		return ProcessSampleMetrics(g, sampleId);
-	}
+	// The Task.Yield() this used to open with only forced a thread-pool hop; it didn't add
+	// concurrency, since whatever chain called ProcessSampleAsync was still the only thing
+	// running that evaluation. Concurrency now comes from TowerScheme's shared evaluation
+	// worker stage (see TowerScheme.ProblemTower's evaluation queue), which already runs
+	// each call to this method on its own worker — so the yield is redundant overhead here.
+	protected virtual ValueTask<double[]> ProcessSampleMetricsAsync(TGenome g, long sampleId)
+		=> new(ProcessSampleMetrics(g, sampleId));
 
 	public async ValueTask<IEnumerable<Fitness>> ProcessSampleAsync(TGenome g, long sampleId = 0)
 	{
+		// 15-0030: see ProcessSample's identical instrumentation above for rationale.
+		long start = Stopwatch.GetTimestamp();
 		double[] metrics = await ProcessSampleMetricsAsync(g, sampleId).ConfigureAwait(false);
+		EngineInstruments.RecordEvaluation(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
 		Interlocked.Increment(ref _testCount);
 		return Pools.Select(p => p.Transform(g, metrics));
 	}
+
+	/// <summary>
+	/// Framework-level default for task 25-0023's per-case surface
+	/// (<see cref="IProblem{TGenome}.ProcessSampleCasesAsync"/>): returns
+	/// <see langword="null"/>, same as the interface member's own default-interface-method
+	/// fallback -- a subclass that hasn't opted into per-case exposure (via <see langword="override"/>
+	/// here) stays opted out of epsilon-lexicase ranking.
+	/// </summary>
+	/// <remarks>
+	/// Declared here as a concrete <see langword="virtual"/> method -- rather than relying
+	/// solely on <see cref="IProblem{TGenome}.ProcessSampleCasesAsync"/>'s own default interface
+	/// method -- specifically so a subclass (e.g. <c>Eater.Problem</c>) can participate in
+	/// <see cref="IProblem{TGenome}"/>'s dispatch by declaring an ordinary
+	/// <see langword="override"/>. Interface member binding is fixed at the type that first
+	/// lists the interface (this class); a same-signature method added on a more-derived type
+	/// with no corresponding <see langword="virtual"/> member here would NOT bind into
+	/// <see cref="IProblem{TGenome}"/>'s dispatch slot at all -- calls made through an
+	/// <see cref="IProblem{TGenome}"/>-typed reference (as <c>TowerScheme{TGenome}.Level</c>
+	/// always uses -- see <c>ProblemTower.Problem</c>'s declared type) would keep hitting the
+	/// interface's own default (this same "return null" behavior) regardless, silently
+	/// stranding the subclass's intended override. A virtual member here closes that gap.
+	/// </remarks>
+	public virtual ValueTask<IReadOnlyList<CaseResult>?> ProcessSampleCasesAsync(TGenome g, long sampleId)
+		=> new((IReadOnlyList<CaseResult>?)null);
 }

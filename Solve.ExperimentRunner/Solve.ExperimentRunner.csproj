@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Solve\Solve.csproj" />
+		<ProjectReference Include="..\Solve.Evaluation\Solve.Evaluation.csproj" />
+		<ProjectReference Include="..\Problems\Eater\Core\Eater.Core.csproj" />
+		<ProjectReference Include="..\Problems\BlackBoxFunction\BlackBoxFunction.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Bundled example definitions (see README.md) travel with the built executable so the
+		     runner can be smoke-tested from bin\ without needing the source tree. -->
+		<None Include="examples\**" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+</Project>

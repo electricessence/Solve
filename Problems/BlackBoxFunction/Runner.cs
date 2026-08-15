@@ -1,6 +1,6 @@
-﻿using App.Metrics;
-using Solve.Evaluation;
+﻿using Solve.Evaluation;
 using Solve.Experiment.Console;
+using Solve.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -62,8 +62,8 @@ internal class Runner : RunnerBase<EvalGenome<double>>
 
 	public void Init()
 	{
-		var metrics = new MetricsBuilder().Build();
-		var factory = new NumericEvalGenomeFactory(metrics.Provider.Counter /*, "((({0} * {0}) + ({1} * {1}))^0.5)"*/);
+		var metrics = new CounterRegistry();
+		var factory = new NumericEvalGenomeFactory(metrics /*, "((({0} * {0}) + ({1} * {1}))^0.5)"*/);
 		var emitter = new EvalConsoleEmitter(factory, _minSamples);
 
 		var scheme = new Solve.ProcessingSchemes.TowerScheme<EvalGenome<double>>(factory, (800, 80, 2));

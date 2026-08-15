@@ -1,9 +1,4 @@
-﻿using App.Metrics;
-using App.Metrics.Counter;
-using App.Metrics.Filtering;
-using App.Metrics.Filters;
-using Solve.Metrics;
-using System.Collections.Frozen;
+﻿using Solve.Metrics;
 using System.Collections.Immutable;
 
 namespace Solve;
@@ -20,17 +15,15 @@ public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 	private static readonly SuccessFailKeys CROSSOVER = "Crossover";
 	private const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
 
-	internal GenomeFactoryMetrics(MetricsContextValueSource? context)
+	internal GenomeFactoryMetrics(IMetricsSnapshot? snapshot)
 	{
-		static string GetName(CounterValueSource c) => c.Name;
-		static CounterValue GetValue(CounterValueSource c) => c.Value;
-
-		FrozenDictionary<string, CounterValue> counters
-			= context?.Counters.ToFrozenDictionary(GetName, GetValue)
-			?? FrozenDictionary<string, CounterValue>.Empty;
-
 		Timestamp = DateTime.Now;
-		ImmutableArray<QueueCount>.Builder queueStates = ImmutableArray.CreateBuilder<QueueCount>();
+		// Capacity fixed at 4 (one per AddQueueState call below): the parameterless
+		// CreateBuilder() defaults to capacity 8, which would leave Count (4) != Capacity
+		// (8) and make MoveToImmutable() below throw -- this path was never exercised by
+		// the test suite (nothing calls GenomeFactoryMetrics.Get with a real snapshot), so
+		// the pre-existing mismatch was never caught.
+		ImmutableArray<QueueCount>.Builder queueStates = ImmutableArray.CreateBuilder<QueueCount>(4);
 
 		BreedingStock = AddQueueState(BREEDING_STOCK);
 		InternalQueueCount = AddQueueState(INTERNAL_QUEUE_COUNT);
@@ -53,7 +46,7 @@ public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 		}
 
 		long GetCount(string key)
-			=> counters.TryGetValue(key, out CounterValue value) ? value.Count : 0;
+			=> snapshot?.GetValue(Context, key) ?? 0;
 
 		SuccessFailCount GetSuccessFail(SuccessFailKeys key)
 			=> new(GetCount(key.Succeded), GetCount(key.Failed));
@@ -79,11 +72,46 @@ public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 
 	public long ExternalProducerQueried { get; }
 
+	// 15-0016: novelty-saturation visibility. When most generation/mutation/crossover
+	// attempts collide with an already-registered genome (see
+	// GenomeFactoryBase<TGenome>.RegisterProduction), the search has gone sterile long before
+	// champion progress visibly stalls. This ratio surfaces that trend early.
+	//
+	// Deliberately CUMULATIVE (lifetime failures / lifetime attempts), not windowed: the
+	// counters it reads (GenerateNew, Mutation, Crossover) are themselves cumulative running
+	// totals maintained by CounterRegistry (see its remarks -- System.Diagnostics.Metrics is
+	// emit-only, so CounterRegistry's MeterListener aggregates every measurement into one
+	// running total per instrument, with no history retained). A true sliding-window ratio
+	// would need new state (e.g. a ring buffer of recent outcomes) and, given the factory's
+	// producer/consumer machinery increments these counters from multiple threads
+	// concurrently, likely new synchronization on the operator hot paths -- both out of scope
+	// here (see task 15-0016's scope boundary: no new locks, read existing snapshots only).
+	// A cumulative ratio still serves the early-warning purpose: early in a run it is noisy
+	// (few attempts), but as a run progresses it converges toward the current failure rate and
+	// a sustained rise remains clearly visible to an operator watching successive snapshots.
+	/// <summary>
+	/// Cumulative fraction of generation/mutation/crossover attempts (successes + failures,
+	/// since this factory was created) that failed to produce a genuinely novel genome. Ranges
+	/// from 0 (nothing attempted yet, or every attempt so far has succeeded) to 1 (every
+	/// attempt so far has collided with an already-produced genome). See the remarks above for
+	/// why this is a cumulative rather than windowed ratio.
+	/// </summary>
+	public double NoveltySaturation
+	{
+		get
+		{
+			long succeeded = GenerateNew.Succeeded + Mutation.Succeeded + Crossover.Succeeded;
+			long failed = GenerateNew.Failed + Mutation.Failed + Crossover.Failed;
+			long attempts = succeeded + failed;
+			return attempts == 0 ? 0d : (double)failed / attempts;
+		}
+	}
+
 	internal sealed class Logger : CounterCollection
 	{
 		private const string EXTERNAL_PRODUCER_QUERIED = "External Producer Queried";
 
-		internal Logger(IProvideCounterMetrics metrics)
+		internal Logger(CounterRegistry metrics)
 			: base(metrics, GenomeFactoryMetrics.Context)
 		{
 		}
@@ -106,13 +134,5 @@ public readonly record struct GenomeFactoryMetrics : IGenomeFactoryMetrics
 			=> this[EXTERNAL_PRODUCER_QUERIED].Increment();
 	}
 
-	private static readonly IFilterMetrics MetricsFilter = new MetricsFilter().WhereContext(Context);
-
-	public static GenomeFactoryMetrics Get(IProvideMetricValues? snapshot)
-	{
-		MetricsContextValueSource? context = snapshot?.Get(MetricsFilter).Contexts.FirstOrDefault();
-		return Get(context);
-	}
-
-	public static GenomeFactoryMetrics Get(MetricsContextValueSource? snapshot) => new(snapshot);
+	public static GenomeFactoryMetrics Get(IMetricsSnapshot? snapshot) => new(snapshot);
 }

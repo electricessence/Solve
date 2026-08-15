@@ -11,13 +11,18 @@ public class LossTracker : DisposableBase
 
 	protected int _lastRejectionLevel = -1;
 	protected int _consecutiveRejection;
-	public int ConcecutiveRejection => _consecutiveRejection;
+	public int ConsecutiveRejection => _consecutiveRejection;
 
 	protected int _rejectionCount;
 	public int RejectionCount => _rejectionCount;
 	public virtual int IncrementRejection(int level)
 	{
-		if (_lastRejectionLevel == level - 1) ++_consecutiveRejection;
+		// A rejection only extends the streak when it occurs at the level immediately
+		// following the previous rejection. Any break in that sequence — a skipped
+		// level or a repeat at the same level — starts a new streak of one.
+		_consecutiveRejection = _lastRejectionLevel == level - 1
+			? _consecutiveRejection + 1
+			: 1;
 		_lastRejectionLevel = level;
 		return ++_rejectionCount;
 	}

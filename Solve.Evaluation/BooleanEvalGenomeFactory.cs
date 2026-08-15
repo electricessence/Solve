@@ -1,13 +1,13 @@
-﻿using App.Metrics.Counter;
-using Open.Collections;
+﻿using Open.Collections;
 using Open.Evaluation.Boolean;
 using Open.Evaluation.Core;
+using Solve.Metrics;
 
 using EvaluationRegistry = Open.Evaluation.Registry;
 
 namespace Solve.Evaluation;
 
-public partial class BooleanEvalGenomeFactory(IProvideCounterMetrics metrics) : EvalGenomeFactoryBase<bool>(metrics)
+public partial class BooleanEvalGenomeFactory(CounterRegistry metrics) : EvalGenomeFactoryBase<bool>(metrics)
 {
 	//public BooleanEvalGenomeFactory(params string[] seeds)
 	//{

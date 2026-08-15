@@ -47,7 +47,15 @@ public abstract class GenomeBase : FreezableBase, IGenome
 	public int GeneCount => IsFrozen ? _geneCount.Value : GetGeneCount();
 
 #if DEBUG
+	// Capturing Environment.StackTrace walks the full call stack on every genome
+	// construction, which is expensive enough to make Debug runs unusable. It only
+	// compiles in when GENOME_DIAGNOSTICS is explicitly opted into; plain DEBUG gets a
+	// cheap constant so the IGenome.StackTrace contract is still satisfied.
+#if GENOME_DIAGNOSTICS
 	public string StackTrace { get; } = Environment.StackTrace;
+#else
+	public string StackTrace => string.Empty;
+#endif
 
 	private sealed record LogEntry : IGenomeLogEntry
 	{

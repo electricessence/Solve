@@ -1,12 +1,11 @@
-using App.Metrics;
-using App.Metrics.Counter;
 using Solve.Evaluation;
+using Solve.Metrics;
 
 namespace Solve.Tests;
 
 public class BooleanFactoryTests
 {
-	private sealed class ExposedBooleanFactory(IProvideCounterMetrics metrics)
+	private sealed class ExposedBooleanFactory(CounterRegistry metrics)
 		: BooleanEvalGenomeFactory(metrics)
 	{
 		public IEnumerable<EvalGenome<bool>> GenerateOperatedPublic(ushort paramCount)
@@ -17,7 +16,7 @@ public class BooleanFactoryTests
 	}
 
 	private static ExposedBooleanFactory CreateFactory()
-		=> new(new MetricsBuilder().Build().Provider.Counter);
+		=> new(new CounterRegistry());
 
 	[Fact]
 	public void GenerateOperated_YieldsBooleanOperatorGenomes()

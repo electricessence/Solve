@@ -1,5 +1,6 @@
 ﻿using Open.Cloneable;
 using Solve;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -41,6 +42,9 @@ public sealed class Genome
 
 	void Freeze(ImmutableArray<Step> steps)
 	{
+		if (steps.Length == 0)
+			throw new ArgumentException("A genome cannot be constructed from an empty step sequence.", nameof(steps));
+
 		Debug.Assert(steps[0] == Step.Forward && steps[^1] == Step.Forward);
 		Genes = steps;
 		Freeze();

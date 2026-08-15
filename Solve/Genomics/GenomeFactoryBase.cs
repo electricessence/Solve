@@ -3,11 +3,12 @@
  * Licensing: Apache https://github.com/electricessence/Solve/blob/master/LICENSE.txt
  */
 
-using App.Metrics.Counter;
 using Open.Collections;
 using Open.Collections.Synchronized;
 using Open.Disposable;
 using Open.Threading.Tasks;
+using Solve.Metrics;
+using Solve.Telemetry;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -22,11 +23,109 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 {
 	private readonly GenomeFactoryMetrics.Logger Metrics;
 
-	protected GenomeFactoryBase(IProvideCounterMetrics metrics, IEnumerable<TGenome>? seeds = null)
+	// 15-0016: retained (in addition to the write-only Logger above) so this factory can read
+	// its own point-in-time counter snapshot on demand -- see MetricsSnapshot / NoveltySaturation
+	// below. No new counting mechanism: this is the same CounterRegistry the constructor already
+	// received and wrapped in Metrics for writes.
+	private readonly CounterRegistry _counterRegistry;
+
+	// 10-0002: optional seedable randomness source. Only GenomeFactoryBase's own direct
+	// subclasses can hand a Random through this constructor parameter; classes separated from
+	// GenomeFactoryBase by a non-forwarding intermediate base (e.g. ReducibleGenomeFactoryBase,
+	// which does not forward a randomSource parameter) instead assign the protected RandomSource
+	// setter from their own constructor body -- see Eater's GenomeFactory and
+	// EvalGenomeFactoryBase for that pattern. Either path ends up going through the RandomSource
+	// property setter below, so the thread-safety wrapping is applied uniformly.
+	protected GenomeFactoryBase(CounterRegistry metrics, IEnumerable<TGenome>? seeds = null, Random? randomSource = null)
 	{
-		Metrics = new GenomeFactoryMetrics.Logger(metrics ?? throw new ArgumentNullException(nameof(metrics)));
+		_counterRegistry = metrics ?? throw new ArgumentNullException(nameof(metrics));
+		Metrics = new GenomeFactoryMetrics.Logger(_counterRegistry);
+		if (randomSource is not null)
+			RandomSource = randomSource;
+
+		// 15-0030: solve.factory.registry_size / solve.factory.breeding_stock observable
+		// gauges. Pull-based (see EngineInstruments' type-level remarks): each callback is only
+		// ever invoked by a listener's own polling pass, so registering here adds no work to
+		// any per-generation/per-genome hot path. Registry.Count and MetricsSnapshot.BreedingStock
+		// are the same values GetOrCreateCounter/Registry consumers already read elsewhere in
+		// this class -- no new counting mechanism.
+		EngineInstruments.RegisterRegistrySizeSource(this, () => Registry.Count);
+		EngineInstruments.RegisterBreedingStockSource(this, () => MetricsSnapshot.BreedingStock);
 
 		InjectSeeds(seeds);
+	}
+
+	/// <summary>
+	/// A point-in-time snapshot of this factory's operator-outcome counters (generation,
+	/// mutation, crossover -- see <see cref="GenomeFactoryMetrics"/>) plus its queue depths.
+	/// Cheap and lock-free on the operator hot paths: it re-reads the existing
+	/// <see cref="Solve.Metrics.CounterRegistry"/> aggregation this factory already writes to via
+	/// its private <see cref="GenomeFactoryMetrics.Logger"/> (see that registry's own remarks for
+	/// how the aggregation works); no additional counting mechanism is introduced.
+	/// </summary>
+	public GenomeFactoryMetrics MetricsSnapshot
+		=> GenomeFactoryMetrics.Get(_counterRegistry.Snapshot());
+
+	/// <summary>
+	/// Cumulative fraction of this factory's generation/mutation/crossover attempts that failed
+	/// to produce a genuinely novel genome so far -- see
+	/// <see cref="GenomeFactoryMetrics.NoveltySaturation"/> for the ratio definition and why it
+	/// is cumulative rather than windowed. A rising value is an early-warning sign that the
+	/// search has gone sterile, well before champion progress visibly stalls (task 15-0016).
+	/// </summary>
+	public double NoveltySaturation => MetricsSnapshot.NoveltySaturation;
+
+	private Random _randomSource = System.Random.Shared;
+
+	/// <summary>
+	/// The randomness source used for every stochastic decision this factory makes: genome
+	/// generation (<see cref="GenerateOneInternal"/>), mutation-point selection
+	/// (<see cref="MutateInternal"/>), crossover-point selection (<see cref="CrossoverInternal"/>),
+	/// and the default matchmaking logic in <see cref="IGenomeFactory{TGenome}.AttemptNewCrossover(in ReadOnlySpan{TGenome}, byte)"/>.
+	/// </summary>
+	/// <remarks>
+	/// Thread-safety strategy (locking): the default, unseeded value is
+	/// <see cref="System.Random.Shared"/>, which .NET already guarantees is safe to call from
+	/// any thread concurrently, so it is used as-is with zero extra overhead. Any other
+	/// <see cref="Random"/> assigned here -- typically a freshly seeded instance a derived
+	/// factory's constructor passes through to make a run reproducible -- is automatically
+	/// wrapped in <see cref="SynchronizedRandom"/>, which serializes every draw behind a lock.
+	/// This factory's producer/consumer machinery (<see cref="PriorityQueue"/>'s
+	/// ProcessBreeder/ProcessMutation/ProcessVariation triggers, plus any external
+	/// <c>Parallel.ForEach</c>-driven callers) invokes <see cref="GenerateOneInternal"/>,
+	/// <see cref="MutateInternal"/>, and <see cref="CrossoverInternal"/> from multiple threads
+	/// concurrently, so without this a shared seeded <see cref="Random"/> instance would corrupt
+	/// its internal state under concurrent access. Locking guarantees every draw is valid and
+	/// none are lost or duplicated -- but since thread-scheduling order is not itself
+	/// deterministic, it does NOT guarantee the same interleaving of draws under real parallel
+	/// load. A seed therefore reproduces a bit-identical sequence for single-threaded / fixed
+	/// call-order use (e.g. unit tests calling <see cref="IGenomeFactory{TGenome}.TryGenerateNew"/>
+	/// in a loop); full determinism of the parallel tower pipeline's thread scheduling is
+	/// explicitly out of scope (task 10-0002).
+	/// </remarks>
+	public Random RandomSource
+	{
+		get => _randomSource;
+		protected set => _randomSource = value is null || ReferenceEquals(value, System.Random.Shared)
+			? System.Random.Shared
+			: new SynchronizedRandom(value);
+	}
+
+	private Action<string> _logWarning = static message => Debug.WriteLine(message);
+
+	/// <summary>
+	/// Injectable sink for this factory's non-fatal warnings: the generation/mutation
+	/// timeout notices raised by <see cref="TryGenerateNew"/>, <see cref="Mutate(TGenome, byte)"/>, and
+	/// the default <see cref="IGenomeFactory{TGenome}.GenerateOneFrom(IReadOnlyList{TGenome})"/>
+	/// implementation. Defaults to <see cref="Debug.WriteLine(string)"/> so headless hosts
+	/// (unit tests, the benchmark harness) see nothing on the console; an interactive host
+	/// that wants these surfaced can assign its own sink here (e.g. routed through its own
+	/// logger, or through a console emitter that won't corrupt a cursor-positioned display).
+	/// </summary>
+	public Action<string> LogWarning
+	{
+		get => _logWarning;
+		set => _logWarning = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
 	protected void InjectSeeds(IEnumerable<TGenome>? seeds)
@@ -47,6 +146,56 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 	protected readonly LockSynchronizedHashSet<string> PreviouslyProduced = [];
 
 	//protected readonly ConcurrentQueue<string> RegistryOrder;
+
+	// 25-0024: opt-in age-marker tracking. A genome's age marker is the value of this
+	// monotonically increasing counter at the moment it was FIRST registered by this
+	// factory (see the Register(...) overloads below, which are the sole assignment
+	// point -- every public Registration(...) overload, including subclass overrides
+	// such as EvalGenomeFactoryBase's, ultimately funnels through one of the two
+	// Register(...) methods). Lower markers are older.
+	private long _ageCounter;
+	private readonly ConcurrentDictionary<string, long> _ageMarkers = new();
+
+	/// <summary>
+	/// Enables per-genome creation-order age-marker assignment during registration (see
+	/// <see cref="GetAgeMarker(TGenome)"/> and <see cref="CurrentAgeCounter"/>). Defaults to
+	/// <see langword="false"/>: while disabled, <see cref="Register(TGenome, out TGenome, Action{TGenome}?)"/>
+	/// and its sibling overload perform zero extra work for this feature -- no counter
+	/// increment, no dictionary write, no allocation -- so registration is unaffected and
+	/// behaves exactly as it did before this feature existed. A consumer that wants age data
+	/// (e.g. <c>TowerScheme{TGenome}.Level</c>'s opt-in age-protection ranking lens, driven by
+	/// <see cref="Solve.ProcessingSchemes.SchemeConfig.AgeProtectionWindow"/>) sets this to
+	/// <see langword="true"/> before genomes it cares about start flowing through the factory.
+	/// </summary>
+	public bool AgeTrackingEnabled { get; set; }
+
+	/// <summary>
+	/// The current value of the age-marker counter -- the marker that will be assigned to the
+	/// next newly-registered genome (see <see cref="GetAgeMarker(TGenome)"/>). Only meaningful
+	/// once <see cref="AgeTrackingEnabled"/> has been set; reads as zero until then.
+	/// </summary>
+	public long CurrentAgeCounter => Interlocked.Read(ref _ageCounter);
+
+	/// <summary>
+	/// Returns the creation-order age marker assigned to <paramref name="genome"/> when it was
+	/// first registered by this factory, or <see langword="null"/> when
+	/// <see cref="AgeTrackingEnabled"/> was <see langword="false"/> at that time (including
+	/// always, if it has never been enabled) or the genome was never registered by this
+	/// factory. Lower values are older; markers are drawn from a single monotonically
+	/// increasing counter, so no two genomes ever share one.
+	/// </summary>
+	public long? GetAgeMarker(TGenome genome)
+	{
+		ArgumentNullException.ThrowIfNull(genome);
+		return _ageMarkers.TryGetValue(genome.Hash, out long age) ? age : null;
+	}
+
+	private void AssignAgeMarkerIfEnabled(TGenome genome)
+	{
+		if (!AgeTrackingEnabled) return;
+		long age = Interlocked.Increment(ref _ageCounter);
+		_ageMarkers[genome.Hash] = age;
+	}
 
 	protected override void OnDispose()
 	{
@@ -79,6 +228,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 			onBeforeAdd?.Invoke(genome);
 			// Cannot allow registration of an unfrozen genome because it then can be used by another thread.
 			AssertFrozen(genome);
+			AssignAgeMarkerIfEnabled(genome);
 			//RegistryOrder.Enqueue(hash);
 			return genome;
 		})).Value;
@@ -100,6 +250,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 			onBeforeAdd?.Invoke(genome);
 			// Cannot allow registration of an unfrozen genome because it then can be used by another thread.
 			AssertFrozen(genome);
+			AssignAgeMarkerIfEnabled(genome);
 			//RegistryOrder.Enqueue(hash);
 			return genome;
 		})).Value;
@@ -169,7 +320,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 #pragma warning restore CA1859 // Use concrete types when possible for improved performance
 #pragma warning restore IDE0079 // Remove unnecessary suppression
 		using (TimeoutHandler.New(5000,
-			ms => Console.WriteLine("Warning: {0}.GenerateOneInternal() is taking longer than {1} milliseconds.\n", this, ms)))
+			ms => LogWarning($"Warning: {this}.GenerateOneInternal() is taking longer than {ms} milliseconds.\n")))
 		{
 			// Note: for now, we will only mutate by 1.
 
@@ -252,7 +403,7 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 			while (tries != 0 && genome is null)
 			{
 				TGenome s = source;
-				void onTimeout(double ms) => Console.WriteLine("Warning: {0}.MutateInternal({1}) is taking longer than {2} milliseconds.\n", this, s, ms);
+				void onTimeout(double ms) => LogWarning($"Warning: {this}.MutateInternal({s}) is taking longer than {ms} milliseconds.\n");
 				using (TimeoutHandler.New(3000, onTimeout))
 				{
 					genome = MutateInternal(source);
@@ -320,13 +471,17 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 		return [];
 	}
 
-#if DEBUG
+	// Tracking every released genome in an unbounded dictionary is expensive (unbounded
+	// memory growth over a long run) and only useful when actively hunting for duplicate-
+	// release / duplicate-production bugs. It compiles in only when GENOME_DIAGNOSTICS is
+	// explicitly opted into, not on plain DEBUG.
+#if DEBUG && GENOME_DIAGNOSTICS
 	private readonly ConcurrentDictionary<string, TGenome> Released = new();
 #endif
 
 	public TGenome Next()
 	{
-#if DEBUG
+#if DEBUG && GENOME_DIAGNOSTICS
 		bool generated = false;
 		TGenome next()
 		{
@@ -339,11 +494,11 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 				else
 					q++;
 			}
-#if DEBUG
+#if DEBUG && GENOME_DIAGNOSTICS
 			generated = true;
 #endif
 			return ((IGenomeFactory<TGenome>)this).GenerateOne();
-#if DEBUG
+#if DEBUG && GENOME_DIAGNOSTICS
 		}
 
 		TGenome n = next();
@@ -814,5 +969,75 @@ public abstract class GenomeFactoryBase<TGenome> : DisposableBase, IGenomeFactor
 
 			return false;
 		}
+	}
+}
+
+/// <summary>
+/// Wraps a <see cref="Random"/> instance so every draw is serialized behind a lock, making it
+/// safe to share one seeded generator across concurrent callers (see
+/// <see cref="GenomeFactoryBase{TGenome}.RandomSource"/> for why this is needed and what
+/// determinism guarantee it does -- and does not -- provide under real parallelism).
+/// Every public virtual member of <see cref="Random"/> is overridden explicitly (rather than
+/// relying on the base class routing everything through <see cref="Sample"/>) so behavior does
+/// not depend on undocumented internal dispatch details of the wrapped instance.
+/// </summary>
+internal sealed class SynchronizedRandom(Random source) : Random
+{
+	private readonly Random _source = source ?? throw new ArgumentNullException(nameof(source));
+	private readonly System.Threading.Lock _gate = new();
+
+	public override int Next()
+	{
+		lock (_gate) return _source.Next();
+	}
+
+	public override int Next(int maxValue)
+	{
+		lock (_gate) return _source.Next(maxValue);
+	}
+
+	public override int Next(int minValue, int maxValue)
+	{
+		lock (_gate) return _source.Next(minValue, maxValue);
+	}
+
+	public override long NextInt64()
+	{
+		lock (_gate) return _source.NextInt64();
+	}
+
+	public override long NextInt64(long maxValue)
+	{
+		lock (_gate) return _source.NextInt64(maxValue);
+	}
+
+	public override long NextInt64(long minValue, long maxValue)
+	{
+		lock (_gate) return _source.NextInt64(minValue, maxValue);
+	}
+
+	public override double NextDouble()
+	{
+		lock (_gate) return _source.NextDouble();
+	}
+
+	public override float NextSingle()
+	{
+		lock (_gate) return _source.NextSingle();
+	}
+
+	public override void NextBytes(byte[] buffer)
+	{
+		lock (_gate) _source.NextBytes(buffer);
+	}
+
+	public override void NextBytes(Span<byte> buffer)
+	{
+		lock (_gate) _source.NextBytes(buffer);
+	}
+
+	protected override double Sample()
+	{
+		lock (_gate) return _source.NextDouble();
 	}
 }

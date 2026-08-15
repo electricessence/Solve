@@ -1,9 +1,8 @@
-﻿using Open.Collections;
+using Open.Collections;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using RandomUtilities = Open.RandomizationExtensions.Extensions;
 
 namespace Multiplexer;
 
@@ -12,10 +11,10 @@ public sealed class SampleCache
 {
 	public sealed class Entry
 	{
-		public readonly IReadOnlyList<double> ParamValues;
-		public readonly Lazy<double> Correct;
+		public readonly IReadOnlyList<bool> ParamValues;
+		public readonly Lazy<bool> Correct;
 
-		public Entry(IReadOnlyList<double> paramValues, Formula f)
+		public Entry(IReadOnlyList<bool> paramValues, Formula f)
 		{
 			ParamValues = paramValues;
 			Correct = Lazy.Create(() => f(ParamValues));
@@ -25,11 +24,8 @@ public sealed class SampleCache
 	readonly Formula _actualFormula;
 	readonly ConcurrentDictionary<long, LazyList<Entry>> _sampleCache;
 
-	public readonly double Range;
-
-	public SampleCache(Formula actualFormula, double range = 100)
+	public SampleCache(Formula actualFormula)
 	{
-		Range = range;
 		_actualFormula = actualFormula;
 		_sampleCache = new ConcurrentDictionary<long, LazyList<Entry>>();
 	}
@@ -43,12 +39,15 @@ public sealed class SampleCache
 	public LazyList<Entry> Get(long id)
 		=> _sampleCache.GetOrAdd(id, key => Generate().Memoize(true));
 
-	IEnumerable<double> Samples()
+	// Boolean domain (address + data lines): each parameter is simply a coin flip.
+	// Uses the BCL's Random.Shared directly -- Open.RandomizationExtensions no longer
+	// exposes a static "Extensions.Random" surface; that package's current API is a set
+	// of extension methods over System.Random/collections (e.g. RandomSelectOne(), as
+	// used by Solve/Genomics/IGenomeFactory.cs and Solve.Evaluation/EvalGenomeFactoryBase.cs),
+	// not a random-number-generation facade, so plain System.Random is the correct fit here.
+	static IEnumerable<bool> Samples()
 	{
-		var offset = RandomUtilities.Random.Next(1000) - Range / 2;
 		while (true)
-		{
-			yield return RandomUtilities.Random.NextDouble() * Range + offset;
-		}
+			yield return Random.Shared.Next(2) == 1;
 	}
 }

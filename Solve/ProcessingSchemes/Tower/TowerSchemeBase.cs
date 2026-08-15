@@ -19,12 +19,19 @@ public abstract class TowerSchemeBase<TGenome> : EnvironmentBase<TGenome>
 
 		ReserveFactoryQueue = genomeFactory[2];
 		ReserveFactoryQueue.ExternalProducers.Add(ProduceFromChampions);
-		// The explicit no-op onError is load-bearing: the single-Action Subscribe
-		// overload defaults onError to Rx's rethrow stub, and Subject.OnError fans
-		// out in subscription order with no per-observer catch — this subscription
-		// is observer #0, so a rethrow here would abort fault delivery to every
-		// later (external) observer.
-		this.Subscribe(e => Factory[0].EnqueueChampion(e.Genome), _ => { });
+
+		// Champion-queue inflow (Factory[0].EnqueueChampion) used to also be driven
+		// from here, via a broadcast subscription (`this.Subscribe(e =>
+		// Factory[0].EnqueueChampion(e.Genome), ...)`) that fired once per tower
+		// Broadcast. That duplicated TowerScheme.Level.cs's own direct call for the
+		// very same climbing genomes (see the `won` block in
+		// Level.ProcessContenderSafelyAsync for the full trace of both original event
+		// sources this single remaining call site now covers), inflating breeding-
+		// stock churn without changing which genomes counted as champions. Removed in
+		// favor of that single call site — this class no longer needs to subscribe to
+		// its own broadcast for champion inflow. (Other independent subscribers of
+		// this same broadcast — dashboards, StagnationMonitor, tests — are unaffected;
+		// Subject-based broadcast fans out to each subscriber separately.)
 	}
 
 	// First, and Minimum allow for tapering of pool size as generations progress.

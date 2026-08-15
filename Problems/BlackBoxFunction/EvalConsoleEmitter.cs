@@ -1,6 +1,12 @@
 ﻿using Open.Evaluation.Core;
+using Solve;
 using Solve.Evaluation;
 using Solve.Experiment.Console;
+using Spectre.Console.Rendering;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -10,6 +16,18 @@ public partial class EvalConsoleEmitter(ICatalog<IEvaluate<double>> catalog, uin
 	: ConsoleEmitterBase<EvalGenome<double>>(sampleMinimum)
 {
 	readonly ICatalog<IEvaluate<double>> Catalog = catalog;
+
+	// 15-0039: per-pool metric snapshots (Direction/Correlation/Divergence + convergence) backing
+	// BuildExtraPanels() below -- TopGenomeStats (inherited) only keeps a formatted summary string,
+	// not the individual values BlackBoxLiveView's gauges/readouts need. Keyed identically to
+	// TopGenomeStats ("{ProblemId}.{PoolIndex}") and populated from the same OnEmittingGenomeFitness
+	// call that feeds the base class's own bookkeeping.
+	private readonly ConcurrentDictionary<string, BlackBoxLiveView.PoolSnapshot> _snapshots = new();
+
+	// Own stopwatch rather than reusing RunnerBase's: this emitter is constructed independently of
+	// (and slightly before) RunnerBase.Start(), and BlackBoxLiveView only needs elapsed time for a
+	// "time to convergence" display, not perfectly synced clocks.
+	private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
 
 	public EvalConsoleEmitter(NumericEvalGenomeFactory factory, uint sampleMinimum = 50)
 		: this(factory.Catalog, sampleMinimum)
@@ -67,6 +85,31 @@ public partial class EvalConsoleEmitter(ICatalog<IEvaluate<double>> catalog, uin
 			return FormatGenomeString(alpha);
 		}
 	}
+
+	// 15-0039: captures the raw per-metric values (by name -- Metrics01/02/03 permute
+	// Direction/Correlation/Divergence into different slots per pool) that BuildExtraPanels below
+	// needs but the base class's TopGenomeStats snapshot doesn't keep. Runs on every champion
+	// update, same as the base implementation this calls through to.
+	protected override void OnEmittingGenomeFitness(IProblem<EvalGenome<double>> p, EvalGenome<double> genome, int poolIndex, Fitness fitness)
+	{
+		base.OnEmittingGenomeFitness(p, genome, poolIndex, fitness);
+
+		string key = $"{p.ID}.{poolIndex}";
+		TimeSpan elapsed = _stopwatch.Elapsed;
+		_snapshots.AddOrUpdate(
+			key,
+			addValueFactory: _ => BlackBoxLiveView.BuildSnapshot(fitness, SampleMinimum, elapsed, previousConvergedAt: null),
+			updateValueFactory: (_, previous) => BlackBoxLiveView.BuildSnapshot(fitness, SampleMinimum, elapsed, previous.ConvergedAt));
+	}
+
+	/// <summary>
+	/// Task 15-0039: BlackBoxFunction's contribution to the generic extra-panels hook (task
+	/// 15-0037/15-0038's <see cref="ConsoleEmitterBase{TGenome}.BuildExtraPanels"/>) -- one panel
+	/// per pool with the champion expression, Direction/Correlation gauges, Divergence/gene-count
+	/// readouts, and a convergence banner. See <see cref="BlackBoxLiveView"/> for the pure builders.
+	/// </summary>
+	public override IReadOnlyList<IRenderable> BuildExtraPanels()
+		=> BlackBoxLiveView.BuildPanels(TopGenomeStats, _snapshots);
 
 	[GeneratedRegex(@"\((\w+[⁰¹²³⁴⁵⁶⁷⁸⁹]*)\)(\)|\s)", RegexOptions.Compiled)]
 	private static partial Regex StripParensRegex();

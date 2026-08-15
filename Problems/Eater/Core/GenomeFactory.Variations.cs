@@ -5,6 +5,7 @@ using Solve;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -15,8 +16,13 @@ public partial class GenomeFactory
 	static readonly Regex UTurn = UTurnPattern();
 	static readonly Regex Loop = LoopPattern();
 
-	public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source)
+	// 10-0002: randomness source is now a required parameter (there are no external callers of
+	// this method today -- see the sole caller below) so the Shuffle() draw always routes
+	// through the factory's injected/seedable RandomSource rather than an unseedable ambient
+	// default.
+	public static IEnumerable<IEnumerable<Step>> GetVariations(IReadOnlyList<Step> source, Random random)
 	{
+		ArgumentNullException.ThrowIfNull(random);
 		int len = source.Count;
 		// Try to simply shorten the result first.
 		yield return source.Take(len - 1); // by 1
@@ -42,7 +48,7 @@ public partial class GenomeFactory
 
 		yield return source.Reverse();
 
-		foreach (int i in Enumerable.Range(0, stepCount).Shuffle())
+		foreach (int i in Enumerable.Range(0, stepCount).Shuffle(random))
 		{
 			var segments = SplicedEnumerable.Create(stepCounts.Take(i).Steps(), stepCounts.Skip(i + 1).Steps());
 			var step = stepCounts[i];
@@ -99,9 +105,18 @@ public partial class GenomeFactory
 	}
 
 	protected override IEnumerable<Genome> GetVariationsInternal(Genome source)
-		=> GetVariations(source.Genes.ToArray())
-			.Concat(base.GetVariationsInternal(source) ?? [])
-			.Select(steps => new Genome(steps.TrimTurns()));
+		// 10-0005: the coverage-preserving reduction (GetReduced, overridden in
+		// GenomeFactory.Reduce.cs) is tried first, ahead of the syntactic variation catalogue
+		// below -- otherwise it would only be reached once that (potentially very long, for
+		// large champions) catalogue is fully exhausted.
+		=> (base.GetVariationsInternal(source) ?? [])
+			.Concat(GetVariations(source.Genes.ToArray(), RandomSource))
+			.Select(steps => steps.TrimTurns().ToImmutableArray())
+			// Some candidates (e.g. "remove one" on a minimal genome) can legitimately
+			// reduce to nothing after trimming; skip those rather than let Genome's Freeze
+			// throw on an empty step sequence.
+			.Where(steps => steps.Length != 0)
+			.Select(steps => new Genome(steps));
 
 	[GeneratedRegex(@"\^([<>])\1\^", RegexOptions.Compiled)]
 	private static partial Regex UTurnPattern();

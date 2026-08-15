@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - dotnet9-dev
+  pull_request:
+    branches:
+      - master
+      - dotnet9-dev
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-and-test:
+    # windows-latest: Eater's use of System.Drawing.Common requires Windows.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # Building the individual buildable projects instead of Solve.sln
+      # deliberately excludes the known-broken legacy projects
+      # (Problems/Multiplexer, Problems/Eater/WebConsole, Dashboard/*),
+      # which are tracked and fixed by separate tasks.
+      - name: Build
+        shell: pwsh
+        run: |
+          $projects = @(
+            'Solve/Solve.csproj',
+            'Solve.Evaluation/Solve.Evaluation.csproj',
+            'Solve.Experiment/Solve.Experiment.csproj',
+            'Problems/Eater/Core/Eater.Core.csproj',
+            'Problems/Eater/Console/Eater.Console.csproj',
+            'Problems/Eater/Benchmark/Eater.Benchmark.csproj',
+            'Problems/BlackBoxFunction/BlackBoxFunction.csproj',
+            'Solve.Tests/Solve.Tests.csproj'
+          )
+
+          foreach ($project in $projects) {
+            Write-Host "::group::dotnet build $project"
+            dotnet build $project -c Release
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::endgroup::"
+              throw "Build failed for $project"
+            }
+            Write-Host "::endgroup::"
+          }
+
+      - name: Test
+        run: dotnet test Solve.Tests/Solve.Tests.csproj -c Release --no-build

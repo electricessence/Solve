@@ -258,4 +258,5 @@ ModelManifest.xml
 
 Problems/Eater/Console/Log-*.csv
 Problems/Eater/Console/Progression
-Problems/Eater/WebConsole/Progression
+# Task pipeline (local only)
+.tasks/

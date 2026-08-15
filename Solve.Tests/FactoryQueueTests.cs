@@ -1,5 +1,5 @@
-using App.Metrics;
 using Eater;
+using Solve.Metrics;
 using System.Diagnostics;
 
 namespace Solve.Tests;
@@ -9,8 +9,8 @@ public class FactoryQueueTests
 	[Fact]
 	public void ProcessBreederIsBounded()
 	{
-		var metrics = new MetricsBuilder().Build();
-		var factory = new GenomeFactory(metrics.Provider.Counter, seeds: null, leftTurnDisabled: true);
+		var metrics = new CounterRegistry();
+		var factory = new GenomeFactory(metrics, seeds: null, leftTurnDisabled: true);
 		IGenomeFactoryPriorityQueue<Genome> queue = factory[0];
 
 		// DISTINCT hashes are essential: they route BreedOne into the real

@@ -1,10 +1,8 @@
-﻿using Open.Memory;
+using Open.Memory;
 using Open.Numeric;
-using Open.Numeric.Precision;
 using Open.Text;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Solve;
 
@@ -52,7 +50,12 @@ public class Fitness : IComparable<Fitness>
 	public virtual ProcedureResults Merge(ProcedureResults other)
 	{
 		ProcedureResults r = _results;
-		ProcedureResults sum = r.Count == 0 ? other : (r + other);
+		// Equivalent to `r + other`, but routed through Add(ReadOnlySpan<double>, int) instead
+		// of the `+` operator: the operator internally boxes both operands' Sum
+		// (ImmutableArray<double> is a struct passed to an IReadOnlyList<double> parameter),
+		// while AsSpan() lets this side of the sum pass through unboxed -- one fewer boxed
+		// array per merge on these long-lived champion Fitness objects.
+		ProcedureResults sum = r.Count == 0 ? other : r.Add(other.Sum.AsSpan(), other.Count);
 		_results = sum;
 		return sum;
 	}
@@ -70,9 +73,14 @@ public class Fitness : IComparable<Fitness>
 	public virtual ProcedureResults Merge(ImmutableArray<double> other, int count = 1)
 	{
 		ProcedureResults r = _results;
+		// other.AsSpan() routes to Add(ReadOnlySpan<double>, int) instead of
+		// Add(IReadOnlyList<double>, int) -- the latter would box `other` (a struct) to pass
+		// it as an interface-typed parameter. This is the overload actually exercised on the
+		// hot evaluation path (TowerScheme.Level.cs's ProcessContenderSafelyAsync), so avoiding
+		// that per-merge boxed allocation matters on long-lived champion Fitness objects.
 		ProcedureResults sum = r.Count == 0
 			? new ProcedureResults(other, count)
-			: r.Add(other, count);
+			: r.Add(other.AsSpan(), count);
 		_results = sum;
 		return sum;
 	}
@@ -154,27 +162,17 @@ public class Fitness : IComparable<Fitness>
 		foreach ((Metric Metric, double Value) in MetricAverages.Where(m => m.Metric.Convergence))
 		{
 			c = true;
-			double convergence = Metric.MaxValue;
+			double maxValue = Metric.MaxValue;
 			double tolerance = Metric.Tolerance;
 
-			if (Value > convergence + double.Epsilon)
+			if (Value > maxValue)
 			{
-				// A value at/above the metric's maximum cannot improve further — treat as
+				// A value above the metric's maximum cannot improve further — treat as
 				// converged. (Transform floating-point overshoot must not crash a run.)
 				continue;
 			}
 
-			// ReSharper disable once CompareOfFloatsByEqualityOperator
-			if (Value == convergence || Value.IsNearEqual(convergence, 0.0000001)
-				&& Value.ToString(CultureInfo.InvariantCulture) == convergence.ToString(CultureInfo.InvariantCulture))
-			{
-				continue;
-			}
-
-			if (double.IsNaN(tolerance)) // not necessary but shows more explicit intent.
-				continue;
-
-			if (Value < convergence - tolerance)
+			if (Value < maxValue - tolerance)
 				return false;
 		}
 

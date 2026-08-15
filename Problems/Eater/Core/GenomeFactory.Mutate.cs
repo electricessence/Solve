@@ -2,17 +2,25 @@
 using Solve;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Eater;
 
 public partial class GenomeFactory
 {
-	protected override Genome MutateInternal(Genome target)
-		=> new(MutateCore(target.Genes).Reduce().TrimTurns());
+	protected override Genome? MutateInternal(Genome target)
+	{
+		// Removal-heavy mutation paths (e.g. Case 0 on a 1-gene source) can legitimately
+		// reduce the gene sequence to nothing. Constructing a Genome from an empty sequence
+		// is invalid, so report mutation failure (null) instead of letting Genome's Freeze
+		// throw on the empty array.
+		ImmutableArray<Step> steps = MutateCore(target.Genes).Reduce().TrimTurns().ToImmutableArray();
+		return steps.Length == 0 ? null : new Genome(steps);
+	}
 
 	private IEnumerable<Step> MutateCore(IReadOnlyList<Step> genes)
 	{
-		var rand = System.Random.Shared;
+		Random rand = RandomSource; // 10-0002: injected (seedable) source instead of the previous unseedable ambient default.
 		int length = genes.Count;
 		int index = rand.Next(length);
 		var segments = genes.SpliceAt(index);
@@ -40,7 +48,7 @@ public partial class GenomeFactory
 
 			// Insert
 			case 3:
-				return segments.Insert(AvailableSteps.RandomSelectOne());
+				return segments.Insert(AvailableSteps.RandomSelectOne(rand));
 
 			default:
 				throw new NotSupportedException();
